@@ -5,7 +5,7 @@
     "fx": "frankfurter",
     "dividend": "akshare"
   },
-  "updatedAt": "2026-03-13T18:06:27.506204Z",
+  "updatedAt": "2026-03-13T19:56:08.939669Z",
   "rates": {
     "CNY": 1,
     "USD": 6.8966,
@@ -17,77 +17,77 @@
       "name": "苹果",
       "market": "US",
       "currency": "USD",
-      "price": 252.28
+      "price": 250.395
     },
     "MSFT": {
       "symbol": "MSFT",
       "name": "微软",
       "market": "US",
       "currency": "USD",
-      "price": 396.19
+      "price": 395.42
     },
     "KO": {
       "symbol": "KO",
       "name": "可口可乐",
       "market": "US",
       "currency": "USD",
-      "price": 77.635
+      "price": 77.275
     },
     "JNJ": {
       "symbol": "JNJ",
       "name": "强生",
       "market": "US",
       "currency": "USD",
-      "price": 243.525
+      "price": 242.009
     },
     "PG": {
       "symbol": "PG",
       "name": "宝洁",
       "market": "US",
       "currency": "USD",
-      "price": 151.35
+      "price": 150.4
     },
     "PEP": {
       "symbol": "PEP",
       "name": "百事",
       "market": "US",
       "currency": "USD",
-      "price": 160.18
+      "price": 159.745
     },
     "MCD": {
       "symbol": "MCD",
       "name": "麦当劳",
       "market": "US",
       "currency": "USD",
-      "price": 325.31
+      "price": 325.98
     },
     "O": {
       "symbol": "O",
       "name": "Realty Income Corp",
       "market": "US",
       "currency": "USD",
-      "price": 65.155
+      "price": 64.435
     },
     "VZ": {
       "symbol": "VZ",
       "name": "威瑞森通讯",
       "market": "US",
       "currency": "USD",
-      "price": 51.315
+      "price": 51.325
     },
     "XOM": {
       "symbol": "XOM",
       "name": "埃克森美孚",
       "market": "US",
       "currency": "USD",
-      "price": 154.76
+      "price": 156.18
     },
     "CVX": {
       "symbol": "CVX",
       "name": "雪佛龙",
       "market": "US",
       "currency": "USD",
-      "price": 195.2
+      "price": 196.56
     },
     "00700.HK": {
       "symbol": "00700.HK",
