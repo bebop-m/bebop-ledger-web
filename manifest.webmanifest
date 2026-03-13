@@ -1,0 +1,17 @@
+{
+  "name": "波普账本",
+  "short_name": "波普账本",
+  "description": "手机优先的持仓与股息记录本",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#152849",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

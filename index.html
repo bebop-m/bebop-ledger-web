@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#152849">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>&#27874;&#26222;&#36134;&#26412;</title>
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="./assets/icon.svg">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="topbar-kicker">Mobile Ledger</p>
+          <h1 class="topbar-title">&#27874;&#26222;&#36134;&#26412;</h1>
+        </div>
+        <button id="privacyToggle" class="icon-button" type="button" aria-label="privacy toggle">
+          <svg class="icon-eye" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 12C4.7 7.8 8.1 5.7 12 5.7S19.3 7.8 22 12c-2.7 4.2-6.1 6.3-10 6.3S4.7 16.2 2 12Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+            <circle cx="12" cy="12" r="3.1" fill="none" stroke="currentColor" stroke-width="1.8"></circle>
+            <path class="eye-slash" d="M4 20L20 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+          </svg>
+        </button>
+      </header>
+
+      <main class="page-content">
+        <section class="panel hero-panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title" data-i18n="heroTitle"></h2>
+              <p class="panel-caption" data-i18n="heroSubtitle"></p>
+            </div>
+          </div>
+          <div class="summary-grid" id="summaryGrid"></div>
+        </section>
+
+        <section class="panel chart-panel">
+          <div class="panel-head">
+            <div>
+              <h2 class="panel-title" data-i18n="chartTitle"></h2>
+              <p class="panel-caption" data-i18n="chartCaption"></p>
+            </div>
+          </div>
+          <div class="chart-surface">
+            <div class="chart-layout">
+              <div class="donut-wrap">
+                <div class="donut-chart" id="companyDonut"></div>
+              </div>
+              <div class="legend-panel">
+                <div class="legend-list" id="companyLegend"></div>
+                <button id="legendToggle" class="link-button" type="button" hidden></button>
+              </div>
+            </div>
+            <div class="bucket-track" id="bucketTrack"></div>
+          </div>
+        </section>
+
+        <section class="panel list-panel">
+          <div class="panel-head list-head">
+            <h2 class="panel-title" data-i18n="stockListTitle"></h2>
+            <div class="list-tools">
+              <button class="sort-chip" data-sort-field="marketValueCny" type="button"></button>
+              <button class="sort-chip" data-sort-field="dividendYield" type="button"></button>
+            </div>
+            <div class="head-actions">
+              <button id="refreshButton" class="icon-button" type="button" aria-label="refresh">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M18.4 8.3A7.5 7.5 0 1 0 19 15.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
+                  <path d="M15.2 5.8h4.8v4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </button>
+              <button id="addButton" class="icon-button" type="button" aria-label="add">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 5.2v13.6M5.2 12h13.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div id="stockList" class="stock-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="modalRoot"></div>
+
+    <template id="stockCardTemplate">
+      <article class="stock-card">
+        <div class="stock-head">
+          <div class="stock-title-line">
+            <span class="stock-name"></span>
+            <span class="stock-divider">/</span>
+            <span class="stock-price"></span>
+          </div>
+          <div class="stock-head-right">
+            <span class="holding-badge"></span>
+            <button class="stock-delete" type="button">-</button>
+          </div>
+        </div>
+        <div class="stock-code"></div>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label market-label"></span>
+            <span class="info-value market-value"></span>
+          </div>
+          <button class="info-item info-trigger align-right quantity-trigger" type="button">
+            <span class="info-label quantity-label"></span>
+            <span class="info-value quantity-value"></span>
+          </button>
+          <button class="info-item info-trigger annual-trigger" type="button">
+            <span class="info-label annual-label"></span>
+            <span class="info-value income annual-value"></span>
+          </button>
+          <div class="info-item align-right">
+            <span class="info-label yield-label"></span>
+            <span class="info-value income yield-value"></span>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

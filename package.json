@@ -1,0 +1,9 @@
+{
+  "name": "bopup-ledger-web-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Mobile-first portfolio ledger web app",
+  "dependencies": {
+    "longport": "latest"
+  }
+}
