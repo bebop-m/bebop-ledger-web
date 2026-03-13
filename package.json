@@ -1,9 +1,9 @@
-{
+﻿{
   "name": "bopup-ledger-web-app",
   "private": true,
-  "version": "1.0.0",
-  "description": "Mobile-first portfolio ledger web app",
-  "dependencies": {
-    "longport": "latest"
+  "version": "3.0.0",
+  "description": "Static mobile web app for Bopup Ledger",
+  "scripts": {
+    "serve": "powershell -ExecutionPolicy Bypass -File ./serve.ps1"
   }
 }

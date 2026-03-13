@@ -1,6 +1,6 @@
-const STORAGE_KEY = 'bopup-ledger-web-state';
+﻿const STORAGE_KEY = 'bopup-ledger-web-state';
 const LEGEND_COLLAPSED_COUNT = 8;
-const MARKET_ENDPOINT = '/api/market';
+const MARKET_ENDPOINT = './data/market.json';
 const COMPANY_COLORS = [
   '#14274a', '#f28c28', '#cfd6e1', '#8e9aae', '#e7d7c7',
   '#6d7b90', '#f5b36b', '#2a4168', '#d9e0e8', '#a2acba',
@@ -395,7 +395,7 @@ function setSortUI() {
   refs.sortChips.forEach((chip) => {
     const isActive = chip.dataset.sortField === state.sortField;
     chip.classList.toggle('is-active', isActive);
-    chip.dataset.direction = isActive ? (state.sortDirection === 'desc' ? '↓' : '↑') : '';
+    chip.dataset.direction = isActive ? (state.sortDirection === 'desc' ? '鈫? : '鈫?) : '';
   });
 }
 
@@ -698,3 +698,4 @@ async function boot() {
 }
 
 boot();
+

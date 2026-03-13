@@ -1,0 +1,38 @@
+﻿{
+  "ok": true,
+  "provider": {
+    "quote": "seed",
+    "fx": "seed"
+  },
+  "updatedAt": "2026-03-13T00:00:00Z",
+  "rates": {
+    "CNY": 1,
+    "USD": 7.22,
+    "HKD": 0.92
+  },
+  "quotes": {
+    "AAPL": { "symbol": "AAPL", "name": "Apple", "market": "US", "currency": "USD", "price": 213.4 },
+    "MSFT": { "symbol": "MSFT", "name": "Microsoft", "market": "US", "currency": "USD", "price": 419.15 },
+    "KO": { "symbol": "KO", "name": "Coca-Cola", "market": "US", "currency": "USD", "price": 68.22 },
+    "JNJ": { "symbol": "JNJ", "name": "Johnson & Johnson", "market": "US", "currency": "USD", "price": 162.35 },
+    "PG": { "symbol": "PG", "name": "P&G", "market": "US", "currency": "USD", "price": 171.28 },
+    "PEP": { "symbol": "PEP", "name": "PepsiCo", "market": "US", "currency": "USD", "price": 174.06 },
+    "MCD": { "symbol": "MCD", "name": "McDonald's", "market": "US", "currency": "USD", "price": 301.42 },
+    "O": { "symbol": "O", "name": "Realty Income", "market": "US", "currency": "USD", "price": 54.1 },
+    "VZ": { "symbol": "VZ", "name": "Verizon", "market": "US", "currency": "USD", "price": 41.26 },
+    "XOM": { "symbol": "XOM", "name": "Exxon Mobil", "market": "US", "currency": "USD", "price": 109.74 },
+    "CVX": { "symbol": "CVX", "name": "Chevron", "market": "US", "currency": "USD", "price": 154.32 },
+    "00700.HK": { "symbol": "00700.HK", "name": "腾讯控股", "market": "HK", "currency": "HKD", "price": 389.6 },
+    "00941.HK": { "symbol": "00941.HK", "name": "中国移动", "market": "HK", "currency": "HKD", "price": 77.15 },
+    "01398.HK": { "symbol": "01398.HK", "name": "工商银行", "market": "HK", "currency": "HKD", "price": 4.33 },
+    "00883.HK": { "symbol": "00883.HK", "name": "中国海洋石油", "market": "HK", "currency": "HKD", "price": 18.42 },
+    "00005.HK": { "symbol": "00005.HK", "name": "汇丰控股", "market": "HK", "currency": "HKD", "price": 68.35 },
+    "00388.HK": { "symbol": "00388.HK", "name": "香港交易所", "market": "HK", "currency": "HKD", "price": 256.2 },
+    "600519.SH": { "symbol": "600519.SH", "name": "贵州茅台", "market": "CN", "currency": "CNY", "price": 1688 },
+    "601318.SH": { "symbol": "601318.SH", "name": "中国平安", "market": "CN", "currency": "CNY", "price": 46.22 },
+    "600036.SH": { "symbol": "600036.SH", "name": "招商银行", "market": "CN", "currency": "CNY", "price": 34.58 },
+    "600900.SH": { "symbol": "600900.SH", "name": "长江电力", "market": "CN", "currency": "CNY", "price": 28.41 },
+    "000651.SZ": { "symbol": "000651.SZ", "name": "格力电器", "market": "CN", "currency": "CNY", "price": 41.86 },
+    "300750.SZ": { "symbol": "300750.SZ", "name": "宁德时代", "market": "CN", "currency": "CNY", "price": 192.65 }
+  }
+}

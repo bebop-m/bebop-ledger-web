@@ -1,6 +1,11 @@
-# 波普账本网页版
+﻿# 波普账本网页端
 
-这个目录是和微信小程序完全隔离的手机网页版本。
+这版网页现在改成了：
+
+- 静态网页前端
+- `data/market.json` 作为行情快照
+- `GitHub Actions` 每 5 分钟自动更新一次股价和汇率
+- `Netlify` 或 `GitHub Pages` 只负责托管静态文件
 
 ## 当前能力
 
@@ -14,44 +19,76 @@
 - 删除持仓
 - 按持仓市值 / 股息率排序
 - 隐私隐藏
-- 真实股价与汇率接口预留
+- 免费股价刷新（基于 AKShare 定时更新）
 
-## 真实数据接入
+## 架构
 
-当前网页版已经预留 `/api/market` 接口，建议用：
+```text
+GitHub Actions
+  -> 运行 Python 脚本
+  -> 从 AKShare 拉股价
+  -> 从 Frankfurter 拉汇率
+  -> 生成 data/market.json
+  -> 提交回仓库
 
-- 股价：Longbridge OpenAPI
-- 汇率：Frankfurter
+静态网页
+  -> 读取 data/market.json
+```
 
-### 需要的环境变量
+## 关键文件
 
-- `LONGPORT_APP_KEY`
-- `LONGPORT_APP_SECRET`
-- `LONGPORT_ACCESS_TOKEN`
-- `LONGPORT_REGION` 可选，常用 `hk` 或 `cn`
+- `data/watchlist.json`
+- `data/market.json`
+- `scripts/update_market_data.py`
+- `scripts/requirements.txt`
+- `.github/workflows/update-market-data.yml`
 
-### 部署注意
+## 使用说明
 
-如果你只是把静态文件拖到 Netlify Drop，静态页面可以更新，但 `Netlify Functions` 不能按源码自动准备依赖。
-要让 `Longbridge` 这类函数真正工作，建议改成：
-
-1. Git 持续部署
-2. 或 Netlify CLI 手动部署
-
-参考官方文档：
-- Functions 部署：https://docs.netlify.com/build/functions/deploy/
-- Site deploy：https://docs.netlify.com/deploy/create-deploys/
-
-## 本地预览
-
-PowerShell：
+### 1. 本地预览
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File "C:\GPT CODEX\web-app\serve.ps1"
 ```
 
-浏览器打开：
+打开：
 
 ```text
 http://127.0.0.1:4173/
 ```
+
+### 2. GitHub 自动更新
+
+GitHub Actions 工作流会：
+
+- 每 5 分钟跑一次
+- 更新 `data/market.json`
+- 自动提交最新行情文件
+
+### 3. Netlify 部署
+
+当前版本不需要环境变量，也不需要函数。
+
+只要部署静态文件即可。
+
+## 重要限制
+
+### 观察名单限制
+
+GitHub Actions 只能更新 `data/watchlist.json` 里的股票。
+
+也就是说：
+
+- 如果你在网页里新增了一只新股票
+- 想让它也自动刷新价格
+- 还需要把这只股票补进 `data/watchlist.json`
+
+### 港股时效
+
+AKShare 的港股行情文档注明是 `15 分钟延时`。
+
+### 股息率
+
+当前这版主要自动更新股价和汇率。
+
+股息率如果 AKShare 没有稳定来源，网页会继续保留已有值；新增股票默认可能是 `0`，后面可以再补手填入口。
