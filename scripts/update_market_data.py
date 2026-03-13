@@ -22,7 +22,7 @@ CN_DIV_RATIO = '\u6d3e\u606f\u6bd4\u4f8b'
 
 
 def load_watchlist():
-    payload = json.loads(WATCHLIST_PATH.read_text(encoding='utf-8'))
+    payload = json.loads(WATCHLIST_PATH.read_text(encoding='utf-8-sig'))
     return [str(symbol).strip().upper() for symbol in payload.get('symbols', []) if str(symbol).strip()]
 
 
