@@ -659,18 +659,23 @@ svg {
 
   .summary-value {
     margin-top: 6px;
-    font-size: clamp(20px, 6vw, 24px);
-    line-height: 1.05;
-    overflow-wrap: anywhere;
+    font-size: clamp(18px, 5.2vw, 22px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+
+  .summary-card:first-child .summary-value {
+    font-size: clamp(16px, 4.8vw, 21px);
   }
 
   .summary-grid {
-    gap: 10px;
+    gap: 8px;
     margin-top: 12px;
   }
 
   .summary-card {
-    padding: 14px;
+    padding: 13px;
     border-radius: 16px;
   }
 
@@ -744,19 +749,19 @@ svg {
   }
 
   .stock-list {
-    gap: 12px;
+    gap: 10px;
     margin-top: 12px;
   }
 
   .holding-card {
-    padding: 16px;
-    border-radius: 20px;
-    box-shadow: 0 10px 24px rgba(21, 40, 73, 0.04);
+    padding: 14px 13px;
+    border-radius: 18px;
+    box-shadow: none;
   }
 
   .holding-head {
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
   }
 
   .holding-name,
@@ -778,45 +783,51 @@ svg {
 
   .weight-pill {
     min-width: 72px;
-    padding: 8px 12px;
-    border-radius: 17px;
-    font-size: 15px;
+    padding: 7px 11px;
+    border-radius: 16px;
+    font-size: 14px;
   }
 
   .holding-grid {
-    gap: 10px;
-    margin-top: 12px;
+    gap: 8px 14px;
+    margin-top: 10px;
   }
 
   .metric-static,
   .metric-button {
-    align-items: stretch;
-    min-height: 74px;
-    padding: 10px 12px;
-    border-radius: 16px;
-    background: #f8fafc;
-    box-shadow: inset 0 0 0 1px var(--line-soft);
+    align-items: center;
+    min-height: 0;
+    padding: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
   }
 
   .metric-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+    width: 100%;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
   }
 
   .metric-row.metric-right {
-    align-items: flex-end;
+    align-items: baseline;
+    justify-content: space-between;
   }
 
   .metric-label {
     white-space: nowrap;
     line-height: 1.1;
+    flex: 0 0 4.8em;
   }
 
   .metric-value {
-    font-size: clamp(15px, 5vw, 17px);
-    line-height: 1.15;
-    overflow-wrap: anywhere;
+    flex: 1 1 auto;
+    font-size: clamp(15px, 4.8vw, 17px);
+    line-height: 1.12;
+    text-align: right;
+    white-space: nowrap;
   }
 
   .panel-note,
