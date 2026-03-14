@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'bopup-ledger-web-state';
 const MARKET_ENDPOINT = './data/market.json';
+const GITHUB_MARKET_CONTENTS_API = 'https://api.github.com/repos/bebop-m/bopup-ledger-web/contents/data/market.json';
 const LEGEND_COLLAPSED_COUNT = 8;
 const MASK_AMOUNT = '******';
 const MASK_PRICE = '***.**';
@@ -814,11 +815,7 @@ async function refreshMarketData(options = {}) {
   refs.refreshButton.disabled = true;
 
   try {
-    const response = await fetch(`${MARKET_ENDPOINT}?t=${Date.now()}`, { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error(`market request failed: ${response.status}`);
-    }
-    const payload = await response.json();
+    const payload = await loadLatestMarketSnapshot();
     if (!payload || payload.ok === false) {
       throw new Error(payload && payload.error ? payload.error : 'invalid market payload');
     }
@@ -834,6 +831,48 @@ async function refreshMarketData(options = {}) {
     state.syncing = false;
     refs.refreshButton.disabled = false;
   }
+}
+
+async function loadLatestMarketSnapshot() {
+  const errors = [];
+
+  try {
+    const response = await fetch(GITHUB_MARKET_CONTENTS_API + '?t=' + Date.now(), {
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/vnd.github+json'
+      }
+    });
+    if (!response.ok) {
+      throw new Error('github contents request failed: ' + response.status);
+    }
+    const payload = await response.json();
+    if (payload && typeof payload.content === 'string') {
+      const decoded = decodeBase64Utf8(payload.content.replace(/\\n/g, ''));
+      return JSON.parse(decoded);
+    }
+    throw new Error('github contents payload missing content');
+  } catch (error) {
+    errors.push(error);
+  }
+
+  try {
+    const response = await fetch(MARKET_ENDPOINT + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error('site market request failed: ' + response.status);
+    }
+    return await response.json();
+  } catch (error) {
+    errors.push(error);
+  }
+
+  throw errors[0] || new Error('failed to load market snapshot');
+}
+
+function decodeBase64Utf8(value) {
+  const binary = atob(value);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new TextDecoder('utf-8').decode(bytes);
 }
 
 async function cleanupLegacyCaches() {
