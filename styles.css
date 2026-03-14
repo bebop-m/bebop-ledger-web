@@ -735,17 +735,28 @@ svg {
   }
 
   .panel-bar--list {
-    align-items: flex-start;
-    row-gap: 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 8px;
+    row-gap: 10px;
   }
 
   .list-heading {
-    flex: 1 1 calc(100% - 96px);
+    min-width: 0;
+  }
+
+  .sort-group {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
   }
 
   .icon-actions {
+    grid-column: 2;
+    grid-row: 1;
     gap: 8px;
-    margin-left: auto;
+    margin-left: 0;
   }
 
   .stock-list {
@@ -828,6 +839,11 @@ svg {
     line-height: 1.12;
     text-align: right;
     white-space: nowrap;
+  }
+
+  .metric-static .metric-value,
+  .metric-button:not(.metric-right) .metric-value {
+    font-size: clamp(13px, 4.2vw, 15px);
   }
 
   .panel-note,
