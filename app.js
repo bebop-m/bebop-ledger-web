@@ -52,9 +52,6 @@ const LABELS = {
   duplicateHolding: '\u5df2\u5728\u6301\u4ed3\u4e2d',
   deleteConfirm: '\u786e\u8ba4\u5220\u9664',
   refreshFailed: '\u884c\u60c5\u5237\u65b0\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002',
-  importConfirm: '\u5bfc\u5165\u540e\u4f1a\u8986\u76d6\u5f53\u524d\u672c\u5730\u6570\u636e\uff0c\u786e\u8ba4\u7ee7\u7eed\u5417\uff1f',
-  importFailed: '\u5bfc\u5165\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u5907\u4efd\u6587\u4ef6\u3002',
-  exportFailed: '\u5bfc\u51fa\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002',
   marketValue: '\u6301\u4ed3\u5e02\u503c\uff1a',
   quantity: '\u6570\u91cf\uff1a',
   annualDividend: '\u7a0e\u540e\u80a1\u606f\uff1a',
@@ -134,9 +131,6 @@ const state = {
 
 const refs = {
   privacyButton: document.getElementById('privacyButton'),
-  exportButton: document.getElementById('exportButton'),
-  importButton: document.getElementById('importButton'),
-  importFileInput: document.getElementById('importFileInput'),
   summaryGrid: document.getElementById('summaryGrid'),
   companyDonut: document.getElementById('companyDonut'),
   companyLegend: document.getElementById('companyLegend'),
@@ -734,62 +728,6 @@ function handleModalSave() {
   renderApp();
 }
 
-function exportBackup() {
-  try {
-    const payload = {
-      type: 'bopup-ledger-backup',
-      version: 1,
-      exportedAt: new Date().toISOString(),
-      state: getPersistedSnapshot()
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `bopup-ledger-backup-${stamp}.json`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
-  } catch (error) {
-    console.warn('export failed', error);
-    window.alert(LABELS.exportFailed);
-  }
-}
-
-function importSnapshot(payload) {
-  const source = payload && payload.state ? payload.state : payload;
-  if (!source || !Array.isArray(source.holdings)) {
-    throw new Error('invalid backup payload');
-  }
-  applySnapshot(source);
-  saveState();
-  renderApp();
-}
-
-async function handleImportFile(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) {
-    return;
-  }
-
-  try {
-    if (!window.confirm(LABELS.importConfirm)) {
-      return;
-    }
-    const text = await file.text();
-    const payload = JSON.parse(text);
-    importSnapshot(payload);
-    await refreshMarketData({ silent: true });
-  } catch (error) {
-    console.warn('import failed', error);
-    window.alert(LABELS.importFailed);
-  } finally {
-    refs.importFileInput.value = '';
-  }
-}
-
 function applyMarketPayload(payload) {
   if (payload && payload.rates) {
     state.rates = {
@@ -914,10 +852,6 @@ refs.privacyButton.addEventListener('click', () => {
   saveState();
   renderApp();
 });
-
-refs.exportButton.addEventListener('click', exportBackup);
-refs.importButton.addEventListener('click', () => refs.importFileInput.click());
-refs.importFileInput.addEventListener('change', handleImportFile);
 
 refs.legendToggle.addEventListener('click', () => {
   state.legendExpanded = !state.legendExpanded;
