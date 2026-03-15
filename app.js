@@ -35,6 +35,7 @@ const UI_TEXT = {
   overallYieldCompact: '\u80a1\u606f\u7387'
 };
 const ALLOCATION_LEGEND_MIN_WEIGHT = 0.05;
+const BUCKET_CHIP_COMPACT_THRESHOLD = 0.16;
 
 const DEFAULT_RATES = {
   CNY: 1,
@@ -1147,18 +1148,22 @@ function renderBuckets(segments, holdings, summary) {
     refs.bucketTrack.innerHTML = `
       <div class="bucket-summary-v2">
         <div class="bucket-chip-row">
-          ${bucketItems.map((item) => `
-            <button
-              class="bucket-chip is-${item.key}${state.activeBucketKey === item.key ? ' is-active' : ''}"
-              type="button"
-              data-bucket-toggle="${item.key}"
-              style="--bucket-share:${(item.marketValueCny / (totalMarketValue || 1)).toFixed(4)};"
-              aria-expanded="${state.activeBucketKey === item.key ? 'true' : 'false'}"
-            >
-              <span class="bucket-chip-label">${item.label}</span>
-              <span class="bucket-chip-value">${(item.marketValueCny / (totalMarketValue || 1) * 100).toFixed(1)}%</span>
-            </button>
-          `).join('')}
+          ${bucketItems.map((item) => {
+            const bucketShare = item.marketValueCny / (totalMarketValue || 1);
+            const isCompact = bucketShare < BUCKET_CHIP_COMPACT_THRESHOLD;
+            return `
+              <button
+                class="bucket-chip is-${item.key}${state.activeBucketKey === item.key ? ' is-active' : ''}${isCompact ? ' is-compact' : ''}"
+                type="button"
+                data-bucket-toggle="${item.key}"
+                style="--bucket-share:${bucketShare.toFixed(4)};"
+                aria-expanded="${state.activeBucketKey === item.key ? 'true' : 'false'}"
+              >
+                <span class="bucket-chip-label">${item.label}</span>
+                <span class="bucket-chip-value">${(bucketShare * 100).toFixed(1)}%</span>
+              </button>
+            `;
+          }).join('')}
         </div>
         ${UI_FLAGS.summaryOverallYieldNote ? '' : `<div class="bucket-overall-yield">${UI_TEXT.overallAverageNetYield} ${formatPercent(overallNetYield)}</div>`}
         ${activeItem ? `
@@ -1258,7 +1263,7 @@ function renderHoldings(holdings) {
     return `
       <article class="holding-card" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
         <header class="holding-head">
-          <div>
+          <div class="holding-main">
             <div class="holding-name-row">
               <h3 class="holding-name">${escapeHtml(item.name)}</h3>
               <span class="holding-title-price">
@@ -1280,7 +1285,7 @@ function renderHoldings(holdings) {
             </div>
           </div>
           <div class="holding-side">
-            <span class="weight-pill">${weightText}</span>
+            <span class="weight-pill is-${item.bucket === 'income' ? 'income' : 'core'}">${weightText}</span>
             <button class="ghost-minus" type="button" data-action="delete" aria-label="${LABELS.deleteConfirm} ${escapeHtml(item.name)}">-</button>
           </div>
         </header>
@@ -1329,6 +1334,19 @@ function closeModal() {
   refs.modalRoot.innerHTML = '';
 }
 
+function setModalBucketSelection(nextBucket) {
+  const bucket = nextBucket === 'income' ? 'income' : 'core';
+  const input = document.getElementById('modalBucketInput');
+  if (input) {
+    input.value = bucket;
+  }
+  Array.from(document.querySelectorAll('[data-bucket-option]')).forEach((button) => {
+    const isActive = button.dataset.bucketOption === bucket;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+}
+
 function renderModal() {
   if (!state.modal) {
     refs.modalRoot.innerHTML = '';
@@ -1372,10 +1390,11 @@ function renderModal() {
     fields = `
       <input id="modalSymbolInput" class="modal-input" type="text" placeholder="${LABELS.symbolPlaceholder}">
       <input id="modalQuantityInput" class="modal-input" type="number" inputmode="decimal" placeholder="${LABELS.quantityPlaceholder}">
-      <select id="modalBucketSelect" class="modal-select">
-        <option value="core">${LABELS.core}</option>
-        <option value="income">${LABELS.income}</option>
-      </select>
+      <div class="modal-bucket-group" role="group" aria-label="${LABELS.core} / ${LABELS.income}">
+        <button class="modal-bucket-button is-core is-active" type="button" data-bucket-option="core" aria-pressed="true">${LABELS.core}</button>
+        <button class="modal-bucket-button is-income" type="button" data-bucket-option="income" aria-pressed="false">${LABELS.income}</button>
+      </div>
+      <input id="modalBucketInput" type="hidden" value="core">
     `;
   }
 
@@ -1428,7 +1447,7 @@ function handleModalSave() {
   if (state.modal === 'add') {
     const symbol = normalizeSymbol(document.getElementById('modalSymbolInput').value);
     const quantity = Math.max(0, safeNumber(document.getElementById('modalQuantityInput').value, 0));
-    const bucket = document.getElementById('modalBucketSelect').value === 'income' ? 'income' : 'core';
+    const bucket = document.getElementById('modalBucketInput').value === 'income' ? 'income' : 'core';
 
     if (!symbol) {
       window.alert(LABELS.missingSymbol);
@@ -2015,6 +2034,11 @@ refs.stockList.addEventListener('click', (event) => {
 });
 
 refs.modalRoot.addEventListener('click', (event) => {
+  const bucketButton = event.target.closest('[data-bucket-option]');
+  if (bucketButton) {
+    setModalBucketSelection(bucketButton.dataset.bucketOption);
+    return;
+  }
   const action = event.target.closest('[data-modal-action]');
   if (!action) {
     return;
