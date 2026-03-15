@@ -230,6 +230,9 @@ function ensureSortToggleButton() {
 function configureUiChrome() {
   if (refs.appKicker) {
     refs.appKicker.textContent = 'BEBOP';
+    if (refs.appKicker.parentElement) {
+      refs.appKicker.parentElement.classList.add('app-brand');
+    }
   }
 
   if (UI_FLAGS.summaryActionCluster && refs.summaryActions) {
