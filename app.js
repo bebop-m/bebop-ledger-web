@@ -31,7 +31,8 @@ const UI_FLAGS = {
 
 const UI_TEXT = {
   sort: '\u6392\u5e8f',
-  overallAverageNetYield: '\u6574\u4f53\u5e73\u5747\u7a0e\u540e\u80a1\u606f\u7387'
+  overallAverageNetYield: '\u6574\u4f53\u5e73\u5747\u7a0e\u540e\u80a1\u606f\u7387',
+  overallYieldCompact: '\u80a1\u606f\u7387'
 };
 const ALLOCATION_LEGEND_MIN_WEIGHT = 0.05;
 
@@ -206,6 +207,7 @@ function ensureSortToggleButton() {
   sortToggleButton.type = 'button';
   sortToggleButton.className = 'circle-button sort-toggle-button';
   sortToggleButton.setAttribute('aria-label', UI_TEXT.sort);
+  sortToggleButton.setAttribute('aria-expanded', 'false');
   sortToggleButton.innerHTML = `
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 6.2v11.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
@@ -214,10 +216,11 @@ function ensureSortToggleButton() {
     </svg>
   `;
   refs.iconActions.insertBefore(sortToggleButton, refs.refreshButton);
-  sortToggleButton.addEventListener('click', () => {
+  sortToggleButton.addEventListener('click', (event) => {
     if (!UI_FLAGS.subtleSortControls) {
       return;
     }
+    event.stopPropagation();
     state.sortMenuOpen = !state.sortMenuOpen;
     renderApp();
   });
@@ -234,7 +237,7 @@ function configureUiChrome() {
     refs.summaryActions.append(refs.exportButton, refs.privacyButton);
   }
 
-  refs.exportButton.className = 'circle-button summary-action-button';
+  refs.exportButton.className = 'summary-action-button';
   refs.exportButton.setAttribute('aria-label', '\u5bfc\u51fa\u5feb\u7167');
   refs.exportButton.title = '\u5bfc\u51fa\u5feb\u7167';
   refs.exportButton.innerHTML = `
@@ -244,6 +247,7 @@ function configureUiChrome() {
       <path d="M5.8 18h12.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
     </svg>
   `;
+  refs.privacyButton.classList.remove('circle-button');
   refs.privacyButton.classList.add('summary-action-button');
 
   if (UI_FLAGS.hideSnapshotImportEntry) {
@@ -256,6 +260,10 @@ function configureUiChrome() {
     const button = ensureSortToggleButton();
     if (button) {
       button.hidden = false;
+    }
+    if (refs.sortGroup && refs.iconActions && refs.sortGroup.parentElement !== refs.iconActions) {
+      refs.sortGroup.classList.add('sort-group--popover');
+      refs.iconActions.prepend(refs.sortGroup);
     }
   }
 }
@@ -954,6 +962,7 @@ function computeHoldings() {
 function getCompanySegments(holdings) {
   return holdings
     .filter((item) => safeNumber(item.marketValueCny, 0) > 0)
+    .sort((left, right) => safeNumber(right.marketValueCny, 0) - safeNumber(left.marketValueCny, 0))
     .map((item, index) => ({
       label: item.name,
       value: safeNumber(item.marketValueCny, 0),
@@ -1032,7 +1041,7 @@ function renderSummary(summary) {
     <article class="summary-card">
       <div class="summary-label">${LABELS.totalDividend}</div>
       <div class="summary-value is-income">${dividendLabel}</div>
-      ${UI_FLAGS.summaryOverallYieldNote ? `<p class="summary-note">${UI_TEXT.overallAverageNetYield} ${formatPercent(overallAverageNetYield)}</p>` : ''}
+      ${UI_FLAGS.summaryOverallYieldNote ? `<p class="summary-note summary-note--yield">${UI_TEXT.overallYieldCompact} ${formatPercent(overallAverageNetYield)}</p>` : ''}
     </article>
   `;
 
@@ -1134,6 +1143,7 @@ function renderBuckets(segments, holdings, summary) {
               class="bucket-chip is-${item.key}${state.activeBucketKey === item.key ? ' is-active' : ''}"
               type="button"
               data-bucket-toggle="${item.key}"
+              style="--bucket-share:${(item.marketValueCny / (totalMarketValue || 1)).toFixed(4)};"
               aria-expanded="${state.activeBucketKey === item.key ? 'true' : 'false'}"
             >
               <span class="bucket-chip-label">${item.label}</span>
@@ -1184,6 +1194,7 @@ function renderSortChips() {
   if (sortToggleButton) {
     sortToggleButton.hidden = !UI_FLAGS.subtleSortControls;
     sortToggleButton.classList.toggle('is-active', state.sortMenuOpen);
+    sortToggleButton.setAttribute('aria-expanded', state.sortMenuOpen ? 'true' : 'false');
     sortToggleButton.title = `${UI_TEXT.sort} \u00b7 ${state.sortField === 'effectiveYield' ? LABELS.sortDividendYield : LABELS.sortMarketValue}`;
     sortToggleButton.innerHTML = state.sortDirection === 'asc'
       ? `
