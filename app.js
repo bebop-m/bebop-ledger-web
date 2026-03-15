@@ -13,6 +13,7 @@ const DEFAULT_STALE_DAYS = 7;
 const VALID_DIVIDEND_SOURCES = new Set(['yahoo', 'eodhd', 'manual', 'cache']);
 const VALID_DIVIDEND_STATUSES = new Set(['manual', 'fresh', 'stale', 'missing']);
 let currentDividendStaleDays = DEFAULT_STALE_DAYS;
+let activeHoldingSwipe = null;
 
 // Each UI refinement block stays behind its own flag for quick rollback.
 const UI_FLAGS = {
@@ -36,6 +37,8 @@ const UI_TEXT = {
 };
 const ALLOCATION_LEGEND_MIN_WEIGHT = 0.05;
 const BUCKET_CHIP_COMPACT_THRESHOLD = 0.16;
+const HOLDING_SWIPE_DELETE_WIDTH = 84;
+const HOLDING_SWIPE_OPEN_THRESHOLD = 34;
 
 const DEFAULT_RATES = {
   CNY: 1,
@@ -502,7 +505,14 @@ function buildDividendTooltipLines(item) {
 }
 
 function updateDividendTooltipSide(button) {
-  if (!button || !UI_FLAGS.tooltipPreferRight) {
+  if (!button) {
+    return;
+  }
+  if (button.classList.contains('dividend-status-button--value')) {
+    button.dataset.tooltipSide = 'left';
+    return;
+  }
+  if (!UI_FLAGS.tooltipPreferRight) {
     return;
   }
   const tooltip = button.querySelector('.dividend-status-tooltip');
@@ -514,10 +524,6 @@ function updateDividendTooltipSide(button) {
   const rect = button.getBoundingClientRect();
   const rightSpace = viewportWidth - rect.right;
   const leftSpace = rect.left;
-  if (button.classList.contains('dividend-status-button--value')) {
-    button.dataset.tooltipSide = 'left';
-    return;
-  }
   const side = rightSpace >= fallbackWidth + 16 || rightSpace >= leftSpace ? 'right' : 'left';
   button.dataset.tooltipSide = side;
 }
@@ -1277,7 +1283,11 @@ function renderHoldings(holdings) {
     `;
 
     return `
-      <article class="holding-card" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
+      <div class="holding-swipe" data-id="${item.localId}" style="--holding-swipe-offset:0px;">
+        <button class="holding-swipe-delete" type="button" data-action="delete" aria-label="${LABELS.deleteConfirm} ${escapeHtml(item.name)}">
+          <span>删除</span>
+        </button>
+        <article class="holding-card" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
         <header class="holding-head">
           <div class="holding-main">
             <h3 class="holding-name">${escapeHtml(item.name)}</h3>
@@ -1318,9 +1328,45 @@ function renderHoldings(holdings) {
             </div>
           </div>
         </div>
-      </article>
+        </article>
+      </div>
     `;
   }).join('');
+}
+
+function isHoldingSwipeEnabled() {
+  return window.matchMedia('(max-width: 560px)').matches;
+}
+
+function getHoldingSwipeOffset(wrapper) {
+  return safeNumber(wrapper.style.getPropertyValue('--holding-swipe-offset').replace('px', ''), 0);
+}
+
+function setHoldingSwipeOffset(wrapper, offset) {
+  wrapper.style.setProperty('--holding-swipe-offset', `${Math.max(0, Math.min(HOLDING_SWIPE_DELETE_WIDTH, offset))}px`);
+}
+
+function closeHoldingSwipe(wrapper) {
+  if (!wrapper) {
+    return;
+  }
+  wrapper.classList.remove('is-swipe-open');
+  setHoldingSwipeOffset(wrapper, 0);
+  if (activeHoldingSwipe && activeHoldingSwipe.wrapper === wrapper) {
+    activeHoldingSwipe = null;
+  }
+}
+
+function openHoldingSwipe(wrapper) {
+  if (!wrapper) {
+    return;
+  }
+  const opened = refs.stockList.querySelector('.holding-swipe.is-swipe-open');
+  if (opened && opened !== wrapper) {
+    closeHoldingSwipe(opened);
+  }
+  wrapper.classList.add('is-swipe-open');
+  setHoldingSwipeOffset(wrapper, HOLDING_SWIPE_DELETE_WIDTH);
 }
 
 function openModal(type, payload = {}) {
@@ -1987,10 +2033,12 @@ refs.stockList.addEventListener('click', (event) => {
   }
   const button = event.target.closest('[data-action]');
   const card = event.target.closest('.holding-card');
-  if (!button || !card) {
+  const swipeItem = event.target.closest('.holding-swipe');
+  const targetItem = card || swipeItem;
+  if (!button || !targetItem) {
     return;
   }
-  const localId = safeNumber(card.dataset.id, 0);
+  const localId = safeNumber(targetItem.dataset.id, 0);
   const holding = state.holdings.find((item) => item.localId === localId);
   if (!holding) {
     return;
@@ -2035,6 +2083,69 @@ refs.stockList.addEventListener('click', (event) => {
     });
   }
 });
+
+refs.stockList.addEventListener('touchstart', (event) => {
+  if (!isHoldingSwipeEnabled() || event.touches.length !== 1 || event.target.closest('button')) {
+    return;
+  }
+  const wrapper = event.target.closest('.holding-swipe');
+  const card = event.target.closest('.holding-card');
+  if (!wrapper || !card) {
+    return;
+  }
+  const opened = refs.stockList.querySelector('.holding-swipe.is-swipe-open');
+  if (opened && opened !== wrapper) {
+    closeHoldingSwipe(opened);
+  }
+  const touch = event.touches[0];
+  activeHoldingSwipe = {
+    wrapper,
+    startX: touch.clientX,
+    startY: touch.clientY,
+    startOffset: getHoldingSwipeOffset(wrapper),
+    dragging: false
+  };
+}, { passive: true });
+
+refs.stockList.addEventListener('touchmove', (event) => {
+  if (!activeHoldingSwipe || !isHoldingSwipeEnabled()) {
+    return;
+  }
+  const touch = event.touches[0];
+  const dx = touch.clientX - activeHoldingSwipe.startX;
+  const dy = touch.clientY - activeHoldingSwipe.startY;
+
+  if (!activeHoldingSwipe.dragging) {
+    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) {
+      return;
+    }
+    if (Math.abs(dy) > Math.abs(dx)) {
+      activeHoldingSwipe = null;
+      return;
+    }
+    activeHoldingSwipe.dragging = true;
+  }
+
+  event.preventDefault();
+  setHoldingSwipeOffset(activeHoldingSwipe.wrapper, activeHoldingSwipe.startOffset - dx);
+}, { passive: false });
+
+function settleHoldingSwipe() {
+  if (!activeHoldingSwipe) {
+    return;
+  }
+  const wrapper = activeHoldingSwipe.wrapper;
+  const shouldOpen = activeHoldingSwipe.dragging && getHoldingSwipeOffset(wrapper) >= HOLDING_SWIPE_OPEN_THRESHOLD;
+  if (shouldOpen) {
+    openHoldingSwipe(wrapper);
+  } else {
+    closeHoldingSwipe(wrapper);
+  }
+  activeHoldingSwipe = null;
+}
+
+refs.stockList.addEventListener('touchend', settleHoldingSwipe, { passive: true });
+refs.stockList.addEventListener('touchcancel', settleHoldingSwipe, { passive: true });
 
 refs.modalRoot.addEventListener('click', (event) => {
   const bucketButton = event.target.closest('[data-bucket-option]');
