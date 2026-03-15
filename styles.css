@@ -967,12 +967,12 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 
 @media (max-width: 560px) {
   html {
-    background: #f6f7f9;
+    background: #ffffff !important;
   }
 
   body {
     padding: max(14px, env(safe-area-inset-top)) 10px max(22px, env(safe-area-inset-bottom));
-    background: #f6f7f9;
+    background: #ffffff !important;
   }
 
   .app-shell {
