@@ -806,6 +806,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  justify-content: flex-end;
   font-size: 17px;
   font-weight: 700;
   line-height: 1;
@@ -944,6 +945,13 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   gap: 4px;
 }
 
+.metric-button.metric-right .metric-row,
+.metric-static--yield .metric-row {
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
 .metric-label-button {
   padding: 0;
   border: 0;
@@ -967,12 +975,26 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   flex: 0 1 auto;
 }
 
+.metric-button.metric-right .metric-label,
+.metric-static--yield .metric-label,
+.metric-static--yield .metric-label-button {
+  flex: 0 0 4.2em;
+  min-width: 4.2em;
+  text-align: right;
+}
+
 .metric-value {
   flex: 0 0 auto;
   font-size: 17px;
   font-weight: 700;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+}
+
+.metric-button.metric-right .metric-value,
+.dividend-status-button--value {
+  min-width: 4.6em;
+  text-align: right;
 }
 
 .metric-value.is-income {
@@ -1403,7 +1425,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   .metric-button.metric-right .metric-row,
   .metric-static--yield .metric-row {
     justify-content: flex-end;
-    gap: 4px;
+    gap: 6px;
   }
 
   .metric-label {
@@ -1415,7 +1437,8 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   .metric-button.metric-right .metric-label,
   .metric-static--yield .metric-label,
   .metric-static--yield .metric-label-button {
-    flex: 0 0 auto;
+    flex: 0 0 4.2em;
+    min-width: 4.2em;
   }
 
   .metric-value {
@@ -1432,6 +1455,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   }
 
   .dividend-status-button--value {
+    min-width: 4.6em;
     font-size: clamp(15px, 4.8vw, 17px);
   }
 
