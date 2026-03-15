@@ -1,11 +1,17 @@
-const STORAGE_KEY = 'bopup-ledger-web-state';
+﻿const STORAGE_KEY = 'bopup-ledger-web-state';
 const MARKET_ENDPOINT = './data/market.json';
+const OVERRIDE_ENDPOINT = './data/override.json';
+const CONFIG_ENDPOINT = './config.json';
 const GITHUB_MARKET_CONTENTS_API = 'https://api.github.com/repos/bebop-m/bopup-ledger-web/contents/data/market.json';
 const TENCENT_REALTIME_ENDPOINT = 'https://qt.gtimg.cn/q=';
 const TENCENT_BATCH_SIZE = 60;
 const LEGEND_COLLAPSED_COUNT = 8;
 const MASK_AMOUNT = '******';
 const MASK_PRICE = '***.**';
+const DEFAULT_STALE_DAYS = 7;
+const VALID_DIVIDEND_SOURCES = new Set(['yahoo', 'eodhd', 'manual', 'cache']);
+const VALID_DIVIDEND_STATUSES = new Set(['manual', 'fresh', 'stale', 'missing']);
+let currentDividendStaleDays = DEFAULT_STALE_DAYS;
 
 const DEFAULT_RATES = {
   CNY: 1,
@@ -43,11 +49,12 @@ const LABELS = {
   addNote: '\u8f93\u5165\u80a1\u7968\u4ee3\u7801\u3001\u6570\u91cf\u5e76\u9009\u62e9\u4ed3\u4f4d\u7c7b\u578b',
   quantityTitle: '\u6570\u91cf\u8bbe\u7f6e',
   taxTitle: '\u7a0e\u7387\u8bbe\u7f6e',
-  yieldTitle: '\u80a1\u606f\u7387\u8bbe\u7f6e',
+  dividendPerShareTitle: '\u6bcf\u80a1 TTM \u80a1\u606f\u8bbe\u7f6e',
+  dividendPerShareHint: '\u6309\u80a1\u7968\u539f\u5e01\u8f93\u5165\u6bcf\u80a1 TTM \u80a1\u606f\u91d1\u989d',
   liabilityTitle: '\u8d1f\u503a\u8bbe\u7f6e',
   quantityPlaceholder: '\u8f93\u5165\u6301\u80a1\u6570\u91cf',
   taxPlaceholder: '\u8f93\u5165\u7a0e\u7387\uff0c\u4f8b\u5982 10',
-  yieldPlaceholder: '\u8f93\u5165\u80a1\u606f\u7387\uff0c\u4f8b\u5982 5.2',
+  dividendPerSharePlaceholder: '\u8f93\u5165\u6bcf\u80a1 TTM \u80a1\u606f\uff0c\u4f8b\u5982 5.4',
   liabilityPlaceholder: '\u8f93\u5165\u8d1f\u503a\u91d1\u989d',
   symbolPlaceholder: '\u4f8b\u5982 00700.HK \u6216 600519',
   missingSymbol: '\u8bf7\u8f93\u5165\u80a1\u7968\u4ee3\u7801',
@@ -61,6 +68,13 @@ const LABELS = {
   quantity: '\u6570\u91cf\uff1a',
   annualDividend: '\u7a0e\u540e\u80a1\u606f\uff1a',
   dividendYield: '\u80a1\u606f\u7387\uff1a',
+  dividendSource: '\u6570\u636e\u6765\u6e90',
+  dividendUpdatedAt: '\u6700\u8fd1\u66f4\u65b0',
+  lastExDate: '\u6700\u8fd1\u9664\u606f\u65e5',
+  dividendStatusManual: '\u624b\u52a8\u8986\u76d6',
+  dividendStatusFresh: '\u5df2\u66f4\u65b0',
+  dividendStatusStale: '\u7f13\u5b58',
+  dividendStatusMissing: '\u7f3a\u5931',
   expandLegend: '\u5c55\u5f00\u5168\u90e8',
   collapseLegend: '\u6536\u8d77',
   itemsUnit: '\u9879',
@@ -69,53 +83,53 @@ const LABELS = {
   unknownUS: '\u672a\u8bc6\u522b\u7f8e\u80a1'
 };
 
-const DEFAULT_QUOTES = {
-  AAPL: { name: 'Apple', market: 'US', currency: 'USD', price: 213.4, dividendYield: 0 },
-  MSFT: { name: 'Microsoft', market: 'US', currency: 'USD', price: 419.15, dividendYield: 0.0069 },
-  KO: { name: 'Coca-Cola', market: 'US', currency: 'USD', price: 68.22, dividendYield: 0.031 },
-  JNJ: { name: 'Johnson & Johnson', market: 'US', currency: 'USD', price: 162.35, dividendYield: 0.0294 },
-  PG: { name: 'P&G', market: 'US', currency: 'USD', price: 171.28, dividendYield: 0.0241 },
-  PEP: { name: 'PepsiCo', market: 'US', currency: 'USD', price: 174.06, dividendYield: 0.0291 },
-  MCD: { name: "McDonald's", market: 'US', currency: 'USD', price: 301.42, dividendYield: 0.0223 },
-  O: { name: 'Realty Income', market: 'US', currency: 'USD', price: 54.1, dividendYield: 0.0564 },
-  VZ: { name: 'Verizon', market: 'US', currency: 'USD', price: 41.26, dividendYield: 0.0648 },
-  XOM: { name: 'Exxon Mobil', market: 'US', currency: 'USD', price: 109.74, dividendYield: 0.0341 },
-  CVX: { name: 'Chevron', market: 'US', currency: 'USD', price: 154.32, dividendYield: 0.0392 },
-  '00700.HK': { name: '\u817e\u8baf\u63a7\u80a1', market: 'HK', currency: 'HKD', price: 389.6, dividendYield: 0.0092 },
-  '00941.HK': { name: '\u4e2d\u56fd\u79fb\u52a8', market: 'HK', currency: 'HKD', price: 77.15, dividendYield: 0.072 },
-  '01398.HK': { name: '\u5de5\u5546\u94f6\u884c', market: 'HK', currency: 'HKD', price: 4.33, dividendYield: 0.081 },
-  '00883.HK': { name: '\u4e2d\u56fd\u6d77\u6d0b\u77f3\u6cb9', market: 'HK', currency: 'HKD', price: 18.42, dividendYield: 0.078 },
-  '00005.HK': { name: '\u6c47\u4e30\u63a7\u80a1', market: 'HK', currency: 'HKD', price: 68.35, dividendYield: 0.068 },
-  '00388.HK': { name: '\u9999\u6e2f\u4ea4\u6613\u6240', market: 'HK', currency: 'HKD', price: 256.2, dividendYield: 0.028 },
-  '600519.SH': { name: '\u8d35\u5dde\u8305\u53f0', market: 'CN', currency: 'CNY', price: 1688, dividendYield: 0.0175 },
-  '601318.SH': { name: '\u4e2d\u56fd\u5e73\u5b89', market: 'CN', currency: 'CNY', price: 46.22, dividendYield: 0.051 },
-  '600036.SH': { name: '\u62db\u5546\u94f6\u884c', market: 'CN', currency: 'CNY', price: 34.58, dividendYield: 0.049 },
-  '600900.SH': { name: '\u957f\u6c5f\u7535\u529b', market: 'CN', currency: 'CNY', price: 28.41, dividendYield: 0.035 },
-  '000651.SZ': { name: '\u683c\u529b\u7535\u5668', market: 'CN', currency: 'CNY', price: 41.86, dividendYield: 0.062 },
-  '300750.SZ': { name: '\u5b81\u5fb7\u65f6\u4ee3', market: 'CN', currency: 'CNY', price: 192.65, dividendYield: 0.012 }
-};
+const DEFAULT_QUOTES = normalizeSeedQuoteMap({
+  AAPL: { name: 'Apple', market: 'US', currency: 'USD', price: 213.4, dividendPerShareTtm: 0 },
+  MSFT: { name: 'Microsoft', market: 'US', currency: 'USD', price: 419.15, dividendPerShareTtm: 2.892135 },
+  KO: { name: 'Coca-Cola', market: 'US', currency: 'USD', price: 68.22, dividendPerShareTtm: 2.11482 },
+  JNJ: { name: 'Johnson & Johnson', market: 'US', currency: 'USD', price: 162.35, dividendPerShareTtm: 4.77309 },
+  PG: { name: 'P&G', market: 'US', currency: 'USD', price: 171.28, dividendPerShareTtm: 4.127848 },
+  PEP: { name: 'PepsiCo', market: 'US', currency: 'USD', price: 174.06, dividendPerShareTtm: 5.065146 },
+  MCD: { name: "McDonald's", market: 'US', currency: 'USD', price: 301.42, dividendPerShareTtm: 6.721666 },
+  O: { name: 'Realty Income', market: 'US', currency: 'USD', price: 54.1, dividendPerShareTtm: 3.05124 },
+  VZ: { name: 'Verizon', market: 'US', currency: 'USD', price: 41.26, dividendPerShareTtm: 2.673648 },
+  XOM: { name: 'Exxon Mobil', market: 'US', currency: 'USD', price: 109.74, dividendPerShareTtm: 3.742134 },
+  CVX: { name: 'Chevron', market: 'US', currency: 'USD', price: 154.32, dividendPerShareTtm: 6.049344 },
+  '00700.HK': { name: '\u817e\u8baf\u63a7\u80a1', market: 'HK', currency: 'HKD', price: 389.6, dividendPerShareTtm: 3.58432 },
+  '00941.HK': { name: '\u4e2d\u56fd\u79fb\u52a8', market: 'HK', currency: 'HKD', price: 77.15, dividendPerShareTtm: 5.5548 },
+  '01398.HK': { name: '\u5de5\u5546\u94f6\u884c', market: 'HK', currency: 'HKD', price: 4.33, dividendPerShareTtm: 0.35073 },
+  '00883.HK': { name: '\u4e2d\u56fd\u6d77\u6d0b\u77f3\u6cb9', market: 'HK', currency: 'HKD', price: 18.42, dividendPerShareTtm: 1.43676 },
+  '00005.HK': { name: '\u6c47\u4e30\u63a7\u80a1', market: 'HK', currency: 'HKD', price: 68.35, dividendPerShareTtm: 4.6478 },
+  '00388.HK': { name: '\u9999\u6e2f\u4ea4\u6613\u6240', market: 'HK', currency: 'HKD', price: 256.2, dividendPerShareTtm: 7.1736 },
+  '600519.SH': { name: '\u8d35\u5dde\u8305\u53f0', market: 'CN', currency: 'CNY', price: 1688, dividendPerShareTtm: 29.54 },
+  '601318.SH': { name: '\u4e2d\u56fd\u5e73\u5b89', market: 'CN', currency: 'CNY', price: 46.22, dividendPerShareTtm: 2.35722 },
+  '600036.SH': { name: '\u62db\u5546\u94f6\u884c', market: 'CN', currency: 'CNY', price: 34.58, dividendPerShareTtm: 1.69442 },
+  '600900.SH': { name: '\u957f\u6c5f\u7535\u529b', market: 'CN', currency: 'CNY', price: 28.41, dividendPerShareTtm: 0.99435 },
+  '000651.SZ': { name: '\u683c\u529b\u7535\u5668', market: 'CN', currency: 'CNY', price: 41.86, dividendPerShareTtm: 2.59532 },
+  '300750.SZ': { name: '\u5b81\u5fb7\u65f6\u4ee3', market: 'CN', currency: 'CNY', price: 192.65, dividendPerShareTtm: 2.3118 }
+});
 
 const DEFAULT_HOLDINGS = [
-  { localId: 1, symbol: 'AAPL', quantity: 20, bucket: 'core', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 2, symbol: 'MSFT', quantity: 10, bucket: 'core', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 3, symbol: 'KO', quantity: 120, bucket: 'income', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 4, symbol: 'JNJ', quantity: 40, bucket: 'core', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 5, symbol: 'PG', quantity: 35, bucket: 'core', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 6, symbol: 'PEP', quantity: 28, bucket: 'income', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 7, symbol: 'MCD', quantity: 16, bucket: 'income', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 8, symbol: 'O', quantity: 200, bucket: 'income', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 9, symbol: 'VZ', quantity: 160, bucket: 'income', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 10, symbol: 'XOM', quantity: 55, bucket: 'core', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 11, symbol: 'CVX', quantity: 32, bucket: 'core', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 12, symbol: '00700.HK', quantity: 100, bucket: 'core', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 13, symbol: '00941.HK', quantity: 2000, bucket: 'income', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 14, symbol: '01398.HK', quantity: 8000, bucket: 'income', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 15, symbol: '00883.HK', quantity: 2200, bucket: 'income', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 16, symbol: '00005.HK', quantity: 600, bucket: 'core', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 17, symbol: '00388.HK', quantity: 150, bucket: 'core', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 18, symbol: '600519.SH', quantity: 8, bucket: 'core', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 19, symbol: '601318.SH', quantity: 1000, bucket: 'income', taxRateOverride: '', dividendYieldOverride: '' },
-  { localId: 20, symbol: '600036.SH', quantity: 1200, bucket: 'income', taxRateOverride: '', dividendYieldOverride: '' }
+  { localId: 1, symbol: 'AAPL', quantity: 20, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 2, symbol: 'MSFT', quantity: 10, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 3, symbol: 'KO', quantity: 120, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 4, symbol: 'JNJ', quantity: 40, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 5, symbol: 'PG', quantity: 35, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 6, symbol: 'PEP', quantity: 28, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 7, symbol: 'MCD', quantity: 16, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 8, symbol: 'O', quantity: 200, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 9, symbol: 'VZ', quantity: 160, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 10, symbol: 'XOM', quantity: 55, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 11, symbol: 'CVX', quantity: 32, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 12, symbol: '00700.HK', quantity: 100, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 13, symbol: '00941.HK', quantity: 2000, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 14, symbol: '01398.HK', quantity: 8000, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 15, symbol: '00883.HK', quantity: 2200, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 16, symbol: '00005.HK', quantity: 600, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 17, symbol: '00388.HK', quantity: 150, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 18, symbol: '600519.SH', quantity: 8, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 19, symbol: '601318.SH', quantity: 1000, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 20, symbol: '600036.SH', quantity: 1200, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' }
 ];
 
 const state = {
@@ -151,6 +165,124 @@ const refs = {
   modalRoot: document.getElementById('modalRoot'),
   sortChips: Array.from(document.querySelectorAll('.sort-chip'))
 };
+
+function roundTo(value, digits = 6) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+  return Number(numeric.toFixed(digits));
+}
+
+function normalizeDividendSource(value, fallback = 'cache') {
+  const source = String(value || '').trim().toLowerCase();
+  return VALID_DIVIDEND_SOURCES.has(source) ? source : fallback;
+}
+
+function normalizeDividendStatus(value, fallback = 'missing') {
+  const status = String(value || '').trim().toLowerCase();
+  return VALID_DIVIDEND_STATUSES.has(status) ? status : fallback;
+}
+
+function normalizeYieldRatio(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return null;
+  }
+  return Math.max(0, numeric > 1 ? numeric / 100 : numeric);
+}
+
+function parsePerShareOverride(value) {
+  if (value === '' || value === null || value === undefined) {
+    return null;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+  return roundTo(parsed);
+}
+
+function sanitizePerShareOverrideInput(value) {
+  const parsed = parsePerShareOverride(value);
+  return parsed === null ? '' : String(parsed);
+}
+
+function normalizeStaleDays(value, fallback = DEFAULT_STALE_DAYS) {
+  const numeric = Math.floor(Number(value));
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : fallback;
+}
+
+function parseIsoDate(value) {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return null;
+  }
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isDividendDataStale(updatedAt, staleDays = currentDividendStaleDays) {
+  const updatedDate = parseIsoDate(updatedAt);
+  if (!updatedDate) {
+    return true;
+  }
+  const ageMs = Date.now() - updatedDate.getTime();
+  return ageMs > normalizeStaleDays(staleDays) * 24 * 60 * 60 * 1000;
+}
+
+function buildDividendFields(rawQuote = {}, fallbackQuote = {}) {
+  const nextPrice = safeNumber(rawQuote.price, safeNumber(fallbackQuote.price, 0));
+  const rawDividendPerShareTtm = Number(rawQuote.dividendPerShareTtm);
+  const fallbackDividendPerShareTtm = safeNumber(fallbackQuote.dividendPerShareTtm, 0);
+  const legacyYieldRatio = normalizeYieldRatio(rawQuote.dividendYield);
+  const derivedDividendPerShareTtm = legacyYieldRatio === null || nextPrice <= 0
+    ? fallbackDividendPerShareTtm
+    : nextPrice * legacyYieldRatio;
+  const dividendPerShareTtm = Number.isFinite(rawDividendPerShareTtm)
+    ? Math.max(0, rawDividendPerShareTtm)
+    : Math.max(0, derivedDividendPerShareTtm);
+  const fallbackSource = normalizeDividendSource(
+    fallbackQuote.dividendSource,
+    fallbackDividendPerShareTtm > 0 ? 'cache' : 'cache'
+  );
+  const dividendSource = normalizeDividendSource(rawQuote.dividendSource, fallbackSource);
+  const fallbackUpdatedAt = typeof fallbackQuote.dividendUpdatedAt === 'string' ? fallbackQuote.dividendUpdatedAt : '';
+  const fallbackLastExDate = typeof fallbackQuote.lastExDate === 'string' ? fallbackQuote.lastExDate : '';
+  const hasRawFetchError = Object.prototype.hasOwnProperty.call(rawQuote, 'dividendFetchError');
+  const rawFetchError = hasRawFetchError && typeof rawQuote.dividendFetchError === 'string'
+    ? rawQuote.dividendFetchError.trim()
+    : null;
+  const fallbackFetchError = typeof fallbackQuote.dividendFetchError === 'string' ? fallbackQuote.dividendFetchError.trim() : '';
+  const dividendUpdatedAt = typeof rawQuote.dividendUpdatedAt === 'string' ? rawQuote.dividendUpdatedAt : fallbackUpdatedAt;
+  const lastExDate = typeof rawQuote.lastExDate === 'string' ? rawQuote.lastExDate : fallbackLastExDate;
+  const dividendStatus = dividendSource === 'manual'
+    ? 'manual'
+    : dividendPerShareTtm <= 0
+      ? 'missing'
+      : (dividendSource === 'cache' || isDividendDataStale(dividendUpdatedAt) ? 'stale' : 'fresh');
+
+  return {
+    dividendPerShareTtm: roundTo(dividendPerShareTtm),
+    dividendSource,
+    dividendUpdatedAt,
+    lastExDate,
+    dividendFetchError: rawFetchError === null ? fallbackFetchError : rawFetchError,
+    dividendStatus
+  };
+}
+
+function normalizeSeedQuoteMap(seedMap) {
+  const normalized = {};
+  Object.entries(seedMap || {}).forEach(([symbol, quote]) => {
+    normalized[symbol] = {
+      symbol,
+      ...quote,
+      ...buildDividendFields(quote, {})
+    };
+  });
+  return normalized;
+}
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -196,6 +328,67 @@ function formatTimestamp(isoString) {
   const hour = String(date.getHours()).padStart(2, '0');
   const minute = String(date.getMinutes()).padStart(2, '0');
   return `${LABELS.marketUpdated} ${month}-${day} ${hour}:${minute}`;
+}
+
+function formatDateLabel(value) {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return '';
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return raw;
+  }
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) {
+    return raw;
+  }
+  const year = String(date.getFullYear());
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getDividendSourceLabel(source) {
+  const key = String(source || '').trim().toLowerCase();
+  if (key === 'manual') {
+    return 'Manual';
+  }
+  if (key === 'eodhd') {
+    return 'EODHD';
+  }
+  if (key === 'cache') {
+    return 'Cache';
+  }
+  return 'Yahoo';
+}
+
+function getDividendStatusLabel(status) {
+  const key = normalizeDividendStatus(status, 'missing');
+  if (key === 'manual') {
+    return LABELS.dividendStatusManual;
+  }
+  if (key === 'fresh') {
+    return LABELS.dividendStatusFresh;
+  }
+  if (key === 'stale') {
+    return LABELS.dividendStatusStale;
+  }
+  return LABELS.dividendStatusMissing;
+}
+
+function buildDividendTooltipLines(item) {
+  const lines = [
+    `${LABELS.dividendSource}锛?{getDividendSourceLabel(item.dividendSource)}`
+  ];
+  const updatedAt = formatDateLabel(item.dividendUpdatedAt);
+  if (updatedAt) {
+    lines.push(`${LABELS.dividendUpdatedAt}锛?{updatedAt}`);
+  }
+  const lastExDate = formatDateLabel(item.lastExDate);
+  if (lastExDate) {
+    lines.push(`${LABELS.lastExDate}锛?{lastExDate}`);
+  }
+  return lines;
 }
 
 function escapeHtml(value) {
@@ -274,20 +467,60 @@ function chunkItems(items, size) {
   return chunks;
 }
 
-function inferQuote(symbol) {
-  if (state.quotes[symbol]) {
-    return { ...state.quotes[symbol], symbol };
+function inferQuoteFromMap(symbol, quoteMap = {}) {
+  if (quoteMap[symbol]) {
+    return { ...quoteMap[symbol], symbol };
   }
   if (DEFAULT_QUOTES[symbol]) {
     return { ...DEFAULT_QUOTES[symbol], symbol };
   }
   if (/\.HK$/.test(symbol)) {
-    return { symbol, name: LABELS.unknownHK, market: 'HK', currency: 'HKD', price: 0, dividendYield: 0 };
+    return {
+      symbol,
+      name: LABELS.unknownHK,
+      market: 'HK',
+      currency: 'HKD',
+      price: 0,
+      dividendPerShareTtm: 0,
+      dividendSource: 'cache',
+      dividendUpdatedAt: '',
+      lastExDate: '',
+      dividendFetchError: '',
+      dividendStatus: 'missing'
+    };
   }
   if (/\.(SH|SZ)$/.test(symbol)) {
-    return { symbol, name: LABELS.unknownCN, market: 'CN', currency: 'CNY', price: 0, dividendYield: 0 };
+    return {
+      symbol,
+      name: LABELS.unknownCN,
+      market: 'CN',
+      currency: 'CNY',
+      price: 0,
+      dividendPerShareTtm: 0,
+      dividendSource: 'cache',
+      dividendUpdatedAt: '',
+      lastExDate: '',
+      dividendFetchError: '',
+      dividendStatus: 'missing'
+    };
   }
-  return { symbol, name: LABELS.unknownUS, market: 'US', currency: 'USD', price: 0, dividendYield: 0 };
+  return {
+    symbol,
+    name: LABELS.unknownUS,
+    market: 'US',
+    currency: 'USD',
+    price: 0,
+    dividendPerShareTtm: 0,
+    dividendSource: 'cache',
+    dividendUpdatedAt: '',
+    lastExDate: '',
+    dividendFetchError: '',
+    dividendStatus: 'missing'
+  };
+}
+
+function inferQuote(symbol) {
+  return inferQuoteFromMap(symbol, state.quotes);
 }
 
 function mergeQuotes(baseMap, nextMap) {
@@ -297,35 +530,51 @@ function mergeQuotes(baseMap, nextMap) {
     if (!symbol || !rawQuote) {
       return;
     }
-    const fallback = inferQuote(symbol);
-    let nextDividendYield = rawQuote.dividendYield;
-    if (Number.isFinite(Number(nextDividendYield)) && Number(nextDividendYield) > 1) {
-      nextDividendYield = Number(nextDividendYield) / 100;
-    }
+    const fallback = inferQuoteFromMap(symbol, merged);
+    const dividendFields = buildDividendFields(rawQuote, fallback);
     merged[symbol] = {
       symbol,
       name: rawQuote.name || fallback.name,
       market: rawQuote.market || fallback.market,
       currency: rawQuote.currency || fallback.currency,
       price: safeNumber(rawQuote.price, fallback.price),
-      dividendYield: safeNumber(nextDividendYield, fallback.dividendYield)
+      ...dividendFields
     };
+    if (typeof rawQuote.reason === 'string' && rawQuote.reason.trim()) {
+      merged[symbol].dividendReason = rawQuote.reason.trim();
+    } else if (typeof fallback.dividendReason === 'string' && fallback.dividendReason.trim()) {
+      merged[symbol].dividendReason = fallback.dividendReason.trim();
+    }
   });
   return merged;
 }
 
-function sanitizeHolding(item, index) {
+function sanitizeHolding(item, index, quoteMap = {}) {
   const symbol = normalizeSymbol(item && item.symbol);
   if (!symbol) {
     return null;
   }
+  const quote = inferQuoteFromMap(symbol, quoteMap);
+  const nextDividendPerShareOverride = sanitizePerShareOverrideInput(
+    item && item.dividendPerShareTtmOverride != null
+      ? item.dividendPerShareTtmOverride
+      : (() => {
+          // One-time compatibility read from older browser snapshots that stored dividend yield percentages.
+          const legacyYieldRatio = normalizeYieldRatio(item && item.dividendYieldOverride);
+          if (legacyYieldRatio === null) {
+            return '';
+          }
+          const price = safeNumber(quote.price, 0);
+          return price > 0 ? price * legacyYieldRatio : '';
+        })()
+  );
   return {
     localId: Math.max(1, Math.floor(safeNumber(item && item.localId, index + 1))),
     symbol,
     quantity: Math.max(0, safeNumber(item && item.quantity, 0)),
     bucket: item && item.bucket === 'income' ? 'income' : 'core',
     taxRateOverride: item && item.taxRateOverride != null ? String(item.taxRateOverride) : '',
-    dividendYieldOverride: item && item.dividendYieldOverride != null ? String(item.dividendYieldOverride) : ''
+    dividendPerShareTtmOverride: nextDividendPerShareOverride
   };
 }
 
@@ -357,13 +606,14 @@ function createDefaultSnapshot() {
 
 function applySnapshot(snapshot) {
   const defaults = createDefaultSnapshot();
+  const mergedQuotes = mergeQuotes(clone(defaults.quotes), snapshot && snapshot.quotes);
   const sanitizedHoldings = Array.isArray(snapshot && snapshot.holdings)
-    ? snapshot.holdings.map((item, index) => sanitizeHolding(item, index)).filter(Boolean)
+    ? snapshot.holdings.map((item, index) => sanitizeHolding(item, index, mergedQuotes)).filter(Boolean)
     : defaults.holdings;
   const maxLocalId = sanitizedHoldings.reduce((maxValue, item) => Math.max(maxValue, item.localId), 0);
 
   state.holdings = sanitizedHoldings.length ? sanitizedHoldings : clone(defaults.holdings);
-  state.quotes = mergeQuotes(clone(defaults.quotes), snapshot && snapshot.quotes);
+  state.quotes = mergedQuotes;
   state.rates = { ...DEFAULT_RATES, ...((snapshot && snapshot.rates) || {}) };
   state.nextId = Math.max(maxLocalId + 1, Math.floor(safeNumber(snapshot && snapshot.nextId, defaults.nextId)));
   state.showAmounts = snapshot && snapshot.showAmounts === false ? false : true;
@@ -400,6 +650,7 @@ function restoreState() {
       throw new Error('invalid state');
     }
     applySnapshot(saved);
+    saveState();
   } catch (_error) {
     applySnapshot(createDefaultSnapshot());
   }
@@ -412,21 +663,39 @@ function computeHoldings() {
     const price = safeNumber(quote.price, 0);
     const fxRate = safeNumber(state.rates[quote.currency], 1);
     const taxOverridePercent = parsePercentOverride(holding.taxRateOverride);
-    const yieldOverridePercent = parsePercentOverride(holding.dividendYieldOverride);
-    const effectiveYield = yieldOverridePercent === null
-      ? safeNumber(quote.dividendYield, 0)
-      : yieldOverridePercent / 100;
+    const dividendPerShareOverride = parsePerShareOverride(holding.dividendPerShareTtmOverride);
     const effectiveTax = taxOverridePercent === null ? 0 : taxOverridePercent / 100;
+    const baseDividendPerShareTtm = Math.max(0, safeNumber(quote.dividendPerShareTtm, 0));
+    const effectiveDividendPerShareTtm = dividendPerShareOverride === null
+      ? baseDividendPerShareTtm
+      : dividendPerShareOverride;
+    const currentYield = price > 0 ? effectiveDividendPerShareTtm / price : 0;
     const marketValueCny = price * quantity * fxRate;
-    const annualDividendCny = price * quantity * effectiveYield * (1 - effectiveTax) * fxRate;
+    const grossAnnualDividendCny = effectiveDividendPerShareTtm * quantity * fxRate;
+    const netAnnualDividendCny = grossAnnualDividendCny * (1 - effectiveTax);
+    const dividendSource = dividendPerShareOverride === null
+      ? normalizeDividendSource(quote.dividendSource, effectiveDividendPerShareTtm > 0 ? 'cache' : 'cache')
+      : 'manual';
+    const dividendStatus = dividendPerShareOverride === null
+      ? normalizeDividendStatus(
+          quote.dividendStatus,
+          effectiveDividendPerShareTtm > 0 ? (dividendSource === 'cache' ? 'stale' : 'fresh') : 'missing'
+        )
+      : 'manual';
 
     return {
       ...holding,
       ...quote,
       quantity,
-      effectiveYield,
+      dividendSource,
+      dividendStatus,
+      effectiveDividendPerShareTtm,
+      currentYield,
+      effectiveYield: currentYield,
       marketValueCny,
-      annualDividendCny
+      grossAnnualDividendCny,
+      netAnnualDividendCny,
+      annualDividendCny: netAnnualDividendCny
     };
   });
 
@@ -440,7 +709,7 @@ function computeHoldings() {
   });
 
   const totalMarketValueCny = holdings.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0);
-  const totalDividendCny = holdings.reduce((sum, item) => sum + safeNumber(item.annualDividendCny, 0), 0);
+  const totalDividendCny = holdings.reduce((sum, item) => sum + safeNumber(item.netAnnualDividendCny, 0), 0);
   const divisor = totalMarketValueCny || 1;
 
   return {
@@ -597,11 +866,15 @@ function renderHoldings(holdings) {
   refs.stockList.innerHTML = holdings.map((item) => {
     const priceText = state.showAmounts ? formatPlainPrice(item.price) : MASK_PRICE;
     const marketValueText = state.showAmounts ? formatMoney(item.marketValueCny, 'CNY') : MASK_AMOUNT;
-    const annualDividendText = state.showAmounts ? formatMoney(item.annualDividendCny, 'CNY') : MASK_AMOUNT;
+    const annualDividendText = state.showAmounts ? formatMoney(item.netAnnualDividendCny, 'CNY') : MASK_AMOUNT;
     const weightText = `${(item.holdingWeight * 100).toFixed(1)}%`;
+    const statusKey = normalizeDividendStatus(item.dividendStatus, 'missing');
+    const tooltipLines = buildDividendTooltipLines(item);
+    const tooltipHtml = tooltipLines.map((line) => `<span>${escapeHtml(line)}</span>`).join('');
+    const statusLabel = getDividendStatusLabel(statusKey);
 
     return `
-      <article class="holding-card" data-id="${item.localId}">
+      <article class="holding-card" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
         <header class="holding-head">
           <div>
             <div class="holding-name-row">
@@ -609,7 +882,18 @@ function renderHoldings(holdings) {
               <span class="holding-divider">/</span>
               <span class="holding-price">${priceText}</span>
             </div>
-            <div class="holding-code">${escapeHtml(item.symbol)}</div>
+            <div class="holding-code-row">
+              <div class="holding-code">${escapeHtml(item.symbol)}</div>
+              <button
+                class="dividend-status-button is-${statusKey}"
+                type="button"
+                aria-label="${escapeHtml(statusLabel)}"
+                title="${escapeHtml(tooltipLines.join('\n'))}"
+              >
+                <span class="dividend-status-dot" aria-hidden="true">${statusKey === 'manual' ? 'M' : ''}</span>
+                <span class="dividend-status-tooltip">${tooltipHtml}</span>
+              </button>
+            </div>
           </div>
           <div class="holding-side">
             <span class="weight-pill">${weightText}</span>
@@ -635,7 +919,7 @@ function renderHoldings(holdings) {
               <span class="metric-value is-income">${annualDividendText}</span>
             </div>
           </button>
-          <button class="metric-button metric-right" type="button" data-action="edit-yield">
+          <button class="metric-button metric-right" type="button" data-action="edit-dividend">
             <div class="metric-row metric-right">
               <span class="metric-label">${LABELS.dividendYield}</span>
               <span class="metric-value">${formatPercent(item.effectiveYield)}</span>
@@ -683,10 +967,13 @@ function renderModal() {
     fields = `<input id="modalTaxInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.taxPlaceholder}">`;
   }
 
-  if (state.modal === 'yield') {
-    title = LABELS.yieldTitle;
-    note = state.modalPayload.name || '';
-    fields = `<input id="modalYieldInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.yieldPlaceholder}">`;
+  if (state.modal === 'dividend') {
+    title = LABELS.dividendPerShareTitle;
+    note = [
+      state.modalPayload.name || '',
+      state.modalPayload.currency ? `${LABELS.dividendPerShareHint} (${state.modalPayload.currency})` : LABELS.dividendPerShareHint
+    ].filter(Boolean).join(' - ');
+    fields = `<input id="modalDividendInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.dividendPerSharePlaceholder}">`;
   }
 
   if (state.modal === 'liability') {
@@ -737,10 +1024,10 @@ function handleModalSave() {
     ));
   }
 
-  if (state.modal === 'yield') {
-    const value = document.getElementById('modalYieldInput').value.trim();
+  if (state.modal === 'dividend') {
+    const value = sanitizePerShareOverrideInput(document.getElementById('modalDividendInput').value.trim());
     state.holdings = state.holdings.map((item) => (
-      item.localId === state.modalPayload.localId ? { ...item, dividendYieldOverride: value } : item
+      item.localId === state.modalPayload.localId ? { ...item, dividendPerShareTtmOverride: value } : item
     ));
   }
 
@@ -769,7 +1056,7 @@ function handleModalSave() {
       quantity,
       bucket,
       taxRateOverride: '',
-      dividendYieldOverride: ''
+      dividendPerShareTtmOverride: ''
     });
     state.quotes = mergeQuotes(state.quotes, { [symbol]: inferQuote(symbol) });
     state.nextId += 1;
@@ -852,6 +1139,36 @@ function applyMarketPayload(payload) {
   }
 }
 
+function applyDividendOverridePayload(payload) {
+  if (!payload || typeof payload !== 'object') {
+    return 0;
+  }
+
+  const overrides = {};
+  Object.entries(payload).forEach(([rawSymbol, rawOverride]) => {
+    const symbol = normalizeSymbol(rawSymbol);
+    if (!symbol || !rawOverride || typeof rawOverride !== 'object') {
+      return;
+    }
+
+    overrides[symbol] = {
+      symbol,
+      dividendPerShareTtm: safeNumber(rawOverride.dividendPerShareTtm, 0),
+      dividendSource: 'manual',
+      dividendUpdatedAt: typeof rawOverride.updatedAt === 'string' ? rawOverride.updatedAt : '',
+      lastExDate: typeof rawOverride.lastExDate === 'string' ? rawOverride.lastExDate : '',
+      dividendFetchError: '',
+      dividendStatus: 'manual',
+      reason: typeof rawOverride.reason === 'string' ? rawOverride.reason : ''
+    };
+  });
+
+  if (Object.keys(overrides).length) {
+    state.quotes = mergeQuotes(state.quotes, overrides);
+  }
+  return Object.keys(overrides).length;
+}
+
 async function refreshMarketData(options = {}) {
   const { silent = false } = options;
   if (state.syncing) {
@@ -865,6 +1182,14 @@ async function refreshMarketData(options = {}) {
 
   try {
     try {
+      const configPayload = await loadClientConfigSnapshot();
+      applyClientConfigPayload(configPayload);
+    } catch (error) {
+      lastError = lastError || error;
+      console.warn('config refresh failed', error);
+    }
+
+    try {
       const payload = await loadLatestMarketSnapshot();
       if (!payload || payload.ok === false) {
         throw new Error(payload && payload.error ? payload.error : 'invalid market payload');
@@ -874,6 +1199,14 @@ async function refreshMarketData(options = {}) {
     } catch (error) {
       lastError = error;
       console.warn('snapshot refresh failed', error);
+    }
+
+    try {
+      const overrides = await loadDividendOverrideSnapshot();
+      hasUpdates = applyDividendOverridePayload(overrides) > 0 || hasUpdates;
+    } catch (error) {
+      lastError = lastError || error;
+      console.warn('dividend override refresh failed', error);
     }
 
     try {
@@ -905,8 +1238,33 @@ async function refreshMarketData(options = {}) {
   }
 }
 
+function applyClientConfigPayload(payload) {
+  if (!payload || typeof payload !== 'object') {
+    return;
+  }
+  currentDividendStaleDays = normalizeStaleDays(payload.staleDays, DEFAULT_STALE_DAYS);
+}
+
+async function loadClientConfigSnapshot() {
+  const response = await fetch(CONFIG_ENDPOINT + '?t=' + Date.now(), { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error('config request failed: ' + response.status);
+  }
+  return await response.json();
+}
+
 async function loadLatestMarketSnapshot() {
   const errors = [];
+
+  try {
+    const response = await fetch(MARKET_ENDPOINT + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error('site market request failed: ' + response.status);
+    }
+    return await response.json();
+  } catch (error) {
+    errors.push(error);
+  }
 
   try {
     const response = await fetch(GITHUB_MARKET_CONTENTS_API + '?t=' + Date.now(), {
@@ -928,17 +1286,22 @@ async function loadLatestMarketSnapshot() {
     errors.push(error);
   }
 
+  throw errors[0] || new Error('failed to load market snapshot');
+}
+
+async function loadDividendOverrideSnapshot() {
   try {
-    const response = await fetch(MARKET_ENDPOINT + '?t=' + Date.now(), { cache: 'no-store' });
+    const response = await fetch(OVERRIDE_ENDPOINT + '?t=' + Date.now(), { cache: 'no-store' });
+    if (response.status === 404) {
+      return {};
+    }
     if (!response.ok) {
-      throw new Error('site market request failed: ' + response.status);
+      throw new Error('override request failed: ' + response.status);
     }
     return await response.json();
   } catch (error) {
-    errors.push(error);
+    throw error;
   }
-
-  throw errors[0] || new Error('failed to load market snapshot');
 }
 
 function decodeBase64Utf8(value) {
@@ -1181,11 +1544,12 @@ refs.stockList.addEventListener('click', (event) => {
     return;
   }
 
-  if (action === 'edit-yield') {
-    openModal('yield', {
+  if (action === 'edit-dividend') {
+    openModal('dividend', {
       localId,
       name: computedHolding ? computedHolding.name : holding.symbol,
-      value: holding.dividendYieldOverride
+      currency: computedHolding ? computedHolding.currency : inferQuote(holding.symbol).currency,
+      value: holding.dividendPerShareTtmOverride
     });
   }
 });
@@ -1214,3 +1578,4 @@ async function boot() {
 }
 
 boot();
+

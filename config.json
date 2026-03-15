@@ -1,0 +1,14 @@
+{
+  "coreSymbols": [
+    "00700.HK",
+    "600519.SH"
+  ],
+  "dividendChangeThreshold": 0.3,
+  "staleDays": 7,
+  "forceVerifyMonths": [
+    3,
+    4,
+    8,
+    9
+  ]
+}

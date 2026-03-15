@@ -447,6 +447,13 @@ svg {
   letter-spacing: 0.04em;
 }
 
+.holding-code-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .holding-side {
   gap: 10px;
 }
@@ -462,6 +469,84 @@ svg {
   font-weight: 700;
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+.dividend-status-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-radius: 50%;
+  color: inherit;
+}
+
+.dividend-status-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #d6dde8;
+  box-shadow: inset 0 0 0 1px rgba(21, 40, 73, 0.08);
+}
+
+.dividend-status-button.is-fresh .dividend-status-dot {
+  background: #61b46b;
+}
+
+.dividend-status-button.is-stale .dividend-status-dot {
+  background: #e3b548;
+}
+
+.dividend-status-button.is-missing .dividend-status-dot {
+  background: #db6e63;
+}
+
+.dividend-status-button.is-manual {
+  width: 20px;
+  height: 20px;
+}
+
+.dividend-status-button.is-manual .dividend-status-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  background: #edf2f8;
+  color: #50627f;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.dividend-status-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 6;
+  display: none;
+  min-width: 168px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(21, 40, 73, 0.96);
+  color: #ffffff;
+  box-shadow: 0 12px 26px rgba(21, 40, 73, 0.18);
+}
+
+.dividend-status-tooltip span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.dividend-status-button:hover .dividend-status-tooltip,
+.dividend-status-button:focus .dividend-status-tooltip,
+.dividend-status-button:focus-visible .dividend-status-tooltip {
+  display: block;
 }
 
 .holding-grid {
@@ -788,6 +873,11 @@ svg {
     margin-top: 6px;
   }
 
+  .holding-code-row {
+    gap: 7px;
+    margin-top: 6px;
+  }
+
   .holding-side {
     gap: 8px;
   }
@@ -797,6 +887,12 @@ svg {
     padding: 7px 11px;
     border-radius: 16px;
     font-size: 14px;
+  }
+
+  .dividend-status-tooltip {
+    left: auto;
+    right: 0;
+    min-width: 156px;
   }
 
   .holding-grid {
