@@ -1,7 +1,7 @@
 {
   "type": "portfolio-snapshot",
   "version": 1,
-  "updatedAt": "2026-03-16T08:45:49.947Z",
+  "updatedAt": "2026-03-16T08:49:18.880Z",
   "holdings": [
     {
       "localId": 1,
@@ -33,7 +33,7 @@
       "accountType": "default",
       "bucket": "income",
       "taxRateOverride": "",
-      "dividendPerShareTtmOverride": "2.991",
+      "dividendPerShareTtmOverride": "3",
       "dividendPerShareTtmOverrideTouched": true
     },
     {
