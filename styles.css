@@ -271,6 +271,19 @@ svg {
     transform var(--motion-quick) var(--ease-soft);
 }
 
+#refreshButton {
+  transition:
+    background-color 90ms linear,
+    box-shadow 90ms linear,
+    color 90ms linear,
+    transform 80ms linear;
+  will-change: transform;
+}
+
+#refreshButton:active {
+  transform: scale(0.95);
+}
+
 .circle-button svg {
   width: 18px;
   height: 18px;
@@ -716,10 +729,11 @@ svg {
 .holding-swipe-delete::before {
   content: "";
   position: absolute;
-  inset: 4px 0 4px 10px;
-  border-radius: 16px 0 0 16px;
-  background: linear-gradient(180deg, #f7dfdb 0%, #f3d2cd 100%);
-  box-shadow: inset 0 0 0 1px rgba(173, 97, 88, 0.12);
+  inset: 3px 2px 3px 2px;
+  border-radius: 18px 0 0 18px;
+  border-left: 8px solid rgba(255, 255, 255, 0.96);
+  background: linear-gradient(180deg, #f7ddd8 0%, #f2cbc4 100%);
+  box-shadow: inset 0 0 0 1px rgba(173, 97, 88, 0.1);
   transition:
     background-color var(--motion-base) var(--ease-soft),
     box-shadow var(--motion-base) var(--ease-soft),
@@ -1054,6 +1068,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 .dividend-status-button--value {
   min-width: 4.45em;
   text-align: right;
+  font-size: 16px;
 }
 
 .metric-button.metric-right,
@@ -1537,7 +1552,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   .metric-button.metric-right,
   .metric-static.metric-right.metric-static--yield {
     justify-content: flex-end;
-    padding-inline-end: 7px;
+    padding-inline-end: 10px;
   }
 
   .metric-button.metric-right .metric-row,
@@ -1545,11 +1560,11 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     display: grid;
     width: max-content;
     max-width: 100%;
-    grid-template-columns: 3.7em minmax(4.65em, auto);
+    grid-template-columns: 4.25em 4.6em;
     align-items: baseline;
     justify-content: end;
     justify-items: end;
-    column-gap: 3px;
+    column-gap: 2px;
   }
 
   .metric-label {
@@ -1562,8 +1577,8 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   .metric-static--yield .metric-label,
   .metric-static--yield .metric-label-button {
     flex: none;
-    width: 3.7em;
-    min-width: 3.7em;
+    width: 4.25em;
+    min-width: 4.25em;
     justify-self: end;
     text-align: right;
     white-space: nowrap;
@@ -1572,18 +1587,20 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   .metric-button.metric-right .metric-value {
     flex: none;
     width: auto;
-    min-width: 4.65em;
+    min-width: 4.6em;
     justify-self: end;
     text-align: right;
+    font-size: clamp(14px, 4.4vw, 16px);
   }
 
   .metric-static--yield .dividend-status-button--value {
     flex: none;
-    width: max-content;
-    min-width: 0;
+    width: 4.6em;
+    min-width: 4.6em;
     justify-self: end;
     justify-content: flex-end;
     text-align: right;
+    font-size: clamp(14px, 4.4vw, 16px);
   }
 
   .metric-value {
