@@ -1,7 +1,7 @@
 {
   "type": "portfolio-snapshot",
   "version": 1,
-  "updatedAt": "2026-03-16T08:49:18.880Z",
+  "updatedAt": "2026-03-16T09:21:53.555Z",
   "holdings": [
     {
       "localId": 1,
@@ -238,7 +238,7 @@
   "nextId": 24,
   "showAmounts": true,
   "sortField": "marketValueCny",
-  "sortDirection": "desc",
+  "sortDirection": "asc",
   "legendExpanded": false,
   "liabilityCny": 81745.48,
   "lastUpdatedAt": "2026-03-16T07:34:30.537535Z"
