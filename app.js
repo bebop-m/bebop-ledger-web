@@ -1264,14 +1264,11 @@ function renderLegend(segments) {
   const defaultVisible = UI_FLAGS.allocationLegendThresholdEnabled
     ? segments.filter((segment) => segment.value / total >= ALLOCATION_LEGEND_MIN_WEIGHT)
     : segments.slice(0, LEGEND_COLLAPSED_COUNT);
-  const collapsedVisible = defaultVisible.length ? defaultVisible : segments.slice(0, LEGEND_COLLAPSED_COUNT);
-  const visible = state.legendExpanded
-    ? segments
-    : collapsedVisible;
-  const canToggleLegend = collapsedVisible.length < segments.length;
+  const collapsedCount = (defaultVisible.length ? defaultVisible : segments.slice(0, LEGEND_COLLAPSED_COUNT)).length;
+  const canToggleLegend = collapsedCount < segments.length;
 
-  refs.companyLegend.innerHTML = visible.map((segment, index) => `
-    <div class="legend-row" style="animation-delay:${index * 30}ms">
+  refs.companyLegend.innerHTML = segments.map((segment, index) => `
+    <div class="legend-row${index >= collapsedCount ? ' legend-row--collapsible' : ''}" style="animation-delay:${index * 30}ms">
       <div class="legend-main">
         <span class="legend-dot" style="background:${segment.color}"></span>
         <span class="legend-label">${escapeHtml(segment.label)}</span>
@@ -1279,6 +1276,8 @@ function renderLegend(segments) {
       <span class="legend-value">${((segment.value / total) * 100).toFixed(1)}%</span>
     </div>
   `).join('');
+
+  applyLegendExpandState();
 
   if (canToggleLegend) {
     refs.legendToggle.hidden = false;
@@ -1288,6 +1287,16 @@ function renderLegend(segments) {
   } else {
     refs.legendToggle.hidden = true;
   }
+}
+
+function applyLegendExpandState() {
+  const rows = refs.companyLegend.querySelectorAll('.legend-row--collapsible');
+  rows.forEach((row) => {
+    row.classList.toggle('is-collapsed', !state.legendExpanded);
+  });
+  refs.legendToggle.textContent = state.legendExpanded
+    ? LABELS.collapseLegend
+    : `${LABELS.expandLegend} ${refs.companyLegend.querySelectorAll('.legend-row').length} ${LABELS.itemsUnit}`;
 }
 
 function renderBuckets(segments, holdings, summary) {
@@ -1417,6 +1426,7 @@ function renderTimestamp() {
 
 function renderPrivacyButton() {
   refs.privacyButton.classList.toggle('is-hidden', !state.showAmounts);
+  document.body.classList.toggle('privacy-hidden', !state.showAmounts);
 }
 
 function renderHoldings(holdings) {
@@ -2237,16 +2247,10 @@ function renderApp() {
 configureUiChrome();
 
 refs.privacyButton.addEventListener('click', () => {
-  const shell = document.querySelector('.app-shell');
-  shell.classList.add('privacy-transitioning');
-  setTimeout(() => {
-    state.showAmounts = !state.showAmounts;
-    saveState();
-    renderApp();
-    requestAnimationFrame(() => {
-      shell.classList.remove('privacy-transitioning');
-    });
-  }, 180);
+  state.showAmounts = !state.showAmounts;
+  saveState();
+  document.body.classList.toggle('privacy-hidden', !state.showAmounts);
+  refs.privacyButton.classList.toggle('is-hidden', !state.showAmounts);
 });
 
 refs.exportButton.addEventListener('click', syncPortfolioToCloud);
@@ -2256,7 +2260,7 @@ refs.importFileInput.addEventListener('change', handleImportFile);
 refs.legendToggle.addEventListener('click', () => {
   state.legendExpanded = !state.legendExpanded;
   saveState();
-  renderApp();
+  applyLegendExpandState();
 });
 
 refs.refreshButton.addEventListener('click', () => {
@@ -2291,7 +2295,6 @@ refs.sortChips.forEach((chip) => {
         renderApp();
         requestAnimationFrame(() => {
           refs.stockList.classList.remove('is-resorting');
-          refs.stockList.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       }, 150);
       return;
@@ -2308,7 +2311,6 @@ refs.sortChips.forEach((chip) => {
       renderApp();
       requestAnimationFrame(() => {
         refs.stockList.classList.remove('is-resorting');
-        refs.stockList.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }, 150);
   });
@@ -2345,7 +2347,9 @@ refs.bucketTrack.addEventListener('click', (event) => {
   }
   const nextKey = button.dataset.bucketToggle;
   state.activeBucketKey = state.activeBucketKey === nextKey ? null : nextKey;
-  renderApp();
+  const summary = computeHoldings();
+  const bucketSegments = getBucketSegments(summary.holdings);
+  renderBuckets(bucketSegments, summary.holdings, summary);
 });
 
 refs.stockList.addEventListener('mouseover', (event) => {

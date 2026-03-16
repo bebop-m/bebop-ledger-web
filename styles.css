@@ -32,7 +32,6 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scroll-behavior: smooth;
   background:
     radial-gradient(circle at top left, rgba(248, 249, 252, 0.96), transparent 28%),
     radial-gradient(circle at top right, rgba(250, 246, 241, 0.72), transparent 30%),
@@ -410,12 +409,58 @@ svg {
   transition: opacity 180ms var(--ease-soft);
 }
 
-.privacy-transitioning .summary-value,
-.privacy-transitioning .metric-value,
-.privacy-transitioning .holding-price,
-.privacy-transitioning .summary-note,
-.privacy-transitioning .dividend-status-button--value {
-  opacity: 0;
+.privacy-hidden .summary-value,
+.privacy-hidden .metric-value,
+.privacy-hidden .holding-price,
+.privacy-hidden .summary-note,
+.privacy-hidden .dividend-status-button--value {
+  color: transparent !important;
+  user-select: none;
+  pointer-events: none;
+  position: relative;
+  transition: color 180ms var(--ease-soft);
+}
+
+.privacy-hidden .summary-value::after,
+.privacy-hidden .holding-price::after {
+  content: '******';
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--muted);
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.privacy-hidden .metric-value::after {
+  content: '****';
+  position: absolute;
+  right: 0;
+  top: 0;
+  color: var(--muted);
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.privacy-hidden .dividend-status-button--value::after {
+  content: '****';
+  position: absolute;
+  right: 0;
+  top: 0;
+  color: var(--muted);
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.privacy-hidden .summary-note::after {
+  content: '';
+}
+
+body:not(.privacy-hidden) .summary-value,
+body:not(.privacy-hidden) .metric-value,
+body:not(.privacy-hidden) .holding-price,
+body:not(.privacy-hidden) .dividend-status-button--value {
+  transition: color 180ms var(--ease-soft);
 }
 
 .summary-value.is-income {
@@ -478,6 +523,15 @@ svg {
   padding: 8px 0;
   border-bottom: 1px solid var(--line-soft);
   animation: legend-row-in 200ms var(--ease-soft) both;
+  transition: opacity 200ms var(--ease-soft), transform 200ms var(--ease-soft);
+}
+
+.legend-row--collapsible {
+  overflow: hidden;
+}
+
+.legend-row--collapsible.is-collapsed {
+  display: none;
 }
 
 @keyframes legend-row-in {
@@ -658,13 +712,11 @@ svg {
 @keyframes bucket-detail-in {
   from {
     opacity: 0;
-    transform: translateY(-6px);
-    max-height: 0;
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
-    max-height: 200px;
   }
 }
 
@@ -816,28 +868,20 @@ svg {
 }
 
 @keyframes holding-delete-out {
-  0% {
+  from {
     opacity: 1;
-    transform: translateX(0);
-    max-height: 200px;
-    margin-bottom: 0;
+    transform: translateX(0) scaleY(1);
+    transform-origin: top center;
   }
-  40% {
+  to {
     opacity: 0;
-    transform: translateX(-60px);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(-60px);
-    max-height: 0;
-    margin-bottom: -10px;
-    padding: 0;
-    overflow: hidden;
+    transform: translateX(-40px) scaleY(0);
+    transform-origin: top center;
   }
 }
 
 .holding-swipe.is-deleting {
-  animation: holding-delete-out 320ms var(--ease-soft) forwards;
+  animation: holding-delete-out 280ms var(--ease-soft) forwards;
   pointer-events: none;
 }
 
