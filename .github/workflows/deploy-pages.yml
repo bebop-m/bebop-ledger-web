@@ -5,11 +5,6 @@ on:
   push:
     branches:
       - main
-  workflow_run:
-    workflows:
-      - Update Market Data
-    types:
-      - completed
 
 permissions:
   contents: read
@@ -22,7 +17,6 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
