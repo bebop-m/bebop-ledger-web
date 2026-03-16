@@ -1232,8 +1232,8 @@ function renderLegend(segments) {
     : collapsedVisible;
   const canToggleLegend = collapsedVisible.length < segments.length;
 
-  refs.companyLegend.innerHTML = visible.map((segment) => `
-    <div class="legend-row">
+  refs.companyLegend.innerHTML = visible.map((segment, index) => `
+    <div class="legend-row" style="animation-delay:${index * 30}ms">
       <div class="legend-main">
         <span class="legend-dot" style="background:${segment.color}"></span>
         <span class="legend-label">${escapeHtml(segment.label)}</span>
@@ -1510,10 +1510,23 @@ function openModal(type, payload = {}) {
 }
 
 function closeModal() {
-  state.modal = null;
-  state.modalPayload = null;
-  document.body.classList.remove('modal-open');
-  refs.modalRoot.innerHTML = '';
+  const mask = refs.modalRoot.querySelector('.modal-mask');
+  const sheet = refs.modalRoot.querySelector('.modal-sheet');
+  if (mask && sheet) {
+    mask.classList.add('is-closing');
+    sheet.classList.add('is-closing');
+    sheet.addEventListener('animationend', () => {
+      state.modal = null;
+      state.modalPayload = null;
+      document.body.classList.remove('modal-open');
+      refs.modalRoot.innerHTML = '';
+    }, { once: true });
+  } else {
+    state.modal = null;
+    state.modalPayload = null;
+    document.body.classList.remove('modal-open');
+    refs.modalRoot.innerHTML = '';
+  }
 }
 
 function setModalBucketSelection(nextBucket) {
@@ -1897,6 +1910,7 @@ async function refreshMarketData(options = {}) {
   }
   state.syncing = true;
   refs.refreshButton.disabled = true;
+  refs.refreshButton.classList.add('is-syncing');
 
   let hasUpdates = false;
   let lastError = null;
@@ -1955,6 +1969,7 @@ async function refreshMarketData(options = {}) {
   } finally {
     state.syncing = false;
     refs.refreshButton.disabled = false;
+    refs.refreshButton.classList.remove('is-syncing');
   }
 }
 
@@ -2172,9 +2187,16 @@ function renderApp() {
 configureUiChrome();
 
 refs.privacyButton.addEventListener('click', () => {
-  state.showAmounts = !state.showAmounts;
-  saveState();
-  renderApp();
+  const shell = document.querySelector('.app-shell');
+  shell.classList.add('privacy-transitioning');
+  setTimeout(() => {
+    state.showAmounts = !state.showAmounts;
+    saveState();
+    renderApp();
+    requestAnimationFrame(() => {
+      shell.classList.remove('privacy-transitioning');
+    });
+  }, 180);
 });
 
 refs.exportButton.addEventListener('click', syncPortfolioToCloud);
@@ -2214,7 +2236,13 @@ refs.sortChips.forEach((chip) => {
       }
       state.sortMenuOpen = false;
       saveState();
-      renderApp();
+      refs.stockList.classList.add('is-resorting');
+      setTimeout(() => {
+        renderApp();
+        requestAnimationFrame(() => {
+          refs.stockList.classList.remove('is-resorting');
+        });
+      }, 150);
       return;
     }
     if (state.sortField === nextField) {
@@ -2224,7 +2252,13 @@ refs.sortChips.forEach((chip) => {
       state.sortDirection = 'desc';
     }
     saveState();
-    renderApp();
+    refs.stockList.classList.add('is-resorting');
+    setTimeout(() => {
+      renderApp();
+      requestAnimationFrame(() => {
+        refs.stockList.classList.remove('is-resorting');
+      });
+    }, 150);
   });
 });
 
@@ -2323,9 +2357,19 @@ refs.stockList.addEventListener('click', (event) => {
     if (!window.confirm(`${LABELS.deleteConfirm}\n${holding.symbol}`)) {
       return;
     }
-    state.holdings = state.holdings.filter((item) => item.localId !== localId);
-    saveState();
-    renderApp();
+    const wrapper = targetItem.closest('.holding-swipe');
+    if (wrapper) {
+      wrapper.classList.add('is-deleting');
+      wrapper.addEventListener('animationend', () => {
+        state.holdings = state.holdings.filter((item) => item.localId !== localId);
+        saveState();
+        renderApp();
+      }, { once: true });
+    } else {
+      state.holdings = state.holdings.filter((item) => item.localId !== localId);
+      saveState();
+      renderApp();
+    }
     return;
   }
 

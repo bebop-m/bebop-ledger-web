@@ -75,6 +75,30 @@ button {
   background: none;
   cursor: pointer;
   touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.circle-button:active,
+.sort-chip:active,
+.bucket-chip:active,
+.modal-button:active,
+.modal-bucket-button:active,
+.legend-toggle:active,
+.text-button:active,
+.metric-label-button:active,
+.summary-action-button:active {
+  transform: scale(0.96);
+  opacity: 0.8;
+}
+
+.holding-card:active {
+  transform: translateX(calc(var(--holding-swipe-offset, 0px) * -1)) scale(0.985);
 }
 
 input,
@@ -284,6 +308,15 @@ svg {
   transform: scale(0.95);
 }
 
+#refreshButton.is-syncing svg {
+  animation: spin 800ms linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .circle-button svg {
   width: 18px;
   height: 18px;
@@ -367,6 +400,15 @@ svg {
   font-weight: 700;
   line-height: 1.08;
   font-variant-numeric: tabular-nums;
+  transition: opacity 180ms var(--ease-soft);
+}
+
+.privacy-transitioning .summary-value,
+.privacy-transitioning .metric-value,
+.privacy-transitioning .holding-price,
+.privacy-transitioning .summary-note,
+.privacy-transitioning .dividend-status-button--value {
+  opacity: 0;
 }
 
 .summary-value.is-income {
@@ -459,6 +501,18 @@ svg {
   gap: 10px;
   padding: 8px 0;
   border-bottom: 1px solid var(--line-soft);
+  animation: legend-row-in 200ms var(--ease-soft) both;
+}
+
+@keyframes legend-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .legend-main {
@@ -622,6 +676,20 @@ svg {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: linear-gradient(180deg, #ffffff 0%, #f9fbfe 100%);
+  animation: bucket-detail-in 220ms var(--ease-soft) both;
+}
+
+@keyframes bucket-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 200px;
+  }
 }
 
 .bucket-detail-row {
@@ -749,6 +817,11 @@ svg {
   display: grid;
   gap: 10px;
   margin-top: 14px;
+  transition: opacity 150ms var(--ease-soft);
+}
+
+.stock-list.is-resorting {
+  opacity: 0;
 }
 
 .stock-list .holding-swipe {
@@ -764,6 +837,32 @@ svg {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes holding-delete-out {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+    max-height: 200px;
+    margin-bottom: 0;
+  }
+  40% {
+    opacity: 0;
+    transform: translateX(-60px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-60px);
+    max-height: 0;
+    margin-bottom: -10px;
+    padding: 0;
+    overflow: hidden;
+  }
+}
+
+.holding-swipe.is-deleting {
+  animation: holding-delete-out 320ms var(--ease-soft) forwards;
+  pointer-events: none;
 }
 
 .holding-swipe {
@@ -885,6 +984,7 @@ svg {
   font-weight: 700;
   line-height: 1.1;
   white-space: nowrap;
+  transition: opacity 180ms var(--ease-soft);
 }
 
 body.ui-refined-accent .holding-price {
@@ -1161,6 +1261,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   font-weight: 700;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+  transition: opacity 180ms var(--ease-soft);
 }
 
 .metric-button.metric-right .metric-value,
@@ -1190,6 +1291,22 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   z-index: 30;
   background: rgba(24, 38, 60, 0.22);
   backdrop-filter: blur(2px);
+  opacity: 0;
+  animation: modal-fade-in 200ms var(--ease-soft) forwards;
+}
+
+.modal-mask.is-closing {
+  animation: modal-fade-out 180ms var(--ease-soft) forwards;
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 .modal-sheet {
@@ -1203,6 +1320,23 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   border-radius: 22px;
   background: #ffffff;
   box-shadow: 0 20px 44px rgba(24, 39, 64, 0.16);
+  transform: translateY(100%);
+  opacity: 0;
+  animation: modal-slide-in 260ms var(--ease-soft) forwards;
+}
+
+.modal-sheet.is-closing {
+  animation: modal-slide-out 200ms var(--ease-soft) forwards;
+}
+
+@keyframes modal-slide-in {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes modal-slide-out {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(100%); opacity: 0; }
 }
 
 .modal-title {
