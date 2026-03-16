@@ -28,6 +28,8 @@ const OVERRIDE_ENDPOINT = './data/override.json';
 const CONFIG_ENDPOINT = './config.json';
 const PORTFOLIO_SNAPSHOT_FILENAME = 'portfolio_snapshot.json';
 const GITHUB_MARKET_CONTENTS_API = 'https://api.github.com/repos/bebop-m/bopup-ledger-web/contents/data/market.json';
+const GITHUB_PORTFOLIO_CONTENTS_API = 'https://api.github.com/repos/bebop-m/bopup-ledger-web/contents/data/portfolio.json';
+const GITHUB_TOKEN_STORAGE_KEY = 'bopup-ledger-github-token';
 const TENCENT_REALTIME_ENDPOINT = 'https://qt.gtimg.cn/q=';
 const TENCENT_BATCH_SIZE = 60;
 const LEGEND_COLLAPSED_COUNT = 8;
@@ -123,6 +125,11 @@ const LABELS = {
   importConfirm: '\u5bfc\u5165\u540e\u4f1a\u8986\u76d6\u5f53\u524d\u672c\u5730\u6570\u636e\uff0c\u786e\u8ba4\u7ee7\u7eed\u5417\uff1f',
   importFailed: '\u5bfc\u5165\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u5907\u4efd\u6587\u4ef6\u3002',
   exportFailed: '\u5bfc\u51fa\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002',
+  syncSuccess: '\u5df2\u540c\u6b65\u5230\u4e91\u7aef',
+  syncFailed: '\u540c\u6b65\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5 Token \u662f\u5426\u6709\u6548\u3002',
+  syncTokenPrompt: '\u8bf7\u8f93\u5165 GitHub Personal Access Token\uff08\u53ea\u9700\u8f93\u5165\u4e00\u6b21\uff09\uff1a',
+  syncTokenInvalid: 'Token \u4e0d\u80fd\u4e3a\u7a7a',
+  cloudRestored: '\u5df2\u4ece\u4e91\u7aef\u6062\u590d\u6301\u4ed3\u6570\u636e',
   marketValue: '\u6301\u4ed3\u5e02\u503c\uff1a',
   quantity: '\u6570\u91cf\uff1a',
   annualDividend: '\u7a0e\u540e\u80a1\u606f\uff1a',
@@ -279,13 +286,13 @@ function configureUiChrome() {
   }
 
   refs.exportButton.className = 'summary-action-button';
-  refs.exportButton.setAttribute('aria-label', '\u5bfc\u51fa\u5feb\u7167');
-  refs.exportButton.title = '\u5bfc\u51fa\u5feb\u7167';
+  refs.exportButton.setAttribute('aria-label', '\u540c\u6b65\u5230\u4e91\u7aef');
+  refs.exportButton.title = '\u540c\u6b65\u5230\u4e91\u7aef';
   refs.exportButton.innerHTML = `
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 5.5v9.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
-      <path d="M8.6 11.4L12 14.8l3.4-3.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
-      <path d="M5.8 18h12.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+      <path d="M12 16V8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path>
+      <path d="M8.6 11.3L12 7.9l3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="M20 17.6a3.4 3.4 0 0 0-1.8-6.3h-.6A6 6 0 0 0 6.2 9.8a4.2 4.2 0 0 0 .4 8.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path>
     </svg>
   `;
   refs.privacyButton.classList.remove('circle-button');
@@ -973,8 +980,10 @@ function restoreState() {
     }
     applySnapshot(saved);
     saveState();
+    return true;
   } catch (_error) {
     applySnapshot(createDefaultSnapshot());
+    return false;
   }
 }
 
@@ -1615,8 +1624,132 @@ function handleModalSave() {
 }
 
 /* ----------------------------------------------------------------------------
- *  [13] IMPORT / EXPORT
+ *  [13] CLOUD SYNC & IMPORT / EXPORT
  * -------------------------------------------------------------------------- */
+function getGithubToken() {
+  return (localStorage.getItem(GITHUB_TOKEN_STORAGE_KEY) || '').trim();
+}
+
+function saveGithubToken(token) {
+  localStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, token.trim());
+}
+
+function promptGithubToken() {
+  const token = window.prompt(LABELS.syncTokenPrompt);
+  if (!token || !token.trim()) {
+    return null;
+  }
+  saveGithubToken(token);
+  return token.trim();
+}
+
+async function syncPortfolioToCloud() {
+  let token = getGithubToken();
+  if (!token) {
+    token = promptGithubToken();
+    if (!token) {
+      window.alert(LABELS.syncTokenInvalid);
+      return;
+    }
+  }
+
+  const localHasData = state.holdings.length > 0;
+  const localLooksDefault = localHasData && state.holdings.every(
+    (h, i) => DEFAULT_HOLDINGS[i] && h.symbol === DEFAULT_HOLDINGS[i].symbol && h.quantity === DEFAULT_HOLDINGS[i].quantity
+  ) && state.holdings.length === DEFAULT_HOLDINGS.length;
+
+  if (!localHasData || localLooksDefault) {
+    const restored = await restoreFromCloud(token);
+    if (restored) {
+      await refreshMarketData({ silent: true });
+      renderApp();
+      window.alert(LABELS.cloudRestored);
+      return;
+    }
+  }
+
+  const payload = buildPortfolioSnapshot();
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+
+  try {
+    let sha = null;
+    try {
+      const existing = await fetch(GITHUB_PORTFOLIO_CONTENTS_API, {
+        headers: {
+          Accept: 'application/vnd.github+json',
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (existing.ok) {
+        const data = await existing.json();
+        sha = data.sha || null;
+      }
+    } catch (_error) {
+      // File may not exist yet — that's fine.
+    }
+
+    const body = {
+      message: 'sync: update portfolio snapshot',
+      content: content
+    };
+    if (sha) {
+      body.sha = sha;
+    }
+
+    const response = await fetch(GITHUB_PORTFOLIO_CONTENTS_API, {
+      method: 'PUT',
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || `HTTP ${response.status}`);
+    }
+
+    window.alert(LABELS.syncSuccess);
+  } catch (error) {
+    console.warn('cloud sync failed', error);
+    window.alert(LABELS.syncFailed);
+  }
+}
+
+async function restoreFromCloud(token) {
+  try {
+    const response = await fetch(GITHUB_PORTFOLIO_CONTENTS_API, {
+      headers: {
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    if (!response.ok) {
+      if (response.status === 404) {
+        return false;
+      }
+      throw new Error('portfolio fetch failed: ' + response.status);
+    }
+    const data = await response.json();
+    if (!data || typeof data.content !== 'string') {
+      return false;
+    }
+    const decoded = decodeBase64Utf8(data.content.replace(/\n/g, ''));
+    const payload = JSON.parse(decoded);
+    if (!payload || !Array.isArray(payload.holdings) || !payload.holdings.length) {
+      return false;
+    }
+    importSnapshot(payload);
+    console.log('restored portfolio from cloud');
+    return true;
+  } catch (error) {
+    console.warn('cloud restore failed', error);
+    return false;
+  }
+}
+
 function exportPortfolioSnapshot() {
   try {
     const payload = buildPortfolioSnapshot();
@@ -2006,7 +2139,7 @@ refs.privacyButton.addEventListener('click', () => {
   renderApp();
 });
 
-refs.exportButton.addEventListener('click', exportPortfolioSnapshot);
+refs.exportButton.addEventListener('click', syncPortfolioToCloud);
 refs.importButton.addEventListener('click', () => refs.importFileInput.click());
 refs.importFileInput.addEventListener('change', handleImportFile);
 
