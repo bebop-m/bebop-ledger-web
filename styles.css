@@ -720,7 +720,7 @@ svg {
 
 .holding-swipe-delete {
   display: none;
-  border-radius: 18px 0 0 18px;
+  border-radius: 18px;
   overflow: hidden;
   background: transparent;
   isolation: isolate;
@@ -732,7 +732,7 @@ svg {
   content: "";
   position: absolute;
   inset: 2px 0 2px 8px;
-  border-radius: 18px 0 0 18px;
+  border-radius: 18px;
   background: linear-gradient(180deg, #faf0ee 0%, #f6e5e1 100%);
   box-shadow: inset 0 0 0 1px rgba(173, 97, 88, 0.08);
   transition:
@@ -1479,7 +1479,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     align-items: center;
     justify-content: center;
     border: 0;
-    border-radius: 18px 0 0 18px;
+    border-radius: 18px;
     background: transparent;
     color: #895951;
     box-shadow: none;
