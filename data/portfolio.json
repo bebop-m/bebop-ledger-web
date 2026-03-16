@@ -1,1 +1,245 @@
-{}
+{
+  "type": "portfolio-snapshot",
+  "version": 1,
+  "updatedAt": "2026-03-16T08:32:33.185Z",
+  "holdings": [
+    {
+      "localId": 1,
+      "symbol": "00700.HK",
+      "quantity": 4300,
+      "shares": 4300,
+      "accountType": "default",
+      "bucket": "core",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 2,
+      "symbol": "600519.SH",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "core",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 3,
+      "symbol": "000651.SZ",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 4,
+      "symbol": "00883.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 5,
+      "symbol": "06049.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 6,
+      "symbol": "000333.SZ",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 7,
+      "symbol": "02669.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 8,
+      "symbol": "PDD",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 9,
+      "symbol": "01571.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 10,
+      "symbol": "00270.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 11,
+      "symbol": "09618.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 12,
+      "symbol": "00728.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 13,
+      "symbol": "02333.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 14,
+      "symbol": "600177.SH",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 15,
+      "symbol": "03900.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 16,
+      "symbol": "09982.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 17,
+      "symbol": "01995.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 18,
+      "symbol": "03316.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 19,
+      "symbol": "00816.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 20,
+      "symbol": "00405.HK",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    },
+    {
+      "localId": 21,
+      "symbol": "513530.SH",
+      "quantity": 100,
+      "shares": 100,
+      "accountType": "default",
+      "bucket": "income",
+      "taxRateOverride": "",
+      "dividendPerShareTtmOverride": "",
+      "dividendPerShareTtmOverrideTouched": false
+    }
+  ],
+  "nextId": 22,
+  "showAmounts": true,
+  "sortField": "marketValueCny",
+  "sortDirection": "desc",
+  "legendExpanded": true,
+  "liabilityCny": 0,
+  "lastUpdatedAt": "2026-03-16T07:34:30.537535Z"
+}
