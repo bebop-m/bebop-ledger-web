@@ -375,6 +375,9 @@ def normalize_quote_entry(symbol, quote, stale_days):
         'currency': str(quote.get('currency') or currency).strip() or currency,
         'price': round(safe_float(quote.get('price'), 0.0), 6)
     }
+    prev_close = safe_float(quote.get('previousClose'), 0.0)
+    if prev_close > 0:
+        entry['previousClose'] = round(prev_close, 6)
     entry.update(build_dividend_payload_from_quote(quote, stale_days))
     return entry
 
@@ -474,7 +477,8 @@ def fetch_quotes(watchlist):
                 'name': name or symbol,
                 'market': market,
                 'currency': currency,
-                'price': round(price, 6)
+                'price': round(price, 6),
+                'previousClose': round(safe_float(fields[4], 0), 6)
             }
 
     return quotes

@@ -294,6 +294,23 @@ svg {
   color: var(--brand);
 }
 
+.sort-toggle-button {
+  transition:
+    background-color var(--motion-quick) var(--ease-soft),
+    box-shadow var(--motion-quick) var(--ease-soft),
+    color var(--motion-quick) var(--ease-soft),
+    transform var(--motion-base) var(--ease-soft),
+    opacity var(--motion-base) var(--ease-soft);
+}
+
+.sort-toggle-button.is-hidden-animated {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.85);
+  position: absolute;
+  visibility: hidden;
+}
+
 .circle-button .eye-slash {
   opacity: 0;
 }
@@ -646,6 +663,20 @@ svg {
 
 .sort-group.sort-group--subtle {
   gap: 6px;
+  transition: opacity var(--motion-base) var(--ease-soft), transform var(--motion-base) var(--ease-soft);
+}
+
+.sort-group.sort-group--subtle.is-collapsed {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(8px);
+  position: absolute;
+  visibility: hidden;
+}
+
+.sort-group.sort-group--subtle:not(.is-collapsed) {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .icon-actions > .sort-group.sort-group--subtle {
@@ -690,6 +721,14 @@ svg {
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
+  opacity: 1;
+  transform: scale(1) translateX(0);
+  transition:
+    background-color var(--motion-quick) var(--ease-soft),
+    box-shadow var(--motion-quick) var(--ease-soft),
+    color var(--motion-quick) var(--ease-soft),
+    transform var(--motion-base) var(--ease-soft),
+    opacity var(--motion-base) var(--ease-soft);
 }
 
 .sort-group.sort-group--subtle .sort-chip.is-active {
@@ -775,9 +814,19 @@ svg {
   position: relative;
   z-index: 1;
   transform: translateX(calc(var(--holding-swipe-offset, 0px) * -1));
-  transition: transform var(--motion-base) var(--ease-soft);
+  transition:
+    transform var(--motion-base) var(--ease-soft),
+    border-color var(--motion-base) var(--ease-soft),
+    border-radius var(--motion-base) var(--ease-soft);
   will-change: transform;
   overflow: hidden;
+}
+
+/* When swiped open, smooth the right edge into the delete zone */
+.holding-swipe.is-swipe-open .holding-card {
+  border-right-color: transparent;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .holding-head {
@@ -987,6 +1036,14 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 .dividend-status-button--value .dividend-status-tooltip {
   left: auto;
   right: calc(100% + 8px);
+  top: auto;
+  bottom: calc(100% + 6px);
+  transform: translateX(20%);
+}
+
+/* Allow tooltip to overflow the card when open */
+.holding-card:has(.dividend-status-button--value.is-tooltip-open) {
+  overflow: visible;
 }
 
 .dividend-status-button[data-tooltip-side="left"] .dividend-status-tooltip {
@@ -1481,6 +1538,10 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     border-radius: 18px;
     box-shadow: none;
     touch-action: pan-y;
+    transition:
+      transform var(--motion-base) var(--ease-soft),
+      border-color var(--motion-base) var(--ease-soft),
+      border-radius var(--motion-base) var(--ease-soft);
   }
 
   .holding-swipe {
@@ -1552,6 +1613,11 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 
   .dividend-status-tooltip {
     min-width: 156px;
+  }
+
+  /* Allow tooltip to overflow card on mobile */
+  .holding-card:has(.dividend-status-button--value.is-tooltip-open) {
+    overflow: visible;
   }
 
   .holding-grid {

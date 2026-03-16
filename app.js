@@ -506,6 +506,18 @@ function formatPercent(value) {
   return `${(safeNumber(value, 0) * 100).toFixed(2)}%`;
 }
 
+function formatDailyPnl(pnlCny, totalMarketValueCny) {
+  const pnl = safeNumber(pnlCny, 0);
+  const sign = pnl > 0 ? '+' : pnl < 0 ? '-' : '';
+  const absolute = Math.abs(pnl);
+  const amountStr = `${sign}\u00a5${Math.round(absolute).toLocaleString('en-US')}`;
+  const pctBase = safeNumber(totalMarketValueCny, 0) - pnl;
+  const pct = pctBase > 0 ? pnl / pctBase : 0;
+  const pctSign = pct > 0 ? '+' : pct < 0 ? '-' : '';
+  const pctStr = `(${pctSign}${Math.abs(pct * 100).toFixed(2)}%)`;
+  return `${amountStr} ${pctStr}`;
+}
+
 function formatTimestamp(isoString) {
   if (!isoString) {
     return LABELS.waitingForUpdate;
@@ -754,6 +766,7 @@ function mergeQuotes(baseMap, nextMap) {
       market: rawQuote.market || fallback.market,
       currency: rawQuote.currency || fallback.currency,
       price: safeNumber(rawQuote.price, fallback.price),
+      previousClose: safeNumber(rawQuote.previousClose, fallback.previousClose || 0) || undefined,
       ...dividendFields
     };
     if (typeof rawQuote.reason === 'string' && rawQuote.reason.trim()) {
@@ -1019,6 +1032,9 @@ function computeHoldings() {
         )
       : 'manual';
 
+    const previousClose = safeNumber(quote.previousClose, 0);
+    const dailyPnlCny = previousClose > 0 ? (price - previousClose) * quantity * fxRate : 0;
+
     return {
       ...holding,
       ...quote,
@@ -1033,7 +1049,8 @@ function computeHoldings() {
       marketValueCny,
       grossAnnualDividendCny,
       netAnnualDividendCny,
-      annualDividendCny: netAnnualDividendCny
+      annualDividendCny: netAnnualDividendCny,
+      dailyPnlCny
     };
   });
 
@@ -1048,6 +1065,7 @@ function computeHoldings() {
 
   const totalMarketValueCny = holdings.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0);
   const totalDividendCny = holdings.reduce((sum, item) => sum + safeNumber(item.netAnnualDividendCny, 0), 0);
+  const totalDailyPnlCny = holdings.reduce((sum, item) => sum + safeNumber(item.dailyPnlCny, 0), 0);
   const divisor = totalMarketValueCny || 1;
 
   return {
@@ -1057,6 +1075,7 @@ function computeHoldings() {
     })),
     totalMarketValueCny,
     totalDividendCny,
+    totalDailyPnlCny,
     netMarketValueCny: totalMarketValueCny - state.liabilityCny
   };
 }
@@ -1130,10 +1149,14 @@ function getBucketSummaryItems(holdings) {
 function renderSummary(summary) {
   const totalLabel = formatDisplayMoney(summary.netMarketValueCny, 'CNY');
   const dividendLabel = formatDisplayMoney(summary.totalDividendCny, 'CNY');
-  const liabilityLabel = formatDisplayMoney(state.liabilityCny, 'CNY');
   const overallAverageNetYield = summary.totalMarketValueCny > 0
     ? summary.totalDividendCny / summary.totalMarketValueCny
     : 0;
+  const dailyPnl = safeNumber(summary.totalDailyPnlCny, 0);
+  const hasPnlData = summary.holdings && summary.holdings.some((h) => safeNumber(h.previousClose, 0) > 0);
+  const dailyPnlText = hasPnlData && state.showAmounts
+    ? formatDailyPnl(dailyPnl, summary.totalMarketValueCny)
+    : '';
   const mainCards = `
     <article class="summary-card">
       <div class="summary-top">
@@ -1141,7 +1164,7 @@ function renderSummary(summary) {
         <button class="ghost-minus" type="button" data-summary-action="liability" aria-label="${LABELS.liability}">-</button>
       </div>
       <div class="summary-value">${totalLabel}</div>
-      ${state.liabilityCny > 0 ? `<p class="summary-note">${LABELS.liability} ${liabilityLabel}</p>` : ''}
+      ${dailyPnlText ? `<p class="summary-note">${dailyPnlText}</p>` : ''}
     </article>
     <article class="summary-card">
       <div class="summary-label">${LABELS.totalDividend}</div>
@@ -1300,10 +1323,21 @@ function renderSortChips() {
   if (refs.sortGroup) {
     refs.sortGroup.classList.toggle('sort-group--subtle', UI_FLAGS.subtleSortControls);
     refs.sortGroup.dataset.open = state.sortMenuOpen ? 'true' : 'false';
-    refs.sortGroup.hidden = UI_FLAGS.subtleSortControls ? !state.sortMenuOpen : false;
+    if (UI_FLAGS.subtleSortControls) {
+      refs.sortGroup.hidden = false;
+      refs.sortGroup.classList.toggle('is-collapsed', !state.sortMenuOpen);
+    } else {
+      refs.sortGroup.hidden = false;
+      refs.sortGroup.classList.remove('is-collapsed');
+    }
   }
   if (sortToggleButton) {
-    sortToggleButton.hidden = !UI_FLAGS.subtleSortControls || state.sortMenuOpen;
+    sortToggleButton.hidden = false;
+    if (!UI_FLAGS.subtleSortControls) {
+      sortToggleButton.classList.add('is-hidden-animated');
+    } else {
+      sortToggleButton.classList.toggle('is-hidden-animated', state.sortMenuOpen);
+    }
     sortToggleButton.classList.toggle('is-active', state.sortMenuOpen);
     sortToggleButton.setAttribute('aria-expanded', state.sortMenuOpen ? 'true' : 'false');
     sortToggleButton.title = `${UI_TEXT.sort} \u00b7 ${state.sortField === 'effectiveYield' ? LABELS.sortDividendYield : LABELS.sortMarketValue}`;
@@ -1327,7 +1361,7 @@ function renderSortChips() {
     const label = field === 'effectiveYield' ? LABELS.sortDividendYield : LABELS.sortMarketValue;
     const arrow = isActive ? (state.sortDirection === 'desc' ? '\u2193' : '\u2191') : '';
     chip.classList.toggle('is-active', isActive);
-    chip.hidden = UI_FLAGS.subtleSortControls ? !state.sortMenuOpen : false;
+    chip.hidden = false;
     chip.classList.toggle('is-subtle-primary', false);
     chip.textContent = arrow ? `${label} ${arrow}` : label;
   });
@@ -1436,7 +1470,14 @@ function getHoldingSwipeOffset(wrapper) {
 }
 
 function setHoldingSwipeOffset(wrapper, offset) {
-  wrapper.style.setProperty('--holding-swipe-offset', `${Math.max(0, Math.min(HOLDING_SWIPE_DELETE_WIDTH, offset))}px`);
+  const clamped = Math.max(0, Math.min(HOLDING_SWIPE_DELETE_WIDTH, offset));
+  wrapper.style.setProperty('--holding-swipe-offset', `${clamped}px`);
+  const card = wrapper.querySelector('.holding-card');
+  if (card) {
+    const progress = clamped / HOLDING_SWIPE_DELETE_WIDTH;
+    const borderOpacity = 1 - progress;
+    card.style.setProperty('--swipe-border-opacity', borderOpacity);
+  }
 }
 
 function closeHoldingSwipe(wrapper) {
@@ -2062,12 +2103,14 @@ async function loadTencentQuoteBatch(symbols) {
       return;
     }
 
+    const previousClose = safeNumber(fields[4], 0);
     quotes[symbol] = {
       symbol,
       name: String(fields[1] || fallback.name || symbol).trim() || fallback.name || symbol,
       market: fallback.market,
       currency: fallback.currency,
-      price
+      price,
+      previousClose: previousClose > 0 ? previousClose : undefined
     };
   });
 
