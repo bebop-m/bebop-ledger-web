@@ -1,13 +1,12 @@
 import json
 import math
-import os
 import re
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from urllib.parse import quote
 
 import requests
+import yfinance as yf
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / 'data'
@@ -24,12 +23,8 @@ DEFAULT_CONFIG = {
     'staleDays': 7,
     'forceVerifyMonths': [3, 4, 8, 9]
 }
-VALID_DIVIDEND_SOURCES = {'yahoo', 'eodhd', 'manual', 'cache'}
+VALID_DIVIDEND_SOURCES = {'yfinance', 'manual', 'cache', 'yahoo', 'eodhd'}
 VALID_DIVIDEND_STATUSES = {'manual', 'fresh', 'stale', 'missing'}
-
-TENCENT_QUOTE_ENDPOINT = 'https://qt.gtimg.cn/q='
-YAHOO_CHART_ENDPOINT = 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}'
-EODHD_DIVIDEND_ENDPOINT = 'https://eodhd.com/api/div/{symbol}'
 
 REQUEST_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
@@ -37,6 +32,7 @@ REQUEST_HEADERS = {
     'Accept': 'application/json,text/plain,*/*',
     'Accept-Language': 'en-US,en;q=0.9'
 }
+TENCENT_QUOTE_ENDPOINT = 'https://qt.gtimg.cn/q='
 TENCENT_HEADERS = {
     **REQUEST_HEADERS,
     'Referer': 'https://gu.qq.com/'
@@ -215,6 +211,15 @@ def parse_date_value(value):
     if value is None or value == '':
         return None
 
+    if isinstance(value, datetime):
+        return value.astimezone(timezone.utc) if value.tzinfo else value.replace(tzinfo=timezone.utc)
+
+    if hasattr(value, 'to_pydatetime'):
+        try:
+            return parse_date_value(value.to_pydatetime())
+        except Exception:
+            return None
+
     if isinstance(value, (int, float)):
         timestamp = int(value)
         if timestamp > 10**12:
@@ -327,14 +332,6 @@ def fetch_json(url, params=None, timeout=20):
     return response.json()
 
 
-def fetch_text(url, params=None, timeout=20, encoding=None, headers=None):
-    response = requests.get(url, params=params, timeout=timeout, headers=headers or REQUEST_HEADERS)
-    response.raise_for_status()
-    if encoding:
-        response.encoding = encoding
-    return response.text
-
-
 def fetch_with_retry(label, fn, *args, retries=3, delay_seconds=2, **kwargs):
     last_error = None
     for attempt in range(1, retries + 1):
@@ -348,7 +345,7 @@ def fetch_with_retry(label, fn, *args, retries=3, delay_seconds=2, **kwargs):
     raise last_error
 
 
-def to_yahoo_symbol(symbol):
+def to_yfinance_symbol(symbol):
     normalized = str(symbol).strip().upper()
     if normalized.endswith('.HK'):
         raw = normalized[:-3]
@@ -358,45 +355,6 @@ def to_yahoo_symbol(symbol):
     if normalized.endswith('.SH'):
         return f'{normalized[:-3]}.SS'
     return normalized
-
-
-def to_eodhd_symbol(symbol):
-    normalized = str(symbol).strip().upper()
-    if normalized.endswith('.HK'):
-        raw = normalized[:-3]
-        digits = raw.lstrip('0')
-        digits = digits.zfill(4) if digits else '0000'
-        return f'{digits}.HK'
-    if normalized.endswith('.SH'):
-        return f'{normalized[:-3]}.SHG'
-    if normalized.endswith('.SZ'):
-        return f'{normalized[:-3]}.SHE'
-    return f'{normalized}.US'
-
-
-def to_tencent_symbol(symbol):
-    normalized = str(symbol).strip().upper()
-    if normalized.endswith('.HK'):
-        return f'hk{normalized[:-3].zfill(5)}'
-    if normalized.endswith('.SH'):
-        return f'sh{normalized[:-3]}'
-    if normalized.endswith('.SZ'):
-        return f'sz{normalized[:-3]}'
-    return f'us{normalized}'
-
-
-def from_tencent_symbol(symbol):
-    normalized = str(symbol).strip()
-    lower = normalized.lower()
-    if lower.startswith('hk'):
-        return f'{normalized[2:].upper().zfill(5)}.HK'
-    if lower.startswith('sh'):
-        return f'{normalized[2:].upper()}.SH'
-    if lower.startswith('sz'):
-        return f'{normalized[2:].upper()}.SZ'
-    if lower.startswith('us'):
-        return normalized[2:].upper()
-    return normalized.upper()
 
 
 def infer_market_currency(symbol):
@@ -436,6 +394,39 @@ def chunked(items, size):
         yield items[index:index + size]
 
 
+def to_tencent_symbol(symbol):
+    normalized = str(symbol).strip().upper()
+    if normalized.endswith('.HK'):
+        return f'hk{normalized[:-3].zfill(5)}'
+    if normalized.endswith('.SH'):
+        return f'sh{normalized[:-3]}'
+    if normalized.endswith('.SZ'):
+        return f'sz{normalized[:-3]}'
+    return f'us{normalized}'
+
+
+def from_tencent_symbol(symbol):
+    normalized = str(symbol).strip()
+    lower = normalized.lower()
+    if lower.startswith('hk'):
+        return f'{normalized[2:].upper().zfill(5)}.HK'
+    if lower.startswith('sh'):
+        return f'{normalized[2:].upper()}.SH'
+    if lower.startswith('sz'):
+        return f'{normalized[2:].upper()}.SZ'
+    if lower.startswith('us'):
+        return normalized[2:].upper()
+    return normalized.upper()
+
+
+def fetch_text(url, params=None, timeout=20, encoding=None, headers=None):
+    response = requests.get(url, params=params, timeout=timeout, headers=headers or REQUEST_HEADERS)
+    response.raise_for_status()
+    if encoding:
+        response.encoding = encoding
+    return response.text
+
+
 def parse_tencent_quote_payload(payload):
     text = str(payload or '')
     for match in re.finditer(r'v_([^=]+)="([^"]*)";?', text):
@@ -455,20 +446,21 @@ def fetch_quotes(watchlist):
         )
 
         for raw_symbol, fields in parse_tencent_quote_payload(payload):
-            if len(fields) < 4:
+            if len(fields) < 5:
                 continue
 
             symbol = tencent_code_map.get(raw_symbol, from_tencent_symbol(raw_symbol))
             market, currency = infer_market_currency(symbol)
+            fallback = quotes.get(symbol) or {}
             price = safe_float(fields[3], safe_float(fields[4], 0))
-            name = str(fields[1] or symbol).strip()
+            name = str(fields[1] or fallback.get('name') or symbol).strip()
 
             if price <= 0:
                 continue
 
             quotes[symbol] = {
                 'symbol': symbol,
-                'name': name,
+                'name': name or symbol,
                 'market': market,
                 'currency': currency,
                 'price': round(price, 6)
@@ -477,14 +469,37 @@ def fetch_quotes(watchlist):
     return quotes
 
 
-def sum_ttm_dividends_from_yahoo(dividend_events):
-    if not dividend_events:
-        return 0.0
+def iter_series_items(series):
+    if series is None:
+        return []
+    try:
+        return list(series.items())
+    except Exception:
+        pass
+    try:
+        payload = series.to_dict()
+        if isinstance(payload, dict):
+            return list(payload.items())
+    except Exception:
+        pass
+    return []
+
+
+def last_positive_series_value(series):
+    items = iter_series_items(series)
+    for _, raw_value in reversed(items):
+        value = safe_float(raw_value, 0.0)
+        if value > 0:
+            return round(value, 6)
+    return 0.0
+
+
+def sum_ttm_dividends_from_series(series):
     threshold = utc_now() - timedelta(days=365)
     total = 0.0
-    for event in dividend_events.values():
-        amount = safe_float(event.get('amount'), 0.0)
-        event_dt = parse_date_value(event.get('date'))
+    for index_value, raw_value in iter_series_items(series):
+        amount = safe_float(raw_value, 0.0)
+        event_dt = parse_date_value(index_value)
         if amount <= 0 or event_dt is None:
             continue
         if event_dt >= threshold:
@@ -492,202 +507,153 @@ def sum_ttm_dividends_from_yahoo(dividend_events):
     return round(total, 6)
 
 
-def latest_ex_date_from_yahoo(dividend_events):
+def latest_ex_date_from_series(series):
     latest_dt = None
-    for event in (dividend_events or {}).values():
-        event_dt = parse_date_value(event.get('date'))
+    for index_value, raw_value in iter_series_items(series):
+        if safe_float(raw_value, 0.0) <= 0:
+            continue
+        event_dt = parse_date_value(index_value)
         if event_dt is None:
             continue
         latest_dt = event_dt if latest_dt is None else max(latest_dt, event_dt)
     return latest_dt.date().isoformat() if latest_dt else ''
 
 
-def sum_ttm_dividends_from_eodhd(events):
-    threshold = utc_now() - timedelta(days=365)
-    total = 0.0
-    for event in events or []:
-        amount = safe_float(
-            event.get('value'),
-            safe_float(event.get('unadjusted_value'), safe_float(event.get('unadjustedValue'), 0.0))
-        )
-        event_dt = parse_date_value(event.get('date'))
-        if amount <= 0 or event_dt is None:
-            continue
-        if event_dt >= threshold:
-            total += amount
-    return round(total, 6)
-
-
-def latest_ex_date_from_eodhd(events):
-    latest_dt = None
-    for event in events or []:
-        event_dt = parse_date_value(event.get('date'))
-        if event_dt is None:
-            continue
-        latest_dt = event_dt if latest_dt is None else max(latest_dt, event_dt)
-    return latest_dt.date().isoformat() if latest_dt else ''
-
-
-def fetch_yahoo_dividend_metrics(symbol, stale_days):
-    yahoo_symbol = to_yahoo_symbol(symbol)
-    payload = fetch_json(
-        YAHOO_CHART_ENDPOINT.format(symbol=quote(yahoo_symbol, safe='')),
-        params={'range': '2y', 'interval': '1d', 'events': 'div'}
-    )
-    result = ((payload.get('chart') or {}).get('result') or [None])[0] or {}
-    events = (result.get('events') or {}).get('dividends') or {}
-    return build_dividend_payload(
-        dividend_per_share_ttm=sum_ttm_dividends_from_yahoo(events),
-        dividend_source='yahoo',
-        dividend_updated_at=utc_now_iso(),
-        last_ex_date=latest_ex_date_from_yahoo(events),
-        stale_days=stale_days
-    )
-
-
-def fetch_eodhd_dividend_metrics(symbol, api_key, stale_days):
-    eodhd_symbol = to_eodhd_symbol(symbol)
-    from_date = (datetime.now(LOCAL_TZ) - timedelta(days=730)).date().isoformat()
-    payload = fetch_json(
-        EODHD_DIVIDEND_ENDPOINT.format(symbol=quote(eodhd_symbol, safe='')),
-        params={
-            'from': from_date,
-            'api_token': api_key,
-            'fmt': 'json'
-        }
-    )
-    if not isinstance(payload, list):
-        raise ValueError(f'unexpected EODHD payload for {symbol}')
-    return build_dividend_payload(
-        dividend_per_share_ttm=sum_ttm_dividends_from_eodhd(payload),
-        dividend_source='eodhd',
-        dividend_updated_at=utc_now_iso(),
-        last_ex_date=latest_ex_date_from_eodhd(payload),
-        stale_days=stale_days
-    )
-
-
-def build_cached_dividend(previous_quote, config, error_text=''):
-    previous_quote = previous_quote or {}
-    return build_dividend_payload(
-        dividend_per_share_ttm=previous_quote.get('dividendPerShareTtm'),
-        dividend_source='cache',
-        dividend_updated_at=previous_quote.get('dividendUpdatedAt'),
-        last_ex_date=previous_quote.get('lastExDate'),
-        stale_days=config['staleDays'],
-        dividend_fetch_error=error_text
-    )
-
-
-def should_verify_with_eodhd(symbol, yahoo_payload, previous_quote, config, now_local):
-    reasons = []
-    yahoo_value = safe_float((yahoo_payload or {}).get('dividendPerShareTtm'), 0.0)
-    previous_value = safe_float((previous_quote or {}).get('dividendPerShareTtm'), 0.0)
-
-    if yahoo_value <= 0:
-        reasons.append('yahoo-empty')
-
-    if previous_value > 0 and yahoo_value > 0:
-        if relative_change(yahoo_value, previous_value) > config['dividendChangeThreshold']:
-            reasons.append('threshold-change')
-
-    if symbol in set(config['coreSymbols']):
-        reasons.append('core-symbol')
-
-    if now_local.month in set(config['forceVerifyMonths']):
-        reasons.append('force-month')
-
-    return reasons
-
-
-def resolve_dividend_for_symbol(symbol, previous_quote, config, eodhd_api_key, now_local):
-    previous_quote = normalize_quote_entry(symbol, previous_quote or {}, config['staleDays'])
-    yahoo_payload = None
-    eodhd_payload = None
-    yahoo_error = ''
-    eodhd_error = ''
+def resolve_company_name(ticker, previous_quote, symbol):
+    previous_name = str((previous_quote or {}).get('name') or '').strip()
+    if previous_name and previous_name != symbol:
+        return previous_name
 
     try:
-        yahoo_payload = fetch_with_retry(
-            f'yahoo dividend {symbol}',
-            fetch_yahoo_dividend_metrics,
-            symbol,
-            config['staleDays'],
-            retries=2,
-            delay_seconds=1
-        )
-    except Exception as error:
-        yahoo_error = str(error)
-        print(f'yahoo dividend refresh skipped for {symbol}: {error}')
+        info = ticker.get_info()
+        if isinstance(info, dict):
+            for key in ('shortName', 'longName', 'displayName'):
+                value = str(info.get(key) or '').strip()
+                if value:
+                    return value
+    except Exception:
+        pass
 
-    verify_reasons = should_verify_with_eodhd(symbol, yahoo_payload, previous_quote, config, now_local)
-    if eodhd_api_key and verify_reasons:
+    return previous_name or symbol
+
+
+def resolve_currency(ticker, symbol):
+    market, fallback_currency = infer_market_currency(symbol)
+
+    try:
+        fast_info = ticker.fast_info or {}
+        currency = str(fast_info.get('currency') or '').strip().upper()
+        if currency:
+            return currency
+    except Exception:
+        pass
+
+    try:
+        metadata = ticker.history_metadata or {}
+        currency = str(metadata.get('currency') or '').strip().upper()
+        if currency:
+            return currency
+    except Exception:
+        pass
+
+    return fallback_currency
+
+
+def extract_latest_price(ticker, history):
+    for column in ('Close', 'Adj Close'):
         try:
-            eodhd_payload = fetch_with_retry(
-                f'eodhd dividend {symbol}',
-                fetch_eodhd_dividend_metrics,
+            price = last_positive_series_value(history[column])
+        except Exception:
+            price = 0.0
+        if price > 0:
+            return price
+
+    try:
+        fast_info = ticker.fast_info or {}
+        for key in ('lastPrice', 'regularMarketPrice', 'previousClose'):
+            price = safe_float(fast_info.get(key), 0.0)
+            if price > 0:
+                return round(price, 6)
+    except Exception:
+        pass
+
+    return 0.0
+
+
+def build_cached_quote(symbol, previous_quote, stale_days, error_text=''):
+    cached_quote = normalize_quote_entry(symbol, previous_quote or {}, stale_days)
+    market, currency = infer_market_currency(symbol)
+    cached_quote.update({
+        'symbol': symbol,
+        'name': str(cached_quote.get('name') or symbol).strip() or symbol,
+        'market': str(cached_quote.get('market') or market).strip() or market,
+        'currency': str(cached_quote.get('currency') or currency).strip() or currency,
+        'price': round(safe_float(cached_quote.get('price'), 0.0), 6)
+    })
+    cached_quote.update(build_dividend_payload(
+        dividend_per_share_ttm=cached_quote.get('dividendPerShareTtm'),
+        dividend_source='cache',
+        dividend_updated_at=cached_quote.get('dividendUpdatedAt'),
+        last_ex_date=cached_quote.get('lastExDate'),
+        stale_days=stale_days,
+        dividend_fetch_error=error_text
+    ))
+    return cached_quote
+
+
+def fetch_yfinance_snapshot(symbol, previous_quote, stale_days):
+    previous_quote = normalize_quote_entry(symbol, previous_quote or {}, stale_days)
+    ticker = yf.Ticker(to_yfinance_symbol(symbol))
+
+    history = ticker.history(period='10d', interval='1d', auto_adjust=False, actions=False)
+    price = extract_latest_price(ticker, history)
+    if price <= 0:
+        raise ValueError(f'missing yfinance price for {symbol}')
+
+    try:
+        dividends = ticker.dividends
+    except Exception:
+        dividends = None
+
+    market, _ = infer_market_currency(symbol)
+    quote = {
+        'symbol': symbol,
+        'name': resolve_company_name(ticker, previous_quote, symbol),
+        'market': market,
+        'currency': resolve_currency(ticker, symbol),
+        'price': price
+    }
+    quote.update(build_dividend_payload(
+        dividend_per_share_ttm=sum_ttm_dividends_from_series(dividends),
+        dividend_source='yfinance',
+        dividend_updated_at=utc_now_iso(),
+        last_ex_date=latest_ex_date_from_series(dividends),
+        stale_days=stale_days
+    ))
+    return normalize_quote_entry(symbol, quote, stale_days)
+
+
+def fetch_yfinance_snapshots(watchlist, previous_quotes, stale_days):
+    snapshots = {}
+    previous_quotes = previous_quotes or {}
+
+    for symbol in watchlist:
+        previous_quote = previous_quotes.get(symbol) or {}
+        try:
+            snapshots[symbol] = fetch_with_retry(
+                f'yfinance snapshot {symbol}',
+                fetch_yfinance_snapshot,
                 symbol,
-                eodhd_api_key,
-                config['staleDays'],
+                previous_quote,
+                stale_days,
                 retries=2,
                 delay_seconds=1
             )
         except Exception as error:
-            eodhd_error = str(error)
-            print(f'eodhd dividend verify skipped for {symbol}: {error}')
+            print(f'yfinance snapshot refresh skipped for {symbol}: {error}')
+            snapshots[symbol] = build_cached_quote(symbol, previous_quote, stale_days, str(error))
 
-    yahoo_value = safe_float((yahoo_payload or {}).get('dividendPerShareTtm'), 0.0)
-    eodhd_value = safe_float((eodhd_payload or {}).get('dividendPerShareTtm'), 0.0)
-    cached_value = safe_float(previous_quote.get('dividendPerShareTtm'), 0.0)
-
-    # Stage 2 rule:
-    # manual override stays highest in frontend merge;
-    # when verification is triggered and EODHD returns a valid value, EODHD may replace Yahoo;
-    # otherwise Yahoo remains the daily default source.
-    if verify_reasons and eodhd_value > 0:
-        selected = eodhd_payload
-    elif yahoo_value > 0:
-        selected = yahoo_payload
-    elif cached_value > 0:
-        selected = build_cached_dividend(previous_quote, config)
-    elif yahoo_payload is not None:
-        selected = build_dividend_payload(
-            dividend_per_share_ttm=0,
-            dividend_source='yahoo',
-            dividend_updated_at=yahoo_payload.get('dividendUpdatedAt'),
-            last_ex_date=yahoo_payload.get('lastExDate'),
-            stale_days=config['staleDays']
-        )
-    else:
-        selected = build_cached_dividend(previous_quote, config)
-
-    error_parts = []
-    if selected['dividendSource'] == 'cache' and yahoo_payload is not None and yahoo_value <= 0:
-        error_parts.append('Yahoo returned empty dividend result')
-    if yahoo_error:
-        error_parts.append(f'Yahoo: {yahoo_error}')
-    if eodhd_error:
-        error_parts.append(f'EODHD: {eodhd_error}')
-
-    if selected['dividendSource'] == 'cache' and error_parts:
-        selected['dividendFetchError'] = '; '.join(error_parts)[:300]
-
-    return selected
-
-
-def fetch_daily_dividend_metrics(watchlist, previous_quotes, config, eodhd_api_key):
-    metrics = {}
-    now_local = datetime.now(LOCAL_TZ)
-    previous_quotes = previous_quotes or {}
-    for symbol in watchlist:
-        metrics[symbol] = resolve_dividend_for_symbol(
-            symbol,
-            previous_quotes.get(symbol) or {},
-            config,
-            eodhd_api_key,
-            now_local
-        )
-    return metrics
+    return snapshots
 
 
 def fetch_rates():
@@ -715,22 +681,21 @@ def main():
     watchlist = load_symbol_universe()
     previous_snapshot = load_previous_snapshot()
     previous_quotes = previous_snapshot.get('quotes') or {}
-    eodhd_api_key = str(os.getenv('EODHD_API_KEY', '') or '').strip()
 
     quotes = seed_quotes_from_previous(previous_snapshot, watchlist, config['staleDays'])
     rates = {**DEFAULT_RATES, **(previous_snapshot.get('rates') or {})}
 
     try:
-        fresh_quotes = fetch_with_retry('tencent quotes', fetch_quotes, watchlist, retries=3, delay_seconds=2)
+        fresh_quotes = fetch_yfinance_snapshots(watchlist, previous_quotes, config['staleDays'])
         quotes = merge_quote_snapshots(quotes, fresh_quotes, config['staleDays'])
     except Exception as error:
-        print(f'quote refresh skipped: {error}')
+        print(f'yfinance snapshot refresh skipped: {error}')
 
     try:
-        dividend_metrics = fetch_daily_dividend_metrics(watchlist, previous_quotes, config, eodhd_api_key)
-        quotes = merge_quote_snapshots(quotes, dividend_metrics, config['staleDays'])
+        fresh_prices = fetch_with_retry('tencent quotes', fetch_quotes, watchlist, retries=3, delay_seconds=2)
+        quotes = merge_quote_snapshots(quotes, fresh_prices, config['staleDays'])
     except Exception as error:
-        print(f'dividend refresh skipped: {error}')
+        print(f'tencent quote refresh skipped: {error}')
 
     try:
         rates = fetch_with_retry('fx rates', fetch_rates, retries=3, delay_seconds=2)
@@ -742,8 +707,8 @@ def main():
         'provider': {
             'quote': 'tencent-finance',
             'fx': 'frankfurter',
-            'dividend': 'yahoo-finance',
-            'dividendVerify': 'eodhd' if eodhd_api_key else 'disabled'
+            'dividend': 'yfinance',
+            'dividendVerify': 'disabled'
         },
         'updatedAt': utc_now_iso(),
         'rates': rates,

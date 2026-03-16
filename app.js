@@ -10,7 +10,7 @@ const LEGEND_COLLAPSED_COUNT = 8;
 const MASK_AMOUNT = '******';
 const MASK_PRICE = '***.**';
 const DEFAULT_STALE_DAYS = 7;
-const VALID_DIVIDEND_SOURCES = new Set(['yahoo', 'eodhd', 'manual', 'cache']);
+const VALID_DIVIDEND_SOURCES = new Set(['yfinance', 'yahoo', 'eodhd', 'manual', 'cache']);
 const VALID_DIVIDEND_STATUSES = new Set(['manual', 'fresh', 'stale', 'missing']);
 let currentDividendStaleDays = DEFAULT_STALE_DAYS;
 let activeHoldingSwipe = null;
@@ -328,6 +328,39 @@ function normalizeStaleDays(value, fallback = DEFAULT_STALE_DAYS) {
   return Number.isFinite(numeric) && numeric > 0 ? numeric : fallback;
 }
 
+function chunkSymbols(items, size) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+function toTencentSymbol(symbol) {
+  const normalized = normalizeSymbol(symbol);
+  if (!normalized) {
+    return '';
+  }
+  if (normalized.endsWith('.HK')) {
+    return 'hk' + normalized.slice(0, -3).padStart(5, '0');
+  }
+  if (normalized.endsWith('.SH')) {
+    return 'sh' + normalized.slice(0, -3);
+  }
+  if (normalized.endsWith('.SZ')) {
+    return 'sz' + normalized.slice(0, -3);
+  }
+  return 'us' + normalized;
+}
+
+function getRealtimeSymbols() {
+  return Array.from(new Set(
+    state.holdings
+      .map((item) => normalizeSymbol(item.symbol))
+      .filter(Boolean)
+  ));
+}
+
 function parseIsoDate(value) {
   const raw = String(value || '').trim();
   if (!raw) {
@@ -465,6 +498,12 @@ function formatDateLabel(value) {
 
 function getDividendSourceLabel(source) {
   const key = String(source || '').trim().toLowerCase();
+  if (key === 'yfinance') {
+    return 'YFinance';
+  }
+  if (key === 'yahoo') {
+    return 'Yahoo';
+  }
   if (key === 'manual') {
     return '手动';
   }
@@ -474,7 +513,7 @@ function getDividendSourceLabel(source) {
   if (key === 'cache') {
     return '沿用缓存';
   }
-  return 'Yahoo';
+  return 'YFinance';
 }
 
 function getDividendStatusLabel(status) {
@@ -592,41 +631,6 @@ function normalizeSymbol(rawSymbol) {
     return normalizeCnSuffix(value);
   }
   return value;
-}
-
-function toTencentSymbol(rawSymbol) {
-  const symbol = normalizeSymbol(rawSymbol);
-  if (!symbol) {
-    return '';
-  }
-  if (/\.HK$/.test(symbol)) {
-    return `hk${symbol.slice(0, -3).padStart(5, '0')}`;
-  }
-  if (/\.SH$/.test(symbol)) {
-    return `sh${symbol.slice(0, -3)}`;
-  }
-  if (/\.SZ$/.test(symbol)) {
-    return `sz${symbol.slice(0, -3)}`;
-  }
-  return `us${symbol}`;
-}
-
-function fromTencentSymbol(rawSymbol) {
-  const value = String(rawSymbol || '').trim();
-  const lower = value.toLowerCase();
-  if (lower.startsWith('hk')) {
-    return `${value.slice(2).toUpperCase().padStart(5, '0')}.HK`;
-  }
-  if (lower.startsWith('sh')) {
-    return `${value.slice(2).toUpperCase()}.SH`;
-  }
-  if (lower.startsWith('sz')) {
-    return `${value.slice(2).toUpperCase()}.SZ`;
-  }
-  if (lower.startsWith('us')) {
-    return value.slice(2).toUpperCase();
-  }
-  return normalizeSymbol(value);
 }
 
 function chunkItems(items, size) {
@@ -1703,7 +1707,6 @@ async function refreshMarketData(options = {}) {
       const realtimeQuotes = await loadRealtimeQuoteSnapshot();
       if (Object.keys(realtimeQuotes).length) {
         state.quotes = mergeQuotes(state.quotes, realtimeQuotes);
-        state.lastUpdatedAt = new Date().toISOString();
         hasUpdates = true;
       }
     } catch (error) {
@@ -1800,111 +1803,96 @@ function decodeBase64Utf8(value) {
   return new TextDecoder('utf-8').decode(bytes);
 }
 
-function getRealtimeSymbols() {
-  return Array.from(
-    new Set(
-      state.holdings
-        .map((item) => normalizeSymbol(item.symbol))
-        .filter(Boolean)
-    )
-  );
-}
+async function loadTencentQuoteBatch(symbols) {
+  const codes = [];
+  const codeMap = new Map();
 
-function loadTencentQuoteBatch(codeBatch) {
-  return new Promise((resolve, reject) => {
-    if (!codeBatch.length) {
-      resolve({});
+  symbols.forEach((symbol) => {
+    const code = toTencentSymbol(symbol);
+    if (!code) {
+      return;
+    }
+    codeMap.set(code, symbol);
+    codes.push(code);
+  });
+
+  if (!codes.length) {
+    return {};
+  }
+
+  await new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    const timeoutId = window.setTimeout(() => {
+      script.remove();
+      reject(new Error('tencent realtime request timeout'));
+    }, 8000);
+
+    script.async = true;
+    script.src = `${TENCENT_REALTIME_ENDPOINT}${codes.join(',')}&_=${Date.now()}`;
+    script.onload = () => {
+      window.clearTimeout(timeoutId);
+      script.remove();
+      resolve();
+    };
+    script.onerror = () => {
+      window.clearTimeout(timeoutId);
+      script.remove();
+      reject(new Error('tencent realtime request failed'));
+    };
+    document.head.appendChild(script);
+  });
+
+  const quotes = {};
+  codes.forEach((code) => {
+    const key = `v_${code}`;
+    const payload = window[key];
+    try {
+      delete window[key];
+    } catch (error) {
+      window[key] = undefined;
+    }
+
+    if (typeof payload !== 'string') {
       return;
     }
 
-    const script = document.createElement('script');
-    const globalKeys = codeBatch.map((code) => `v_${code}`);
-    const cleanup = () => {
-      window.clearTimeout(timeoutId);
-      script.remove();
-      globalKeys.forEach((key) => {
-        try {
-          delete window[key];
-        } catch (_error) {
-          window[key] = undefined;
-        }
-      });
+    const fields = payload.split('~');
+    if (fields.length < 5) {
+      return;
+    }
+
+    const symbol = codeMap.get(code);
+    if (!symbol) {
+      return;
+    }
+
+    const fallback = inferQuoteFromMap(symbol, state.quotes);
+    const price = safeNumber(fields[3], safeNumber(fields[4], 0));
+    if (price <= 0) {
+      return;
+    }
+
+    quotes[symbol] = {
+      symbol,
+      name: String(fields[1] || fallback.name || symbol).trim() || fallback.name || symbol,
+      market: fallback.market,
+      currency: fallback.currency,
+      price
     };
-
-    const timeoutId = window.setTimeout(() => {
-      cleanup();
-      reject(new Error('tencent quote request timed out'));
-    }, 10000);
-
-    script.async = true;
-    script.charset = 'gb18030';
-    // Tencent returns executable JS, so we load it via <script> instead of fetch().
-    script.src = `${TENCENT_REALTIME_ENDPOINT}${codeBatch.join(',')}&_=${Date.now()}`;
-
-    script.onload = () => {
-      try {
-        const quotes = {};
-        codeBatch.forEach((code) => {
-          const payload = window[`v_${code}`];
-          if (typeof payload !== 'string' || !payload) {
-            return;
-          }
-          const fields = payload.split('~');
-          if (fields.length < 4) {
-            return;
-          }
-
-          const symbol = fromTencentSymbol(code);
-          const fallback = inferQuote(symbol);
-          const price = safeNumber(fields[3], safeNumber(fields[4], fallback.price));
-
-          if (price <= 0) {
-            return;
-          }
-
-          quotes[symbol] = {
-            symbol,
-            name: String(fields[1] || fallback.name || symbol).trim(),
-            market: fallback.market,
-            currency: fallback.currency,
-            price
-          };
-        });
-        resolve(quotes);
-      } catch (error) {
-        reject(error);
-      } finally {
-        cleanup();
-      }
-    };
-
-    script.onerror = () => {
-      cleanup();
-      reject(new Error(`tencent quote request failed for ${codeBatch.join(',')}`));
-    };
-
-    (document.head || document.body).appendChild(script);
   });
+
+  return quotes;
 }
 
 async function loadRealtimeQuoteSnapshot() {
   const symbols = getRealtimeSymbols();
-  if (!symbols.length) {
-    return {};
+  const quotes = {};
+
+  for (const batch of chunkSymbols(symbols, TENCENT_BATCH_SIZE)) {
+    Object.assign(quotes, await loadTencentQuoteBatch(batch));
   }
 
-  const realtimeQuotes = {};
-  const codeBatches = chunkItems(
-    symbols.map((symbol) => toTencentSymbol(symbol)).filter(Boolean),
-    TENCENT_BATCH_SIZE
-  );
-
-  for (const batch of codeBatches) {
-    const batchQuotes = await loadTencentQuoteBatch(batch);
-    Object.assign(realtimeQuotes, batchQuotes);
-  }
-
-  return realtimeQuotes;
+  return quotes;
 }
 
 async function cleanupLegacyCaches() {
