@@ -1,78 +1,110 @@
-# 波普账本网页端
+# 波普账本 Bopup Ledger
 
-这个版本采用纯静态方案：
+纯静态高股息投资组合记账工具，面向移动端优化，无需后端服务器。
 
-- 前端页面读取 `data/market.json`
-- 页面数据按 `market.json -> override.json -> 腾讯实时价格` 顺序合并
-- `GitHub Actions` 每天自动更新一次后台数据
-- `GitHub Pages` 或其他静态托管只负责发布网页文件
+## 架构
 
-项目已经完成两阶段股息架构收口，当前方案以 `dividendPerShareTtm` 为核心字段，后续不要再改动核心字段和优先级规则。
+```
+GitHub Actions（每日自动）
+  → Python 脚本抓取价格、股息、汇率
+  → 写入 data/market.json
+  → 自动提交回仓库
 
-## 当前能力
+GitHub Pages（静态托管）
+  → 页面加载时读取 data/market.json
+  → 合并 data/override.json 手动覆盖
+  → 实时拉取腾讯行情覆盖价格
+  → 所有持仓数据保存在浏览器 localStorage
+```
 
-- 资产总览
-- 公司占比圆环图
-- 核心仓 / 打工仓分布
-- 本地持仓保存
-- 新增 / 删除持仓
-- 数量弹窗编辑
-- 税率弹窗编辑
-- 兼容旧本地 `dividendYieldOverride` 数据（仅历史兼容）
-- 负债扣减总金额
-- 按持仓市值 / 股息率排序
-- 隐私隐藏
-- 页面加载时实时拉取腾讯价格
-- 持仓行显示股息状态点与 tooltip
+前端零构建依赖：一个 `index.html` + 一个 `styles.css` + 一个 `app.js`。
 
-## 关键文件
+## 功能
 
-- `data/market.json`
-- `data/override.json`
-- `config.json`
-- `data/watchlist.json`
-- `scripts/update_market_data.py`
-- `scripts/requirements.txt`
-- `.github/workflows/update-market-data.yml`
+**资产总览**
+- 持仓总金额（人民币换算）、日涨跌额与涨跌幅
+- 年度税后股息总金额、综合股息率
+- USD/CNY、HKD/CNY 实时汇率显示
+- 负债扣减
 
-## 数据职责边界
+**持仓结构**
+- 核心仓 / 打工仓占比分布
+- 公司占比图例列表，支持展开/折叠
+- 点击核心仓或打工仓查看分仓详情（市值、股息、平均股息率）
 
-### `data/market.json`
+**持仓列表**
+- 每只股票显示名称、代码、实时价格、持仓市值、数量、税后股息、股息率、占比
+- 三种排序方式：持仓市值、股息率、股息金额
+- 股息数据状态指示（绿色已更新 / 黄色缓存 / 红色缺失 / 灰色手动覆盖）
+- 点击股息率查看数据来源、最近更新时间、最近除息日
 
-只保存自动同步结果，不混入手动覆盖。
+**持仓管理**
+- 新增持仓（输入代码、数量、选择仓位类型）
+- 左滑删除（触摸手势）
+- 编辑数量、税率、每股 TTM 股息手动覆盖
+- 隐私模式（一键隐藏/显示所有金额）
 
-主要内容：
+**数据同步**
+- 云端同步（通过 GitHub API + Personal Access Token 上传持仓快照）
+- 本地导入/导出 JSON 备份
 
-- 腾讯价格快照
-- 汇率
-- Yahoo 每日股息结果
-- 条件触发后的 EODHD 校验结果
-- 每只股票的股息状态字段
+**交互动画**
+- 持仓卡片列表 stagger 入场动画
+- 左滑删除渐变遮罩过渡
+- 卡片删除退场动画（左滑淡出 + 高度收缩）
+- 刷新按钮旋转加载动画
+- Modal 底部弹出/关闭滑入滑出动画
+- 自定义 Toast 通知（顶部浮层，自动消失）
+- 自定义 Confirm 确认框（底部 sheet，替代系统原生弹窗）
+- 隐私模式切换数字淡出淡入
+- 排序切换列表淡出淡入 + 自动滚回顶部
+- 图例展开 stagger 入场
+- 核心仓/打工仓详情展开动画
+- 资产总览刷新数据过渡
+- 全局按钮触摸反馈（active scale）
+- 消除系统 tap highlight 直角闪框
 
-核心股息字段：
+## 股息计算
 
-- `dividendPerShareTtm`
-- `dividendSource`
-- `dividendUpdatedAt`
-- `lastExDate`
-- `dividendStatus`
+以 `dividendPerShareTtm`（每股 TTM 股息）为唯一核心字段，前端实时计算：
 
-可选错误字段：
+```
+股息率 = dividendPerShareTtm / 实时价格
+税前年度股息 = dividendPerShareTtm × 持股数 × 汇率
+税后年度股息 = 税前年度股息 × (1 - 税率)
+```
 
-- `dividendFetchError`
+股息数据优先级：
 
-### `data/override.json`
+```
+手动覆盖（override.json / 前端编辑）> Yahoo 每日结果 > 旧缓存 > 0
+```
 
-只保存手动覆盖值，不参与自动生成。
+## 文件结构
 
-用途：
+```
+├── index.html                 # 页面入口
+├── styles.css                 # 样式（含响应式和动画）
+├── app.js                     # 全部业务逻辑（单文件架构）
+├── config.json                # 轻量配置（核心股票、过期天数等）
+├── assets/
+│   └── icon.svg               # 网站图标
+├── data/
+│   ├── market.json            # 自动更新的行情快照（价格、股息、汇率）
+│   ├── override.json          # 手动股息覆盖
+│   ├── portfolio.json         # 云端同步的持仓快照
+│   └── watchlist.json         # 观察名单（控制后台更新范围）
+├── scripts/
+│   ├── update_market_data.py  # 后台数据更新脚本
+│   └── requirements.txt       # Python 依赖（requests, yfinance）
+└── serve.ps1                  # 本地开发服务器（PowerShell）
+```
 
-- 手动修正 `dividendPerShareTtm`
-- 记录手动修正原因和时间
+## 数据文件说明
 
-优先级永远最高。
+**data/market.json** — 由 Python 脚本自动生成，不要手动编辑。包含每只股票的价格、每股 TTM 股息、股息来源、更新时间、除息日、股息状态，以及汇率。
 
-示例：
+**data/override.json** — 手动覆盖股息数据，优先级最高。格式：
 
 ```json
 {
@@ -84,18 +116,9 @@
 }
 ```
 
-### `config.json`
+**data/watchlist.json** — 控制后台脚本更新哪些股票。网页端新增的持仓如果需要自动更新，必须同步添加到这个文件。
 
-只保存轻量配置，不保存行情数据。
-
-当前字段：
-
-- `coreSymbols`
-- `dividendChangeThreshold`
-- `staleDays`
-- `forceVerifyMonths`
-
-示例：
+**config.json** — 轻量配置：
 
 ```json
 {
@@ -106,159 +129,24 @@
 }
 ```
 
-## 股息系统最终方案
-
-### 核心字段
-
-股息系统以 `dividendPerShareTtm` 为唯一核心股息字段。
-
-不再把 `dividendYield` 作为核心存储字段或核心计算依据。
-
-### 前端计算口径
-
-前端统一基于以下变量实时计算：
-
-- `dividendPerShareTtm`
-- 实时价格
-- 持股数
-- 汇率
-- 税率
-
-公式：
-
-```text
-当前股息率 = dividendPerShareTtm / currentPrice
-税前年度股息（人民币） = dividendPerShareTtm * shares * fxRate
-税后年度股息（人民币） = 税前年度股息 * (1 - taxRate)
-```
-
-说明：
-
-- 页面中的股息率会随腾讯实时价格变化而实时变化
-- 年度股息按每股股息乘数量计算，不再由“价格 × 股息率”反推
-- 当价格为 0、空值或异常值时，前端会安全回退，不会出现 `NaN` / `Infinity`
-
-### 最终优先级
-
-股息最终优先级固定为：
-
-```text
-manual override > EODHD verified result > Yahoo daily result > cached old value > 0
-```
-
-解释：
-
-- `manual override`：来自 `override.json`
-- `EODHD verified result`：只有命中校验条件且 EODHD 返回有效值时才生效
-- `Yahoo daily result`：默认日常主流程
-- `cached old value`：自动抓取失败时保留旧值
-- `0`：最后兜底
-
-### Yahoo / EODHD 分工
-
-- Yahoo：每日全量更新全部观察名单
-- EODHD：不是主源，只在命中条件时做轻量校验
-- 没有配置 `EODHD_API_KEY` 时，系统自动跳过 EODHD，保持纯 Yahoo 模式正常运行
-
-### EODHD 触发条件
-
-只有满足以下任一情况时才触发 EODHD：
-
-1. Yahoo 返回 0 或空值
-2. Yahoo 相对旧缓存变化超过 `dividendChangeThreshold`
-3. 股票命中 `coreSymbols`
-4. 当前月份命中 `forceVerifyMonths`
-
-### `dividendStatus` 定义
-
-- `manual`：当前结果来自手动覆盖
-- `fresh`：有有效股息数据，且 `dividendUpdatedAt` 仍在 `staleDays` 之内
-- `stale`：保留旧缓存，或虽然有股息数据但更新时间已超过 `staleDays`
-- `missing`：没有有效股息数据
-
-## 自动更新架构
-
-```text
-GitHub Actions
-  -> 每天运行一次 Python 脚本
-  -> 从腾讯接口拉价格快照
-  -> 从 Yahoo 拉股息历史并计算 TTM 每股股息
-  -> 在命中条件时用 EODHD 做轻量校验
-  -> 从 Frankfurter 拉汇率
-  -> 更新 data/market.json
-  -> 自动提交回仓库
-
-GitHub Pages
-  -> 发布静态网页
-  -> 页面刷新时先读取 data/market.json
-  -> 再合并 override.json
-  -> 最后额外拉取一次腾讯实时价格
-  -> 腾讯实时价格只覆盖 price，不会冲掉手动股息
-```
-
 ## 本地预览
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File "C:\bebopZB-web\serve.ps1"
+powershell -ExecutionPolicy Bypass -File serve.ps1
 ```
 
-打开：
+打开 `http://127.0.0.1:4173/`
 
-```text
-http://127.0.0.1:4173/
-```
+## 部署
 
-## GitHub Actions
+推荐使用 GitHub Pages：
 
-工作流文件：
+1. 仓库 Settings → Pages
+2. Source 选择 Deploy from a branch
+3. Branch 选择 main，Folder 选择 / (root)
 
-- `.github/workflows/update-market-data.yml`
+后台数据自动更新需要配置 GitHub Actions 工作流（`.github/workflows/update-market-data.yml`），每日运行 Python 脚本并自动提交 `data/market.json`。
 
-当前行为：
+## 时间标准
 
-- 每天运行一次
-- 更新 `data/market.json`
-- 自动提交最新后台数据
-
-如果你需要启用 EODHD 校验，在 GitHub 仓库里新增一个 Secret：
-
-- `EODHD_API_KEY`
-
-不配置这个 Secret 时，系统会自动跳过 EODHD，不会影响工作流正常运行。
-
-## GitHub Pages 发布
-
-推荐设置：
-
-- `Settings`
-- `Pages`
-- `Build and deployment`
-- `Source`: `Deploy from a branch`
-- `Branch`: `main`
-- `Folder`: `/ (root)`
-
-## 重要限制
-
-### 观察名单限制
-
-自动更新只覆盖 `data/watchlist.json` 里的股票。
-
-也就是说：
-
-- 你在网页里新增了一只股票
-- 如果想让它进入后台每日更新
-- 还需要把它补进 `data/watchlist.json`
-
-### 数据来源
-
-- 实时价格：腾讯股票接口（前端页面加载时拉取）
-- 后台价格快照：腾讯股票接口
-- 汇率：Frankfurter
-- 日常股息主流程：Yahoo
-- 条件校验股息：EODHD（可选）
-
-### 兼容说明
-
-当前仍保留旧 `dividendYieldOverride` 的本地兼容层，只用于兼容旧浏览器本地数据。
-
-它不是当前股息系统的新核心字段，也不应再继续扩展依赖。
+后端 Python 脚本以 UTC 时间写入 `market.json`。前端使用浏览器本地时区显示，在中国大陆等效于东八区。

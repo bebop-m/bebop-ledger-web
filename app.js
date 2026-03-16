@@ -50,7 +50,6 @@ let suppressHoldingClickUntil = 0;
 const UI_FLAGS = {
   titleDotSeparator: true,
   compactFxSummary: true,
-  hideAllocationPie: true,
   bucketSummaryV2: true,
   subtleSortControls: true,
   refinedAccentColors: true,
@@ -102,6 +101,7 @@ const LABELS = {
   waitingForUpdate: '\u7b49\u5f85\u884c\u60c5\u66f4\u65b0',
   sortMarketValue: '\u6301\u4ed3\u5e02\u503c',
   sortDividendYield: '\u80a1\u606f\u7387',
+  sortDividendAmount: '\u80a1\u606f\u91d1\u989d',
   core: '\u6838\u5fc3\u4ed3',
   income: '\u6253\u5de5\u4ed3',
   cancel: '\u53d6\u6d88',
@@ -226,21 +226,82 @@ const refs = {
   appKicker: document.querySelector('.app-kicker'),
   summaryActions: document.querySelector('.panel-bar--spread .text-actions'),
   summaryGrid: document.getElementById('summaryGrid'),
-  companyDonut: document.getElementById('companyDonut'),
   companyLegend: document.getElementById('companyLegend'),
   legendToggle: document.getElementById('legendToggle'),
   bucketTrack: document.getElementById('bucketTrack'),
   chartLayout: document.querySelector('.chart-layout'),
-  donutWrap: document.querySelector('.donut-wrap'),
   marketTimestamp: document.getElementById('marketTimestamp'),
   refreshButton: document.getElementById('refreshButton'),
   addButton: document.getElementById('addButton'),
   iconActions: document.querySelector('.icon-actions'),
   stockList: document.getElementById('stockList'),
   modalRoot: document.getElementById('modalRoot'),
+  confirmRoot: document.getElementById('confirmRoot'),
+  toastContainer: document.getElementById('toastContainer'),
   sortGroup: document.querySelector('.sort-group'),
   sortChips: Array.from(document.querySelectorAll('.sort-chip'))
 };
+
+function showToast(message, options = {}) {
+  const { type = 'info', duration = 2200 } = options;
+  const el = document.createElement('div');
+  el.className = `toast${type === 'error' ? ' is-error' : type === 'success' ? ' is-success' : ''}`;
+  el.textContent = message;
+  refs.toastContainer.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('is-leaving');
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+  }, duration);
+}
+
+function showConfirm(message, options = {}) {
+  const { sub = '', okLabel, cancelLabel, danger = false } = options;
+  return new Promise((resolve) => {
+    const okText = okLabel || LABELS.save || '\u786e\u8ba4';
+    const cancelText = cancelLabel || LABELS.cancel || '\u53d6\u6d88';
+    refs.confirmRoot.innerHTML = `
+      <div class="confirm-mask"></div>
+      <section class="confirm-sheet" role="alertdialog" aria-modal="true">
+        <p class="confirm-message">${escapeHtml(message)}</p>
+        ${sub ? `<p class="confirm-sub">${escapeHtml(sub)}</p>` : ''}
+        <div class="confirm-actions">
+          <button class="confirm-button confirm-button--cancel" type="button" data-confirm="cancel">${escapeHtml(cancelText)}</button>
+          <button class="confirm-button ${danger ? 'confirm-button--danger' : 'confirm-button--ok'}" type="button" data-confirm="ok">${escapeHtml(okText)}</button>
+        </div>
+      </section>
+    `;
+    document.body.classList.add('modal-open');
+    let settled = false;
+    function cleanup(result) {
+      if (settled) return;
+      settled = true;
+      refs.confirmRoot.removeEventListener('click', handleClick);
+      const mask = refs.confirmRoot.querySelector('.confirm-mask');
+      const sheet = refs.confirmRoot.querySelector('.confirm-sheet');
+      if (mask && sheet) {
+        mask.classList.add('is-closing');
+        sheet.classList.add('is-closing');
+        sheet.addEventListener('animationend', () => {
+          refs.confirmRoot.innerHTML = '';
+          document.body.classList.remove('modal-open');
+          resolve(result);
+        }, { once: true });
+      } else {
+        refs.confirmRoot.innerHTML = '';
+        document.body.classList.remove('modal-open');
+        resolve(result);
+      }
+    }
+    function handleClick(event) {
+      const mask = event.target.closest('.confirm-mask');
+      if (mask) { cleanup(false); return; }
+      const btn = event.target.closest('[data-confirm]');
+      if (!btn) return;
+      cleanup(btn.dataset.confirm === 'ok');
+    }
+    refs.confirmRoot.addEventListener('click', handleClick);
+  });
+}
 
 let sortToggleButton = null;
 
@@ -909,7 +970,7 @@ function applySnapshot(snapshot) {
   state.rates = { ...DEFAULT_RATES, ...((snapshot && snapshot.rates) || {}) };
   state.nextId = Math.max(maxLocalId + 1, Math.floor(safeNumber(snapshot && snapshot.nextId, defaults.nextId)));
   state.showAmounts = snapshot && snapshot.showAmounts === false ? false : true;
-  state.sortField = snapshot && snapshot.sortField === 'effectiveYield' ? 'effectiveYield' : 'marketValueCny';
+  state.sortField = snapshot && ['effectiveYield', 'netAnnualDividendCny'].includes(snapshot.sortField) ? snapshot.sortField : 'marketValueCny';
   state.sortDirection = snapshot && snapshot.sortDirection === 'asc' ? 'asc' : 'desc';
   state.legendExpanded = Boolean(snapshot && snapshot.legendExpanded);
   state.liabilityCny = Math.max(0, safeNumber(snapshot && snapshot.liabilityCny, 0));
@@ -971,7 +1032,7 @@ function buildPortfolioSnapshot() {
       Math.floor(safeNumber(persisted.nextId, 1))
     ),
     showAmounts: persisted.showAmounts !== false,
-    sortField: persisted.sortField === 'effectiveYield' ? 'effectiveYield' : 'marketValueCny',
+    sortField: ['effectiveYield', 'netAnnualDividendCny'].includes(persisted.sortField) ? persisted.sortField : 'marketValueCny',
     sortDirection: persisted.sortDirection === 'asc' ? 'asc' : 'desc',
     legendExpanded: Boolean(persisted.legendExpanded),
     liabilityCny: Math.max(0, safeNumber(persisted.liabilityCny, 0)),
@@ -1198,29 +1259,6 @@ function renderSummary(summary) {
     `;
 }
 
-function renderDonut(segments) {
-  if (refs.donutWrap && refs.chartLayout) {
-    refs.donutWrap.hidden = UI_FLAGS.hideAllocationPie;
-    refs.chartLayout.classList.toggle('is-legend-only', UI_FLAGS.hideAllocationPie);
-  }
-  if (UI_FLAGS.hideAllocationPie) {
-    return;
-  }
-  const total = segments.reduce((sum, item) => sum + item.value, 0);
-  if (!segments.length || total <= 0) {
-    refs.companyDonut.style.background = 'conic-gradient(#dfe5ee 0deg, #dfe5ee 360deg)';
-    return;
-  }
-  let start = 0;
-  const stops = segments.map((segment) => {
-    const end = start + (segment.value / total) * 360;
-    const piece = `${segment.color} ${start.toFixed(1)}deg ${end.toFixed(1)}deg`;
-    start = end;
-    return piece;
-  });
-  refs.companyDonut.style.background = `conic-gradient(${stops.join(', ')})`;
-}
-
 function renderLegend(segments) {
   const total = segments.reduce((sum, item) => sum + item.value, 0) || 1;
   const defaultVisible = UI_FLAGS.allocationLegendThresholdEnabled
@@ -1319,6 +1357,12 @@ function renderBuckets(segments, holdings, summary) {
   `).join('');
 }
 
+function getSortFieldLabel(field) {
+  if (field === 'effectiveYield') return LABELS.sortDividendYield;
+  if (field === 'netAnnualDividendCny') return LABELS.sortDividendAmount;
+  return LABELS.sortMarketValue;
+}
+
 function renderSortChips() {
   if (refs.sortGroup) {
     refs.sortGroup.classList.toggle('sort-group--subtle', UI_FLAGS.subtleSortControls);
@@ -1340,7 +1384,7 @@ function renderSortChips() {
     }
     sortToggleButton.classList.toggle('is-active', state.sortMenuOpen);
     sortToggleButton.setAttribute('aria-expanded', state.sortMenuOpen ? 'true' : 'false');
-    sortToggleButton.title = `${UI_TEXT.sort} \u00b7 ${state.sortField === 'effectiveYield' ? LABELS.sortDividendYield : LABELS.sortMarketValue}`;
+    sortToggleButton.title = `${UI_TEXT.sort} \u00b7 ${getSortFieldLabel(state.sortField)}`;
     sortToggleButton.innerHTML = state.sortDirection === 'asc'
       ? `
         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1358,7 +1402,7 @@ function renderSortChips() {
   refs.sortChips.forEach((chip) => {
     const field = chip.dataset.sortField;
     const isActive = field === state.sortField;
-    const label = field === 'effectiveYield' ? LABELS.sortDividendYield : LABELS.sortMarketValue;
+    const label = getSortFieldLabel(field);
     const arrow = isActive ? (state.sortDirection === 'desc' ? '\u2193' : '\u2191') : '';
     chip.classList.toggle('is-active', isActive);
     chip.hidden = false;
@@ -1645,12 +1689,12 @@ function handleModalSave() {
     const bucket = document.getElementById('modalBucketInput').value === 'income' ? 'income' : 'core';
 
     if (!symbol) {
-      window.alert(LABELS.missingSymbol);
+      showToast(LABELS.missingSymbol, { type: 'error' });
       return;
     }
 
     if (state.holdings.some((item) => normalizeSymbol(item.symbol) === symbol)) {
-      window.alert(`${symbol} ${LABELS.duplicateHolding}`);
+      showToast(`${symbol} ${LABELS.duplicateHolding}`, { type: 'error' });
       return;
     }
 
@@ -1697,7 +1741,7 @@ async function syncPortfolioToCloud() {
   if (!token) {
     token = promptGithubToken();
     if (!token) {
-      window.alert(LABELS.syncTokenInvalid);
+      showToast(LABELS.syncTokenInvalid, { type: 'error' });
       return;
     }
   }
@@ -1712,7 +1756,7 @@ async function syncPortfolioToCloud() {
     if (restored) {
       await refreshMarketData({ silent: true });
       renderApp();
-      window.alert(LABELS.cloudRestored);
+      showToast(LABELS.cloudRestored, { type: 'success' });
       return;
     }
   }
@@ -1760,10 +1804,10 @@ async function syncPortfolioToCloud() {
       throw new Error(errorData.message || `HTTP ${response.status}`);
     }
 
-    window.alert(LABELS.syncSuccess);
+    showToast(LABELS.syncSuccess, { type: 'success' });
   } catch (error) {
     console.warn('cloud sync failed', error);
-    window.alert(LABELS.syncFailed);
+    showToast(LABELS.syncFailed, { type: 'error' });
   }
 }
 
@@ -1813,7 +1857,7 @@ function exportPortfolioSnapshot() {
     URL.revokeObjectURL(url);
   } catch (error) {
     console.warn('export failed', error);
-    window.alert(LABELS.exportFailed);
+    showToast(LABELS.exportFailed, { type: 'error' });
   }
 }
 
@@ -1839,7 +1883,8 @@ async function handleImportFile(event) {
   }
 
   try {
-    if (!window.confirm(LABELS.importConfirm)) {
+    const confirmed = await showConfirm(LABELS.importConfirm, { okLabel: '\u786e\u8ba4\u5bfc\u5165', cancelLabel: LABELS.cancel });
+    if (!confirmed) {
       return;
     }
     const text = await file.text();
@@ -1848,7 +1893,7 @@ async function handleImportFile(event) {
     await refreshMarketData({ silent: true });
   } catch (error) {
     console.warn('import failed', error);
-    window.alert(LABELS.importFailed);
+    showToast(LABELS.importFailed, { type: 'error' });
   } finally {
     refs.importFileInput.value = '';
   }
@@ -1960,11 +2005,17 @@ async function refreshMarketData(options = {}) {
     }
 
     saveState();
-    renderApp();
+    refs.summaryGrid.classList.add('is-updating');
+    setTimeout(() => {
+      renderApp();
+      requestAnimationFrame(() => {
+        refs.summaryGrid.classList.remove('is-updating');
+      });
+    }, 180);
   } catch (error) {
     console.warn('refresh failed', error);
     if (!silent) {
-      window.alert(LABELS.refreshFailed);
+      showToast(LABELS.refreshFailed, { type: 'error' });
     }
   } finally {
     state.syncing = false;
@@ -2175,7 +2226,6 @@ function renderApp() {
 
   document.body.classList.toggle('ui-refined-accent', UI_FLAGS.refinedAccentColors);
   renderSummary(summary);
-  renderDonut(companySegments);
   renderLegend(companySegments);
   renderBuckets(bucketSegments, summary.holdings, summary);
   renderSortChips();
@@ -2241,6 +2291,7 @@ refs.sortChips.forEach((chip) => {
         renderApp();
         requestAnimationFrame(() => {
           refs.stockList.classList.remove('is-resorting');
+          refs.stockList.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       }, 150);
       return;
@@ -2257,6 +2308,7 @@ refs.sortChips.forEach((chip) => {
       renderApp();
       requestAnimationFrame(() => {
         refs.stockList.classList.remove('is-resorting');
+        refs.stockList.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }, 150);
   });
@@ -2354,22 +2406,23 @@ refs.stockList.addEventListener('click', (event) => {
   const action = button.dataset.action;
 
   if (action === 'delete') {
-    if (!window.confirm(`${LABELS.deleteConfirm}\n${holding.symbol}`)) {
-      return;
-    }
-    const wrapper = targetItem.closest('.holding-swipe');
-    if (wrapper) {
-      wrapper.classList.add('is-deleting');
-      wrapper.addEventListener('animationend', () => {
+    const holdingName = computedHolding ? computedHolding.name : holding.symbol;
+    showConfirm(LABELS.deleteConfirm, { sub: holdingName, okLabel: '\u5220\u9664', danger: true, cancelLabel: LABELS.cancel }).then((confirmed) => {
+      if (!confirmed) return;
+      const wrapper = refs.stockList.querySelector(`.holding-swipe[data-id="${localId}"]`);
+      if (wrapper) {
+        wrapper.classList.add('is-deleting');
+        wrapper.addEventListener('animationend', () => {
+          state.holdings = state.holdings.filter((item) => item.localId !== localId);
+          saveState();
+          renderApp();
+        }, { once: true });
+      } else {
         state.holdings = state.holdings.filter((item) => item.localId !== localId);
         saveState();
         renderApp();
-      }, { once: true });
-    } else {
-      state.holdings = state.holdings.filter((item) => item.localId !== localId);
-      saveState();
-      renderApp();
-    }
+      }
+    });
     return;
   }
 

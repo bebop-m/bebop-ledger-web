@@ -85,9 +85,6 @@
           </header>
           <div class="chart-shell">
             <div class="chart-layout">
-              <div class="donut-wrap">
-                <div id="companyDonut" class="company-donut" aria-hidden="true"></div>
-              </div>
               <div class="legend-wrap">
                 <div id="companyLegend" class="legend-list"></div>
                 <button
@@ -111,6 +108,7 @@
             <div class="sort-group">
               <button class="sort-chip" type="button" data-sort-field="marketValueCny"></button>
               <button class="sort-chip" type="button" data-sort-field="effectiveYield"></button>
+              <button class="sort-chip" type="button" data-sort-field="netAnnualDividendCny"></button>
             </div>
             <div class="icon-actions">
               <button
@@ -162,6 +160,8 @@
     </div>
 
     <div id="modalRoot"></div>
+    <div id="confirmRoot"></div>
+    <div id="toastContainer" class="toast-container"></div>
     <input id="importFileInput" type="file" accept="application/json" hidden>
 
     <script src="./app.js"></script>
