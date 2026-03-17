@@ -13,7 +13,7 @@ export const GITHUB_MARKET_WORKFLOW_DISPATCH_API = `https://api.github.com/repos
 export const GITHUB_TOKEN_STORAGE_KEY = 'bebop-ledger-github-token-v2';
 export const TENCENT_REALTIME_ENDPOINT = 'https://qt.gtimg.cn/q=';
 export const TENCENT_BATCH_SIZE = 60;
-export const LEGEND_COLLAPSED_COUNT = 5;
+export const LEGEND_COLLAPSED_COUNT = 8;
 export const LEGEND_TOGGLE_ANIMATION_MS = 220;
 export const MASK_AMOUNT = '******';
 export const MASK_PRICE = '***.**';

@@ -122,7 +122,7 @@ function getLegendSegmentKey(seg, i) {
 function getLegendViewModel(segments) {
   const total = segments.reduce((s, i) => s + i.value, 0) || 1;
   const vis = segments.filter((s) => s.value / total >= ALLOCATION_LEGEND_MIN_WEIGHT);
-  const cc = Math.max(Math.min(LEGEND_COLLAPSED_COUNT, segments.length), vis.length);
+  const cc = (vis.length ? vis : segments.slice(0, LEGEND_COLLAPSED_COUNT)).length;
   return { total, collapsedCount: cc, canToggleLegend: cc < segments.length };
 }
 
