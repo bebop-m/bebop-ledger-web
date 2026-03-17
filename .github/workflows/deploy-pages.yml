@@ -29,10 +29,9 @@ jobs:
 
       - name: Prepare deploy directory
         run: |
-          mkdir -p _site/data _site/src _site/assets
+          mkdir -p _site/data
           cp index.html styles.css config.json _site/
-          cp -r src/ _site/src/
-          cp -r assets/ _site/assets/
+          cp -r src assets _site/
           cp data/market.json data/watchlist.json data/override.json _site/data/
           touch _site/.nojekyll
 
