@@ -127,7 +127,8 @@ function getLegendViewModel(segments) {
 
 function getLegendRowMarkup(seg, pct, index, cc, opts = {}) {
   const { animate = true } = opts;
-  return `<div class="legend-row${animate ? ' is-entering' : ''}${index >= cc ? ' legend-row--collapsible' : ''}" data-legend-key="${escapeHtml(getLegendSegmentKey(seg, index))}" style="animation-delay:${index * LEGEND_ENTER_STAGGER_MS}ms">
+  const collapsible = index >= cc;
+  return `<div class="legend-row${animate && !collapsible ? ' is-entering' : ''}${collapsible ? ' legend-row--collapsible' : ''}" data-legend-key="${escapeHtml(getLegendSegmentKey(seg, index))}" style="animation-delay:${index * LEGEND_ENTER_STAGGER_MS}ms">
     <div class="legend-row-shell"><div class="legend-main"><span class="legend-dot" style="background:${seg.color}"></span><span class="legend-label">${escapeHtml(seg.label)}</span></div>
     <span class="legend-value">${(pct * 100).toFixed(1)}%</span></div></div>`;
 }
