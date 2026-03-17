@@ -7,7 +7,7 @@ import {
 } from './utils.js';
 import {
   MASK_AMOUNT, MASK_PRICE, LABELS, UI_TEXT,
-  LEGEND_COLLAPSED_COUNT, LEGEND_TOGGLE_ANIMATION_MS, LEGEND_ENTER_STAGGER_MS,
+  LEGEND_COLLAPSED_COUNT, LEGEND_ENTER_STAGGER_MS,
   HOLDING_ENTER_STAGGER_MS, HOLDING_ENTER_STAGGER_MAX_MS, TOOLTIP_FALLBACK_WIDTH,
   TOOLTIP_GAP, BUCKET_CHIP_COMPACT_THRESHOLD, HOLDING_REMOVAL_FALLBACK_MS,
   HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD
@@ -142,11 +142,6 @@ function syncLegendRow(row, seg, pct, index, opts = {}) {
   return true;
 }
 
-function keepLegendToggleStable(prevTop) {
-  if (!Number.isFinite(prevTop)) return;
-  const adjust = () => { const d = refs.legendToggle.getBoundingClientRect().top - prevTop; if (Math.abs(d) > 1) window.scrollBy(0, d); };
-  requestAnimationFrame(() => { adjust(); window.setTimeout(adjust, LEGEND_TOGGLE_ANIMATION_MS + 40); });
-}
 
 export function applyLegendExpandState(opts = {}) {
   const { preserveScroll = false, toggleTop = 0 } = opts;
@@ -157,7 +152,10 @@ export function applyLegendExpandState(opts = {}) {
   refs.legendToggle.hidden = !v.canToggleLegend;
   refs.legendToggle.textContent = state.legendExpanded ? LABELS.collapseLegend
     : `${LABELS.expandLegend} ${segments.length} ${LABELS.itemsUnit}`;
-  if (preserveScroll) keepLegendToggleStable(toggleTop);
+  if (preserveScroll && Number.isFinite(toggleTop)) {
+    const d = refs.legendToggle.getBoundingClientRect().top - toggleTop;
+    if (Math.abs(d) > 1) window.scrollBy(0, d);
+  }
 }
 
 export function renderLegendView(segments, opts = {}) {
