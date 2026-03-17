@@ -153,6 +153,30 @@ export function applyLegendExpandState(opts = {}) {
   const { preserveScroll = false, toggleTop = 0 } = opts;
   const rows = Array.from(refs.companyLegend.querySelectorAll('.legend-row--collapsible'));
 
+  /* Measure true shell heights: if rows are collapsed, temporarily reveal them
+     off-screen so getBoundingClientRect returns real values. */
+  const needMeasure = rows.some((r) => r.classList.contains('is-collapsed'));
+  if (needMeasure && state.legendExpanded) {
+    rows.forEach((r) => {
+      r.style.transition = 'none';
+      r.classList.remove('is-collapsed');
+    });
+    refs.companyLegend.getBoundingClientRect();          // force layout
+  }
+
+  rows.forEach((row) => {
+    const shell = row.querySelector('.legend-row-shell');
+    const h = shell ? Math.max(Math.ceil(shell.getBoundingClientRect().height), 18) : Math.max(row.scrollHeight, 18);
+    row.style.setProperty('--legend-row-shell-height', `${h}px`);
+  });
+
+  if (needMeasure && state.legendExpanded) {
+    /* Snap back to collapsed so the transition can play from 0 → target */
+    rows.forEach((r) => r.classList.add('is-collapsed'));
+    refs.companyLegend.getBoundingClientRect();          // force layout
+    rows.forEach((r) => r.style.transition = '');
+  }
+
   rows.forEach((row) => {
     row.classList.toggle('is-collapsed', !state.legendExpanded);
     row.setAttribute('aria-hidden', state.legendExpanded ? 'false' : 'true');
