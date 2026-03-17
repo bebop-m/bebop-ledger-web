@@ -1,7 +1,12 @@
 node_modules/
 _site/
+dist/
 .DS_Store
 Thumbs.db
 *.log
 .codex-tmp/
 tools/nodejs/
+
+# 私有持仓 —— 绝不允许进入公开仓库
+data/portfolio.json
+data/portfolio_snapshot.json
