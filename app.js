@@ -1424,6 +1424,7 @@ function getSortFieldLabel(field) {
 }
 
 function renderSortChips() {
+  const listHeader = refs.sortGroup ? refs.sortGroup.closest('.panel-bar--list') : null;
   if (refs.sortGroup) {
     refs.sortGroup.classList.toggle('sort-group--subtle', UI_FLAGS.subtleSortControls);
     refs.sortGroup.dataset.open = state.sortMenuOpen ? 'true' : 'false';
@@ -1434,6 +1435,9 @@ function renderSortChips() {
       refs.sortGroup.hidden = false;
       refs.sortGroup.classList.remove('is-collapsed');
     }
+  }
+  if (listHeader) {
+    listHeader.classList.toggle('is-sort-open', UI_FLAGS.subtleSortControls && state.sortMenuOpen);
   }
   if (sortToggleButton) {
     sortToggleButton.hidden = false;

@@ -191,7 +191,16 @@ svg {
 }
 
 .panel-bar--list {
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: 10px;
+  row-gap: 10px;
+  transition: padding-bottom var(--motion-base) var(--ease-soft);
+}
+
+.panel-bar--list.is-sort-open {
+  padding-bottom: 44px;
 }
 
 .panel-title {
@@ -871,8 +880,17 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .list-heading {
-  margin-right: auto;
+  display: grid;
+  align-content: start;
+  gap: 2px;
   min-width: 0;
+}
+
+#marketTimestamp {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sort-group {
@@ -882,6 +900,9 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .icon-actions {
   position: relative;
   overflow: visible;
+  justify-content: flex-end;
+  align-self: start;
+  min-width: 44px;
 }
 
 .sort-group.sort-group--subtle {
@@ -892,18 +913,22 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .sort-group.sort-group--subtle.is-collapsed {
   opacity: 0;
   pointer-events: none;
-  transform: translateX(8px);
-  position: absolute;
+  transform: translate3d(0, -4px, 0) scale(0.98);
   visibility: hidden;
 }
 
 .sort-group.sort-group--subtle:not(.is-collapsed) {
   opacity: 1;
-  transform: translateX(0);
+  transform: translate3d(0, 0, 0) scale(1);
 }
 
 .icon-actions > .sort-group.sort-group--subtle {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 3;
   width: auto;
+  max-width: min(calc(100vw - 56px), 360px);
   flex-wrap: nowrap;
   order: 0;
   gap: 6px;
@@ -1902,6 +1927,10 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     order: 0;
     grid-column: auto;
     grid-row: auto;
+  }
+
+  .panel-bar--list.is-sort-open {
+    padding-bottom: 42px;
   }
 
   .legend-list {
