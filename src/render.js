@@ -7,7 +7,7 @@ import {
 } from './utils.js';
 import {
   MASK_AMOUNT, MASK_PRICE, LABELS, UI_TEXT,
-  LEGEND_COLLAPSED_COUNT, LEGEND_TOGGLE_ANIMATION_MS, LEGEND_ENTER_STAGGER_MS,
+  LEGEND_COLLAPSED_COUNT, LEGEND_ENTER_STAGGER_MS,
   HOLDING_ENTER_STAGGER_MS, HOLDING_ENTER_STAGGER_MAX_MS, TOOLTIP_FALLBACK_WIDTH,
   TOOLTIP_GAP, BUCKET_CHIP_COMPACT_THRESHOLD, HOLDING_REMOVAL_FALLBACK_MS,
   HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD
@@ -142,22 +142,29 @@ function syncLegendRow(row, seg, pct, index, opts = {}) {
   return true;
 }
 
-function keepLegendToggleStable(prevTop) {
-  if (!Number.isFinite(prevTop)) return;
-  const adjust = () => { const d = refs.legendToggle.getBoundingClientRect().top - prevTop; if (Math.abs(d) > 1) window.scrollBy(0, d); };
-  requestAnimationFrame(() => { adjust(); window.setTimeout(adjust, LEGEND_TOGGLE_ANIMATION_MS + 40); });
+function updateLegendToggleText(segments) {
+  refs.legendToggle.textContent = state.legendExpanded ? LABELS.collapseLegend
+    : `${LABELS.expandLegend} ${segments.length} ${LABELS.itemsUnit}`;
 }
 
 export function applyLegendExpandState(opts = {}) {
   const { preserveScroll = false, toggleTop = 0 } = opts;
   const segments = getCompanySegments(computeHoldings().holdings);
   const v = getLegendViewModel(segments);
-  const visible = state.legendExpanded ? segments : segments.slice(0, v.collapsedCount);
-  refs.companyLegend.innerHTML = visible.map((s, i) => getLegendRowMarkup(s, s.value / v.total, i, { animate: false })).join('');
+  if (state.legendExpanded) {
+    for (let i = refs.companyLegend.querySelectorAll('.legend-row').length; i < segments.length; i++) {
+      refs.companyLegend.insertAdjacentHTML('beforeend', getLegendRowMarkup(segments[i], segments[i].value / v.total, i, { animate: false }));
+    }
+  } else {
+    const rows = Array.from(refs.companyLegend.querySelectorAll('.legend-row'));
+    for (let i = rows.length - 1; i >= v.collapsedCount; i--) rows[i].remove();
+    if (preserveScroll && Number.isFinite(toggleTop)) {
+      const d = refs.legendToggle.getBoundingClientRect().top - toggleTop;
+      if (Math.abs(d) > 1) window.scrollBy(0, d);
+    }
+  }
   refs.legendToggle.hidden = !v.canToggleLegend;
-  refs.legendToggle.textContent = state.legendExpanded ? LABELS.collapseLegend
-    : `${LABELS.expandLegend} ${segments.length} ${LABELS.itemsUnit}`;
-  if (preserveScroll) keepLegendToggleStable(toggleTop);
+  updateLegendToggleText(segments);
 }
 
 export function renderLegendView(segments, opts = {}) {
@@ -166,7 +173,7 @@ export function renderLegendView(segments, opts = {}) {
   const visible = state.legendExpanded ? segments : segments.slice(0, v.collapsedCount);
   refs.companyLegend.innerHTML = visible.map((s, i) => getLegendRowMarkup(s, s.value / v.total, i, { animate })).join('');
   refs.legendToggle.hidden = !v.canToggleLegend;
-  if (v.canToggleLegend) refs.legendToggle.textContent = state.legendExpanded ? LABELS.collapseLegend : `${LABELS.expandLegend} ${segments.length} ${LABELS.itemsUnit}`;
+  if (v.canToggleLegend) updateLegendToggleText(segments);
 }
 
 export function patchLegendView(segments) {
