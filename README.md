@@ -62,8 +62,8 @@ Update Market Data
   -> 写入公开仓库 data/market.json
 
 Deploy Pages
-  -> 将公开仓库代码、src/ 和 data/ 目录打包部署到 GitHub Pages
-  -> 在 Update Market Data 成功后自动重新部署
+  -> 白名单复制：src/、assets/ 和 data/ 下三个公开文件部署到 GitHub Pages
+  -> update-market-data push market.json 到 main 后自动触发（唯一路径，不重复）
 
 前端页面
   -> 优先读取站点上的 data/market.json
@@ -246,10 +246,29 @@ python -m http.server 8080
 ### 工作流
 
 - `update-market-data.yml`
-  负责更新公开仓库里的 `data/market.json`
+  负责更新公开仓库里的 `data/market.json`，完成后 push 到 main
 
 - `deploy-pages.yml`
-  负责部署页面（复制 `index.html`、`styles.css`、`config.json`、`src/`、`assets/`、`data/` 到 `_site/`），并会在 `Update Market Data` 成功后自动再次部署
+  负责部署页面，只监听 `push` 和 `workflow_dispatch`。update-market-data push 到 main 后自动触发一次部署，不会重复
+
+部署链路：
+
+```text
+update-market-data 完成 → push market.json → 触发 deploy-pages（唯一路径）
+```
+
+### 部署白名单
+
+`deploy-pages.yml` 使用白名单复制，只有以下文件会进入 GitHub Pages：
+
+```text
+index.html / styles.css / config.json
+src/（全部 JS 模块）
+assets/（图标）
+data/market.json / data/watchlist.json / data/override.json
+```
+
+`data/portfolio.json` 和其他私有文件即使不小心出现在仓库中，也不会被部署。
 
 ### 推荐的同步 Token 权限
 
@@ -273,6 +292,8 @@ python -m http.server 8080
 
 ### 安全
 
+- `.gitignore` 明确屏蔽 `data/portfolio.json` 和 `data/portfolio_snapshot.json`，防止私有持仓被意外提交到公开仓库
+- `deploy-pages.yml` 使用白名单复制，即使私有文件出现在仓库中也不会部署到 GitHub Pages
 - HTML 输出统一通过 `escapeHtml()` 转义，使用单次正则 + 映射表
 - 隐私模式在 JS 层面替换 DOM 文本为 mask 值，CSS 层同时切换 `privacy-hidden` 类作为瞬时视觉遮罩
 - GitHub Token 存储在 localStorage，仅当前域可访问
@@ -282,6 +303,7 @@ python -m http.server 8080
 
 - 页面默认模板和真实持仓是两套概念
 - `watchlist.json` 是公共观察池，不是私有持仓快照
-- 私有真实持仓不再放在公开仓库里
-- `Update Market Data` 更新后，Pages 也会自动重新部署
+- 私有真实持仓不在公开仓库中（`.gitignore` 拦截 + 部署白名单双重保障）
+- `Update Market Data` push 到 main 后触发 deploy，单条链路，不重复
+- 如果公开仓库历史 commit 中残留过 `portfolio.json`，需要用 `git filter-repo` 彻底清除
 - 腾讯实时行情通过 JSONP script 注入获取，存在潜在的 CDN 安全风险，但目前没有更好的免费替代方案
