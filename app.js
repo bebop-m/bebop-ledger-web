@@ -1563,6 +1563,53 @@ function syncRenderedHoldings(holdings) {
   });
 }
 
+function captureHoldingPositions(excludedId = 0) {
+  const positions = new Map();
+  refs.stockList.querySelectorAll('.holding-swipe[data-id]').forEach((wrapper) => {
+    const id = safeNumber(wrapper.dataset.id, 0);
+    if (!id || id === excludedId) {
+      return;
+    }
+    positions.set(id, wrapper.getBoundingClientRect().top);
+  });
+  return positions;
+}
+
+function animateHoldingReflow(previousPositions) {
+  if (!(previousPositions instanceof Map) || previousPositions.size === 0) {
+    return;
+  }
+
+  const wrappers = Array.from(refs.stockList.querySelectorAll('.holding-swipe[data-id]'));
+  const moved = [];
+
+  wrappers.forEach((wrapper) => {
+    const id = safeNumber(wrapper.dataset.id, 0);
+    const previousTop = previousPositions.get(id);
+    if (typeof previousTop !== 'number') {
+      return;
+    }
+    const currentTop = wrapper.getBoundingClientRect().top;
+    const deltaY = previousTop - currentTop;
+    if (Math.abs(deltaY) < 1) {
+      return;
+    }
+    wrapper.style.transition = 'none';
+    wrapper.style.transform = `translateY(${deltaY}px)`;
+    moved.push(wrapper);
+  });
+
+  if (!moved.length) {
+    return;
+  }
+
+  refs.stockList.getBoundingClientRect();
+  moved.forEach((wrapper) => {
+    wrapper.style.transition = '';
+    wrapper.style.transform = '';
+  });
+}
+
 /* ----------------------------------------------------------------------------
  *  [11] SWIPE & INTERACTION HELPERS
  * -------------------------------------------------------------------------- */
@@ -1613,8 +1660,8 @@ function animateHoldingRemoval(wrapper, onComplete) {
   if (activeHoldingSwipe && activeHoldingSwipe.wrapper === wrapper) {
     activeHoldingSwipe = null;
   }
-  const initialHeight = wrapper.offsetHeight;
-  if (!initialHeight) {
+  const card = wrapper.querySelector('.holding-card');
+  if (!card) {
     onComplete();
     return;
   }
@@ -1625,25 +1672,20 @@ function animateHoldingRemoval(wrapper, onComplete) {
       return;
     }
     settled = true;
-    wrapper.removeEventListener('transitionend', handleTransitionEnd);
+    card.removeEventListener('transitionend', handleTransitionEnd);
     window.clearTimeout(fallbackId);
     onComplete();
   };
   const handleTransitionEnd = (event) => {
-    if (event.target !== wrapper || event.propertyName !== 'height') {
+    if (event.target !== card || event.propertyName !== 'opacity') {
       return;
     }
     finish();
   };
-  const fallbackId = window.setTimeout(finish, 360);
+  const fallbackId = window.setTimeout(finish, 260);
 
-  wrapper.style.height = `${initialHeight}px`;
-  wrapper.getBoundingClientRect();
   wrapper.classList.add('is-deleting');
-  wrapper.addEventListener('transitionend', handleTransitionEnd);
-  requestAnimationFrame(() => {
-    wrapper.style.height = '0px';
-  });
+  card.addEventListener('transitionend', handleTransitionEnd);
 }
 
 /* ----------------------------------------------------------------------------
@@ -2767,6 +2809,7 @@ refs.stockList.addEventListener('click', (event) => {
       if (!confirmed) return;
       const wrapper = refs.stockList.querySelector(`.holding-swipe[data-id="${localId}"]`);
       if (wrapper) {
+        const previousPositions = captureHoldingPositions(localId);
         animateHoldingRemoval(wrapper, () => {
           if (activeDividendTooltipButton && wrapper.contains(activeDividendTooltipButton)) {
             activeDividendTooltipButton = null;
@@ -2780,6 +2823,7 @@ refs.stockList.addEventListener('click', (event) => {
             animateHoldings: false,
             renderHoldingsList: false
           });
+          animateHoldingReflow(previousPositions);
         });
       } else {
         state.holdings = state.holdings.filter((item) => item.localId !== localId);

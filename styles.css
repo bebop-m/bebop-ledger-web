@@ -882,8 +882,9 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   overflow: hidden;
   border-radius: var(--radius-lg);
   transition:
-    height 280ms var(--ease-soft),
+    transform var(--motion-base) var(--ease-soft),
     opacity 220ms var(--ease-soft);
+  will-change: transform;
 }
 
 .holding-swipe.is-deleting {
