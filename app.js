@@ -41,6 +41,8 @@ const LEGEND_COLLAPSED_COUNT = 8;
 const MASK_AMOUNT = '******';
 const MASK_PRICE = '***.**';
 const DEFAULT_STALE_DAYS = 7;
+const MARKET_DEPLOY_WAIT_TIMEOUT_MS = 90000;
+const MARKET_DEPLOY_WAIT_INTERVAL_MS = 3000;
 const VALID_DIVIDEND_SOURCES = new Set(['yfinance', 'yahoo', 'eodhd', 'manual', 'cache']);
 const VALID_DIVIDEND_STATUSES = new Set(['manual', 'fresh', 'stale', 'missing']);
 let currentDividendStaleDays = DEFAULT_STALE_DAYS;
@@ -221,6 +223,7 @@ const state = {
   modal: null,
   modalPayload: null,
   syncing: false,
+  cloudSyncing: false,
   activeBucketKey: null,
   sortMenuOpen: false
 };
@@ -1878,6 +1881,87 @@ function buildSyncSuccessMessage(options = {}) {
   return message;
 }
 
+function setCloudSyncButtonBusy(isBusy) {
+  state.cloudSyncing = isBusy;
+  refs.exportButton.disabled = isBusy;
+  refs.exportButton.classList.toggle('is-syncing', isBusy);
+  refs.exportButton.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+}
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+async function loadSiteMarketSnapshot() {
+  const response = await fetch(MARKET_ENDPOINT + '?t=' + Date.now(), { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error('site market request failed: ' + response.status);
+  }
+  return await response.json();
+}
+
+function hasRequiredMarketUpdate(payload, baselineUpdatedAt = '', requiredSymbols = []) {
+  const nextUpdatedAt = payload && typeof payload.updatedAt === 'string'
+    ? payload.updatedAt
+    : '';
+  if (!nextUpdatedAt || nextUpdatedAt === baselineUpdatedAt) {
+    return false;
+  }
+
+  const quotes = payload && payload.quotes && typeof payload.quotes === 'object'
+    ? payload.quotes
+    : {};
+  return requiredSymbols.every((symbol) => quotes && quotes[symbol]);
+}
+
+async function waitForDeployedMarketSnapshot(waitContext = {}) {
+  const {
+    baselineUpdatedAt = '',
+    requiredSymbols = []
+  } = waitContext;
+  const deadline = Date.now() + MARKET_DEPLOY_WAIT_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    await delay(MARKET_DEPLOY_WAIT_INTERVAL_MS);
+    try {
+      const payload = await loadSiteMarketSnapshot();
+      if (hasRequiredMarketUpdate(payload, baselineUpdatedAt, requiredSymbols)) {
+        return payload;
+      }
+    } catch (error) {
+      console.warn('waiting for deployed market snapshot failed', error);
+    }
+  }
+
+  return null;
+}
+
+async function runBackgroundMarketRefreshWait(waitContext = {}) {
+  try {
+    const deployedSnapshot = await waitForDeployedMarketSnapshot(waitContext);
+    if (!deployedSnapshot) {
+      return false;
+    }
+
+    let attempts = 0;
+    while (state.syncing && attempts < 20) {
+      attempts += 1;
+      await delay(300);
+    }
+
+    await refreshMarketData({ silent: true });
+    renderApp();
+    return true;
+  } catch (error) {
+    console.warn('background market refresh wait failed', error);
+    return false;
+  } finally {
+    setCloudSyncButtonBusy(false);
+  }
+}
+
 async function uploadPrivatePortfolioSnapshot(token) {
   await saveGithubJsonFile(
     GITHUB_PRIVATE_PORTFOLIO_CONTENTS_API,
@@ -2074,10 +2158,16 @@ async function restoreFromCloud(token) {
 }
 
 async function syncPortfolioToCloud() {
+  if (state.cloudSyncing) {
+    return;
+  }
+
+  setCloudSyncButtonBusy(true);
   let token = getGithubToken();
   if (!token) {
     token = promptGithubToken();
     if (!token) {
+      setCloudSyncButtonBusy(false);
       showToast(LABELS.syncTokenInvalid, { type: 'error' });
       return;
     }
@@ -2085,6 +2175,7 @@ async function syncPortfolioToCloud() {
 
   const localIsTemplate = isLocalPortfolioTemplateState();
   let restored = false;
+  let keepButtonBusyInBackground = false;
 
   try {
     if (localIsTemplate) {
@@ -2102,6 +2193,7 @@ async function syncPortfolioToCloud() {
       await uploadPrivatePortfolioSnapshot(token);
     }
 
+    const marketWaitBaselineUpdatedAt = state.lastUpdatedAt;
     let watchlistResult = {
       addedSymbols: [],
       workflowTriggered: false
@@ -2123,9 +2215,21 @@ async function syncPortfolioToCloud() {
       workflowTriggered: watchlistResult.workflowTriggered,
       watchlistUpdateFailed
     }), { type: watchlistUpdateFailed ? 'error' : 'success' });
+
+    if (watchlistResult.workflowTriggered && watchlistResult.addedSymbols.length) {
+      keepButtonBusyInBackground = true;
+      void runBackgroundMarketRefreshWait({
+        baselineUpdatedAt: marketWaitBaselineUpdatedAt,
+        requiredSymbols: watchlistResult.addedSymbols.slice()
+      });
+    }
   } catch (error) {
     console.warn('cloud sync failed', error);
     showToast(LABELS.syncFailed, { type: 'error' });
+  } finally {
+    if (!keepButtonBusyInBackground) {
+      setCloudSyncButtonBusy(false);
+    }
   }
 }
 
