@@ -147,19 +147,12 @@ export function applyLegendExpandState(opts = {}) {
   const { preserveScroll = false, toggleTop = 0 } = opts;
   const segments = getCompanySegments(computeHoldings().holdings);
   const v = getLegendViewModel(segments);
-  if (state.legendExpanded) {
-    const existing = refs.companyLegend.querySelectorAll('.legend-row').length;
-    for (let i = existing; i < segments.length; i++) {
-      refs.companyLegend.insertAdjacentHTML('beforeend', getLegendRowMarkup(segments[i], segments[i].value / v.total, i, { animate: false }));
-    }
-  } else {
-    const rows = Array.from(refs.companyLegend.querySelectorAll('.legend-row'));
-    for (let i = rows.length - 1; i >= v.collapsedCount; i--) rows[i].remove();
-  }
+  const visible = state.legendExpanded ? segments : segments.slice(0, v.collapsedCount);
+  refs.companyLegend.innerHTML = visible.map((s, i) => getLegendRowMarkup(s, s.value / v.total, i, { animate: false })).join('');
   refs.legendToggle.hidden = !v.canToggleLegend;
   refs.legendToggle.textContent = state.legendExpanded ? LABELS.collapseLegend
     : `${LABELS.expandLegend} ${segments.length} ${LABELS.itemsUnit}`;
-  if (preserveScroll && !state.legendExpanded && Number.isFinite(toggleTop)) {
+  if (preserveScroll && Number.isFinite(toggleTop)) {
     const d = refs.legendToggle.getBoundingClientRect().top - toggleTop;
     if (Math.abs(d) > 1) window.scrollBy(0, d);
   }
