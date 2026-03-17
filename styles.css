@@ -684,14 +684,22 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .legend-row--collapsible.is-collapsed {
   max-height: 0;
+  height: 0;
   padding-top: 0;
   padding-bottom: 0;
   margin-top: 0;
+  margin-bottom: 0;
   opacity: 0;
   transform: translateY(-6px);
-  border-bottom-color: transparent;
-  border-bottom-width: 0;
+  border-bottom: none;
   pointer-events: none;
+  line-height: 0;
+  font-size: 0;
+}
+
+.legend-row + .legend-row--collapsible.is-collapsed,
+.legend-row--collapsible.is-collapsed + .legend-row {
+  margin-top: 0;
 }
 
 @keyframes legend-row-in {
