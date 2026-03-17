@@ -643,28 +643,54 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .legend-list {
-  display: grid;
-  gap: 8px;
+  display: block;
+  overflow-anchor: none;
 }
 
 .legend-row {
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px 0;
+  --legend-row-padding-y: 8px;
+  display: block;
+  padding: var(--legend-row-padding-y) 0;
   border-bottom: 1px solid var(--line-soft);
-  transition: opacity 200ms var(--ease-soft), transform 200ms var(--ease-soft);
+  transition:
+    max-height var(--motion-base) var(--ease-soft),
+    padding-top var(--motion-base) var(--ease-soft),
+    padding-bottom var(--motion-base) var(--ease-soft),
+    border-color 180ms var(--ease-soft),
+    opacity 180ms var(--ease-soft),
+    transform var(--motion-base) var(--ease-soft);
+}
+
+.legend-row + .legend-row {
+  margin-top: 8px;
+  transition: margin-top var(--motion-base) var(--ease-soft);
 }
 
 .legend-row.is-entering {
   animation: legend-row-in 200ms var(--ease-soft) both;
 }
 
+.legend-row-shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .legend-row--collapsible {
   overflow: hidden;
+  max-height: calc(var(--legend-row-shell-height, 18px) + (var(--legend-row-padding-y, 8px) * 2));
 }
 
 .legend-row--collapsible.is-collapsed {
-  display: none;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  border-bottom-color: transparent;
+  pointer-events: none;
 }
 
 @keyframes legend-row-in {
@@ -1311,8 +1337,9 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   left: calc(100% + 8px);
   right: auto;
   z-index: 6;
-  min-width: 168px;
-  max-width: 220px;
+  width: max-content;
+  min-width: 184px;
+  max-width: min(272px, calc(100vw - 48px));
   padding: 10px 12px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.97);
@@ -1348,13 +1375,26 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   transform: translate3d(6px, -50%, 0) scale(0.98);
 }
 
-.dividend-status-tooltip span {
+.dividend-tooltip-line {
   display: block;
   font-size: 11px;
   line-height: 1.55;
   text-align: left;
-  white-space: normal;
+  white-space: nowrap;
   color: var(--muted);
+}
+
+.dividend-tooltip-label,
+.dividend-tooltip-value {
+  display: inline;
+}
+
+.dividend-tooltip-line.is-wrap {
+  white-space: normal;
+}
+
+.dividend-tooltip-line.is-wrap .dividend-tooltip-value {
+  overflow-wrap: anywhere;
 }
 
 .dividend-status-button:not(.dividend-status-button--value):hover .dividend-status-tooltip,
@@ -1944,12 +1984,13 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     padding-bottom: 88px;
   }
 
-  .legend-list {
-    gap: 6px;
+  .legend-row {
+    --legend-row-padding-y: 7px;
+    padding: 7px 0;
   }
 
-  .legend-row {
-    padding: 7px 0;
+  .legend-row + .legend-row {
+    margin-top: 6px;
   }
 
   .bucket-track {
@@ -2101,7 +2142,8 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   }
 
   .dividend-status-tooltip {
-    min-width: 156px;
+    min-width: 176px;
+    max-width: min(248px, calc(100vw - 40px));
   }
 
   /* Allow tooltip to overflow card on mobile */

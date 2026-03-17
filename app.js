@@ -37,6 +37,7 @@ const GITHUB_TOKEN_STORAGE_KEY = 'bebop-ledger-github-token-v2';
 const TENCENT_REALTIME_ENDPOINT = 'https://qt.gtimg.cn/q=';
 const TENCENT_BATCH_SIZE = 60;
 const LEGEND_COLLAPSED_COUNT = 8;
+const LEGEND_TOGGLE_ANIMATION_MS = 220;
 const MASK_AMOUNT = '******';
 const MASK_PRICE = '***.**';
 const DEFAULT_STALE_DAYS = 7;
@@ -709,6 +710,29 @@ function buildDividendTooltipLines(item) {
   return lines;
 }
 
+function buildDividendTooltipHtml(lines) {
+  return lines.map((line) => {
+    const text = String(line || '').trim();
+    const match = text.match(/^([^:：]+[:：])\s*(.*)$/);
+    const isWrap = text.startsWith(LABELS.dividendFetchError);
+
+    if (!match) {
+      return `
+        <span class="dividend-tooltip-line${isWrap ? ' is-wrap' : ''}">
+          <span class="dividend-tooltip-value">${escapeHtml(text)}</span>
+        </span>
+      `;
+    }
+
+    return `
+      <span class="dividend-tooltip-line${isWrap ? ' is-wrap' : ''}">
+        <span class="dividend-tooltip-label">${escapeHtml(match[1])}</span>
+        <span class="dividend-tooltip-value">${escapeHtml(match[2])}</span>
+      </span>
+    `;
+  }).join('');
+}
+
 function updateDividendTooltipSide(button) {
   if (!button) {
     return;
@@ -1339,14 +1363,44 @@ function renderLegend(segments, options = {}) {
   }
 }
 
-function applyLegendExpandState() {
-  const rows = refs.companyLegend.querySelectorAll('.legend-row--collapsible');
+function keepLegendToggleStable(previousTop) {
+  if (!Number.isFinite(previousTop)) {
+    return;
+  }
+
+  const adjust = () => {
+    const currentTop = refs.legendToggle.getBoundingClientRect().top;
+    const delta = currentTop - previousTop;
+    if (Math.abs(delta) > 1) {
+      window.scrollBy(0, delta);
+    }
+  };
+
+  requestAnimationFrame(() => {
+    adjust();
+    window.setTimeout(adjust, LEGEND_TOGGLE_ANIMATION_MS + 40);
+  });
+}
+
+function applyLegendExpandState(options = {}) {
+  const { preserveScroll = false, toggleTop = 0 } = options;
+  const rows = Array.from(refs.companyLegend.querySelectorAll('.legend-row--collapsible'));
   rows.forEach((row) => {
+    const shell = row.querySelector('.legend-row-shell');
+    const shellHeight = shell
+      ? Math.max(Math.ceil(shell.getBoundingClientRect().height), 18)
+      : Math.max(row.scrollHeight, 18);
+    row.style.setProperty('--legend-row-shell-height', `${shellHeight}px`);
     row.classList.toggle('is-collapsed', !state.legendExpanded);
+    row.setAttribute('aria-hidden', state.legendExpanded ? 'false' : 'true');
   });
   refs.legendToggle.textContent = state.legendExpanded
     ? LABELS.collapseLegend
     : `${LABELS.expandLegend} ${refs.companyLegend.querySelectorAll('.legend-row').length} ${LABELS.itemsUnit}`;
+
+  if (preserveScroll) {
+    keepLegendToggleStable(toggleTop);
+  }
 }
 
 function renderBuckets(segments, holdings, summary, options = {}) {
@@ -1524,7 +1578,7 @@ function renderHoldings(holdings, options = {}) {
     const weightText = `${(item.holdingWeight * 100).toFixed(1)}%`;
     const statusKey = normalizeDividendStatus(item.dividendStatus, 'missing');
     const tooltipLines = buildDividendTooltipLines(item);
-    const tooltipHtml = tooltipLines.map((line) => `<span>${escapeHtml(line)}</span>`).join('');
+    const tooltipHtml = buildDividendTooltipHtml(tooltipLines);
     const statusLabel = getDividendStatusLabel(statusKey);
     const staggerDelay = Math.min(index * 25, 400);
     const dividendValueButtonHtml = `
@@ -1759,11 +1813,13 @@ function getLegendRowMarkup(segment, percent, index, collapsedCount, options = {
   const { animate = true } = options;
   return `
     <div class="legend-row${animate ? ' is-entering' : ''}${index >= collapsedCount ? ' legend-row--collapsible' : ''}" data-legend-key="${escapeHtml(getLegendSegmentKey(segment, index))}" style="animation-delay:${index * 30}ms">
-      <div class="legend-main">
-        <span class="legend-dot" style="background:${segment.color}"></span>
-        <span class="legend-label">${escapeHtml(segment.label)}</span>
+      <div class="legend-row-shell">
+        <div class="legend-main">
+          <span class="legend-dot" style="background:${segment.color}"></span>
+          <span class="legend-label">${escapeHtml(segment.label)}</span>
+        </div>
+        <span class="legend-value">${(percent * 100).toFixed(1)}%</span>
       </div>
-      <span class="legend-value">${(percent * 100).toFixed(1)}%</span>
     </div>
   `;
 }
@@ -2094,7 +2150,7 @@ function getHoldingViewModel(item, index = 0) {
     statusKey,
     statusLabel: getDividendStatusLabel(statusKey),
     tooltipLines,
-    tooltipHtml: tooltipLines.map((line) => `<span>${escapeHtml(line)}</span>`).join(''),
+    tooltipHtml: buildDividendTooltipHtml(tooltipLines),
     yieldText: formatPercent(item.effectiveYield),
     bucketTone: item.bucket === 'income' ? 'income' : 'core',
     staggerDelay: Math.min(index * 25, 400)
@@ -2300,6 +2356,14 @@ function renderDashboardIncrementally(summary, companySegments, bucketSegments, 
   renderTimestamp();
   renderPrivacyButton();
   syncRenderedHoldingsView(summary.holdings, { animateReflow: animateHoldingReflow });
+}
+
+function renderSavedStateQuietly(options = {}) {
+  const { animateHoldingReflow = true } = options;
+  renderApp({
+    incremental: true,
+    animateHoldingReflow
+  });
 }
 
 function captureHoldingPositions(excludedId = 0) {
@@ -2597,7 +2661,7 @@ function handleModalSave() {
 
   saveState();
   closeModal();
-  renderApp();
+  renderSavedStateQuietly({ animateHoldingReflow: true });
 }
 
 /* ----------------------------------------------------------------------------
@@ -3028,7 +3092,7 @@ function importSnapshot(payload) {
   }
   applySnapshot(normalizedSource);
   saveState();
-  renderApp();
+  renderSavedStateQuietly({ animateHoldingReflow: false });
 }
 
 async function handleImportFile(event) {
@@ -3416,9 +3480,13 @@ refs.importButton.addEventListener('click', () => refs.importFileInput.click());
 refs.importFileInput.addEventListener('change', handleImportFile);
 
 refs.legendToggle.addEventListener('click', () => {
+  const toggleTop = refs.legendToggle.getBoundingClientRect().top;
   state.legendExpanded = !state.legendExpanded;
   saveState();
-  applyLegendExpandState();
+  applyLegendExpandState({
+    preserveScroll: true,
+    toggleTop
+  });
 });
 
 refs.refreshButton.addEventListener('click', () => {
