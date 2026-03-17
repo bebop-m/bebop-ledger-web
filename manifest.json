@@ -1,0 +1,21 @@
+{
+  "name": "波普账本",
+  "short_name": "波普账本",
+  "description": "Bopup Ledger – 持仓与股息追踪",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#152849",
+  "theme_color": "#152849",
+  "icons": [
+    {
+      "src": "./assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -690,6 +690,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   opacity: 0;
   transform: translateY(-6px);
   border-bottom-color: transparent;
+  border-bottom-width: 0;
   pointer-events: none;
 }
 
