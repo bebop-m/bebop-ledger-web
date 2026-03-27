@@ -7,6 +7,8 @@ Thumbs.db
 .codex-tmp/
 tools/nodejs/
 
+.claude/settings.local.json
+
 # 私有持仓 —— 绝不允许进入公开仓库
 data/portfolio.json
 data/portfolio_snapshot.json
