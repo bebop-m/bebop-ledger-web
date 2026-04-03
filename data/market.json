@@ -6,11 +6,11 @@
     "dividend": "yfinance",
     "dividendVerify": "disabled"
   },
-  "updatedAt": "2026-04-02T12:10:26.655402Z",
+  "updatedAt": "2026-04-03T11:58:02.735525Z",
   "rates": {
     "CNY": 1,
-    "USD": 6.8738,
-    "HKD": 0.877
+    "USD": 6.8975,
+    "HKD": 0.8801
   },
   "quotes": {
     "00700.HK": {
@@ -22,7 +22,7 @@
       "previousClose": 496.6,
       "dividendPerShareTtm": 4.5,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:16.180208Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:53.120232Z",
       "lastExDate": "2025-05-15",
       "dividendStatus": "fresh"
     },
@@ -31,11 +31,11 @@
       "name": "贵州茅台",
       "market": "CN",
       "currency": "CNY",
-      "price": 1459.88,
-      "previousClose": 1459.44,
+      "price": 1460.0,
+      "previousClose": 1459.88,
       "dividendPerShareTtm": 51.63,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:16.617093Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:53.554822Z",
       "lastExDate": "2025-12-18",
       "dividendStatus": "fresh"
     },
@@ -44,11 +44,11 @@
       "name": "格力电器",
       "market": "CN",
       "currency": "CNY",
-      "price": 37.85,
-      "previousClose": 38.02,
+      "price": 37.47,
+      "previousClose": 37.85,
       "dividendPerShareTtm": 4.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:17.102444Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:54.015424Z",
       "lastExDate": "2026-01-22",
       "dividendStatus": "fresh"
     },
@@ -61,7 +61,7 @@
       "previousClose": 26.96,
       "dividendPerShareTtm": 1.39,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:17.496298Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:54.451122Z",
       "lastExDate": "2025-09-10",
       "dividendStatus": "fresh"
     },
@@ -74,7 +74,7 @@
       "previousClose": 31.66,
       "dividendPerShareTtm": 1.45332,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:17.733813Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:54.708950Z",
       "lastExDate": "2025-06-09",
       "dividendStatus": "fresh"
     },
@@ -83,11 +83,11 @@
       "name": "美的集团",
       "market": "CN",
       "currency": "CNY",
-      "price": 77.37,
-      "previousClose": 76.84,
+      "price": 76.35,
+      "previousClose": 77.37,
       "dividendPerShareTtm": 4.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:18.038263Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:55.014634Z",
       "lastExDate": "2025-11-17",
       "dividendStatus": "fresh"
     },
@@ -100,7 +100,7 @@
       "previousClose": 4.01,
       "dividendPerShareTtm": 0.195,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:18.324977Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:55.291021Z",
       "lastExDate": "2025-09-18",
       "dividendStatus": "fresh"
     },
@@ -109,11 +109,11 @@
       "name": "拼多多",
       "market": "US",
       "currency": "USD",
-      "price": 101.78,
-      "previousClose": 102.18,
+      "price": 100.87,
+      "previousClose": 101.78,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:18.563959Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:55.554236Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -126,7 +126,7 @@
       "previousClose": 4.29,
       "dividendPerShareTtm": 0.5,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:18.837275Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:55.794650Z",
       "lastExDate": "2025-09-24",
       "dividendStatus": "fresh"
     },
@@ -139,7 +139,7 @@
       "previousClose": 8.2,
       "dividendPerShareTtm": 0.3393,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:19.248045Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:56.235672Z",
       "lastExDate": "2025-10-07",
       "dividendStatus": "fresh"
     },
@@ -150,9 +150,9 @@
       "currency": "HKD",
       "price": 111.9,
       "previousClose": 112.9,
-      "dividendPerShareTtm": 3.9185,
+      "dividendPerShareTtm": 3.91832,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:19.486254Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:56.468543Z",
       "lastExDate": "2025-04-06",
       "dividendStatus": "fresh"
     },
@@ -165,7 +165,7 @@
       "previousClose": 4.88,
       "dividendPerShareTtm": 0.299901,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:19.921611Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:56.873132Z",
       "lastExDate": "2025-08-26",
       "dividendStatus": "fresh"
     },
@@ -178,7 +178,7 @@
       "previousClose": 12.53,
       "dividendPerShareTtm": 0.49233,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:20.587141Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:57.277716Z",
       "lastExDate": "2025-07-07",
       "dividendStatus": "fresh"
     },
@@ -187,11 +187,11 @@
       "name": "雅戈尔",
       "market": "CN",
       "currency": "CNY",
-      "price": 7.67,
+      "price": 7.57,
       "previousClose": 7.67,
       "dividendPerShareTtm": 0.44,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:21.065598Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:57.737856Z",
       "lastExDate": "2026-03-26",
       "dividendStatus": "fresh"
     },
@@ -204,7 +204,7 @@
       "previousClose": 8.59,
       "dividendPerShareTtm": 0.328,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:21.493256Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:58.133269Z",
       "lastExDate": "2025-06-24",
       "dividendStatus": "fresh"
     },
@@ -217,7 +217,7 @@
       "previousClose": 1.83,
       "dividendPerShareTtm": 0.1617,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:21.831225Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:58.369961Z",
       "lastExDate": "2025-09-01",
       "dividendStatus": "fresh"
     },
@@ -230,7 +230,7 @@
       "previousClose": 23.22,
       "dividendPerShareTtm": 1.702,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:22.092867Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:58.697475Z",
       "lastExDate": "2025-09-02",
       "dividendStatus": "fresh"
     },
@@ -243,7 +243,7 @@
       "previousClose": 2.49,
       "dividendPerShareTtm": 0.249,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:22.352337Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:58.910087Z",
       "lastExDate": "2025-09-07",
       "dividendStatus": "fresh"
     },
@@ -253,10 +253,10 @@
       "market": "CN",
       "currency": "CNY",
       "price": 1.658,
-      "previousClose": 1.661,
+      "previousClose": 1.658,
       "dividendPerShareTtm": 0.12,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:22.616059Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:59.109963Z",
       "lastExDate": "2026-03-22",
       "dividendStatus": "fresh"
     },
@@ -269,7 +269,7 @@
       "previousClose": 36.7,
       "dividendPerShareTtm": 2.6433,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:23.081151Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:59.443123Z",
       "lastExDate": "2025-12-01",
       "dividendStatus": "fresh"
     },
@@ -282,7 +282,7 @@
       "previousClose": 2.7,
       "dividendPerShareTtm": 0.15,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:23.309607Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:59.666027Z",
       "lastExDate": "2025-05-26",
       "dividendStatus": "fresh"
     },
@@ -291,11 +291,11 @@
       "name": "中国神华",
       "market": "CN",
       "currency": "CNY",
-      "price": 47.69,
-      "previousClose": 46.62,
+      "price": 47.58,
+      "previousClose": 47.69,
       "dividendPerShareTtm": 3.24,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:23.720467Z",
+      "dividendUpdatedAt": "2026-04-03T11:57:59.984326Z",
       "lastExDate": "2025-11-09",
       "dividendStatus": "fresh"
     },
@@ -308,7 +308,7 @@
       "previousClose": 79.8,
       "dividendPerShareTtm": 5.24,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:24.123988Z",
+      "dividendUpdatedAt": "2026-04-03T11:58:00.444529Z",
       "lastExDate": "2025-08-31",
       "dividendStatus": "fresh"
     },
@@ -321,7 +321,7 @@
       "previousClose": 46.3,
       "dividendPerShareTtm": 3.5226,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:24.554540Z",
+      "dividendUpdatedAt": "2026-04-03T11:58:00.776368Z",
       "lastExDate": "2025-10-29",
       "dividendStatus": "fresh"
     },
@@ -334,7 +334,7 @@
       "previousClose": 14.82,
       "dividendPerShareTtm": 1.58,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:25.017411Z",
+      "dividendUpdatedAt": "2026-04-03T11:58:01.186349Z",
       "lastExDate": "2025-09-02",
       "dividendStatus": "fresh"
     },
@@ -347,7 +347,7 @@
       "previousClose": 0.495,
       "dividendPerShareTtm": 0.06,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-02T12:10:25.350279Z",
+      "dividendUpdatedAt": "2026-04-03T11:58:01.459101Z",
       "lastExDate": "2026-03-25",
       "dividendStatus": "fresh"
     }
