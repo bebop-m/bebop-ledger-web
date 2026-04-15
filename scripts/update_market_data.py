@@ -659,13 +659,27 @@ def fetch_yfinance_snapshot(symbol, previous_quote, stale_days):
             dividend_fetch_error=dividend_fetch_error
         ))
     else:
-        quote.update(build_dividend_payload(
-            dividend_per_share_ttm=sum_ttm_dividends_from_series(dividends),
-            dividend_source='yfinance',
-            dividend_updated_at=utc_now_iso(),
-            last_ex_date=latest_ex_date_from_series(dividends),
-            stale_days=stale_days
-        ))
+        ttm_dps = sum_ttm_dividends_from_series(dividends)
+        last_ex = latest_ex_date_from_series(dividends)
+        if ttm_dps <= 0 and not last_ex and safe_float(previous_quote.get('dividendPerShareTtm'), 0) > 0:
+            # yfinance returned an empty dividend series despite a known previous value.
+            # This indicates a transient API or data issue — preserve the cached dividend.
+            quote.update(build_dividend_payload(
+                dividend_per_share_ttm=previous_quote.get('dividendPerShareTtm'),
+                dividend_source='cache',
+                dividend_updated_at=previous_quote.get('dividendUpdatedAt'),
+                last_ex_date=previous_quote.get('lastExDate'),
+                stale_days=stale_days,
+                dividend_fetch_error='yfinance returned empty dividend series'
+            ))
+        else:
+            quote.update(build_dividend_payload(
+                dividend_per_share_ttm=ttm_dps,
+                dividend_source='yfinance',
+                dividend_updated_at=utc_now_iso(),
+                last_ex_date=last_ex,
+                stale_days=stale_days
+            ))
     return normalize_quote_entry(symbol, quote, stale_days)
 
 
