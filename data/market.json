@@ -6,11 +6,11 @@
     "dividend": "yfinance",
     "dividendVerify": "disabled"
   },
-  "updatedAt": "2026-04-15T11:16:41.448025Z",
+  "updatedAt": "2026-04-15T19:07:28.280745Z",
   "rates": {
     "CNY": 1,
-    "USD": 6.8157,
-    "HKD": 0.8702
+    "USD": 6.8213,
+    "HKD": 0.8707
   },
   "quotes": {
     "00700.HK": {
@@ -22,7 +22,7 @@
       "previousClose": 493.2,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:31.460278Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:04.245139Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -35,7 +35,7 @@
       "previousClose": 1446.9,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:31.939087Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:05.132804Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -48,7 +48,7 @@
       "previousClose": 37.28,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:32.458724Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:08.520518Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -61,7 +61,7 @@
       "previousClose": 26.6,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:32.876974Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:09.357514Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -74,7 +74,7 @@
       "previousClose": 31.46,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:33.122232Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:10.040888Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -87,7 +87,7 @@
       "previousClose": 76.55,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:33.403293Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:10.780931Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -100,7 +100,7 @@
       "previousClose": 4.06,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:33.703852Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:11.676595Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -109,11 +109,11 @@
       "name": "拼多多",
       "market": "US",
       "currency": "USD",
-      "price": 102.1,
-      "previousClose": 100.8,
+      "price": 102.51,
+      "previousClose": 102.1,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:33.965507Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:12.419603Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -126,7 +126,7 @@
       "previousClose": 4.48,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:34.245706Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:13.209866Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -139,7 +139,7 @@
       "previousClose": 8.25,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:34.738632Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:14.066557Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -152,7 +152,7 @@
       "previousClose": 115.4,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:35.004636Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:14.794866Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -165,7 +165,7 @@
       "previousClose": 4.99,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:35.447336Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:15.717333Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -178,7 +178,7 @@
       "previousClose": 13.64,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:35.838153Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:16.715353Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -191,7 +191,7 @@
       "previousClose": 7.18,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:36.291043Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:17.594637Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -204,7 +204,7 @@
       "previousClose": 9.18,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:36.694850Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:18.474129Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -217,7 +217,7 @@
       "previousClose": 1.94,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:36.948215Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:19.067036Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -230,7 +230,7 @@
       "previousClose": 24.6,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:37.257955Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:19.805754Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -243,7 +243,7 @@
       "previousClose": 2.55,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:37.496144Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:20.573280Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -256,7 +256,7 @@
       "previousClose": 1.688,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:37.739999Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:21.418035Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -269,7 +269,7 @@
       "previousClose": 38.5,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:38.135717Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:22.370875Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -282,7 +282,7 @@
       "previousClose": 2.83,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:38.393374Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:23.033705Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -295,7 +295,7 @@
       "previousClose": 45.66,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:38.764684Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:23.877703Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -308,7 +308,7 @@
       "previousClose": 81.5,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:39.186310Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:24.765822Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -321,7 +321,7 @@
       "previousClose": 45.54,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:39.586882Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:25.706947Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -334,7 +334,7 @@
       "previousClose": 15.13,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:39.964641Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:26.466736Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     },
@@ -347,7 +347,7 @@
       "previousClose": 0.5,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T11:16:40.254912Z",
+      "dividendUpdatedAt": "2026-04-15T19:07:27.094881Z",
       "lastExDate": "",
       "dividendStatus": "missing"
     }
