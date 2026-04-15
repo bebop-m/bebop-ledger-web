@@ -633,9 +633,13 @@ def fetch_yfinance_snapshot(symbol, previous_quote, stale_days):
         if price <= 0:
             print(f'warning: no price available for {symbol}, using 0')
 
+    # Use a fresh Ticker instance for dividends to avoid state pollution from
+    # history() internally calling get_history_metadata() in yfinance 1.x,
+    # which causes subsequent ticker.dividends to return an empty series.
     dividend_fetch_error = ''
     try:
-        dividends = ticker.dividends
+        div_ticker = yf.Ticker(to_yfinance_symbol(symbol))
+        dividends = div_ticker.dividends
     except Exception as error:
         dividends = None
         dividend_fetch_error = str(error).strip()
