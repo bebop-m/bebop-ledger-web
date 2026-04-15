@@ -18,13 +18,13 @@
       "name": "腾讯控股",
       "market": "HK",
       "currency": "HKD",
-      "price": 499.0,
+      "price": 499,
       "previousClose": 493.2,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 4.5,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:04.245139Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:49:55.769475Z",
+      "lastExDate": "2025-05-15",
+      "dividendStatus": "fresh"
     },
     "600519.SH": {
       "symbol": "600519.SH",
@@ -33,11 +33,11 @@
       "currency": "CNY",
       "price": 1467.5,
       "previousClose": 1446.9,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 51.63,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:05.132804Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:49:56.277245Z",
+      "lastExDate": "2025-12-18",
+      "dividendStatus": "fresh"
     },
     "000651.SZ": {
       "symbol": "000651.SZ",
@@ -46,11 +46,11 @@
       "currency": "CNY",
       "price": 37.39,
       "previousClose": 37.28,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 4,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:08.520518Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:49:57.089261Z",
+      "lastExDate": "2026-01-22",
+      "dividendStatus": "fresh"
     },
     "00883.HK": {
       "symbol": "00883.HK",
@@ -59,11 +59,11 @@
       "currency": "HKD",
       "price": 26.22,
       "previousClose": 26.6,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 1.39,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:09.357514Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:49:57.559182Z",
+      "lastExDate": "2025-09-10",
+      "dividendStatus": "fresh"
     },
     "06049.HK": {
       "symbol": "06049.HK",
@@ -72,11 +72,11 @@
       "currency": "HKD",
       "price": 31.7,
       "previousClose": 31.46,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 1.45332,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:10.040888Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:49:57.795458Z",
+      "lastExDate": "2025-06-09",
+      "dividendStatus": "fresh"
     },
     "000333.SZ": {
       "symbol": "000333.SZ",
@@ -85,11 +85,11 @@
       "currency": "CNY",
       "price": 77.49,
       "previousClose": 76.55,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 4,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:10.780931Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:49:58.089926Z",
+      "lastExDate": "2025-11-17",
+      "dividendStatus": "fresh"
     },
     "02669.HK": {
       "symbol": "02669.HK",
@@ -98,11 +98,11 @@
       "currency": "HKD",
       "price": 4.11,
       "previousClose": 4.06,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0.195,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:11.676595Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:49:58.390183Z",
+      "lastExDate": "2025-09-18",
+      "dividendStatus": "fresh"
     },
     "PDD": {
       "symbol": "PDD",
@@ -111,7 +111,7 @@
       "currency": "USD",
       "price": 102.51,
       "previousClose": 102.1,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0,
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-04-15T19:07:12.419603Z",
       "lastExDate": "",
@@ -124,11 +124,11 @@
       "currency": "HKD",
       "price": 4.43,
       "previousClose": 4.48,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0.5,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:13.209866Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:49:59.016098Z",
+      "lastExDate": "2025-09-24",
+      "dividendStatus": "fresh"
     },
     "00270.HK": {
       "symbol": "00270.HK",
@@ -137,11 +137,11 @@
       "currency": "HKD",
       "price": 8.17,
       "previousClose": 8.25,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0.3393,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:14.066557Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:49:59.494601Z",
+      "lastExDate": "2025-10-07",
+      "dividendStatus": "fresh"
     },
     "09618.HK": {
       "symbol": "09618.HK",
@@ -150,11 +150,11 @@
       "currency": "HKD",
       "price": 120.7,
       "previousClose": 115.4,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 3.912565,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:14.794866Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:49:59.718600Z",
+      "lastExDate": "2025-04-06",
+      "dividendStatus": "fresh"
     },
     "00728.HK": {
       "symbol": "00728.HK",
@@ -163,11 +163,11 @@
       "currency": "HKD",
       "price": 4.9,
       "previousClose": 4.99,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0.299901,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:15.717333Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:00.117202Z",
+      "lastExDate": "2025-08-26",
+      "dividendStatus": "fresh"
     },
     "02333.HK": {
       "symbol": "02333.HK",
@@ -176,11 +176,11 @@
       "currency": "HKD",
       "price": 13.31,
       "previousClose": 13.64,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0.49233,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:16.715353Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:00.538042Z",
+      "lastExDate": "2025-07-07",
+      "dividendStatus": "fresh"
     },
     "600177.SH": {
       "symbol": "600177.SH",
@@ -189,11 +189,11 @@
       "currency": "CNY",
       "price": 7.27,
       "previousClose": 7.18,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0.36,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:17.594637Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:01.021211Z",
+      "lastExDate": "2025-12-03",
+      "dividendStatus": "fresh"
     },
     "03900.HK": {
       "symbol": "03900.HK",
@@ -202,11 +202,11 @@
       "currency": "HKD",
       "price": 9.2,
       "previousClose": 9.18,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0.328,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:18.474129Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:01.390691Z",
+      "lastExDate": "2025-06-24",
+      "dividendStatus": "fresh"
     },
     "01995.HK": {
       "symbol": "01995.HK",
@@ -215,11 +215,11 @@
       "currency": "HKD",
       "price": 1.93,
       "previousClose": 1.94,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0.1617,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:19.067036Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:01.661869Z",
+      "lastExDate": "2025-09-01",
+      "dividendStatus": "fresh"
     },
     "03316.HK": {
       "symbol": "03316.HK",
@@ -228,11 +228,11 @@
       "currency": "HKD",
       "price": 24.74,
       "previousClose": 24.6,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 1.702,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:19.805754Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:01.928275Z",
+      "lastExDate": "2025-09-02",
+      "dividendStatus": "fresh"
     },
     "00816.HK": {
       "symbol": "00816.HK",
@@ -241,11 +241,11 @@
       "currency": "HKD",
       "price": 2.55,
       "previousClose": 2.55,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0.249,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:20.573280Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:02.182224Z",
+      "lastExDate": "2025-09-07",
+      "dividendStatus": "fresh"
     },
     "513530.SH": {
       "symbol": "513530.SH",
@@ -254,11 +254,11 @@
       "currency": "CNY",
       "price": 1.678,
       "previousClose": 1.688,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0.12,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:21.418035Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:02.440617Z",
+      "lastExDate": "2026-03-22",
+      "dividendStatus": "fresh"
     },
     "00823.HK": {
       "symbol": "00823.HK",
@@ -267,11 +267,11 @@
       "currency": "HKD",
       "price": 38.54,
       "previousClose": 38.5,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 2.6433,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:22.370875Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:02.823203Z",
+      "lastExDate": "2025-12-01",
+      "dividendStatus": "fresh"
     },
     "02156.HK": {
       "symbol": "02156.HK",
@@ -280,11 +280,11 @@
       "currency": "HKD",
       "price": 2.85,
       "previousClose": 2.83,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0.15,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:23.033705Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:03.056837Z",
+      "lastExDate": "2025-05-26",
+      "dividendStatus": "fresh"
     },
     "601088.SH": {
       "symbol": "601088.SH",
@@ -293,11 +293,11 @@
       "currency": "CNY",
       "price": 45.83,
       "previousClose": 45.66,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 3.24,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:23.877703Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:03.410170Z",
+      "lastExDate": "2025-11-09",
+      "dividendStatus": "fresh"
     },
     "00941.HK": {
       "symbol": "00941.HK",
@@ -306,11 +306,11 @@
       "currency": "HKD",
       "price": 81.35,
       "previousClose": 81.5,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 5.24,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:24.765822Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:03.843865Z",
+      "lastExDate": "2025-08-31",
+      "dividendStatus": "fresh"
     },
     "01088.HK": {
       "symbol": "01088.HK",
@@ -319,11 +319,11 @@
       "currency": "HKD",
       "price": 45.6,
       "previousClose": 45.54,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 3.5226,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:25.706947Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:04.238456Z",
+      "lastExDate": "2025-10-29",
+      "dividendStatus": "fresh"
     },
     "01836.HK": {
       "symbol": "01836.HK",
@@ -332,11 +332,11 @@
       "currency": "HKD",
       "price": 14.99,
       "previousClose": 15.13,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 1.58,
       "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-04-15T19:07:26.466736Z",
-      "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendUpdatedAt": "2026-03-26T14:50:04.567291Z",
+      "lastExDate": "2025-09-02",
+      "dividendStatus": "fresh"
     },
     "01023.HK": {
       "symbol": "01023.HK",
@@ -345,7 +345,7 @@
       "currency": "HKD",
       "price": 0.5,
       "previousClose": 0.5,
-      "dividendPerShareTtm": 0.0,
+      "dividendPerShareTtm": 0,
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-04-15T19:07:27.094881Z",
       "lastExDate": "",
