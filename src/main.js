@@ -33,7 +33,8 @@ function ensureSortToggleButton() {
 /* ── UI Chrome ── */
 function configureUiChrome() {
   if (refs.appKicker) { refs.appKicker.textContent = 'BEBOP'; if (refs.appKicker.parentElement) refs.appKicker.parentElement.classList.add('app-brand'); }
-  if (refs.summaryActions) { refs.summaryActions.classList.add('summary-actions-cluster'); refs.summaryActions.append(refs.exportButton); }
+  if (refs.summaryActions) { refs.summaryActions.classList.add('summary-actions-cluster'); refs.summaryActions.append(refs.exportButton, refs.privacyButton); }
+  refs.privacyButton.classList.remove('circle-button'); refs.privacyButton.classList.add('summary-action-button');
   refs.exportButton.className = 'summary-action-button summary-action-button--cloud';
   refs.exportButton.setAttribute('aria-label', '\u540c\u6b65\u5230\u4e91\u7aef'); refs.exportButton.title = '\u540c\u6b65\u5230\u4e91\u7aef';
   refs.exportButton.innerHTML = '<span class="cloud-sync-icon" aria-hidden="true"><svg class="cloud-sync-base" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 17a3.5 3.5 0 0 0-1.6-6.4h-.5A6.2 6.2 0 0 0 6 9.6 4.4 4.4 0 0 0 6.5 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="cloud-sync-badge"></span><svg class="cloud-sync-check" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4 4.9 9 9.8 3.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>';
