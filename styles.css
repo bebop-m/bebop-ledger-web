@@ -1220,6 +1220,74 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   white-space: nowrap;
 }
 
+/* ── Calendar refinements: YoY badge, month phase colors, big label/total ── */
+.dividend-metric-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 9px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: rgba(21, 40, 73, 0.06);
+  color: var(--muted);
+}
+.dividend-metric-badge.is-up { background: rgba(47, 130, 84, 0.13); color: #2f8254; }
+.dividend-metric-badge.is-down { background: rgba(193, 75, 75, 0.13); color: #c14b4b; }
+
+.dividend-month-card.is-past { background: #f3f5f9; border-color: #e6eaf0; }
+.dividend-month-card.is-future { background: #fff; border-color: var(--line); }
+.dividend-month-card.is-current {
+  background: linear-gradient(180deg, #fff6ec 0%, #ffffff 100%);
+  border-color: rgba(242, 140, 40, 0.5);
+  box-shadow: 0 8px 20px rgba(242, 140, 40, 0.12);
+}
+.dividend-month-card.is-empty { opacity: 0.62; }
+.dividend-month-card.is-current.is-empty { opacity: 0.92; }
+
+.dividend-month-head .dmh-label { font-size: 18px; color: #1f3357; }
+.dividend-month-card.is-past .dmh-label { color: #6b788c; }
+.dividend-month-card.is-current .dmh-label { color: var(--accent); }
+.dividend-month-head .dmh-total { font-size: 19px; color: #1f3357; }
+.dividend-month-card.is-current .dmh-total { color: var(--accent); }
+.dividend-month-card .dividend-mini-rows { margin-top: 10px; gap: 5px; }
+.dividend-month-card .dividend-mini-rows span,
+.dividend-month-card .dividend-mini-rows strong { font-size: 11px; font-weight: 600; }
+.dividend-month-card .dividend-mini-rows strong { color: #5a6b85; }
+
+/* ── Month detail modal (compact) ── */
+.modal-sheet--detail .month-detail-head { margin-bottom: 10px; }
+.month-detail-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.month-detail-title h3 { margin: 0; font-size: 20px; font-weight: 800; color: #1f3357; }
+.month-detail-title strong { font-size: 20px; font-weight: 800; color: #1f3357; font-variant-numeric: tabular-nums; }
+.modal-sheet--detail.is-current .month-detail-title h3,
+.modal-sheet--detail.is-current .month-detail-title strong { color: var(--accent); }
+.month-detail-summary { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+.month-detail-list { display: grid; gap: 0; max-height: 52vh; overflow-y: auto; }
+.month-detail-row {
+  display: grid;
+  grid-template-columns: 10px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--line);
+}
+.month-detail-row:last-child { border-bottom: none; }
+.mdr-dot { width: 8px; height: 8px; border-radius: 50%; background: #9aa5b3; }
+.month-detail-row.is-received .mdr-dot { background: #2f8254; }
+.month-detail-row.is-pending .mdr-dot { background: #ad8430; }
+.month-detail-row.is-forecast .mdr-dot { background: #b3bac6; }
+.mdr-name { font-size: 14px; font-weight: 600; color: #27384f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mdr-date { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mdr-amount { font-size: 14px; font-weight: 800; color: #1f3357; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.month-detail-empty { padding: 22px; text-align: center; color: var(--muted); font-size: 13px; }
+
 .dividend-stock-list,
 .dividend-detail-list {
   display: grid;

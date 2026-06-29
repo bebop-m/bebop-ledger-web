@@ -320,107 +320,93 @@ export function renderPageChrome() {
 }
 
 /* ── Dividend Calendar ── */
-function formatDisplayQuantity(value) {
-  return state.showAmounts
-    ? safeNumber(value, 0).toLocaleString('en-US', { maximumFractionDigits: 2 })
-    : MASK_AMOUNT;
-}
-
 function getDividendFilterLabel(filterKey) {
   if (filterKey === 'core') return UI_TEXT.dividendFilterCore;
   if (filterKey === 'income') return UI_TEXT.dividendFilterIncome;
   return UI_TEXT.dividendFilterAll;
 }
 
-function getDividendEntryStatusLabel(entry) {
-  if (entry.status === 'received') return LABELS.dividendReceivedStatus;
-  if (entry.status === 'forecast') return LABELS.dividendForecastStatus;
-  return LABELS.dividendPendingStatus;
+function formatYoyBadge(yoy) {
+  if (yoy === null || yoy === undefined || !Number.isFinite(Number(yoy))) {
+    return `<span class="dividend-metric-badge is-flat">${escapeHtml(LABELS.dividendNoCompare)}</span>`;
+  }
+  const up = yoy >= 0;
+  const pct = `${up ? '+' : '-'}${formatPercent(Math.abs(yoy))}`;
+  return `<span class="dividend-metric-badge is-${up ? 'up' : 'down'}">${escapeHtml(pct)} · ${escapeHtml(LABELS.dividendVsLastYear)}</span>`;
 }
 
-function getDividendConfidenceLabel(entry) {
-  if (entry.isForecast || entry.sharesSource === 'current') return LABELS.dividendCurrentShares;
-  if (entry.confidence === 'snapshot') return LABELS.dividendSnapshotConfidence;
-  if (entry.confidence === 'carryForward') return LABELS.dividendCarryForwardConfidence;
-  if (entry.confidence === 'confirmed') return LABELS.dividendConfirmedConfidence;
-  if (entry.confidence === 'manual') return LABELS.dividendManualConfidence;
-  return LABELS.dividendCurrentShares;
-}
-
-function getDividendMetricMarkup(label, value, note = '', tone = '') {
+function getDividendMetricMarkup(label, value, tone = '', badge = '') {
   return `<article class="dividend-metric-card${tone ? ` is-${tone}` : ''}">
     <div class="dividend-metric-label">${escapeHtml(label)}</div>
     <div class="dividend-metric-value">${escapeHtml(formatDisplayMoney(value, 'CNY'))}</div>
-    ${note ? `<p class="dividend-metric-note">${escapeHtml(note)}</p>` : ''}
+    ${badge}
   </article>`;
 }
 
 function renderDividendMetricGrid(model) {
   const m = model.metrics;
-  const upcomingText = `${LABELS.dividendPendingStatus} ${formatDisplayMoney(m.pendingCny, 'CNY')} · ${LABELS.dividendForecast} ${formatDisplayMoney(m.forecastCny, 'CNY')}`;
   refs.dividendMetricGrid.innerHTML = [
-    getDividendMetricMarkup(LABELS.dividendReceived, m.receivedCny, '按实际到账日统计', 'received'),
-    getDividendMetricMarkup(LABELS.dividendUpcoming, m.upcomingCny, upcomingText, 'upcoming'),
-    getDividendMetricMarkup(LABELS.dividendProjected, m.projectedCny, '已到账 + 即将到账', 'projected')
+    getDividendMetricMarkup(LABELS.dividendReceived, m.receivedCny, 'received'),
+    getDividendMetricMarkup(LABELS.dividendUpcoming, m.upcomingCny, 'upcoming'),
+    getDividendMetricMarkup(LABELS.dividendProjected, m.projectedCny, 'projected', formatYoyBadge(m.projectedYoy))
   ].join('');
 }
 
-function getDividendAmountRowsMarkup(item) {
-  const upcoming = safeNumber(item.pendingCny, 0) + safeNumber(item.forecastCny, 0);
-  return `<div class="dividend-mini-rows">
-    <div><span>${LABELS.dividendReceivedStatus}</span><strong>${escapeHtml(formatDisplayMoney(item.receivedCny, 'CNY'))}</strong></div>
-    <div><span>${LABELS.dividendUpcoming}</span><strong>${escapeHtml(formatDisplayMoney(upcoming, 'CNY'))}</strong></div>
-  </div>`;
+function getDividendMonthRowsMarkup(item) {
+  const rows = [`<div><span>${LABELS.dividendReceivedStatus}</span><strong>${escapeHtml(formatDisplayMoney(item.receivedCny, 'CNY'))}</strong></div>`];
+  // 已结束的月份不再展示「即将到账」。
+  if (item.phase !== 'past') {
+    rows.push(`<div><span>${LABELS.dividendUpcoming}</span><strong>${escapeHtml(formatDisplayMoney(item.upcomingCny, 'CNY'))}</strong></div>`);
+  }
+  return `<div class="dividend-mini-rows">${rows.join('')}</div>`;
 }
 
 function renderDividendMonths(model) {
   refs.dividendMonthGrid.innerHTML = model.months.map((item) => `
-    <button class="dividend-month-card${item.totalCny > 0 ? '' : ' is-empty'}${model.activeMonth === item.month ? ' is-active' : ''}" type="button" data-dividend-month="${item.month}" aria-pressed="${model.activeMonth === item.month ? 'true' : 'false'}">
+    <button class="dividend-month-card is-${item.phase}${item.totalCny > 0 ? '' : ' is-empty'}" type="button" data-dividend-month="${item.month}">
       <div class="dividend-month-head">
-        <span>${escapeHtml(item.label)}</span>
-        <strong>${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}</strong>
+        <span class="dmh-label">${escapeHtml(item.label)}</span>
+        <strong class="dmh-total">${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}</strong>
       </div>
-      ${getDividendAmountRowsMarkup(item)}
+      ${getDividendMonthRowsMarkup(item)}
     </button>
   `).join('');
 }
 
-function getDividendDetailDateMarkup(entry) {
-  const payDate = entry.payDate || entry.exDate;
-  const estimatedTag = entry.payDateEstimated ? `（${LABELS.dividendPayDateEstimated}）` : '';
-  const exPart = entry.exDate && entry.exDate !== payDate
-    ? ` · ${LABELS.dividendExDateLabel} ${escapeHtml(entry.exDate)}`
-    : '';
-  return `${LABELS.dividendPayDateLabel} ${escapeHtml(payDate)}${estimatedTag}${exPart} · ${escapeHtml(entry.symbol)}`;
+function getMonthDetailDateShort(entry) {
+  const date = entry.payDate || entry.exDate || '';
+  const mmdd = date.length >= 10 ? date.slice(5) : date;
+  return entry.payDateEstimated ? `${mmdd}(${LABELS.dividendPayDateEstimated})` : mmdd;
 }
 
-function renderDividendDetails(model) {
-  if (!model.details.length) {
-    const note = model.activeMonth ? `${model.activeMonth}月暂无股息明细，点击已选月份可返回全年。` : LABELS.dividendEmptyNote;
-    refs.dividendDetailList.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">${LABELS.dividendEmptyTitle}</p><p class="empty-state-note">${escapeHtml(note)}</p></div>`;
-    return;
+// 供月份弹窗使用：返回某月紧凑明细的标题、小结与行 HTML。
+export function buildDividendMonthDetail(month) {
+  const model = computeDividendCalendar();
+  const item = model.months[month - 1] || null;
+  const entries = model.allDetails
+    .filter((entry) => entry.month === month)
+    .sort((a, b) => `${a.payDate}|${a.symbol}`.localeCompare(`${b.payDate}|${b.symbol}`));
+  const summaryParts = [];
+  if (item) {
+    summaryParts.push(`${LABELS.dividendReceivedStatus} ${formatDisplayMoney(item.receivedCny, 'CNY')}`);
+    if (item.phase !== 'past') summaryParts.push(`${LABELS.dividendUpcoming} ${formatDisplayMoney(item.upcomingCny, 'CNY')}`);
   }
-  const scope = model.activeMonth
-    ? `<div class="dividend-detail-scope"><span>${model.activeMonth}月明细</span><small>点击已选月份可返回全年</small></div>`
-    : '';
-  refs.dividendDetailList.innerHTML = scope + model.details.map((entry) => `
-    <article class="dividend-detail-card is-${escapeHtml(entry.status)}">
-      <header class="dividend-detail-head">
-        <div>
-          <h3 class="dividend-detail-name">${escapeHtml(entry.name)}</h3>
-          <p class="dividend-detail-code">${getDividendDetailDateMarkup(entry)}</p>
-        </div>
-        <span class="dividend-status-pill is-${escapeHtml(entry.status)}">${escapeHtml(getDividendEntryStatusLabel(entry))}</span>
-      </header>
-      <p class="dividend-detail-formula">${escapeHtml(formatDisplayMoney(entry.amountPerShare, entry.currency))} × ${escapeHtml(formatDisplayQuantity(entry.shares))} = ${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</p>
-      <div class="dividend-detail-grid">
-        <div><span>每股股息</span><strong>${escapeHtml(formatDisplayMoney(entry.amountPerShare, entry.currency))}</strong></div>
-        <div><span>持股数</span><strong>${escapeHtml(formatDisplayQuantity(entry.shares))}</strong></div>
-        <div><span>税后 CNY</span><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong></div>
-        <div><span>可信度</span><strong>${escapeHtml(getDividendConfidenceLabel(entry))}</strong></div>
-      </div>
-    </article>
-  `).join('');
+  const body = entries.length
+    ? entries.map((entry) => `
+        <div class="month-detail-row is-${escapeHtml(entry.status)}">
+          <span class="mdr-dot" aria-hidden="true"></span>
+          <span class="mdr-name">${escapeHtml(entry.name)}</span>
+          <span class="mdr-date">${escapeHtml(getMonthDetailDateShort(entry))}</span>
+          <span class="mdr-amount">${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</span>
+        </div>`).join('')
+    : `<div class="month-detail-empty">${escapeHtml(LABELS.dividendEmptyTitle)}</div>`;
+  return {
+    title: `${month}${LABELS.dividendMonthSuffix}`,
+    phase: item ? item.phase : 'future',
+    total: item ? formatDisplayMoney(item.totalCny, 'CNY') : formatDisplayMoney(0, 'CNY'),
+    summary: summaryParts.join(' · '),
+    body
+  };
 }
 
 export function renderDividendCalendarPage() {
@@ -433,7 +419,6 @@ export function renderDividendCalendarPage() {
   });
   renderDividendMetricGrid(model);
   renderDividendMonths(model);
-  renderDividendDetails(model);
 }
 
 /* ── Income Summary ── */

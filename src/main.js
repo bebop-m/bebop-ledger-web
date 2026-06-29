@@ -86,9 +86,7 @@ refs.dividendMonthGrid.addEventListener('click', (event) => {
   if (!btn) return;
   const month = Math.floor(safeNumber(btn.dataset.dividendMonth, 0));
   if (month < 1 || month > 12) return;
-  state.activeDividendMonth = state.activeDividendMonth === month ? null : month;
-  saveState();
-  renderApp({ incremental: true, animateHoldingReflow: false });
+  openModal('monthDetail', { month });
 });
 
 refs.incomeFilterGroup.addEventListener('click', (event) => {

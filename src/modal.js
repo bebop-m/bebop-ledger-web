@@ -1,7 +1,7 @@
 import { state, refs, saveState, showToast } from './state.js';
 import { safeNumber, escapeHtml, normalizeSymbol, sanitizePerShareOverrideInput, mergeQuotes } from './utils.js';
 import { LABELS } from './constants.js';
-import { renderSavedStateQuietly } from './render.js';
+import { renderSavedStateQuietly, buildDividendMonthDetail } from './render.js';
 import { inferQuote } from './compute.js';
 
 let _keydownHandler = null;
@@ -52,6 +52,7 @@ function getManualModalValue(key) {
 
 function renderModal() {
   if (!state.modal) { refs.modalRoot.innerHTML = ''; return; }
+  if (state.modal === 'monthDetail') { renderMonthDetailModal(); return; }
   let title = '', note = '', fields = '';
   if (state.modal === 'quantity') {
     title = LABELS.quantityTitle; note = state.modalPayload.name || '';
@@ -91,7 +92,27 @@ function renderModal() {
     <button class="modal-button modal-button--primary" type="button" data-modal-action="save">${LABELS.save}</button></div></section>`;
 }
 
+function renderMonthDetailModal() {
+  const month = Math.floor(safeNumber(state.modalPayload && state.modalPayload.month, 0));
+  const detail = buildDividendMonthDetail(month);
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet modal-sheet--detail is-${escapeHtml(detail.phase)}" role="dialog" aria-modal="true">
+      <header class="month-detail-head">
+        <div class="month-detail-title">
+          <h3>${escapeHtml(detail.title)}</h3>
+          <strong>${escapeHtml(detail.total)}</strong>
+        </div>
+        ${detail.summary ? `<p class="month-detail-summary">${escapeHtml(detail.summary)}</p>` : ''}
+      </header>
+      <div class="month-detail-list">${detail.body}</div>
+      <div class="modal-actions">
+        <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">${LABELS.cancel === '取消' ? '关闭' : LABELS.cancel}</button>
+      </div>
+    </section>`;
+}
+
 export function handleModalSave() {
+  if (state.modal === 'monthDetail') { closeModal(); return; }
   if (state.modal === 'quantity') {
     const v = Math.max(0, safeNumber(document.getElementById('modalQuantityInput').value, 0));
     state.holdings = state.holdings.map((i) => i.localId === state.modalPayload.localId ? { ...i, quantity: v } : i);
