@@ -358,11 +358,10 @@ function getDividendMetricMarkup(label, value, note = '', tone = '') {
 function renderDividendMetricGrid(model) {
   const m = model.metrics;
   const pendingText = `${LABELS.dividendPending} ${formatDisplayMoney(m.pendingCny, 'CNY')}`;
-  const forecastText = `${LABELS.dividendForecast} ${formatDisplayMoney(m.forecastCny, 'CNY')}`;
   refs.dividendMetricGrid.innerHTML = [
-    getDividendMetricMarkup(LABELS.dividendReceived, m.receivedCny, LABELS.dividendReceivedStatus, 'received'),
-    getDividendMetricMarkup(LABELS.dividendUpcoming, m.upcomingCny, `${pendingText} · ${forecastText}`, 'upcoming'),
-    getDividendMetricMarkup(LABELS.dividendProjected, m.projectedCny, `${model.year} ${LABELS.dividendCalendarYear}`, 'projected'),
+    getDividendMetricMarkup(LABELS.dividendReceived, m.receivedCny, '按除息日已发生统计', 'received'),
+    getDividendMetricMarkup(LABELS.dividendUpcoming, m.upcomingCny, pendingText, 'upcoming'),
+    getDividendMetricMarkup(LABELS.dividendProjected, m.projectedCny, '与首页预估年化同口径', 'projected'),
     getDividendMetricMarkup(LABELS.dividendAnnualized, m.annualizedCny, LABELS.annualDividend.replace(/[：:]\s*$/, ''), 'annualized')
   ].join('');
 }
@@ -371,19 +370,18 @@ function getDividendAmountRowsMarkup(item) {
   return `<div class="dividend-mini-rows">
     <div><span>${LABELS.dividendReceivedStatus}</span><strong>${escapeHtml(formatDisplayMoney(item.receivedCny, 'CNY'))}</strong></div>
     <div><span>${LABELS.dividendPending}</span><strong>${escapeHtml(formatDisplayMoney(item.pendingCny, 'CNY'))}</strong></div>
-    <div><span>${LABELS.dividendForecast}</span><strong>${escapeHtml(formatDisplayMoney(item.forecastCny, 'CNY'))}</strong></div>
   </div>`;
 }
 
 function renderDividendMonths(model) {
   refs.dividendMonthGrid.innerHTML = model.months.map((item) => `
-    <article class="dividend-month-card${item.totalCny > 0 ? '' : ' is-empty'}">
+    <button class="dividend-month-card${item.totalCny > 0 ? '' : ' is-empty'}${model.activeMonth === item.month ? ' is-active' : ''}" type="button" data-dividend-month="${item.month}" aria-pressed="${model.activeMonth === item.month ? 'true' : 'false'}">
       <div class="dividend-month-head">
         <span>${escapeHtml(item.label)}</span>
         <strong>${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}</strong>
       </div>
       ${getDividendAmountRowsMarkup(item)}
-    </article>
+    </button>
   `).join('');
 }
 
@@ -408,18 +406,23 @@ function renderDividendStocks(model) {
 
 function renderDividendDetails(model) {
   if (!model.details.length) {
-    refs.dividendDetailList.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">${LABELS.dividendEmptyTitle}</p><p class="empty-state-note">${LABELS.dividendEmptyNote}</p></div>`;
+    const note = model.activeMonth ? `${model.activeMonth}月暂无股息明细，点击已选月份可返回全年。` : LABELS.dividendEmptyNote;
+    refs.dividendDetailList.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">${LABELS.dividendEmptyTitle}</p><p class="empty-state-note">${escapeHtml(note)}</p></div>`;
     return;
   }
-  refs.dividendDetailList.innerHTML = model.details.map((entry) => `
+  const scope = model.activeMonth
+    ? `<div class="dividend-detail-scope"><span>${model.activeMonth}月明细</span><small>点击已选月份可返回全年</small></div>`
+    : '';
+  refs.dividendDetailList.innerHTML = scope + model.details.map((entry) => `
     <article class="dividend-detail-card is-${escapeHtml(entry.status)}">
       <header class="dividend-detail-head">
         <div>
           <h3 class="dividend-detail-name">${escapeHtml(entry.name)}</h3>
-          <p class="dividend-detail-code">${escapeHtml(entry.symbol)} · ${escapeHtml(entry.exDate)}</p>
+          <p class="dividend-detail-code">${escapeHtml(entry.exDate)} · ${escapeHtml(entry.symbol)}</p>
         </div>
         <span class="dividend-status-pill is-${escapeHtml(entry.status)}">${escapeHtml(getDividendEntryStatusLabel(entry))}</span>
       </header>
+      <p class="dividend-detail-formula">${escapeHtml(formatDisplayMoney(entry.amountPerShare, entry.currency))} × ${escapeHtml(formatDisplayQuantity(entry.shares))} = ${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</p>
       <div class="dividend-detail-grid">
         <div><span>每股股息</span><strong>${escapeHtml(formatDisplayMoney(entry.amountPerShare, entry.currency))}</strong></div>
         <div><span>持股数</span><strong>${escapeHtml(formatDisplayQuantity(entry.shares))}</strong></div>

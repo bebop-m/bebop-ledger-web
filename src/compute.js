@@ -149,11 +149,13 @@ function getHoldingTaxRate(holding) {
   return taxOverridePercent === null ? 0 : taxOverridePercent / 100;
 }
 
-function buildLedgerDividendEntry(entry, year) {
+function buildLedgerDividendEntry(entry, year, todayLabel) {
   const parts = getDateParts(entry && entry.exDate);
   if (!parts || parts.year !== year) return null;
   const quote = inferQuote(entry.symbol);
-  const isReceived = entry.receiptStatus === 'received' || entry.confirmed === true;
+  const payDate = formatDateLabel(entry.payDate);
+  const isPastDividend = payDate ? payDate <= todayLabel : parts.label <= todayLabel;
+  const isReceived = entry.receiptStatus === 'received' || entry.confirmed === true || isPastDividend;
   const netCny = getLedgerNetCny(entry);
   return {
     id: entry.id || entry.sourceId || buildDividendSourceId(entry),
@@ -161,7 +163,7 @@ function buildLedgerDividendEntry(entry, year) {
     symbol: entry.symbol,
     name: quote.name || entry.symbol,
     exDate: parts.label,
-    payDate: formatDateLabel(entry.payDate),
+    payDate,
     month: parts.month,
     amountPerShare: safeNumber(entry.amountPerShare, 0),
     currency: entry.currency || resolveQuoteCurrency(quote, entry.symbol),
@@ -174,6 +176,11 @@ function buildLedgerDividendEntry(entry, year) {
     confidence: entry.confidence || (isReceived ? 'confirmed' : 'estimated'),
     isForecast: false
   };
+}
+
+function getActiveDividendMonth() {
+  const month = Math.floor(safeNumber(state.activeDividendMonth, 0));
+  return month >= 1 && month <= 12 ? month : null;
 }
 
 function getExistingDividendKeys(entries) {
@@ -316,14 +323,15 @@ export function computeDividendCalendar(today = new Date()) {
   const todayParts = getDateParts(todayLabel) || getDateParts(formatLocalDate());
   const year = todayParts ? todayParts.year : new Date().getFullYear();
   const filterKey = getDividendFilterKey();
+  const activeMonth = getActiveDividendMonth();
   const summary = computeHoldings();
   const annualizedCny = summary.holdings
     .filter((holding) => matchesDividendFilter(holding, filterKey))
     .reduce((sum, holding) => sum + safeNumber(holding.netAnnualDividendCny, 0), 0);
   const ledgerEntries = state.dividendLedger
-    .map((entry) => buildLedgerDividendEntry(entry, year))
+    .map((entry) => buildLedgerDividendEntry(entry, year, todayLabel))
     .filter(Boolean);
-  const forecastEntries = buildForecastDividendEntries(summary, year, todayLabel, ledgerEntries);
+  const forecastEntries = [];
   const entries = [...ledgerEntries, ...forecastEntries]
     .filter((entry) => matchesDividendFilter(entry, filterKey))
     .sort((a, b) => `${a.exDate}|${a.status}|${a.symbol}`.localeCompare(`${b.exDate}|${b.status}|${b.symbol}`));
@@ -336,11 +344,12 @@ export function computeDividendCalendar(today = new Date()) {
   const forecastCny = entries
     .filter((entry) => entry.status === 'forecast')
     .reduce((sum, entry) => sum + entry.netCny, 0);
-  const upcomingCny = pendingCny + forecastCny;
-  const projectedCny = receivedCny + upcomingCny;
+  const upcomingCny = pendingCny;
+  const projectedCny = Math.max(annualizedCny, receivedCny + pendingCny);
   return {
     year,
     filterKey,
+    activeMonth,
     today: todayLabel,
     metrics: {
       receivedCny: roundMoney(receivedCny),
@@ -352,7 +361,8 @@ export function computeDividendCalendar(today = new Date()) {
     },
     months: buildDividendMonthItems(entries),
     stocks: buildDividendStockItems(entries),
-    details: entries
+    details: activeMonth ? entries.filter((entry) => entry.month === activeMonth) : entries,
+    allDetails: entries
   };
 }
 

@@ -22,6 +22,7 @@ export const state = {
   showAmounts: true,
   activePage: 'assets',
   dividendCalendarBucket: 'all',
+  activeDividendMonth: null,
   sortField: 'marketValueCny',
   sortDirection: 'desc',
   legendExpanded: false,
@@ -190,6 +191,7 @@ export function createDefaultSnapshot() {
     showAmounts: true,
     activePage: 'assets',
     dividendCalendarBucket: 'all',
+    activeDividendMonth: null,
     sortField: 'marketValueCny',
     sortDirection: 'desc',
     legendExpanded: false,
@@ -217,6 +219,8 @@ export function applySnapshot(snapshot) {
   state.showAmounts = snapshot && snapshot.showAmounts === false ? false : true;
   state.activePage = PAGE_KEYS.has(snapshot && snapshot.activePage) ? snapshot.activePage : 'assets';
   state.dividendCalendarBucket = DIVIDEND_FILTER_KEYS.has(snapshot && snapshot.dividendCalendarBucket) ? snapshot.dividendCalendarBucket : 'all';
+  const activeDividendMonth = Math.floor(safeNumber(snapshot && snapshot.activeDividendMonth, 0));
+  state.activeDividendMonth = activeDividendMonth >= 1 && activeDividendMonth <= 12 ? activeDividendMonth : null;
   state.sortField = snapshot && ['effectiveYield', 'netAnnualDividendCny'].includes(snapshot.sortField) ? snapshot.sortField : 'marketValueCny';
   state.sortDirection = snapshot && snapshot.sortDirection === 'asc' ? 'asc' : 'desc';
   state.legendExpanded = Boolean(snapshot && snapshot.legendExpanded);
@@ -241,7 +245,7 @@ export function getPersistedSnapshot() {
     type: 'portfolio-snapshot', version: PORTFOLIO_SNAPSHOT_VERSION,
     holdings: state.holdings, quotes: state.quotes, rates: state.rates,
     nextId: state.nextId, showAmounts: state.showAmounts, activePage: state.activePage,
-    dividendCalendarBucket: state.dividendCalendarBucket, sortField: state.sortField,
+    dividendCalendarBucket: state.dividendCalendarBucket, activeDividendMonth: state.activeDividendMonth, sortField: state.sortField,
     sortDirection: state.sortDirection, legendExpanded: state.legendExpanded,
     liabilityCny: state.liabilityCny, dividendLedger: state.dividendLedger,
     dailySnapshots: state.dailySnapshots, cashFlows: state.cashFlows,

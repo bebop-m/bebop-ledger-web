@@ -80,6 +80,16 @@ refs.dividendFilterGroup.addEventListener('click', (event) => {
   renderApp({ incremental: true, animateHoldingReflow: false });
 });
 
+refs.dividendMonthGrid.addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-dividend-month]');
+  if (!btn) return;
+  const month = Math.floor(safeNumber(btn.dataset.dividendMonth, 0));
+  if (month < 1 || month > 12) return;
+  state.activeDividendMonth = state.activeDividendMonth === month ? null : month;
+  saveState();
+  renderApp({ incremental: true, animateHoldingReflow: false });
+});
+
 refs.incomeFilterGroup.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-income-filter]');
   if (!btn || !DIVIDEND_FILTER_KEYS.has(btn.dataset.incomeFilter)) return;

@@ -1158,11 +1158,29 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .dividend-month-card {
   padding: 12px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 .dividend-month-card.is-empty {
   background: #fbfcfe;
   opacity: 0.72;
+}
+
+.dividend-month-card:hover,
+.dividend-month-card.is-active {
+  border-color: rgba(242, 140, 40, 0.46);
+  box-shadow: 0 10px 24px rgba(21, 40, 73, 0.08);
+}
+
+.dividend-month-card.is-active {
+  background: linear-gradient(180deg, #fffaf4 0%, #ffffff 100%);
 }
 
 .dividend-month-head,
@@ -1246,6 +1264,37 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .dividend-detail-card.is-forecast {
   border-style: dashed;
   background: linear-gradient(180deg, #ffffff 0%, #fcfaf7 100%);
+}
+
+.dividend-detail-scope {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 2px 4px;
+  color: #63738a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.dividend-detail-scope small {
+  color: #8a96a8;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.dividend-detail-formula {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f7f9fc;
+  color: #263b5b;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 .dividend-status-pill {

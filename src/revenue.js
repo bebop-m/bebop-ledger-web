@@ -106,7 +106,9 @@ function buildLedgerEntry(symbol, dividend, today) {
   const netCny = roundMoney(grossCny * (1 - context.taxRate));
   const now = new Date().toISOString();
   const idSuffix = sourceId.replace(/[^A-Z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
-  const receiptStatus = event.payDate && isDateOnOrBefore(event.payDate, today) ? 'received' : 'pending';
+  const receiptStatus = event.payDate
+    ? (isDateOnOrBefore(event.payDate, today) ? 'received' : 'pending')
+    : 'received';
 
   return sanitizeDividendLedgerEntry({
     id: `div_${idSuffix || Date.now()}`,
