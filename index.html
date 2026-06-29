@@ -166,7 +166,7 @@
             <header class="panel-bar panel-bar--spread">
               <div>
                 <h2 class="panel-title">收益汇总</h2>
-                <p class="panel-note">股息收入按除息日统计，资金收益按年度净值变化估算。</p>
+                <p class="panel-note">股息收入按实际到账日统计，资金收益按年度净值变化估算。</p>
               </div>
               <div class="income-header-actions">
                 <button
@@ -248,7 +248,7 @@
             <header class="panel-bar">
               <div>
                 <h2 class="panel-title">按月分布</h2>
-                <p class="panel-note">按除息日归属月份统计。</p>
+                <p class="panel-note">按实际到账月份统计，点击某月查看当月明细。</p>
               </div>
             </header>
             <div id="dividendMonthGrid" class="dividend-month-grid"></div>
@@ -257,18 +257,8 @@
           <section class="panel">
             <header class="panel-bar">
               <div>
-                <h2 class="panel-title">按股票分布</h2>
-                <p class="panel-note">当年已到账、待到账和节奏预估合并展示。</p>
-              </div>
-            </header>
-            <div id="dividendStockList" class="dividend-stock-list"></div>
-          </section>
-
-          <section class="panel">
-            <header class="panel-bar">
-              <div>
                 <h2 class="panel-title">股息明细</h2>
-                <p class="panel-note">forecast 仅为节奏预估，不写入账本。</p>
+                <p class="panel-note">显示到账日、公司与税后金额；节奏预估仅展示，不写入账本。</p>
               </div>
             </header>
             <div id="dividendDetailList" class="dividend-detail-list"></div>

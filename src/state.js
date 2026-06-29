@@ -82,7 +82,6 @@ export const refs = {
   incomeNorthStar: document.getElementById('incomeNorthStar'),
   dividendMetricGrid: document.getElementById('dividendMetricGrid'),
   dividendMonthGrid: document.getElementById('dividendMonthGrid'),
-  dividendStockList: document.getElementById('dividendStockList'),
   dividendDetailList: document.getElementById('dividendDetailList'),
   exportButton: document.getElementById('exportButton'),
   importButton: document.getElementById('importButton'),

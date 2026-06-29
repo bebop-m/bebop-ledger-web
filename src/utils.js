@@ -1,6 +1,7 @@
 import {
   DEFAULT_STALE_DAYS, VALID_DIVIDEND_SOURCES, VALID_DIVIDEND_STATUSES,
-  VALID_RECEIPT_STATUSES, VALID_DIVIDEND_CONFIDENCES, LABELS, DEFAULT_RATES
+  VALID_RECEIPT_STATUSES, VALID_DIVIDEND_CONFIDENCES, LABELS, DEFAULT_RATES,
+  PAYDATE_LAG_DAYS
 } from './constants.js';
 
 /* ── Stale-days config (set from network module on config load) ── */
@@ -340,6 +341,34 @@ export function normalizeQuoteDividends(value, symbolFallback = '') {
   return Array.isArray(value)
     ? value.map((item) => normalizeQuoteDividendEvent(item, symbolFallback)).filter(Boolean)
     : [];
+}
+
+export function marketFromSymbol(symbol) {
+  const value = String(symbol || '').trim().toUpperCase();
+  if (value.endsWith('.HK')) return 'HK';
+  if (value.endsWith('.SH') || value.endsWith('.SZ')) return 'CN';
+  return 'US';
+}
+
+export function addDaysToDateLabel(dateLabel, days) {
+  const label = formatDateLabel(dateLabel);
+  if (!label) return '';
+  const date = new Date(`${label}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return '';
+  date.setUTCDate(date.getUTCDate() + Math.round(safeNumber(days, 0)));
+  return formatDateLabel(date.toISOString());
+}
+
+/* 有效到账日：真实 payDate（数据或用户确认）优先，缺失时按市场滞后估算，最后退回除息日。
+   返回 { date, source: 'data' | 'estimated' | 'exDate', estimated } */
+export function resolveEffectivePayDate(exDate, payDate, symbol) {
+  const realPay = formatDateLabel(payDate);
+  if (realPay) return { date: realPay, source: 'data', estimated: false };
+  const ex = formatDateLabel(exDate);
+  if (!ex) return { date: '', source: 'exDate', estimated: false };
+  const lag = safeNumber(PAYDATE_LAG_DAYS[marketFromSymbol(symbol)], 0);
+  if (lag <= 0) return { date: ex, source: 'exDate', estimated: false };
+  return { date: addDaysToDateLabel(ex, lag) || ex, source: 'estimated', estimated: true };
 }
 
 export function sanitizeDividendLedgerEntry(item, index = 0) {

@@ -2,7 +2,7 @@ import { state } from './state.js';
 import { computeHoldings } from './compute.js';
 import {
   buildDividendSourceId, formatDateLabel, normalizeQuoteDividendEvent,
-  parsePercentOverride, resolveFxRate, safeNumber,
+  parsePercentOverride, resolveEffectivePayDate, resolveFxRate, safeNumber,
   sanitizeDailySnapshotEntry, sanitizeDividendLedgerEntry
 } from './utils.js';
 
@@ -106,9 +106,9 @@ function buildLedgerEntry(symbol, dividend, today) {
   const netCny = roundMoney(grossCny * (1 - context.taxRate));
   const now = new Date().toISOString();
   const idSuffix = sourceId.replace(/[^A-Z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
-  const receiptStatus = event.payDate
-    ? (isDateOnOrBefore(event.payDate, today) ? 'received' : 'pending')
-    : 'received';
+  // 以有效到账日判断已到账/在途：真实 payDate 优先，缺失时按市场滞后估算（A股≈当天，港股≈数周）。
+  const effectivePay = resolveEffectivePayDate(event.exDate, event.payDate, event.symbol || symbol);
+  const receiptStatus = isDateOnOrBefore(effectivePay.date || event.exDate, today) ? 'received' : 'pending';
 
   return sanitizeDividendLedgerEntry({
     id: `div_${idSuffix || Date.now()}`,
@@ -135,9 +135,16 @@ function buildLedgerEntry(symbol, dividend, today) {
 }
 
 function generateDividendLedgerEntries(today = formatLocalDate()) {
-  const currentSymbols = new Set(state.holdings.map((holding) => holding.symbol).filter(Boolean));
+  // 包含当前持仓 + 历史快照中曾经持有过的 symbol，避免已清仓持仓的派息被漏记（打工仓常见）。
+  const relevantSymbols = new Set(state.holdings.map((holding) => holding.symbol).filter(Boolean));
+  state.dailySnapshots.forEach((snapshot) => {
+    const holdings = Array.isArray(snapshot && snapshot.holdings) ? snapshot.holdings : [];
+    holdings.forEach((holding) => {
+      if (holding && holding.symbol && safeNumber(holding.shares, 0) > 0) relevantSymbols.add(holding.symbol);
+    });
+  });
   const additions = [];
-  currentSymbols.forEach((symbol) => {
+  relevantSymbols.forEach((symbol) => {
     const quote = state.quotes[symbol];
     const dividends = Array.isArray(quote && quote.dividends) ? quote.dividends : [];
     dividends.forEach((dividend) => {

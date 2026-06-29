@@ -3,7 +3,7 @@ import {
   safeNumber, inferQuoteFromMap, resolveQuoteCurrency, resolveFxRate,
   parsePercentOverride, resolveManualDividendPerShareOverride,
   normalizeDividendSource, normalizeDividendStatus, formatDateLabel,
-  buildDividendSourceId
+  buildDividendSourceId, resolveEffectivePayDate
 } from './utils.js';
 import { COMPANY_COLORS, BUCKET_COLORS, LABELS, DIVIDEND_FILTER_KEYS } from './constants.js';
 
@@ -149,22 +149,29 @@ function getHoldingTaxRate(holding) {
   return taxOverridePercent === null ? 0 : taxOverridePercent / 100;
 }
 
+/* 账本条目的有效到账日（真实 payDate 优先，否则按市场估算）。所有归月/归年/到账判断统一以此为准。 */
+function getLedgerEffectivePayDate(entry) {
+  return resolveEffectivePayDate(entry && entry.exDate, entry && entry.payDate, entry && entry.symbol);
+}
+
 function buildLedgerDividendEntry(entry, year, todayLabel) {
-  const parts = getDateParts(entry && entry.exDate);
-  if (!parts || parts.year !== year) return null;
+  const exParts = getDateParts(entry && entry.exDate);
+  if (!exParts) return null;
+  const effectivePay = getLedgerEffectivePayDate(entry);
+  const payParts = getDateParts(effectivePay.date) || exParts;
+  if (payParts.year !== year) return null;
   const quote = inferQuote(entry.symbol);
-  const payDate = formatDateLabel(entry.payDate);
-  const isPastDividend = payDate ? payDate <= todayLabel : parts.label <= todayLabel;
-  const isReceived = entry.receiptStatus === 'received' || entry.confirmed === true || isPastDividend;
+  const isReceived = entry.confirmed === true || payParts.label <= todayLabel;
   const netCny = getLedgerNetCny(entry);
   return {
     id: entry.id || entry.sourceId || buildDividendSourceId(entry),
     sourceId: entry.sourceId || buildDividendSourceId(entry),
     symbol: entry.symbol,
     name: quote.name || entry.symbol,
-    exDate: parts.label,
-    payDate,
-    month: parts.month,
+    exDate: exParts.label,
+    payDate: payParts.label,
+    payDateEstimated: effectivePay.estimated,
+    month: payParts.month,
     amountPerShare: safeNumber(entry.amountPerShare, 0),
     currency: entry.currency || resolveQuoteCurrency(quote, entry.symbol),
     shares: safeNumber(entry.shares, 0),
@@ -194,6 +201,8 @@ function getExistingDividendKeys(entries) {
 
 function buildForecastDividendEntries(summary, year, todayLabel, ledgerEntries) {
   const existingKeys = getExistingDividendKeys(ledgerEntries);
+  // 同一 (symbol, 到账月) 已有真实账本条目时，跳过该周期的节奏预估，避免与实际派息重复计数。
+  const ledgerMonthKeys = new Set(ledgerEntries.map((entry) => `${entry.symbol}|${entry.month}`));
   const candidates = new Map();
 
   summary.holdings.forEach((holding) => {
@@ -202,21 +211,33 @@ function buildForecastDividendEntries(summary, year, todayLabel, ledgerEntries) 
     dividends.forEach((dividend) => {
       const parts = getDateParts(dividend && dividend.exDate);
       if (!parts || parts.year >= year) return;
-      const forecastDate = formatDateParts(year, parts.month, parts.day);
-      if (!forecastDate || forecastDate <= todayLabel) return;
+      const forecastExDate = formatDateParts(year, parts.month, parts.day);
+      if (!forecastExDate) return;
+      const forecastPay = resolveEffectivePayDate(forecastExDate, '', holding.symbol);
+      const forecastPayDate = forecastPay.date || forecastExDate;
+      // 预计到账日已过 → 本应已在账本中（或当时未持有），不再作为「即将到账」展示。
+      if (forecastPayDate <= todayLabel) return;
+      const payParts = getDateParts(forecastPayDate);
+      if (payParts && payParts.year !== year) return;
+      if (payParts && ledgerMonthKeys.has(`${holding.symbol}|${payParts.month}`)) return;
       const amountPerShare = safeNumber(dividend.amountPerShare, 0);
       if (amountPerShare <= 0 || safeNumber(holding.quantity, 0) <= 0) return;
       const currency = dividend.currency || resolveQuoteCurrency(quote, holding.symbol);
       const sourceId = buildDividendSourceId({
         symbol: holding.symbol,
-        exDate: forecastDate,
+        exDate: forecastExDate,
         amountPerShare,
         currency
       });
       if (existingKeys.has(sourceId)) return;
-      const key = `${holding.symbol}|${forecastDate}|${currency}`;
+      const key = `${holding.symbol}|${forecastExDate}|${currency}`;
       const previous = candidates.get(key);
-      const item = { holding, quote, dividend, forecastDate, amountPerShare, currency, sourceId, historyDate: parts.label };
+      const item = {
+        holding, quote, dividend, forecastExDate, forecastPayDate,
+        forecastPayMonth: payParts ? payParts.month : 0,
+        payDateEstimated: forecastPay.estimated,
+        amountPerShare, currency, sourceId, historyDate: parts.label
+      };
       if (!previous || previous.historyDate < parts.label) {
         candidates.set(key, { historyDate: parts.label, items: [item] });
         return;
@@ -235,15 +256,15 @@ function buildForecastDividendEntries(summary, year, todayLabel, ledgerEntries) 
       const taxRate = getHoldingTaxRate(item.holding);
       const grossCny = roundMoney(item.amountPerShare * shares * fxRate);
       const netCny = roundMoney(grossCny * (1 - taxRate));
-      const parts = getDateParts(item.forecastDate);
       return {
         id: `forecast_${item.sourceId.replace(/[^A-Z0-9]+/gi, '_')}`,
         sourceId: item.sourceId,
         symbol: item.holding.symbol,
         name: item.holding.name || item.quote.name || item.holding.symbol,
-        exDate: item.forecastDate,
-        payDate: '',
-        month: parts ? parts.month : 0,
+        exDate: item.forecastExDate,
+        payDate: item.forecastPayDate,
+        payDateEstimated: item.payDateEstimated,
+        month: item.forecastPayMonth,
         amountPerShare: item.amountPerShare,
         currency: item.currency,
         shares,
@@ -286,38 +307,6 @@ function buildDividendMonthItems(entries) {
   }));
 }
 
-function buildDividendStockItems(entries) {
-  const map = new Map();
-  entries.forEach((entry) => {
-    if (!map.has(entry.symbol)) {
-      map.set(entry.symbol, {
-        symbol: entry.symbol,
-        name: entry.name || entry.symbol,
-        receivedCny: 0,
-        pendingCny: 0,
-        forecastCny: 0,
-        totalCny: 0
-      });
-    }
-    const item = map.get(entry.symbol);
-    if (entry.status === 'received') item.receivedCny += entry.netCny;
-    else if (entry.status === 'pending') item.pendingCny += entry.netCny;
-    else item.forecastCny += entry.netCny;
-    item.totalCny += entry.netCny;
-  });
-  const total = Array.from(map.values()).reduce((sum, item) => sum + item.totalCny, 0) || 1;
-  return Array.from(map.values())
-    .map((item) => ({
-      ...item,
-      receivedCny: roundMoney(item.receivedCny),
-      pendingCny: roundMoney(item.pendingCny),
-      forecastCny: roundMoney(item.forecastCny),
-      totalCny: roundMoney(item.totalCny),
-      share: item.totalCny / total
-    }))
-    .sort((a, b) => b.totalCny - a.totalCny || a.symbol.localeCompare(b.symbol));
-}
-
 export function computeDividendCalendar(today = new Date()) {
   const todayLabel = typeof today === 'string' ? formatDateLabel(today) : formatLocalDate(today);
   const todayParts = getDateParts(todayLabel) || getDateParts(formatLocalDate());
@@ -325,16 +314,13 @@ export function computeDividendCalendar(today = new Date()) {
   const filterKey = getDividendFilterKey();
   const activeMonth = getActiveDividendMonth();
   const summary = computeHoldings();
-  const annualizedCny = summary.holdings
-    .filter((holding) => matchesDividendFilter(holding, filterKey))
-    .reduce((sum, holding) => sum + safeNumber(holding.netAnnualDividendCny, 0), 0);
   const ledgerEntries = state.dividendLedger
     .map((entry) => buildLedgerDividendEntry(entry, year, todayLabel))
     .filter(Boolean);
-  const forecastEntries = [];
+  const forecastEntries = buildForecastDividendEntries(summary, year, todayLabel, ledgerEntries);
   const entries = [...ledgerEntries, ...forecastEntries]
     .filter((entry) => matchesDividendFilter(entry, filterKey))
-    .sort((a, b) => `${a.exDate}|${a.status}|${a.symbol}`.localeCompare(`${b.exDate}|${b.status}|${b.symbol}`));
+    .sort((a, b) => `${a.payDate}|${a.status}|${a.symbol}`.localeCompare(`${b.payDate}|${b.status}|${b.symbol}`));
   const receivedCny = entries
     .filter((entry) => entry.status === 'received')
     .reduce((sum, entry) => sum + entry.netCny, 0);
@@ -344,8 +330,9 @@ export function computeDividendCalendar(today = new Date()) {
   const forecastCny = entries
     .filter((entry) => entry.status === 'forecast')
     .reduce((sum, entry) => sum + entry.netCny, 0);
-  const upcomingCny = pendingCny;
-  const projectedCny = Math.max(annualizedCny, receivedCny + pendingCny);
+  // 即将到账 = 在途待到账(pending) + 节奏预估(forecast)；预计全年 = 已到账 + 即将到账。
+  const upcomingCny = pendingCny + forecastCny;
+  const projectedCny = receivedCny + upcomingCny;
   return {
     year,
     filterKey,
@@ -356,11 +343,9 @@ export function computeDividendCalendar(today = new Date()) {
       pendingCny: roundMoney(pendingCny),
       forecastCny: roundMoney(forecastCny),
       upcomingCny: roundMoney(upcomingCny),
-      projectedCny: roundMoney(projectedCny),
-      annualizedCny: roundMoney(annualizedCny)
+      projectedCny: roundMoney(projectedCny)
     },
     months: buildDividendMonthItems(entries),
-    stocks: buildDividendStockItems(entries),
     details: activeMonth ? entries.filter((entry) => entry.month === activeMonth) : entries,
     allDetails: entries
   };
@@ -378,7 +363,7 @@ function getManualByYear() {
 function getDividendEntriesByYear() {
   const map = new Map();
   state.dividendLedger.forEach((entry) => {
-    const year = getIncomeYear(entry && entry.exDate);
+    const year = getIncomeYear(getLedgerEffectivePayDate(entry).date || (entry && entry.exDate));
     if (!year) return;
     if (!map.has(year)) map.set(year, []);
     map.get(year).push({
@@ -557,7 +542,7 @@ export function computeIncomeSummary(today = new Date()) {
       growthStreak: getCoreGrowthStreak(rowsAsc)
     },
     notes: {
-      dividendBasis: 'exDate',
+      dividendBasis: 'payDate',
       capitalReturnScope: filterKey === 'all' ? 'all' : 'account'
     }
   };

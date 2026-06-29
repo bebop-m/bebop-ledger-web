@@ -357,19 +357,19 @@ function getDividendMetricMarkup(label, value, note = '', tone = '') {
 
 function renderDividendMetricGrid(model) {
   const m = model.metrics;
-  const pendingText = `${LABELS.dividendPending} ${formatDisplayMoney(m.pendingCny, 'CNY')}`;
+  const upcomingText = `${LABELS.dividendPendingStatus} ${formatDisplayMoney(m.pendingCny, 'CNY')} · ${LABELS.dividendForecast} ${formatDisplayMoney(m.forecastCny, 'CNY')}`;
   refs.dividendMetricGrid.innerHTML = [
-    getDividendMetricMarkup(LABELS.dividendReceived, m.receivedCny, '按除息日已发生统计', 'received'),
-    getDividendMetricMarkup(LABELS.dividendUpcoming, m.upcomingCny, pendingText, 'upcoming'),
-    getDividendMetricMarkup(LABELS.dividendProjected, m.projectedCny, '与首页预估年化同口径', 'projected'),
-    getDividendMetricMarkup(LABELS.dividendAnnualized, m.annualizedCny, LABELS.annualDividend.replace(/[：:]\s*$/, ''), 'annualized')
+    getDividendMetricMarkup(LABELS.dividendReceived, m.receivedCny, '按实际到账日统计', 'received'),
+    getDividendMetricMarkup(LABELS.dividendUpcoming, m.upcomingCny, upcomingText, 'upcoming'),
+    getDividendMetricMarkup(LABELS.dividendProjected, m.projectedCny, '已到账 + 即将到账', 'projected')
   ].join('');
 }
 
 function getDividendAmountRowsMarkup(item) {
+  const upcoming = safeNumber(item.pendingCny, 0) + safeNumber(item.forecastCny, 0);
   return `<div class="dividend-mini-rows">
     <div><span>${LABELS.dividendReceivedStatus}</span><strong>${escapeHtml(formatDisplayMoney(item.receivedCny, 'CNY'))}</strong></div>
-    <div><span>${LABELS.dividendPending}</span><strong>${escapeHtml(formatDisplayMoney(item.pendingCny, 'CNY'))}</strong></div>
+    <div><span>${LABELS.dividendUpcoming}</span><strong>${escapeHtml(formatDisplayMoney(upcoming, 'CNY'))}</strong></div>
   </div>`;
 }
 
@@ -385,23 +385,13 @@ function renderDividendMonths(model) {
   `).join('');
 }
 
-function renderDividendStocks(model) {
-  if (!model.stocks.length) {
-    refs.dividendStockList.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">${LABELS.dividendEmptyTitle}</p><p class="empty-state-note">${LABELS.dividendEmptyNote}</p></div>`;
-    return;
-  }
-  refs.dividendStockList.innerHTML = model.stocks.map((item) => `
-    <article class="dividend-stock-card">
-      <div class="dividend-stock-head">
-        <div>
-          <h3 class="dividend-stock-name">${escapeHtml(item.name)}</h3>
-          <p class="dividend-stock-code">${escapeHtml(item.symbol)}</p>
-        </div>
-        <span class="dividend-stock-share">${escapeHtml(formatPercent(item.share))}</span>
-      </div>
-      ${getDividendAmountRowsMarkup(item)}
-    </article>
-  `).join('');
+function getDividendDetailDateMarkup(entry) {
+  const payDate = entry.payDate || entry.exDate;
+  const estimatedTag = entry.payDateEstimated ? `（${LABELS.dividendPayDateEstimated}）` : '';
+  const exPart = entry.exDate && entry.exDate !== payDate
+    ? ` · ${LABELS.dividendExDateLabel} ${escapeHtml(entry.exDate)}`
+    : '';
+  return `${LABELS.dividendPayDateLabel} ${escapeHtml(payDate)}${estimatedTag}${exPart} · ${escapeHtml(entry.symbol)}`;
 }
 
 function renderDividendDetails(model) {
@@ -418,7 +408,7 @@ function renderDividendDetails(model) {
       <header class="dividend-detail-head">
         <div>
           <h3 class="dividend-detail-name">${escapeHtml(entry.name)}</h3>
-          <p class="dividend-detail-code">${escapeHtml(entry.exDate)} · ${escapeHtml(entry.symbol)}</p>
+          <p class="dividend-detail-code">${getDividendDetailDateMarkup(entry)}</p>
         </div>
         <span class="dividend-status-pill is-${escapeHtml(entry.status)}">${escapeHtml(getDividendEntryStatusLabel(entry))}</span>
       </header>
@@ -443,7 +433,6 @@ export function renderDividendCalendarPage() {
   });
   renderDividendMetricGrid(model);
   renderDividendMonths(model);
-  renderDividendStocks(model);
   renderDividendDetails(model);
 }
 
@@ -510,7 +499,7 @@ function renderIncomeOverview(model) {
     ? '等待净值回填后计算'
     : '非唯一总收益口径';
   refs.incomeOverviewGrid.innerHTML = [
-    getIncomeMetricMarkup('股息收入', formatIncomeMoney(row.dividendCny), row.dividendSource === 'manual' ? '使用手动回填值' : `${row.year} 年除息日归属`, 'dividend'),
+    getIncomeMetricMarkup('股息收入', formatIncomeMoney(row.dividendCny), row.dividendSource === 'manual' ? '使用手动回填值' : `${row.year} 年到账日归属`, 'dividend'),
     getIncomeMetricMarkup('资金收益', formatIncomeSignedMoney(row.capitalReturnCny), capitalNote, 'capital'),
     getIncomeMetricMarkup('合计参考', formatIncomeSignedMoney(row.totalReferenceCny), totalNote, 'total'),
     getIncomeMetricMarkup('较上一年变化', compareText, compareNote, 'compare')

@@ -59,6 +59,11 @@ export const HOLDING_SWIPE_OPEN_THRESHOLD = 34;
 
 export const DEFAULT_RATES = { CNY: 1, USD: 7.22, HKD: 0.92 };
 
+/* Estimated settlement lag (除息日 → 到账日) by market, in days.
+   A 股现金红利基本除息日当天到账（lag 0）；港股通常除息后数周才派付；美股约两周。
+   真实 payDate 或用户确认值优先，缺失时才用这里估算。 */
+export const PAYDATE_LAG_DAYS = { CN: 0, HK: 30, US: 14 };
+
 export const COMPANY_COLORS = [
   '#152849', '#f28c28', '#cfd6e1', '#8e9aae', '#e7d7c7',
   '#6d7b90', '#f5b36b', '#2a4168', '#d9e0e8', '#a2acba',
@@ -120,8 +125,11 @@ export const LABELS = {
   dividendPending: '\u5f85\u786e\u8ba4\u5230\u8d26',
   dividendForecast: '\u8282\u594f\u9884\u4f30',
   dividendReceivedStatus: '\u5df2\u5230\u8d26',
-  dividendPendingStatus: '\u5f85\u786e\u8ba4\u5230\u8d26',
+  dividendPendingStatus: '\u5728\u9014\u5f85\u5230\u8d26',
   dividendForecastStatus: '\u8282\u594f\u9884\u4f30',
+  dividendPayDateLabel: '\u5230\u8d26\u65e5',
+  dividendExDateLabel: '\u9664\u606f',
+  dividendPayDateEstimated: '\u4f30',
   dividendCurrentShares: '\u5f53\u524d\u80a1\u6570\u4f30\u7b97',
   dividendSnapshotConfidence: '\u5feb\u7167\u63a8\u7b97',
   dividendCarryForwardConfidence: '\u5feb\u7167\u5ef6\u7eed',
