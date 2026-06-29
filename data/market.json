@@ -4,6 +4,7 @@
     "quote": "tencent-finance",
     "fx": "frankfurter",
     "dividend": "yfinance",
+    "dividendHistoryPeriod": "5y",
     "dividendVerify": "disabled"
   },
   "updatedAt": "2026-06-26T12:26:04.133220Z",
@@ -24,7 +25,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:52.621152Z",
       "lastExDate": "2026-05-14",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "600519.SH": {
       "symbol": "600519.SH",
@@ -37,7 +39,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:52.957698Z",
       "lastExDate": "2026-06-25",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "000651.SZ": {
       "symbol": "000651.SZ",
@@ -50,7 +53,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:53.239934Z",
       "lastExDate": "2026-01-22",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "00883.HK": {
       "symbol": "00883.HK",
@@ -63,7 +67,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:53.545740Z",
       "lastExDate": "2026-06-10",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "06049.HK": {
       "symbol": "06049.HK",
@@ -76,7 +81,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:53.946537Z",
       "lastExDate": "2026-06-01",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "000333.SZ": {
       "symbol": "000333.SZ",
@@ -89,7 +95,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:54.205401Z",
       "lastExDate": "2025-11-17",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "02669.HK": {
       "symbol": "02669.HK",
@@ -102,7 +109,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:54.589812Z",
       "lastExDate": "2026-06-22",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "PDD": {
       "symbol": "PDD",
@@ -115,7 +123,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:54.788479Z",
       "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendStatus": "missing",
+      "dividends": []
     },
     "01571.HK": {
       "symbol": "01571.HK",
@@ -128,7 +137,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:55.241377Z",
       "lastExDate": "2026-06-17",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "00270.HK": {
       "symbol": "00270.HK",
@@ -141,7 +151,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:55.941779Z",
       "lastExDate": "2025-10-07",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "09618.HK": {
       "symbol": "09618.HK",
@@ -154,7 +165,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:56.582636Z",
       "lastExDate": "2026-04-07",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "00728.HK": {
       "symbol": "00728.HK",
@@ -167,7 +179,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:57.026870Z",
       "lastExDate": "2026-06-01",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "02333.HK": {
       "symbol": "02333.HK",
@@ -180,7 +193,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:57.375662Z",
       "lastExDate": "2025-07-07",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "600177.SH": {
       "symbol": "600177.SH",
@@ -193,7 +207,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:57.736528Z",
       "lastExDate": "2026-06-04",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "03900.HK": {
       "symbol": "03900.HK",
@@ -206,7 +221,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:58.010445Z",
       "lastExDate": "2025-06-24",
-      "dividendStatus": "missing"
+      "dividendStatus": "missing",
+      "dividends": []
     },
     "01995.HK": {
       "symbol": "01995.HK",
@@ -219,7 +235,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:58.317621Z",
       "lastExDate": "2026-05-14",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "03316.HK": {
       "symbol": "03316.HK",
@@ -232,7 +249,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:58.570795Z",
       "lastExDate": "2025-09-02",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "00816.HK": {
       "symbol": "00816.HK",
@@ -245,7 +263,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:59.000816Z",
       "lastExDate": "2026-06-24",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "513530.SH": {
       "symbol": "513530.SH",
@@ -258,7 +277,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:59.395502Z",
       "lastExDate": "2026-06-14",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "00823.HK": {
       "symbol": "00823.HK",
@@ -271,7 +291,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:25:59.886805Z",
       "lastExDate": "2026-06-10",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "02156.HK": {
       "symbol": "02156.HK",
@@ -284,7 +305,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:26:00.192081Z",
       "lastExDate": "2026-05-28",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "601088.SH": {
       "symbol": "601088.SH",
@@ -297,7 +319,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:26:00.524583Z",
       "lastExDate": "2025-11-09",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "00941.HK": {
       "symbol": "00941.HK",
@@ -310,7 +333,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:26:01.065259Z",
       "lastExDate": "2026-06-04",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "01088.HK": {
       "symbol": "01088.HK",
@@ -323,7 +347,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:26:01.498216Z",
       "lastExDate": "2025-10-29",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "01836.HK": {
       "symbol": "01836.HK",
@@ -336,7 +361,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:26:01.749639Z",
       "lastExDate": "2026-05-18",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "01023.HK": {
       "symbol": "01023.HK",
@@ -349,7 +375,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:26:02.098860Z",
       "lastExDate": "2026-03-25",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "00926.HK": {
       "symbol": "00926.HK",
@@ -362,7 +389,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:26:02.319236Z",
       "lastExDate": "2025-08-26",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     },
     "09926.HK": {
       "symbol": "09926.HK",
@@ -375,7 +403,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:26:02.657818Z",
       "lastExDate": "",
-      "dividendStatus": "missing"
+      "dividendStatus": "missing",
+      "dividends": []
     },
     "00777.HK": {
       "symbol": "00777.HK",
@@ -388,7 +417,8 @@
       "dividendSource": "yfinance",
       "dividendUpdatedAt": "2026-06-26T12:26:02.992361Z",
       "lastExDate": "2026-06-03",
-      "dividendStatus": "fresh"
+      "dividendStatus": "fresh",
+      "dividends": []
     }
   }
 }

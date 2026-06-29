@@ -13,6 +13,7 @@ export const GITHUB_MARKET_WORKFLOW_DISPATCH_API = `https://api.github.com/repos
 export const GITHUB_TOKEN_STORAGE_KEY = 'bebop-ledger-github-token-v2';
 export const TENCENT_REALTIME_ENDPOINT = 'https://qt.gtimg.cn/q=';
 export const TENCENT_BATCH_SIZE = 60;
+export const PORTFOLIO_SNAPSHOT_VERSION = 2;
 export const LEGEND_COLLAPSED_COUNT = 5;
 export const LEGEND_TOGGLE_ANIMATION_MS = 220;
 export const MASK_AMOUNT = '******';
@@ -22,6 +23,10 @@ export const MARKET_DEPLOY_WAIT_TIMEOUT_MS = 90000;
 export const MARKET_DEPLOY_WAIT_INTERVAL_MS = 3000;
 export const VALID_DIVIDEND_SOURCES = new Set(['yfinance', 'yahoo', 'eodhd', 'manual', 'cache']);
 export const VALID_DIVIDEND_STATUSES = new Set(['manual', 'fresh', 'stale', 'missing']);
+export const VALID_RECEIPT_STATUSES = new Set(['received', 'pending']);
+export const VALID_DIVIDEND_CONFIDENCES = new Set(['confirmed', 'snapshot', 'carryForward', 'estimated', 'manual']);
+export const PAGE_KEYS = new Set(['assets', 'income', 'dividends']);
+export const DIVIDEND_FILTER_KEYS = new Set(['all', 'core', 'income']);
 export const TENCENT_REQUEST_TIMEOUT_MS = 8000;
 export const HOLDING_ENTER_STAGGER_MS = 25;
 export const HOLDING_ENTER_STAGGER_MAX_MS = 400;
@@ -38,8 +43,14 @@ export const CONFIRM_CLOSE_DELAY_MS = 40;
 
 export const UI_TEXT = {
   sort: '\u6392\u5e8f',
-  overallAverageNetYield: '\u6574\u4f53\u5e73\u5747\u7a0e\u540e\u80a1\u606f\u7387',
-  overallYieldCompact: '\u80a1\u606f\u7387'
+  overallAverageNetYield: '\u6574\u4f53\u5e73\u5747\u9884\u4f30\u80a1\u606f\u7387',
+  overallYieldCompact: '\u9884\u4f30\u80a1\u606f\u7387',
+  pageAssets: '\u8d44\u4ea7',
+  pageIncome: '\u6536\u76ca\u6c47\u603b',
+  pageDividends: '\u80a1\u606f\u65e5\u5386',
+  dividendFilterAll: '\u5168\u90e8',
+  dividendFilterCore: '\u6838\u5fc3\u4ed3',
+  dividendFilterIncome: '\u6253\u5de5\u4ed3'
 };
 
 export const BUCKET_CHIP_COMPACT_THRESHOLD = 0.16;
@@ -59,15 +70,15 @@ export const BUCKET_COLORS = { core: '#152849', income: '#f28c28' };
 
 export const LABELS = {
   totalMarketValue: '\u6301\u4ed3\u603b\u91d1\u989d',
-  totalDividend: '\u5e74\u5ea6\u80a1\u606f\u603b\u91d1\u989d',
+  totalDividend: '\u9884\u4f30\u5e74\u5316\u80a1\u606f',
   usdRate: '\u7f8e\u5143\u6c47\u7387',
   hkdRate: '\u6e2f\u5e01\u6c47\u7387',
   liability: '\u8d1f\u503a',
   marketUpdated: '\u884c\u60c5\u66f4\u65b0',
   waitingForUpdate: '\u7b49\u5f85\u884c\u60c5\u66f4\u65b0',
   sortMarketValue: '\u6301\u4ed3\u5e02\u503c',
-  sortDividendYield: '\u80a1\u606f\u7387',
-  sortDividendAmount: '\u80a1\u606f\u91d1\u989d',
+  sortDividendYield: '\u9884\u4f30\u80a1\u606f\u7387',
+  sortDividendAmount: '\u9884\u4f30\u5e74\u5316\u80a1\u606f',
   core: '\u6838\u5fc3\u4ed3',
   income: '\u6253\u5de5\u4ed3',
   cancel: '\u53d6\u6d88',
@@ -99,8 +110,25 @@ export const LABELS = {
   syncNoPrivateSnapshot: '\u672a\u53d1\u73b0\u79c1\u6709\u6301\u4ed3\uff0c\u8bf7\u5148\u65b0\u589e\u6216\u7f16\u8f91\u6301\u4ed3\u540e\u518d\u540c\u6b65\u3002',
   marketValue: '\u6301\u4ed3\u5e02\u503c\uff1a',
   quantity: '\u6570\u91cf\uff1a',
-  annualDividend: '\u7a0e\u540e\u80a1\u606f\uff1a',
-  dividendYield: '\u80a1\u606f\u7387\uff1a',
+  annualDividend: '\u9884\u4f30\u5e74\u5316\u80a1\u606f\uff1a',
+  dividendYield: '\u9884\u4f30\u80a1\u606f\u7387\uff1a',
+  dividendCalendarYear: '\u5f53\u5e74\u80a1\u606f\u73b0\u91d1\u6d41',
+  dividendReceived: '\u4eca\u5e74\u5df2\u5230\u8d26',
+  dividendUpcoming: '\u5373\u5c06\u5230\u8d26',
+  dividendProjected: '\u9884\u8ba1\u5168\u5e74',
+  dividendAnnualized: '\u9884\u4f30\u5e74\u5316\u80a1\u606f',
+  dividendPending: '\u5f85\u786e\u8ba4\u5230\u8d26',
+  dividendForecast: '\u8282\u594f\u9884\u4f30',
+  dividendReceivedStatus: '\u5df2\u5230\u8d26',
+  dividendPendingStatus: '\u5f85\u786e\u8ba4\u5230\u8d26',
+  dividendForecastStatus: '\u8282\u594f\u9884\u4f30',
+  dividendCurrentShares: '\u5f53\u524d\u80a1\u6570\u4f30\u7b97',
+  dividendSnapshotConfidence: '\u5feb\u7167\u63a8\u7b97',
+  dividendCarryForwardConfidence: '\u5feb\u7167\u5ef6\u7eed',
+  dividendConfirmedConfidence: '\u5df2\u786e\u8ba4',
+  dividendManualConfidence: '\u624b\u52a8\u8bb0\u5f55',
+  dividendEmptyTitle: '\u6682\u65e0\u5f53\u5e74\u80a1\u606f',
+  dividendEmptyNote: '\u884c\u60c5\u4e2d\u6709\u9010\u7b14\u6d3e\u606f\u540e\uff0c\u8fd9\u91cc\u4f1a\u81ea\u52a8\u6c47\u603b\u3002',
   dividendSource: '\u6570\u636e\u6765\u6e90',
   dividendUpdatedAt: '\u6700\u8fd1\u66f4\u65b0',
   lastExDate: '\u6700\u8fd1\u9664\u606f\u65e5',

@@ -33,6 +33,7 @@ REQUEST_HEADERS = {
     'Accept-Language': 'en-US,en;q=0.9'
 }
 TENCENT_QUOTE_ENDPOINT = 'https://qt.gtimg.cn/q='
+DIVIDEND_HISTORY_PERIOD = '5y'
 TENCENT_HEADERS = {
     **REQUEST_HEADERS,
     'Referer': 'https://gu.qq.com/'
@@ -212,7 +213,9 @@ def parse_date_value(value):
         return None
 
     if isinstance(value, datetime):
-        return value.astimezone(timezone.utc) if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        # Dividend ex-dates are calendar dates, not instants. Preserve the
+        # provider's displayed date instead of converting across time zones.
+        return datetime(value.year, value.month, value.day, tzinfo=timezone.utc)
 
     if hasattr(value, 'to_pydatetime'):
         try:
@@ -236,8 +239,15 @@ def parse_date_value(value):
     if re.fullmatch(r'\d{10,13}', raw):
         return parse_date_value(int(raw))
 
+    if re.fullmatch(r'\d{4}-\d{2}-\d{2}', raw):
+        return datetime.strptime(raw, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+
+    if re.fullmatch(r'\d{4}/\d{1,2}/\d{1,2}', raw):
+        return datetime.strptime(raw, '%Y/%m/%d').replace(tzinfo=timezone.utc)
+
     try:
-        return datetime.fromisoformat(raw.replace('Z', '+00:00')).astimezone(timezone.utc)
+        parsed = datetime.fromisoformat(raw.replace('Z', '+00:00'))
+        return datetime(parsed.year, parsed.month, parsed.day, tzinfo=timezone.utc)
     except Exception:
         pass
 
@@ -252,6 +262,74 @@ def parse_date_value(value):
 def normalize_date_string(value):
     dt = parse_date_value(value)
     return dt.date().isoformat() if dt else ''
+
+
+def normalize_currency_code(value, fallback='CNY'):
+    currency = str(value or '').strip().upper()
+    return currency if re.fullmatch(r'[A-Z]{3}', currency) else fallback
+
+
+def build_dividend_event_key(event):
+    return '|'.join([
+        str(event.get('exDate') or ''),
+        str(round(safe_float(event.get('amountPerShare'), 0.0), 6)),
+        str(event.get('currency') or '')
+    ])
+
+
+def normalize_dividend_event(item, symbol='', currency=''):
+    if not isinstance(item, dict):
+        return None
+
+    fallback_currency = normalize_currency_code(currency, infer_market_currency(symbol)[1])
+    ex_date = normalize_date_string(item.get('exDate') or item.get('date'))
+    amount_per_share = round(max(0.0, safe_float(item.get('amountPerShare'), 0.0)), 6)
+    if not ex_date or amount_per_share <= 0:
+        return None
+
+    return {
+        'exDate': ex_date,
+        'payDate': normalize_date_string(item.get('payDate')) if item.get('payDate') else '',
+        'amountPerShare': amount_per_share,
+        'currency': normalize_currency_code(item.get('currency'), fallback_currency),
+        'source': str(item.get('source') or 'yfinance').strip() or 'yfinance'
+    }
+
+
+def normalize_dividend_events(value, symbol='', currency=''):
+    if not isinstance(value, list):
+        return []
+
+    events = []
+    seen = set()
+    for item in value:
+        event = normalize_dividend_event(item, symbol, currency)
+        if not event:
+            continue
+        key = build_dividend_event_key(event)
+        if key in seen:
+            continue
+        seen.add(key)
+        events.append(event)
+
+    return sorted(events, key=lambda event: event['exDate'])
+
+
+def build_dividend_events_from_series(series, currency):
+    events = []
+    for index_value, raw_value in iter_series_items(series):
+        amount = safe_float(raw_value, 0.0)
+        ex_date = normalize_date_string(index_value)
+        if amount <= 0 or not ex_date:
+            continue
+        events.append({
+            'exDate': ex_date,
+            'payDate': '',
+            'amountPerShare': round(amount, 6),
+            'currency': normalize_currency_code(currency),
+            'source': 'yfinance'
+        })
+    return normalize_dividend_events(events, currency=currency)
 
 
 def is_stale(updated_at, stale_days):
@@ -379,6 +457,7 @@ def normalize_quote_entry(symbol, quote, stale_days):
     if prev_close > 0:
         entry['previousClose'] = round(prev_close, 6)
     entry.update(build_dividend_payload_from_quote(quote, stale_days))
+    entry['dividends'] = normalize_dividend_events(quote.get('dividends'), symbol, entry['currency'])
     return entry
 
 
@@ -386,7 +465,7 @@ def merge_quote_snapshots(base_quotes, next_quotes, stale_days):
     merged = {**(base_quotes or {})}
     dividend_keys = (
         'dividendPerShareTtm', 'dividendSource', 'dividendUpdatedAt',
-        'lastExDate', 'dividendStatus', 'dividendFetchError'
+        'lastExDate', 'dividendStatus', 'dividendFetchError', 'dividends'
     )
     for symbol, next_quote in (next_quotes or {}).items():
         base = merged.get(symbol) or {}
@@ -640,7 +719,7 @@ def fetch_yfinance_snapshot(symbol, previous_quote, stale_days):
     dividends = None
     try:
         div_history = yf.Ticker(to_yfinance_symbol(symbol)).history(
-            period='2y', auto_adjust=False, actions=True
+            period=DIVIDEND_HISTORY_PERIOD, auto_adjust=False, actions=True
         )
         if div_history is not None and not div_history.empty and 'Dividends' in div_history.columns:
             dividends = div_history['Dividends']
@@ -652,14 +731,16 @@ def fetch_yfinance_snapshot(symbol, previous_quote, stale_days):
         print(f'yfinance dividends skipped for {symbol}: {error}')
 
     market, _ = infer_market_currency(symbol)
+    quote_currency = resolve_currency(ticker, symbol)
     quote = {
         'symbol': symbol,
         'name': resolve_company_name(ticker, previous_quote, symbol),
         'market': market,
-        'currency': resolve_currency(ticker, symbol),
+        'currency': quote_currency,
         'price': price
     }
     if dividend_fetch_error:
+        quote['dividends'] = previous_quote.get('dividends') or []
         quote.update(build_dividend_payload(
             dividend_per_share_ttm=previous_quote.get('dividendPerShareTtm'),
             dividend_source='cache',
@@ -671,9 +752,11 @@ def fetch_yfinance_snapshot(symbol, previous_quote, stale_days):
     else:
         ttm_dps = sum_ttm_dividends_from_series(dividends)
         last_ex = latest_ex_date_from_series(dividends)
+        dividend_events = build_dividend_events_from_series(dividends, quote_currency)
         if ttm_dps <= 0 and not last_ex and safe_float(previous_quote.get('dividendPerShareTtm'), 0) > 0:
             # yfinance returned an empty dividend series despite a known previous value.
             # This indicates a transient API or data issue — preserve the cached dividend.
+            quote['dividends'] = previous_quote.get('dividends') or []
             quote.update(build_dividend_payload(
                 dividend_per_share_ttm=previous_quote.get('dividendPerShareTtm'),
                 dividend_source='cache',
@@ -683,6 +766,7 @@ def fetch_yfinance_snapshot(symbol, previous_quote, stale_days):
                 dividend_fetch_error='yfinance returned empty dividend series'
             ))
         else:
+            quote['dividends'] = dividend_events
             quote.update(build_dividend_payload(
                 dividend_per_share_ttm=ttm_dps,
                 dividend_source='yfinance',
@@ -779,6 +863,7 @@ def main():
             'quote': 'tencent-finance',
             'fx': 'frankfurter',
             'dividend': 'yfinance',
+            'dividendHistoryPeriod': DIVIDEND_HISTORY_PERIOD,
             'dividendVerify': 'disabled'
         },
         'updatedAt': utc_now_iso(),

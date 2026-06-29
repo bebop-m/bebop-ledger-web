@@ -1,10 +1,13 @@
 import {
   DEFAULT_RATES, DEFAULT_HOLDINGS, SEED_QUOTES, STORAGE_KEY,
-  LABELS, TOAST_DEFAULT_DURATION_MS, CONFIRM_CLOSE_DELAY_MS
+  LABELS, TOAST_DEFAULT_DURATION_MS, CONFIRM_CLOSE_DELAY_MS,
+  PORTFOLIO_SNAPSHOT_VERSION, PAGE_KEYS, DIVIDEND_FILTER_KEYS
 } from './constants.js';
 import {
   safeNumber, clone, escapeHtml, normalizeSeedQuoteMap, mergeQuotes,
-  sanitizeHolding, sanitizePerShareOverrideInput, normalizeSymbol
+  sanitizeHolding, sanitizePerShareOverrideInput, normalizeSymbol,
+  sanitizeDividendLedgerEntry, sanitizeDailySnapshotEntry,
+  sanitizeCashFlowEntry, sanitizeYearlyManualEntry
 } from './utils.js';
 
 /* ── Default Quotes (normalized from seed data) ── */
@@ -17,10 +20,16 @@ export const state = {
   rates: { ...DEFAULT_RATES },
   nextId: 1,
   showAmounts: true,
+  activePage: 'assets',
+  dividendCalendarBucket: 'all',
   sortField: 'marketValueCny',
   sortDirection: 'desc',
   legendExpanded: false,
   liabilityCny: 0,
+  dividendLedger: [],
+  dailySnapshots: [],
+  cashFlows: [],
+  yearlyManual: [],
   lastUpdatedAt: '',
   modal: null,
   modalPayload: null,
@@ -56,6 +65,24 @@ export function setComputeCache(result) {
 /* ── DOM Refs ── */
 export const refs = {
   privacyButton: document.getElementById('privacyButton'),
+  pageViews: Array.from(document.querySelectorAll('[data-page-view]')),
+  bottomNav: document.getElementById('bottomNav'),
+  bottomNavButtons: Array.from(document.querySelectorAll('[data-page-nav]')),
+  dividendCalendarYear: document.getElementById('dividendCalendarYear'),
+  dividendFilterGroup: document.getElementById('dividendFilterGroup'),
+  dividendFilterButtons: Array.from(document.querySelectorAll('[data-dividend-filter]')),
+  incomeManualButton: document.getElementById('incomeManualButton'),
+  incomeFilterGroup: document.getElementById('incomeFilterGroup'),
+  incomeFilterButtons: Array.from(document.querySelectorAll('[data-income-filter]')),
+  incomeOverviewGrid: document.getElementById('incomeOverviewGrid'),
+  incomeMethodNote: document.getElementById('incomeMethodNote'),
+  incomeTrend: document.getElementById('incomeTrend'),
+  incomeYearList: document.getElementById('incomeYearList'),
+  incomeNorthStar: document.getElementById('incomeNorthStar'),
+  dividendMetricGrid: document.getElementById('dividendMetricGrid'),
+  dividendMonthGrid: document.getElementById('dividendMonthGrid'),
+  dividendStockList: document.getElementById('dividendStockList'),
+  dividendDetailList: document.getElementById('dividendDetailList'),
   exportButton: document.getElementById('exportButton'),
   importButton: document.getElementById('importButton'),
   importFileInput: document.getElementById('importFileInput'),
@@ -154,15 +181,23 @@ export function showConfirm(message, options = {}) {
 /* ── Snapshot & Persistence ── */
 export function createDefaultSnapshot() {
   return {
+    type: 'portfolio-snapshot',
+    version: PORTFOLIO_SNAPSHOT_VERSION,
     holdings: clone(DEFAULT_HOLDINGS),
     quotes: clone(DEFAULT_QUOTES),
     rates: { ...DEFAULT_RATES },
     nextId: DEFAULT_HOLDINGS.length + 1,
     showAmounts: true,
+    activePage: 'assets',
+    dividendCalendarBucket: 'all',
     sortField: 'marketValueCny',
     sortDirection: 'desc',
     legendExpanded: false,
     liabilityCny: 0,
+    dividendLedger: [],
+    dailySnapshots: [],
+    cashFlows: [],
+    yearlyManual: [],
     lastUpdatedAt: ''
   };
 }
@@ -180,19 +215,37 @@ export function applySnapshot(snapshot) {
   state.rates = { ...DEFAULT_RATES, ...((snapshot && snapshot.rates) || {}) };
   state.nextId = Math.max(maxLocalId + 1, Math.floor(safeNumber(snapshot && snapshot.nextId, defaults.nextId)));
   state.showAmounts = snapshot && snapshot.showAmounts === false ? false : true;
+  state.activePage = PAGE_KEYS.has(snapshot && snapshot.activePage) ? snapshot.activePage : 'assets';
+  state.dividendCalendarBucket = DIVIDEND_FILTER_KEYS.has(snapshot && snapshot.dividendCalendarBucket) ? snapshot.dividendCalendarBucket : 'all';
   state.sortField = snapshot && ['effectiveYield', 'netAnnualDividendCny'].includes(snapshot.sortField) ? snapshot.sortField : 'marketValueCny';
   state.sortDirection = snapshot && snapshot.sortDirection === 'asc' ? 'asc' : 'desc';
   state.legendExpanded = Boolean(snapshot && snapshot.legendExpanded);
   state.liabilityCny = Math.max(0, safeNumber(snapshot && snapshot.liabilityCny, 0));
+  state.dividendLedger = Array.isArray(snapshot && snapshot.dividendLedger)
+    ? snapshot.dividendLedger.map(sanitizeDividendLedgerEntry).filter(Boolean)
+    : [];
+  state.dailySnapshots = Array.isArray(snapshot && snapshot.dailySnapshots)
+    ? snapshot.dailySnapshots.map(sanitizeDailySnapshotEntry).filter(Boolean)
+    : [];
+  state.cashFlows = Array.isArray(snapshot && snapshot.cashFlows)
+    ? snapshot.cashFlows.map(sanitizeCashFlowEntry).filter(Boolean)
+    : [];
+  state.yearlyManual = Array.isArray(snapshot && snapshot.yearlyManual)
+    ? snapshot.yearlyManual.map(sanitizeYearlyManualEntry).filter(Boolean)
+    : [];
   state.lastUpdatedAt = typeof (snapshot && snapshot.lastUpdatedAt) === 'string' ? snapshot.lastUpdatedAt : '';
 }
 
 export function getPersistedSnapshot() {
   return {
+    type: 'portfolio-snapshot', version: PORTFOLIO_SNAPSHOT_VERSION,
     holdings: state.holdings, quotes: state.quotes, rates: state.rates,
-    nextId: state.nextId, showAmounts: state.showAmounts, sortField: state.sortField,
+    nextId: state.nextId, showAmounts: state.showAmounts, activePage: state.activePage,
+    dividendCalendarBucket: state.dividendCalendarBucket, sortField: state.sortField,
     sortDirection: state.sortDirection, legendExpanded: state.legendExpanded,
-    liabilityCny: state.liabilityCny, lastUpdatedAt: state.lastUpdatedAt
+    liabilityCny: state.liabilityCny, dividendLedger: state.dividendLedger,
+    dailySnapshots: state.dailySnapshots, cashFlows: state.cashFlows,
+    yearlyManual: state.yearlyManual, lastUpdatedAt: state.lastUpdatedAt
   };
 }
 
@@ -236,9 +289,21 @@ export function buildPortfolioSnapshot() {
     : [];
   return {
     type: 'portfolio-snapshot',
-    version: 1,
+    version: PORTFOLIO_SNAPSHOT_VERSION,
     updatedAt: new Date().toISOString(),
     holdings,
+    dividendLedger: Array.isArray(persisted.dividendLedger)
+      ? persisted.dividendLedger.map(sanitizeDividendLedgerEntry).filter(Boolean)
+      : [],
+    dailySnapshots: Array.isArray(persisted.dailySnapshots)
+      ? persisted.dailySnapshots.map(sanitizeDailySnapshotEntry).filter(Boolean)
+      : [],
+    cashFlows: Array.isArray(persisted.cashFlows)
+      ? persisted.cashFlows.map(sanitizeCashFlowEntry).filter(Boolean)
+      : [],
+    yearlyManual: Array.isArray(persisted.yearlyManual)
+      ? persisted.yearlyManual.map(sanitizeYearlyManualEntry).filter(Boolean)
+      : [],
     nextId: Math.max(holdings.reduce((max, item) => Math.max(max, item.localId), 0) + 1, Math.floor(safeNumber(persisted.nextId, 1))),
     showAmounts: persisted.showAmounts !== false,
     sortField: ['effectiveYield', 'netAnnualDividendCny'].includes(persisted.sortField) ? persisted.sortField : 'marketValueCny',

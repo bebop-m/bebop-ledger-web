@@ -11,10 +11,11 @@
   - GitHub Pages 静态部署（直接 serve 源码，无构建步骤）
 
 私有仓库（bebop-ledger-private）
-  - 个人真实持仓快照：data/portfolio.json
+  - 个人真实数据：data/portfolio.json
+  - 当前持仓、股息账本、每日快照、出入金、历史回填
 
 浏览器本地（localStorage）
-  - 当前设备上的运行态持仓
+  - 当前设备上的运行态持仓和收益账本容器
   - UI 状态
   - GitHub Personal Access Token
 ```
@@ -76,11 +77,11 @@ Deploy Pages
 
 ### 持仓与收益
 
-- 展示总市值、总股息、汇率、负债和净资产
+- 展示总市值、预估年化股息、汇率、负债和净资产
 - 展示日内盈亏金额和百分比（基于腾讯 previousClose）
 - 支持核心仓 / 打工仓分组，点击可展开仓位明细
-- 支持按市值、股息率、股息金额排序（折叠式排序菜单）
-- 展示每只股票的价格、市值、数量、税后股息、股息率和占比
+- 支持按市值、预估股息率、预估年化股息排序（折叠式排序菜单）
+- 展示每只股票的价格、市值、数量、预估年化股息、预估股息率和占比
 - 支持数量、税率、每股 TTM 股息手动覆盖
 - 隐私模式：点击后 DOM 文本替换为 ****，F12 也看不到真实金额
 
@@ -121,6 +122,8 @@ Deploy Pages
 ### 私有仓库中的数据
 
 - `data/portfolio.json`
+
+其中 `portfolio.json` 保存个人真实数据：当前持仓、`dividendLedger`、`dailySnapshots`、`cashFlows` 和 `yearlyManual`。这些数据不进入公开仓库或 GitHub Pages。
 
 这个文件只放在私有仓库，不在公开仓库中，也不会部署到 GitHub Pages。
 
@@ -196,19 +199,21 @@ data/
 ```
 
 - `data/portfolio.json`
-  个人真实持仓快照，用于跨设备恢复和备份。
+  个人真实数据快照，用于跨设备恢复和备份。包含当前持仓、股息账本、每日快照、出入金和历史回填。
 
-## 股息计算
+## 首页预估股息计算
 
 前端只认 `dividendPerShareTtm` 这个核心字段：
 
 ```text
-股息率 = dividendPerShareTtm / 当前价格
-税前年度股息 = dividendPerShareTtm * 持股数量 * 汇率
-税后年度股息 = 税前年度股息 * (1 - 税率)
+预估股息率 = dividendPerShareTtm / 当前价格
+税前预估年化股息 = dividendPerShareTtm * 持股数量 * 汇率
+税后预估年化股息 = 税前预估年化股息 * (1 - 税率)
 ```
 
 手动覆盖优先级高于后台值。
+
+已收股息后续以 `dividendLedger` 事件为准，按除息日归属年份统计，不用 TTM 反推。
 
 ## 本地开发
 

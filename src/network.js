@@ -3,6 +3,7 @@ import {
   safeNumber, normalizeSymbol, normalizeDividendSource, chunkSymbols,
   toTencentSymbol, inferQuoteFromMap, mergeQuotes, setStaleDays, normalizeStaleDays
 } from './utils.js';
+import { settleRevenueData } from './revenue.js';
 import {
   MARKET_ENDPOINT, OVERRIDE_ENDPOINT, CONFIG_ENDPOINT, TENCENT_REALTIME_ENDPOINT,
   TENCENT_BATCH_SIZE, TENCENT_REQUEST_TIMEOUT_MS, GITHUB_MARKET_CONTENTS_API,
@@ -113,8 +114,17 @@ export async function refreshMarketData(opts = {}) {
     try { hasUpdates = applyDividendOverridePayload(await loadDividendOverrideSnapshot()) > 0 || hasUpdates; } catch (e) { lastError = lastError || e; console.warn('dividend override refresh failed', e); }
     try { const rq = await loadRealtimeQuoteSnapshot(); if (Object.keys(rq).length) { invalidateComputeCache(); state.quotes = mergeQuotes(state.quotes, rq); hasUpdates = true; } } catch (e) { lastError = lastError || e; console.warn('realtime quote refresh failed', e); }
     if (!hasUpdates) throw lastError || new Error('invalid market payload');
+    settleRevenueData();
     saveState(); renderApp({ incremental: true, animateHoldingReflow: true });
-  } catch (e) { console.warn('refresh failed', e); if (!silent) showToast(LABELS.refreshFailed, { type: 'error' }); }
+  } catch (e) {
+    console.warn('refresh failed', e);
+    const settlement = settleRevenueData();
+    if (settlement.changed) {
+      saveState();
+      renderApp({ incremental: true, animateHoldingReflow: false });
+    }
+    if (!silent) showToast(LABELS.refreshFailed, { type: 'error' });
+  }
   finally { state.syncing = false; refs.refreshButton.disabled = false; refs.refreshButton.classList.remove('is-syncing'); }
 }
 

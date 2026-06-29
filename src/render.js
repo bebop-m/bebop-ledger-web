@@ -1,5 +1,8 @@
 import { state, refs, mutable, saveState } from './state.js';
-import { computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems } from './compute.js';
+import {
+  computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems,
+  computeDividendCalendar, computeIncomeSummary
+} from './compute.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
   formatTimestamp, normalizeDividendStatus, getDividendStatusLabel,
@@ -292,6 +295,365 @@ export function renderPrivacyButton() {
   refs.privacyButton.title = state.showAmounts ? '\u9690\u85cf\u91d1\u989d' : '\u663e\u793a\u91d1\u989d';
 }
 
+/* ── Page Chrome ── */
+function getPageLabel(page) {
+  if (page === 'income') return UI_TEXT.pageIncome;
+  if (page === 'dividends') return UI_TEXT.pageDividends;
+  return UI_TEXT.pageAssets;
+}
+
+function getActivePage() {
+  return ['assets', 'income', 'dividends'].includes(state.activePage) ? state.activePage : 'assets';
+}
+
+export function renderPageChrome() {
+  const activePage = getActivePage();
+  refs.pageViews.forEach((view) => {
+    view.hidden = view.dataset.pageView !== activePage;
+  });
+  refs.bottomNavButtons.forEach((button) => {
+    const isActive = button.dataset.pageNav === activePage;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-current', isActive ? 'page' : 'false');
+    button.textContent = getPageLabel(button.dataset.pageNav);
+  });
+}
+
+/* ── Dividend Calendar ── */
+function formatDisplayQuantity(value) {
+  return state.showAmounts
+    ? safeNumber(value, 0).toLocaleString('en-US', { maximumFractionDigits: 2 })
+    : MASK_AMOUNT;
+}
+
+function getDividendFilterLabel(filterKey) {
+  if (filterKey === 'core') return UI_TEXT.dividendFilterCore;
+  if (filterKey === 'income') return UI_TEXT.dividendFilterIncome;
+  return UI_TEXT.dividendFilterAll;
+}
+
+function getDividendEntryStatusLabel(entry) {
+  if (entry.status === 'received') return LABELS.dividendReceivedStatus;
+  if (entry.status === 'forecast') return LABELS.dividendForecastStatus;
+  return LABELS.dividendPendingStatus;
+}
+
+function getDividendConfidenceLabel(entry) {
+  if (entry.isForecast || entry.sharesSource === 'current') return LABELS.dividendCurrentShares;
+  if (entry.confidence === 'snapshot') return LABELS.dividendSnapshotConfidence;
+  if (entry.confidence === 'carryForward') return LABELS.dividendCarryForwardConfidence;
+  if (entry.confidence === 'confirmed') return LABELS.dividendConfirmedConfidence;
+  if (entry.confidence === 'manual') return LABELS.dividendManualConfidence;
+  return LABELS.dividendCurrentShares;
+}
+
+function getDividendMetricMarkup(label, value, note = '', tone = '') {
+  return `<article class="dividend-metric-card${tone ? ` is-${tone}` : ''}">
+    <div class="dividend-metric-label">${escapeHtml(label)}</div>
+    <div class="dividend-metric-value">${escapeHtml(formatDisplayMoney(value, 'CNY'))}</div>
+    ${note ? `<p class="dividend-metric-note">${escapeHtml(note)}</p>` : ''}
+  </article>`;
+}
+
+function renderDividendMetricGrid(model) {
+  const m = model.metrics;
+  const pendingText = `${LABELS.dividendPending} ${formatDisplayMoney(m.pendingCny, 'CNY')}`;
+  const forecastText = `${LABELS.dividendForecast} ${formatDisplayMoney(m.forecastCny, 'CNY')}`;
+  refs.dividendMetricGrid.innerHTML = [
+    getDividendMetricMarkup(LABELS.dividendReceived, m.receivedCny, LABELS.dividendReceivedStatus, 'received'),
+    getDividendMetricMarkup(LABELS.dividendUpcoming, m.upcomingCny, `${pendingText} · ${forecastText}`, 'upcoming'),
+    getDividendMetricMarkup(LABELS.dividendProjected, m.projectedCny, `${model.year} ${LABELS.dividendCalendarYear}`, 'projected'),
+    getDividendMetricMarkup(LABELS.dividendAnnualized, m.annualizedCny, LABELS.annualDividend.replace(/[：:]\s*$/, ''), 'annualized')
+  ].join('');
+}
+
+function getDividendAmountRowsMarkup(item) {
+  return `<div class="dividend-mini-rows">
+    <div><span>${LABELS.dividendReceivedStatus}</span><strong>${escapeHtml(formatDisplayMoney(item.receivedCny, 'CNY'))}</strong></div>
+    <div><span>${LABELS.dividendPending}</span><strong>${escapeHtml(formatDisplayMoney(item.pendingCny, 'CNY'))}</strong></div>
+    <div><span>${LABELS.dividendForecast}</span><strong>${escapeHtml(formatDisplayMoney(item.forecastCny, 'CNY'))}</strong></div>
+  </div>`;
+}
+
+function renderDividendMonths(model) {
+  refs.dividendMonthGrid.innerHTML = model.months.map((item) => `
+    <article class="dividend-month-card${item.totalCny > 0 ? '' : ' is-empty'}">
+      <div class="dividend-month-head">
+        <span>${escapeHtml(item.label)}</span>
+        <strong>${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}</strong>
+      </div>
+      ${getDividendAmountRowsMarkup(item)}
+    </article>
+  `).join('');
+}
+
+function renderDividendStocks(model) {
+  if (!model.stocks.length) {
+    refs.dividendStockList.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">${LABELS.dividendEmptyTitle}</p><p class="empty-state-note">${LABELS.dividendEmptyNote}</p></div>`;
+    return;
+  }
+  refs.dividendStockList.innerHTML = model.stocks.map((item) => `
+    <article class="dividend-stock-card">
+      <div class="dividend-stock-head">
+        <div>
+          <h3 class="dividend-stock-name">${escapeHtml(item.name)}</h3>
+          <p class="dividend-stock-code">${escapeHtml(item.symbol)}</p>
+        </div>
+        <span class="dividend-stock-share">${escapeHtml(formatPercent(item.share))}</span>
+      </div>
+      ${getDividendAmountRowsMarkup(item)}
+    </article>
+  `).join('');
+}
+
+function renderDividendDetails(model) {
+  if (!model.details.length) {
+    refs.dividendDetailList.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">${LABELS.dividendEmptyTitle}</p><p class="empty-state-note">${LABELS.dividendEmptyNote}</p></div>`;
+    return;
+  }
+  refs.dividendDetailList.innerHTML = model.details.map((entry) => `
+    <article class="dividend-detail-card is-${escapeHtml(entry.status)}">
+      <header class="dividend-detail-head">
+        <div>
+          <h3 class="dividend-detail-name">${escapeHtml(entry.name)}</h3>
+          <p class="dividend-detail-code">${escapeHtml(entry.symbol)} · ${escapeHtml(entry.exDate)}</p>
+        </div>
+        <span class="dividend-status-pill is-${escapeHtml(entry.status)}">${escapeHtml(getDividendEntryStatusLabel(entry))}</span>
+      </header>
+      <div class="dividend-detail-grid">
+        <div><span>每股股息</span><strong>${escapeHtml(formatDisplayMoney(entry.amountPerShare, entry.currency))}</strong></div>
+        <div><span>持股数</span><strong>${escapeHtml(formatDisplayQuantity(entry.shares))}</strong></div>
+        <div><span>税后 CNY</span><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong></div>
+        <div><span>可信度</span><strong>${escapeHtml(getDividendConfidenceLabel(entry))}</strong></div>
+      </div>
+    </article>
+  `).join('');
+}
+
+export function renderDividendCalendarPage() {
+  const model = computeDividendCalendar();
+  refs.dividendCalendarYear.textContent = `${model.year} ${LABELS.dividendCalendarYear} · ${getDividendFilterLabel(model.filterKey)}`;
+  refs.dividendFilterButtons.forEach((button) => {
+    const isActive = button.dataset.dividendFilter === model.filterKey;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+  renderDividendMetricGrid(model);
+  renderDividendMonths(model);
+  renderDividendStocks(model);
+  renderDividendDetails(model);
+}
+
+/* ── Income Summary ── */
+function isIncomeValueMissing(value) {
+  return value === null || value === undefined || !Number.isFinite(Number(value));
+}
+
+function formatIncomeMoney(value) {
+  return isIncomeValueMissing(value) ? '待回填' : formatDisplayMoney(value, 'CNY');
+}
+
+function formatIncomeSignedMoney(value) {
+  if (isIncomeValueMissing(value)) return '待回填';
+  if (!state.showAmounts) return MASK_AMOUNT;
+  const amount = safeNumber(value, 0);
+  return `${amount > 0 ? '+' : ''}${formatMoney(amount, 'CNY')}`;
+}
+
+function formatIncomeCompare(value) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return '无可比数据';
+  const numeric = safeNumber(value, 0);
+  const sign = numeric > 0 ? '+' : numeric < 0 ? '-' : '';
+  return `${sign}${formatPercent(Math.abs(numeric))}`;
+}
+
+function getIncomeCompareBasisLabel(basis) {
+  if (basis === 'total') return '合计参考同比';
+  if (basis === 'dividend') return '股息收入同比';
+  return '同比';
+}
+
+function getIncomeMetricMarkup(label, value, note = '', tone = '') {
+  return `<article class="income-metric-card${tone ? ` is-${tone}` : ''}">
+    <div class="income-metric-label">${escapeHtml(label)}</div>
+    <div class="income-metric-value income-amount">${escapeHtml(value)}</div>
+    ${note ? `<p class="income-metric-note">${escapeHtml(note)}</p>` : ''}
+  </article>`;
+}
+
+function renderIncomeFilterButtons(model) {
+  refs.incomeFilterButtons.forEach((button) => {
+    const isActive = button.dataset.incomeFilter === model.filterKey;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+}
+
+function renderIncomeOverview(model) {
+  const row = model.current;
+  if (!row) {
+    refs.incomeOverviewGrid.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无收益数据</p><p class="empty-state-note">生成快照或导入历史回填后，这里会展示年度口径。</p></div>`;
+    refs.incomeMethodNote.textContent = '';
+    return;
+  }
+  const compareText = formatIncomeCompare(row.compare.value);
+  const compareNote = row.compare.value === null
+    ? '去年值为 0 或缺失'
+    : getIncomeCompareBasisLabel(row.compare.basis);
+  const capitalNote = row.capitalReturnAvailable
+    ? (model.filterKey === 'all' ? '年末净值 - 年初净值 - 净注入' : '资金收益暂按全账户口径')
+    : '需要上一年和本年年末净值';
+  const totalNote = row.totalReferenceCny === null
+    ? '等待净值回填后计算'
+    : '非唯一总收益口径';
+  refs.incomeOverviewGrid.innerHTML = [
+    getIncomeMetricMarkup('股息收入', formatIncomeMoney(row.dividendCny), row.dividendSource === 'manual' ? '使用手动回填值' : `${row.year} 年除息日归属`, 'dividend'),
+    getIncomeMetricMarkup('资金收益', formatIncomeSignedMoney(row.capitalReturnCny), capitalNote, 'capital'),
+    getIncomeMetricMarkup('合计参考', formatIncomeSignedMoney(row.totalReferenceCny), totalNote, 'total'),
+    getIncomeMetricMarkup('较上一年变化', compareText, compareNote, 'compare')
+  ].join('');
+  refs.incomeMethodNote.textContent = `合计为参考值；复利再投资和现金账户未完整跟踪前，股息与资金收益不作为唯一总收益口径。${model.filterKey === 'all' ? '' : ' 当前筛选只精确拆分股息收入；资金收益暂按全账户口径。'}`;
+}
+
+function getTrendValue(row, key) {
+  const value = row && row[key];
+  return isIncomeValueMissing(value) ? null : safeNumber(value, 0);
+}
+
+function getTrendPoint(row, index, total, key, minValue, maxValue) {
+  const value = getTrendValue(row, key);
+  if (value === null) return null;
+  const width = 720;
+  const height = 220;
+  const padX = 28;
+  const padTop = 18;
+  const padBottom = 34;
+  const innerWidth = width - padX * 2;
+  const innerHeight = height - padTop - padBottom;
+  const x = total <= 1 ? width / 2 : padX + (innerWidth * index) / (total - 1);
+  const range = maxValue === minValue ? 1 : maxValue - minValue;
+  const y = padTop + ((maxValue - value) / range) * innerHeight;
+  return { x: roundSvgNumber(x), y: roundSvgNumber(y) };
+}
+
+function roundSvgNumber(value) {
+  return Math.round(value * 100) / 100;
+}
+
+function getTrendSeriesMarkup(rows, key, className, minValue, maxValue) {
+  const points = rows
+    .map((row, index) => getTrendPoint(row, index, rows.length, key, minValue, maxValue))
+    .filter(Boolean);
+  if (!points.length) return '';
+  const pointText = points.map((point) => `${point.x},${point.y}`).join(' ');
+  const circles = points.map((point) => `<circle cx="${point.x}" cy="${point.y}" r="3.4"></circle>`).join('');
+  return `<g class="income-trend-series ${className}">
+    <polyline points="${pointText}"></polyline>
+    ${circles}
+  </g>`;
+}
+
+function renderIncomeTrend(model) {
+  const rows = model.trendRows;
+  if (!rows.length) {
+    refs.incomeTrend.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无趋势数据</p><p class="empty-state-note">有年度数据后会展示历年趋势。</p></div>`;
+    return;
+  }
+  const values = rows.flatMap((row) => [
+    getTrendValue(row, 'dividendCny'),
+    getTrendValue(row, 'capitalReturnCny'),
+    getTrendValue(row, 'totalReferenceCny')
+  ]).filter((value) => value !== null);
+  const minValue = Math.min(0, ...values);
+  const maxValue = Math.max(0, ...values);
+  const zeroPoint = getTrendPoint({ totalReferenceCny: 0 }, 0, 1, 'totalReferenceCny', minValue, maxValue);
+  refs.incomeTrend.innerHTML = `
+    <div class="income-trend-chart">
+      <svg class="income-trend-svg" viewBox="0 0 720 220" role="img" aria-label="历年收益趋势">
+        <line class="income-trend-zero" x1="28" x2="692" y1="${zeroPoint.y}" y2="${zeroPoint.y}"></line>
+        ${getTrendSeriesMarkup(rows, 'dividendCny', 'is-dividend', minValue, maxValue)}
+        ${getTrendSeriesMarkup(rows, 'capitalReturnCny', 'is-capital', minValue, maxValue)}
+        ${getTrendSeriesMarkup(rows, 'totalReferenceCny', 'is-total', minValue, maxValue)}
+      </svg>
+      <div class="income-trend-years">${rows.map((row) => `<span>${row.year}</span>`).join('')}</div>
+    </div>
+    <div class="income-trend-legend" aria-label="趋势图例">
+      <span><i class="is-dividend"></i>股息收入</span>
+      <span><i class="is-capital"></i>资金收益</span>
+      <span><i class="is-total"></i>合计参考</span>
+    </div>`;
+}
+
+function getIncomeYearCell(label, value, extraClass = '') {
+  return `<div class="income-year-cell${extraClass ? ` ${extraClass}` : ''}" data-label="${escapeHtml(label)}">${escapeHtml(value)}</div>`;
+}
+
+function getIncomeYearActionCell(row) {
+  const label = row.hasManualBackfill ? '修改历史回填' : '填写历史回填';
+  return `<div class="income-year-action-cell" data-label="操作">
+    <button class="income-year-action-button${row.hasManualBackfill ? ' is-filled' : ''}" type="button" data-income-manual-year="${row.year}" aria-label="${label} ${row.year}" title="${label}">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 19h4.2L18.4 9.8a2 2 0 0 0 0-2.8L17 5.6a2 2 0 0 0-2.8 0L5 14.8V19Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>
+        <path d="M13.2 6.6l4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+      </svg>
+    </button>
+  </div>`;
+}
+
+function renderIncomeYearList(model) {
+  if (!model.rows.length) {
+    refs.incomeYearList.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无年度数据</p><p class="empty-state-note">导入历史回填后会显示年度列表。</p></div>`;
+    return;
+  }
+  const rows = model.rows.map((row) => {
+    const compareText = row.compare.value === null
+      ? '无可比数据'
+      : `${formatIncomeCompare(row.compare.value)} · ${row.compare.basis === 'total' ? '合计' : '股息'}`;
+    return `<div class="income-year-row" role="row">
+      ${getIncomeYearCell('年份', String(row.year), 'is-year')}
+      ${getIncomeYearCell('股息收入', formatIncomeMoney(row.dividendCny), 'income-amount')}
+      ${getIncomeYearCell('资金收益', formatIncomeSignedMoney(row.capitalReturnCny), 'income-amount')}
+      ${getIncomeYearCell('合计参考', formatIncomeSignedMoney(row.totalReferenceCny), 'income-amount')}
+      ${getIncomeYearCell('净注入', formatIncomeSignedMoney(row.netInflowCny), 'income-amount')}
+      ${getIncomeYearCell('年末净值', formatIncomeMoney(row.yearEndNetCny), 'income-amount')}
+      ${getIncomeYearCell('同比', compareText, 'is-compare')}
+      ${getIncomeYearActionCell(row)}
+    </div>`;
+  }).join('');
+  refs.incomeYearList.innerHTML = `<div class="income-year-table" role="table" aria-label="年度收益列表">
+    <div class="income-year-row income-year-head" role="row">
+      <div>年份</div><div>股息收入</div><div>资金收益</div><div>合计参考</div><div>净注入</div><div>年末净值</div><div>同比</div><div>操作</div>
+    </div>
+    ${rows}
+  </div>`;
+}
+
+function renderIncomeNorthStar(model) {
+  const ns = model.northStar;
+  const streakText = ns.growthStreak > 0
+    ? `连续增长 ${ns.growthStreak} 年`
+    : (ns.yoy === null ? '等待更多核心仓历史数据' : '尚未形成连续增长');
+  refs.incomeNorthStar.innerHTML = `<article class="income-north-star-card">
+    <div>
+      <p class="income-north-star-label">核心仓股息收入</p>
+      <strong class="income-north-star-value income-amount">${escapeHtml(formatIncomeMoney(ns.coreDividendCny))}</strong>
+    </div>
+    <div class="income-north-star-side">
+      <span>${escapeHtml(formatIncomeCompare(ns.yoy))}</span>
+      <small>${escapeHtml(streakText)}</small>
+    </div>
+  </article>`;
+}
+
+export function renderIncomeSummaryPage() {
+  const model = computeIncomeSummary();
+  renderIncomeFilterButtons(model);
+  renderIncomeOverview(model);
+  renderIncomeTrend(model);
+  renderIncomeYearList(model);
+  renderIncomeNorthStar(model);
+}
+
 /* ── Holdings ── */
 function getHoldingViewModel(item, index = 0) {
   const tl = buildDividendTooltipLines(item), sk = normalizeDividendStatus(item.dividendStatus, 'missing');
@@ -426,6 +788,8 @@ function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
   patchSummaryView(summary); patchLegendView(cs);
   patchBucketsView(bs, summary.holdings, summary);
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
+  renderIncomeSummaryPage();
+  renderDividendCalendarPage();
   syncRenderedHoldingsView(summary.holdings, { animateReflow: opts.animateHoldingReflow });
 }
 
@@ -441,10 +805,13 @@ export function renderApp(opts = {}) {
   const chartShell = refs.chartLayout && refs.chartLayout.parentElement;
   if (chartShell) chartShell.insertBefore(refs.bucketTrack, refs.chartLayout);
   document.body.classList.add('ui-refined-accent');
+  renderPageChrome();
   if (incremental) { renderDashboardIncrementally(summary, cs, bs, { animateHoldingReflow }); return; }
   renderSummaryView(summary); renderLegendView(cs, { animate: animateLegend });
   renderBucketsView(bs, summary.holdings, summary, { animateDetail: animateBucketDetail });
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
+  renderIncomeSummaryPage();
+  renderDividendCalendarPage();
   if (renderHoldingsList) renderHoldingsView(summary.holdings, { animate: animateHoldings });
   else syncRenderedHoldingsView(summary.holdings, { animateReflow: false });
 }

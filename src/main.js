@@ -1,16 +1,19 @@
 /* ── BOPUP LEDGER — Entry Point ── */
 import { state, refs, mutable, saveState, createDefaultSnapshot, applySnapshot, restoreState, showConfirm } from './state.js';
-import { safeNumber, normalizeSymbol, escapeHtml } from './utils.js';
-import { UI_TEXT, LABELS, HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD, SWIPE_SUPPRESS_CLICK_MS } from './constants.js';
+import { safeNumber } from './utils.js';
+import {
+  UI_TEXT, LABELS, HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD,
+  SWIPE_SUPPRESS_CLICK_MS, PAGE_KEYS, DIVIDEND_FILTER_KEYS
+} from './constants.js';
 import { computeHoldings, getBucketSegments } from './compute.js';
 import {
   renderApp, renderSavedStateQuietly, renderSortChips, renderBucketsView,
   applyLegendExpandState, applyHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
-  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, renderPrivacyButton
+  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset
 } from './render.js';
-import { openModal, closeModal, handleModalSave, setModalBucketSelection } from './modal.js';
+import { openModal, closeModal, handleModalSave, handleModalDelete, setModalBucketSelection } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
 
@@ -30,11 +33,10 @@ function ensureSortToggleButton() {
 /* ── UI Chrome ── */
 function configureUiChrome() {
   if (refs.appKicker) { refs.appKicker.textContent = 'BEBOP'; if (refs.appKicker.parentElement) refs.appKicker.parentElement.classList.add('app-brand'); }
-  if (refs.summaryActions) { refs.summaryActions.classList.add('summary-actions-cluster'); refs.summaryActions.append(refs.exportButton, refs.privacyButton); }
+  if (refs.summaryActions) { refs.summaryActions.classList.add('summary-actions-cluster'); refs.summaryActions.append(refs.exportButton); }
   refs.exportButton.className = 'summary-action-button summary-action-button--cloud';
   refs.exportButton.setAttribute('aria-label', '\u540c\u6b65\u5230\u4e91\u7aef'); refs.exportButton.title = '\u540c\u6b65\u5230\u4e91\u7aef';
   refs.exportButton.innerHTML = '<span class="cloud-sync-icon" aria-hidden="true"><svg class="cloud-sync-base" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 17a3.5 3.5 0 0 0-1.6-6.4h-.5A6.2 6.2 0 0 0 6 9.6 4.4 4.4 0 0 0 6.5 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="cloud-sync-badge"></span><svg class="cloud-sync-check" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4 4.9 9 9.8 3.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>';
-  refs.privacyButton.classList.remove('circle-button'); refs.privacyButton.classList.add('summary-action-button');
   refs.importButton.hidden = true; refs.importButton.setAttribute('aria-hidden', 'true'); refs.importButton.tabIndex = -1;
   const btn = ensureSortToggleButton(); if (btn) btn.hidden = false;
   if (refs.sortGroup && refs.iconActions) {
@@ -55,6 +57,52 @@ refs.importFileInput.addEventListener('change', handleImportFile);
 refs.legendToggle.addEventListener('click', () => { const t = refs.legendToggle.getBoundingClientRect().top; state.legendExpanded = !state.legendExpanded; saveState(); applyLegendExpandState({ preserveScroll: true, toggleTop: t }); });
 refs.refreshButton.addEventListener('click', () => { refreshMarketData({ silent: false }); });
 refs.addButton.addEventListener('click', () => { openModal('add'); });
+refs.incomeManualButton.addEventListener('click', () => { openModal('yearlyManual'); });
+
+refs.bottomNav.addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-page-nav]');
+  if (!btn || !PAGE_KEYS.has(btn.dataset.pageNav)) return;
+  if (state.activePage === btn.dataset.pageNav) return;
+  closeActiveDividendTooltip(true);
+  state.activePage = btn.dataset.pageNav;
+  state.sortMenuOpen = false;
+  saveState();
+  renderApp({ incremental: true, animateHoldingReflow: false });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+refs.dividendFilterGroup.addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-dividend-filter]');
+  if (!btn || !DIVIDEND_FILTER_KEYS.has(btn.dataset.dividendFilter)) return;
+  if (state.dividendCalendarBucket === btn.dataset.dividendFilter) return;
+  state.dividendCalendarBucket = btn.dataset.dividendFilter;
+  saveState();
+  renderApp({ incremental: true, animateHoldingReflow: false });
+});
+
+refs.incomeFilterGroup.addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-income-filter]');
+  if (!btn || !DIVIDEND_FILTER_KEYS.has(btn.dataset.incomeFilter)) return;
+  if (state.dividendCalendarBucket === btn.dataset.incomeFilter) return;
+  state.dividendCalendarBucket = btn.dataset.incomeFilter;
+  saveState();
+  renderApp({ incremental: true, animateHoldingReflow: false });
+});
+
+refs.incomeYearList.addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-income-manual-year]');
+  if (!btn) return;
+  const year = Math.floor(safeNumber(btn.dataset.incomeManualYear, 0));
+  if (!year) return;
+  const existing = state.yearlyManual.find((entry) => entry.year === year);
+  openModal('yearlyManual', {
+    year,
+    dividendCny: existing ? existing.dividendCny : '',
+    yearEndNetCny: existing ? existing.yearEndNetCny : '',
+    netInflowCny: existing ? existing.netInflowCny : '',
+    existing: Boolean(existing)
+  });
+});
 
 refs.sortChips.forEach((chip) => {
   chip.addEventListener('click', () => { const f = chip.dataset.sortField; if (!f || !state.sortMenuOpen) return; state.sortMenuOpen = false; applyHoldingSortSelection(f); });
@@ -142,6 +190,7 @@ refs.modalRoot.addEventListener('click', (event) => {
   const a = event.target.closest('[data-modal-action]'); if (!a) return;
   const t = a.dataset.modalAction;
   if (t === 'close' || t === 'cancel') { closeModal(); return; }
+  if (t === 'delete-yearly-manual') { handleModalDelete(); return; }
   if (t === 'save') handleModalSave();
 });
 

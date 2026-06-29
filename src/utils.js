@@ -1,6 +1,6 @@
 import {
   DEFAULT_STALE_DAYS, VALID_DIVIDEND_SOURCES, VALID_DIVIDEND_STATUSES,
-  LABELS, DEFAULT_RATES
+  VALID_RECEIPT_STATUSES, VALID_DIVIDEND_CONFIDENCES, LABELS, DEFAULT_RATES
 } from './constants.js';
 
 /* ── Stale-days config (set from network module on config load) ── */
@@ -97,6 +97,20 @@ export function normalizeDividendStatus(value, fallback = 'missing') {
   return VALID_DIVIDEND_STATUSES.has(status) ? status : fallback;
 }
 
+export function normalizeReceiptStatus(value, fallback = 'pending') {
+  const status = String(value || '').trim().toLowerCase();
+  if (VALID_RECEIPT_STATUSES.has(status)) return status;
+  if (status === 'confirmed' || status === 'paid' || status === 'settled') return 'received';
+  return VALID_RECEIPT_STATUSES.has(fallback) ? fallback : 'pending';
+}
+
+export function normalizeDividendConfidence(value, fallback = 'estimated') {
+  const confidence = String(value || '').trim();
+  return VALID_DIVIDEND_CONFIDENCES.has(confidence)
+    ? confidence
+    : (VALID_DIVIDEND_CONFIDENCES.has(fallback) ? fallback : 'estimated');
+}
+
 // Legacy migration helper: converts dividend yield from either ratio (0.052) or
 // percentage (5.2) format into a ratio. Assumes values > 1 are percentages.
 export function normalizeYieldRatio(value) {
@@ -151,10 +165,12 @@ export function buildDividendFields(rawQuote = {}, fallbackQuote = {}) {
   const fallbackFetchError = typeof fallbackQuote.dividendFetchError === 'string' ? fallbackQuote.dividendFetchError.trim() : '';
   const dividendUpdatedAt = typeof rawQuote.dividendUpdatedAt === 'string' ? rawQuote.dividendUpdatedAt : fallbackUpdatedAt;
   const lastExDate = typeof rawQuote.lastExDate === 'string' ? rawQuote.lastExDate : fallbackLastExDate;
+  const rawDividendEvents = Array.isArray(rawQuote.dividends) ? rawQuote.dividends : fallbackQuote.dividends;
+  const dividends = normalizeQuoteDividends(rawDividendEvents, rawQuote.symbol || fallbackQuote.symbol || '');
   const dividendStatus = dividendSource === 'manual' ? 'manual'
     : dividendPerShareTtm <= 0 ? 'missing'
     : (dividendSource === 'cache' || isDividendDataStale(dividendUpdatedAt) ? 'stale' : 'fresh');
-  return {
+  const result = {
     dividendPerShareTtm: roundTo(dividendPerShareTtm),
     dividendSource,
     dividendUpdatedAt,
@@ -162,12 +178,16 @@ export function buildDividendFields(rawQuote = {}, fallbackQuote = {}) {
     dividendFetchError: rawFetchError === null ? fallbackFetchError : rawFetchError,
     dividendStatus
   };
+  if (dividends.length || Array.isArray(rawQuote.dividends) || Array.isArray(fallbackQuote.dividends)) {
+    result.dividends = dividends;
+  }
+  return result;
 }
 
 export function normalizeSeedQuoteMap(seedMap) {
   const normalized = {};
   Object.entries(seedMap || {}).forEach(([symbol, quote]) => {
-    normalized[symbol] = { symbol, ...quote, ...buildDividendFields(quote, {}) };
+    normalized[symbol] = { symbol, ...quote, ...buildDividendFields({ symbol, ...quote }, {}) };
   });
   return normalized;
 }
@@ -262,7 +282,7 @@ export function mergeQuotes(baseMap, nextMap) {
     const symbol = normalizeSymbol(rawSymbol);
     if (!symbol || !rawQuote) return;
     const fallback = merged[symbol] || inferQuoteFromMap(symbol, merged);
-    const dividendFields = buildDividendFields(rawQuote, fallback);
+    const dividendFields = buildDividendFields({ symbol, ...rawQuote }, fallback);
     merged[symbol] = {
       symbol,
       name: rawQuote.name || fallback.name,
@@ -279,6 +299,147 @@ export function mergeQuotes(baseMap, nextMap) {
     }
   });
   return merged;
+}
+
+function normalizeCurrencyCode(value, fallback = 'CNY') {
+  const currency = String(value || '').trim().toUpperCase();
+  return /^[A-Z]{3}$/.test(currency) ? currency : fallback;
+}
+
+export function buildDividendSourceId(input = {}) {
+  const symbol = normalizeSymbol(input.symbol);
+  const exDate = formatDateLabel(input.exDate);
+  const amountPerShare = roundTo(safeNumber(input.amountPerShare, 0));
+  const currency = normalizeCurrencyCode(input.currency, '');
+  return [symbol, exDate, amountPerShare, currency].join('|');
+}
+
+export function normalizeQuoteDividendEvent(item, symbolFallback = '') {
+  if (!item || typeof item !== 'object') return null;
+  const symbol = normalizeSymbol(item.symbol || symbolFallback);
+  const exDate = formatDateLabel(item.exDate);
+  const amountPerShare = Math.max(0, roundTo(safeNumber(item.amountPerShare, 0)));
+  const currency = normalizeCurrencyCode(item.currency, resolveQuoteCurrency({}, symbol));
+  if (!exDate) return null;
+  const sourceId = typeof item.sourceId === 'string' && item.sourceId.trim()
+    ? item.sourceId.trim()
+    : buildDividendSourceId({ symbol, exDate, amountPerShare, currency });
+  return {
+    ...item,
+    ...(symbol ? { symbol } : {}),
+    sourceId,
+    exDate,
+    payDate: formatDateLabel(item.payDate),
+    amountPerShare,
+    currency,
+    source: typeof item.source === 'string' && item.source.trim() ? item.source.trim() : 'unknown'
+  };
+}
+
+export function normalizeQuoteDividends(value, symbolFallback = '') {
+  return Array.isArray(value)
+    ? value.map((item) => normalizeQuoteDividendEvent(item, symbolFallback)).filter(Boolean)
+    : [];
+}
+
+export function sanitizeDividendLedgerEntry(item, index = 0) {
+  if (!item || typeof item !== 'object') return null;
+  const symbol = normalizeSymbol(item.symbol);
+  const exDate = formatDateLabel(item.exDate);
+  const amountPerShare = Math.max(0, roundTo(safeNumber(item.amountPerShare, 0)));
+  const currency = normalizeCurrencyCode(item.currency, resolveQuoteCurrency({}, symbol));
+  if (!symbol || !exDate || amountPerShare <= 0) return null;
+  const sourceId = typeof item.sourceId === 'string' && item.sourceId.trim()
+    ? item.sourceId.trim()
+    : buildDividendSourceId({ symbol, exDate, amountPerShare, currency });
+  const userConfirmed = item.confirmed === true;
+  const receiptStatus = userConfirmed ? 'received' : normalizeReceiptStatus(item.receiptStatus || item.status, 'pending');
+  const confidence = normalizeDividendConfidence(item.confidence, userConfirmed ? 'confirmed' : 'estimated');
+  const id = typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `div_${sourceId || index + 1}`;
+  return {
+    ...item,
+    id,
+    sourceId,
+    symbol: symbol || String(item.symbol || '').trim(),
+    exDate,
+    payDate: formatDateLabel(item.payDate),
+    amountPerShare,
+    currency,
+    shares: Math.max(0, safeNumber(item.shares, 0)),
+    sharesSource: typeof item.sharesSource === 'string' && item.sharesSource.trim() ? item.sharesSource.trim() : 'manual',
+    fxRate: Math.max(0, safeNumber(item.fxRate, 1)),
+    taxRate: Math.max(0, safeNumber(item.taxRate, 0)),
+    grossCny: safeNumber(item.grossCny, 0),
+    netCny: safeNumber(item.netCny, 0),
+    bucket: item.bucket === 'income' ? 'income' : 'core',
+    receiptStatus,
+    confidence,
+    confirmed: userConfirmed,
+    note: typeof item.note === 'string' ? item.note : '',
+    createdAt: typeof item.createdAt === 'string' ? item.createdAt : '',
+    updatedAt: typeof item.updatedAt === 'string' ? item.updatedAt : ''
+  };
+}
+
+export function sanitizeDailySnapshotEntry(item) {
+  if (!item || typeof item !== 'object') return null;
+  const date = formatDateLabel(item.date);
+  if (!date) return null;
+  const rates = item.rates && typeof item.rates === 'object' ? item.rates : {};
+  const holdings = Array.isArray(item.holdings)
+    ? item.holdings.map((holding) => {
+        if (!holding || typeof holding !== 'object') return null;
+        const symbol = normalizeSymbol(holding.symbol);
+        return {
+          ...holding,
+          symbol: symbol || String(holding.symbol || '').trim(),
+          shares: Math.max(0, safeNumber(holding.shares != null ? holding.shares : holding.quantity, 0)),
+          bucket: holding.bucket === 'income' ? 'income' : 'core',
+          taxRate: Math.max(0, safeNumber(holding.taxRate, 0))
+        };
+      }).filter(Boolean)
+    : [];
+  return {
+    ...item,
+    date,
+    rates: {
+      CNY: 1,
+      USD: safeNumber(rates.USD, DEFAULT_RATES.USD),
+      HKD: safeNumber(rates.HKD, DEFAULT_RATES.HKD)
+    },
+    netCny: safeNumber(item.netCny, 0),
+    totalMarketValueCny: safeNumber(item.totalMarketValueCny, 0),
+    liabilityCny: Math.max(0, safeNumber(item.liabilityCny, 0)),
+    holdings
+  };
+}
+
+export function sanitizeCashFlowEntry(item, index = 0) {
+  if (!item || typeof item !== 'object') return null;
+  const date = formatDateLabel(item.date);
+  if (!date) return null;
+  const amountCny = safeNumber(item.amountCny, 0);
+  return {
+    ...item,
+    id: typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `cf_${index + 1}`,
+    date,
+    amountCny,
+    type: typeof item.type === 'string' && item.type.trim() ? item.type.trim() : (amountCny < 0 ? 'withdrawal' : 'deposit'),
+    note: typeof item.note === 'string' ? item.note : ''
+  };
+}
+
+export function sanitizeYearlyManualEntry(item) {
+  if (!item || typeof item !== 'object') return null;
+  const year = Math.floor(safeNumber(item.year, 0));
+  if (year <= 0) return null;
+  return {
+    ...item,
+    year,
+    dividendCny: safeNumber(item.dividendCny, 0),
+    yearEndNetCny: safeNumber(item.yearEndNetCny, 0),
+    netInflowCny: safeNumber(item.netInflowCny, 0)
+  };
 }
 
 export function sanitizeHolding(item, index, quoteMap = {}) {
