@@ -3,15 +3,16 @@
   "provider": {
     "quote": "tencent-finance",
     "fx": "frankfurter",
-    "dividend": "yfinance",
+    "dividend": "yahoo-chart",
+    "dividendFallback": "yfinance",
     "dividendHistoryPeriod": "5y",
     "dividendVerify": "disabled"
   },
-  "updatedAt": "2026-06-26T12:26:04.133220Z",
+  "updatedAt": "2026-06-29T14:02:45.713857Z",
   "rates": {
     "CNY": 1,
-    "USD": 6.7981,
-    "HKD": 0.8671
+    "USD": 6.7939,
+    "HKD": 0.8663
   },
   "quotes": {
     "00700.HK": {
@@ -19,109 +20,501 @@
       "name": "腾讯控股",
       "market": "HK",
       "currency": "HKD",
-      "price": 411.8,
-      "previousClose": 421.4,
+      "price": 420.2,
+      "previousClose": 411.8,
       "dividendPerShareTtm": 5.3,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:52.621152Z",
-      "lastExDate": "2026-05-14",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:01:50.719951Z",
+      "lastExDate": "2026-05-15",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2022-05-20",
+          "payDate": "",
+          "amountPerShare": 1.6,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-05-19",
+          "payDate": "",
+          "amountPerShare": 2.4,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-05-17",
+          "payDate": "",
+          "amountPerShare": 3.4,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-05-16",
+          "payDate": "",
+          "amountPerShare": 4.5,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-05-15",
+          "payDate": "",
+          "amountPerShare": 5.3,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "600519.SH": {
       "symbol": "600519.SH",
-      "name": "XD贵州茅",
+      "name": "贵州茅台",
       "market": "CN",
       "currency": "CNY",
-      "price": 1168.63,
-      "previousClose": 1184.08,
+      "price": 1194.96,
+      "previousClose": 1168.63,
       "dividendPerShareTtm": 51.98123,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:52.957698Z",
-      "lastExDate": "2026-06-25",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:01:52.707693Z",
+      "lastExDate": "2026-06-26",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-06-25",
+          "payDate": "",
+          "amountPerShare": 19.293,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-06-30",
+          "payDate": "",
+          "amountPerShare": 21.675,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-12-27",
+          "payDate": "",
+          "amountPerShare": 21.91,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-30",
+          "payDate": "",
+          "amountPerShare": 25.911,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-12-20",
+          "payDate": "",
+          "amountPerShare": 19.106,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-19",
+          "payDate": "",
+          "amountPerShare": 30.876,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-12-20",
+          "payDate": "",
+          "amountPerShare": 23.882,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-26",
+          "payDate": "",
+          "amountPerShare": 27.673,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-12-19",
+          "payDate": "",
+          "amountPerShare": 23.957,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-26",
+          "payDate": "",
+          "amountPerShare": 28.02423,
+          "currency": "CNY",
+          "source": "yahoo"
+        }
+      ]
     },
     "000651.SZ": {
       "symbol": "000651.SZ",
       "name": "格力电器",
       "market": "CN",
       "currency": "CNY",
-      "price": 37.02,
-      "previousClose": 37.16,
+      "price": 37.92,
+      "previousClose": 37.02,
       "dividendPerShareTtm": 3.0,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:53.239934Z",
-      "lastExDate": "2026-01-22",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:01:54.598615Z",
+      "lastExDate": "2026-01-23",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-08-23",
+          "payDate": "",
+          "amountPerShare": 3.0,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-04-08",
+          "payDate": "",
+          "amountPerShare": 1.0,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-08-05",
+          "payDate": "",
+          "amountPerShare": 2.0,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-02-27",
+          "payDate": "",
+          "amountPerShare": 1.0,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-08-09",
+          "payDate": "",
+          "amountPerShare": 1.0,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-08-28",
+          "payDate": "",
+          "amountPerShare": 2.38,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-05-15",
+          "payDate": "",
+          "amountPerShare": 1.0,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-08-29",
+          "payDate": "",
+          "amountPerShare": 2.0,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-01-23",
+          "payDate": "",
+          "amountPerShare": 1.0,
+          "currency": "CNY",
+          "source": "yahoo"
+        }
+      ]
     },
     "00883.HK": {
       "symbol": "00883.HK",
       "name": "中国海洋石油",
       "market": "HK",
       "currency": "HKD",
-      "price": 20.86,
-      "previousClose": 21.22,
+      "price": 21.08,
+      "previousClose": 20.86,
       "dividendPerShareTtm": 1.28,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:53.545740Z",
-      "lastExDate": "2026-06-10",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:01:56.487404Z",
+      "lastExDate": "2026-06-11",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-09-02",
+          "payDate": "",
+          "amountPerShare": 0.3,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-06-09",
+          "payDate": "",
+          "amountPerShare": 1.18,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-09-06",
+          "payDate": "",
+          "amountPerShare": 0.7,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-08",
+          "payDate": "",
+          "amountPerShare": 0.75,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-09-07",
+          "payDate": "",
+          "amountPerShare": 0.59,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-13",
+          "payDate": "",
+          "amountPerShare": 0.66,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-09-12",
+          "payDate": "",
+          "amountPerShare": 0.74,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-12",
+          "payDate": "",
+          "amountPerShare": 0.66,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-09-11",
+          "payDate": "",
+          "amountPerShare": 0.73,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-11",
+          "payDate": "",
+          "amountPerShare": 0.55,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "06049.HK": {
       "symbol": "06049.HK",
       "name": "保利物业",
       "market": "HK",
       "currency": "HKD",
-      "price": 26.02,
-      "previousClose": 26.44,
+      "price": 26.34,
+      "previousClose": 26.02,
       "dividendPerShareTtm": 1.60706,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:53.946537Z",
-      "lastExDate": "2026-06-01",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:01:58.269178Z",
+      "lastExDate": "2026-06-02",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2022-07-04",
+          "payDate": "",
+          "amountPerShare": 0.3586,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-08",
+          "payDate": "",
+          "amountPerShare": 0.56795,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-05-31",
+          "payDate": "",
+          "amountPerShare": 1.09574,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-10",
+          "payDate": "",
+          "amountPerShare": 1.45332,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-02",
+          "payDate": "",
+          "amountPerShare": 1.60706,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "000333.SZ": {
       "symbol": "000333.SZ",
       "name": "美的集团",
       "market": "CN",
       "currency": "CNY",
-      "price": 78.55,
-      "previousClose": 76.5,
-      "dividendPerShareTtm": 0.5,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:54.205401Z",
-      "lastExDate": "2025-11-17",
+      "price": 77.27,
+      "previousClose": 74.83,
+      "dividendPerShareTtm": 4.3,
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:00.232326Z",
+      "lastExDate": "2026-06-29",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2022-06-02",
+          "payDate": "",
+          "amountPerShare": 1.700894,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-01",
+          "payDate": "",
+          "amountPerShare": 2.5,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-05-15",
+          "payDate": "",
+          "amountPerShare": 3.0,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-12",
+          "payDate": "",
+          "amountPerShare": 3.5,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-11-18",
+          "payDate": "",
+          "amountPerShare": 0.5,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-29",
+          "payDate": "",
+          "amountPerShare": 3.8,
+          "currency": "CNY",
+          "source": "yahoo"
+        }
+      ]
     },
     "02669.HK": {
       "symbol": "02669.HK",
       "name": "中海物业",
       "market": "HK",
       "currency": "HKD",
-      "price": 3.22,
-      "previousClose": 3.27,
+      "price": 3.25,
+      "previousClose": 3.22,
       "dividendPerShareTtm": 0.2,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:54.589812Z",
-      "lastExDate": "2026-06-22",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:02.161254Z",
+      "lastExDate": "2026-06-23",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-09-10",
+          "payDate": "",
+          "amountPerShare": 0.03,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-06-23",
+          "payDate": "",
+          "amountPerShare": 0.06,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-09-26",
+          "payDate": "",
+          "amountPerShare": 0.04,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-23",
+          "payDate": "",
+          "amountPerShare": 0.08,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-09-14",
+          "payDate": "",
+          "amountPerShare": 0.055,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-24",
+          "payDate": "",
+          "amountPerShare": 0.085,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-09-27",
+          "payDate": "",
+          "amountPerShare": 0.085,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-20",
+          "payDate": "",
+          "amountPerShare": 0.095,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-09-19",
+          "payDate": "",
+          "amountPerShare": 0.1,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-23",
+          "payDate": "",
+          "amountPerShare": 0.1,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "PDD": {
       "symbol": "PDD",
       "name": "拼多多",
       "market": "US",
       "currency": "USD",
-      "price": 73.3,
-      "previousClose": 75.74,
+      "price": 77.42,
+      "previousClose": 76.55,
       "dividendPerShareTtm": 0.0,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:54.788479Z",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:04.039993Z",
       "lastExDate": "",
       "dividendStatus": "missing",
       "dividends": []
@@ -131,238 +524,1214 @@
       "name": "信邦控股",
       "market": "HK",
       "currency": "HKD",
-      "price": 3.72,
-      "previousClose": 3.78,
+      "price": 3.84,
+      "previousClose": 3.72,
       "dividendPerShareTtm": 0.5,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:55.241377Z",
-      "lastExDate": "2026-06-17",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:06.001876Z",
+      "lastExDate": "2026-06-18",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-09-30",
+          "payDate": "",
+          "amountPerShare": 0.0546,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-06-07",
+          "payDate": "",
+          "amountPerShare": 0.0213,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-09-29",
+          "payDate": "",
+          "amountPerShare": 0.0589,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-08",
+          "payDate": "",
+          "amountPerShare": 0.14,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-09-28",
+          "payDate": "",
+          "amountPerShare": 0.1,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-11",
+          "payDate": "",
+          "amountPerShare": 0.25,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-09-26",
+          "payDate": "",
+          "amountPerShare": 0.2,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-26",
+          "payDate": "",
+          "amountPerShare": 0.3,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-09-25",
+          "payDate": "",
+          "amountPerShare": 0.2,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-18",
+          "payDate": "",
+          "amountPerShare": 0.3,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "00270.HK": {
       "symbol": "00270.HK",
       "name": "粤海投资",
       "market": "HK",
       "currency": "HKD",
-      "price": 7.83,
-      "previousClose": 7.66,
+      "price": 7.81,
+      "previousClose": 7.83,
       "dividendPerShareTtm": 0.2666,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:55.941779Z",
-      "lastExDate": "2025-10-07",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:07.903654Z",
+      "lastExDate": "2025-10-08",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-06-24",
+          "payDate": "",
+          "amountPerShare": 0.413,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2021-10-08",
+          "payDate": "",
+          "amountPerShare": 0.1817,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-06-27",
+          "payDate": "",
+          "amountPerShare": 0.4254,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-10-07",
+          "payDate": "",
+          "amountPerShare": 0.1871,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-27",
+          "payDate": "",
+          "amountPerShare": 0.4262,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-10-06",
+          "payDate": "",
+          "amountPerShare": 0.1871,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-26",
+          "payDate": "",
+          "amountPerShare": 0.1233,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-10-09",
+          "payDate": "",
+          "amountPerShare": 0.2397,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-25",
+          "payDate": "",
+          "amountPerShare": 0.0727,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-10-08",
+          "payDate": "",
+          "amountPerShare": 0.2666,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "09618.HK": {
       "symbol": "09618.HK",
       "name": "京东集团-SW",
       "market": "HK",
       "currency": "HKD",
-      "price": 96.0,
-      "previousClose": 98.75,
-      "dividendPerShareTtm": 3.920875,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:56.582636Z",
-      "lastExDate": "2026-04-07",
+      "price": 99.0,
+      "previousClose": 96.0,
+      "dividendPerShareTtm": 3.92065,
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:09.724428Z",
+      "lastExDate": "2026-04-08",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2022-05-19",
+          "payDate": "",
+          "amountPerShare": 4.940019,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-04-04",
+          "payDate": "",
+          "amountPerShare": 2.430803,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-04-03",
+          "payDate": "",
+          "amountPerShare": 2.979694,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-04-07",
+          "payDate": "",
+          "amountPerShare": 3.92065,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-04-08",
+          "payDate": "",
+          "amountPerShare": 3.92065,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "00728.HK": {
       "symbol": "00728.HK",
       "name": "中国电信",
       "market": "HK",
       "currency": "HKD",
-      "price": 4.35,
-      "previousClose": 4.3,
+      "price": 4.39,
+      "previousClose": 4.35,
       "dividendPerShareTtm": 0.303174,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:57.026870Z",
-      "lastExDate": "2026-06-01",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:11.633310Z",
+      "lastExDate": "2026-06-02",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2022-05-31",
+          "payDate": "",
+          "amountPerShare": 0.197211,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-08-31",
+          "payDate": "",
+          "amountPerShare": 0.139523,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-05-31",
+          "payDate": "",
+          "amountPerShare": 0.085065,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-08-23",
+          "payDate": "",
+          "amountPerShare": 0.156524,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-05",
+          "payDate": "",
+          "amountPerShare": 0.098814,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-09-03",
+          "payDate": "",
+          "amountPerShare": 0.182289,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-03",
+          "payDate": "",
+          "amountPerShare": 0.100637,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-08-27",
+          "payDate": "",
+          "amountPerShare": 0.199264,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-02",
+          "payDate": "",
+          "amountPerShare": 0.10391,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "02333.HK": {
       "symbol": "02333.HK",
       "name": "长城汽车",
       "market": "HK",
       "currency": "HKD",
-      "price": 9.09,
-      "previousClose": 9.32,
+      "price": 9.13,
+      "previousClose": 9.09,
       "dividendPerShareTtm": 0.49233,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:57.375662Z",
-      "lastExDate": "2025-07-07",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:13.580936Z",
+      "lastExDate": "2025-07-08",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-10-05",
+          "payDate": "",
+          "amountPerShare": 0.36288,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-05-10",
+          "payDate": "",
+          "amountPerShare": 0.08501,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-29",
+          "payDate": "",
+          "amountPerShare": 0.32854,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-05-28",
+          "payDate": "",
+          "amountPerShare": 0.33011,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-07-08",
+          "payDate": "",
+          "amountPerShare": 0.49233,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "600177.SH": {
       "symbol": "600177.SH",
       "name": "雅戈尔",
       "market": "CN",
       "currency": "CNY",
-      "price": 7.51,
-      "previousClose": 7.44,
+      "price": 7.6,
+      "previousClose": 7.51,
       "dividendPerShareTtm": 0.44,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:57.736528Z",
-      "lastExDate": "2026-06-04",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:15.394130Z",
+      "lastExDate": "2026-06-05",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2022-06-08",
+          "payDate": "",
+          "amountPerShare": 0.5,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-14",
+          "payDate": "",
+          "amountPerShare": 0.5,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-13",
+          "payDate": "",
+          "amountPerShare": 0.5,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-09-13",
+          "payDate": "",
+          "amountPerShare": 0.1,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-12-04",
+          "payDate": "",
+          "amountPerShare": 0.1,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-03-03",
+          "payDate": "",
+          "amountPerShare": 0.1,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-06",
+          "payDate": "",
+          "amountPerShare": 0.2,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-09-12",
+          "payDate": "",
+          "amountPerShare": 0.08,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-12-04",
+          "payDate": "",
+          "amountPerShare": 0.08,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-03-27",
+          "payDate": "",
+          "amountPerShare": 0.08,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-05",
+          "payDate": "",
+          "amountPerShare": 0.2,
+          "currency": "CNY",
+          "source": "yahoo"
+        }
+      ]
     },
     "03900.HK": {
       "symbol": "03900.HK",
       "name": "绿城中国",
       "market": "HK",
       "currency": "HKD",
-      "price": 6.41,
-      "previousClose": 6.53,
+      "price": 6.81,
+      "previousClose": 6.41,
       "dividendPerShareTtm": 0.0,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:58.010445Z",
-      "lastExDate": "2025-06-24",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:17.208286Z",
+      "lastExDate": "2025-06-25",
       "dividendStatus": "missing",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-06-23",
+          "payDate": "",
+          "amountPerShare": 0.403445,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-06-22",
+          "payDate": "",
+          "amountPerShare": 0.537,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-20",
+          "payDate": "",
+          "amountPerShare": 0.548,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-19",
+          "payDate": "",
+          "amountPerShare": 0.472,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-25",
+          "payDate": "",
+          "amountPerShare": 0.328,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "01995.HK": {
       "symbol": "01995.HK",
       "name": "永升服务",
       "market": "HK",
       "currency": "HKD",
-      "price": 1.63,
+      "price": 1.66,
       "previousClose": 1.63,
       "dividendPerShareTtm": 0.1978,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:58.317621Z",
-      "lastExDate": "2026-05-14",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:19.104746Z",
+      "lastExDate": "2026-05-15",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2022-06-09",
+          "payDate": "",
+          "amountPerShare": 0.1299,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-09-06",
+          "payDate": "",
+          "amountPerShare": 0.074,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-11-22",
+          "payDate": "",
+          "amountPerShare": 0.0492,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-11",
+          "payDate": "",
+          "amountPerShare": 0.0914,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-09-10",
+          "payDate": "",
+          "amountPerShare": 0.1175,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-05-26",
+          "payDate": "",
+          "amountPerShare": 0.0668,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-09-02",
+          "payDate": "",
+          "amountPerShare": 0.0949,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-05-15",
+          "payDate": "",
+          "amountPerShare": 0.1029,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "03316.HK": {
       "symbol": "03316.HK",
       "name": "滨江服务",
       "market": "HK",
       "currency": "HKD",
-      "price": 21.12,
-      "previousClose": 21.22,
+      "price": 21.82,
+      "previousClose": 21.12,
       "dividendPerShareTtm": 0.826,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:58.570795Z",
-      "lastExDate": "2025-09-02",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:21.114821Z",
+      "lastExDate": "2025-09-03",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-10-05",
+          "payDate": "",
+          "amountPerShare": 0.379,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-06-06",
+          "payDate": "",
+          "amountPerShare": 0.473,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-20",
+          "payDate": "",
+          "amountPerShare": 1.001,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-12",
+          "payDate": "",
+          "amountPerShare": 1.374,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-10-02",
+          "payDate": "",
+          "amountPerShare": 0.63,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-23",
+          "payDate": "",
+          "amountPerShare": 0.876,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-09-03",
+          "payDate": "",
+          "amountPerShare": 0.826,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "00816.HK": {
       "symbol": "00816.HK",
       "name": "金茂服务",
       "market": "HK",
       "currency": "HKD",
-      "price": 2.12,
+      "price": 2.19,
       "previousClose": 2.12,
       "dividendPerShareTtm": 0.236,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:59.000816Z",
-      "lastExDate": "2026-06-24",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:23.136734Z",
+      "lastExDate": "2026-06-25",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2023-06-12",
+          "payDate": "",
+          "amountPerShare": 0.17,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-07",
+          "payDate": "",
+          "amountPerShare": 0.17,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-09-09",
+          "payDate": "",
+          "amountPerShare": 0.084,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-25",
+          "payDate": "",
+          "amountPerShare": 0.096,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-09-08",
+          "payDate": "",
+          "amountPerShare": 0.153,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-25",
+          "payDate": "",
+          "amountPerShare": 0.083,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "513530.SH": {
       "symbol": "513530.SH",
       "name": "港股通红利ETF华泰柏瑞",
       "market": "CN",
       "currency": "CNY",
-      "price": 1.454,
-      "previousClose": 1.46,
+      "price": 1.462,
+      "previousClose": 1.454,
       "dividendPerShareTtm": 0.13,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:59.395502Z",
-      "lastExDate": "2026-06-14",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:24.953671Z",
+      "lastExDate": "2026-06-15",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2025-06-16",
+          "payDate": "",
+          "amountPerShare": 0.02,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-07-14",
+          "payDate": "",
+          "amountPerShare": 0.02,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-08-18",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-09-15",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-10-20",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-11-17",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-12-15",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-01-21",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-02-26",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-03-23",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-04-20",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-05-18",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-15",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "CNY",
+          "source": "yahoo"
+        }
+      ]
     },
     "00823.HK": {
       "symbol": "00823.HK",
       "name": "领展房产基金",
       "market": "HK",
       "currency": "HKD",
-      "price": 36.34,
-      "previousClose": 36.18,
+      "price": 36.8,
+      "previousClose": 36.34,
       "dividendPerShareTtm": 2.5361,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:25:59.886805Z",
-      "lastExDate": "2026-06-10",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:26.940364Z",
+      "lastExDate": "2026-06-11",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-06-29",
+          "payDate": "",
+          "amountPerShare": 1.441575,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2021-11-22",
+          "payDate": "",
+          "amountPerShare": 1.550903,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-06-16",
+          "payDate": "",
+          "amountPerShare": 1.419612,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-11-21",
+          "payDate": "",
+          "amountPerShare": 1.511253,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-15",
+          "payDate": "",
+          "amountPerShare": 1.188,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-11-20",
+          "payDate": "",
+          "amountPerShare": 1.3008,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-27",
+          "payDate": "",
+          "amountPerShare": 1.3257,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-11-18",
+          "payDate": "",
+          "amountPerShare": 1.3489,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-18",
+          "payDate": "",
+          "amountPerShare": 1.3745,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-12-02",
+          "payDate": "",
+          "amountPerShare": 1.2688,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-11",
+          "payDate": "",
+          "amountPerShare": 1.2673,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "02156.HK": {
       "symbol": "02156.HK",
       "name": "建发物业",
       "market": "HK",
       "currency": "HKD",
-      "price": 2.56,
-      "previousClose": 2.61,
+      "price": 2.66,
+      "previousClose": 2.56,
       "dividendPerShareTtm": 0.2,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:26:00.192081Z",
-      "lastExDate": "2026-05-28",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:28.688900Z",
+      "lastExDate": "2026-05-29",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2022-05-24",
+          "payDate": "",
+          "amountPerShare": 0.06,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-01",
+          "payDate": "",
+          "amountPerShare": 0.1,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-05-28",
+          "payDate": "",
+          "amountPerShare": 0.26,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-05-27",
+          "payDate": "",
+          "amountPerShare": 0.15,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-05-29",
+          "payDate": "",
+          "amountPerShare": 0.2,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "601088.SH": {
       "symbol": "601088.SH",
       "name": "中国神华",
       "market": "CN",
       "currency": "CNY",
-      "price": 39.57,
-      "previousClose": 39.4,
+      "price": 39.98,
+      "previousClose": 39.57,
       "dividendPerShareTtm": 3.24,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:26:00.524583Z",
-      "lastExDate": "2025-11-09",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:30.597470Z",
+      "lastExDate": "2025-11-10",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-07-12",
+          "payDate": "",
+          "amountPerShare": 1.81,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-07-11",
+          "payDate": "",
+          "amountPerShare": 2.54,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-07-05",
+          "payDate": "",
+          "amountPerShare": 2.55,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-07-08",
+          "payDate": "",
+          "amountPerShare": 2.26,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-07-07",
+          "payDate": "",
+          "amountPerShare": 2.26,
+          "currency": "CNY",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-11-10",
+          "payDate": "",
+          "amountPerShare": 0.98,
+          "currency": "CNY",
+          "source": "yahoo"
+        }
+      ]
     },
     "00941.HK": {
       "symbol": "00941.HK",
       "name": "中国移动",
       "market": "HK",
       "currency": "HKD",
-      "price": 77.4,
-      "previousClose": 77.65,
+      "price": 77.25,
+      "previousClose": 77.4,
       "dividendPerShareTtm": 5.27,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:26:01.065259Z",
-      "lastExDate": "2026-06-04",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:32.573243Z",
+      "lastExDate": "2026-06-05",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-08-25",
+          "payDate": "",
+          "amountPerShare": 1.63,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-05-25",
+          "payDate": "",
+          "amountPerShare": 2.43,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-09-06",
+          "payDate": "",
+          "amountPerShare": 2.2,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-07",
+          "payDate": "",
+          "amountPerShare": 2.21,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-09-04",
+          "payDate": "",
+          "amountPerShare": 2.43,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-06",
+          "payDate": "",
+          "amountPerShare": 2.4,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-09-02",
+          "payDate": "",
+          "amountPerShare": 2.6,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-06",
+          "payDate": "",
+          "amountPerShare": 2.49,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-09-01",
+          "payDate": "",
+          "amountPerShare": 2.75,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-05",
+          "payDate": "",
+          "amountPerShare": 2.52,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "01088.HK": {
       "symbol": "01088.HK",
       "name": "中国神华",
       "market": "HK",
       "currency": "HKD",
-      "price": 40.62,
-      "previousClose": 40.58,
+      "price": 41.1,
+      "previousClose": 40.62,
       "dividendPerShareTtm": 1.074,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:26:01.498216Z",
-      "lastExDate": "2025-10-29",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:34.450119Z",
+      "lastExDate": "2025-10-30",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-06-30",
+          "payDate": "",
+          "amountPerShare": 2.157279,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-06-29",
+          "payDate": "",
+          "amountPerShare": 3.125,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-21",
+          "payDate": "",
+          "amountPerShare": 2.909,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-27",
+          "payDate": "",
+          "amountPerShare": 2.491,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-26",
+          "payDate": "",
+          "amountPerShare": 2.4486,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-10-30",
+          "payDate": "",
+          "amountPerShare": 1.074,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "01836.HK": {
       "symbol": "01836.HK",
       "name": "九兴控股",
       "market": "HK",
       "currency": "HKD",
-      "price": 12.4,
-      "previousClose": 12.53,
+      "price": 12.6,
+      "previousClose": 12.4,
       "dividendPerShareTtm": 1.45,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:26:01.749639Z",
-      "lastExDate": "2026-05-18",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:36.507088Z",
+      "lastExDate": "2026-05-19",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-09-13",
+          "payDate": "",
+          "amountPerShare": 0.21,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-05-19",
+          "payDate": "",
+          "amountPerShare": 0.56,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-09-09",
+          "payDate": "",
+          "amountPerShare": 0.42,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-05-17",
+          "payDate": "",
+          "amountPerShare": 0.45,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-09-06",
+          "payDate": "",
+          "amountPerShare": 0.42,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-05-16",
+          "payDate": "",
+          "amountPerShare": 0.61,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-09-04",
+          "payDate": "",
+          "amountPerShare": 0.65,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-05-20",
+          "payDate": "",
+          "amountPerShare": 1.06,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-09-03",
+          "payDate": "",
+          "amountPerShare": 0.52,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-05-19",
+          "payDate": "",
+          "amountPerShare": 0.93,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "01023.HK": {
       "symbol": "01023.HK",
@@ -370,13 +1739,84 @@
       "market": "HK",
       "currency": "HKD",
       "price": 0.46,
-      "previousClose": 0.465,
+      "previousClose": 0.46,
       "dividendPerShareTtm": 0.06,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:26:02.098860Z",
-      "lastExDate": "2026-03-25",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:38.438959Z",
+      "lastExDate": "2026-03-26",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-11-26",
+          "payDate": "",
+          "amountPerShare": 0.01,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-04-01",
+          "payDate": "",
+          "amountPerShare": 0.02,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-11-25",
+          "payDate": "",
+          "amountPerShare": 0.06,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-03-31",
+          "payDate": "",
+          "amountPerShare": 0.04,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-11-24",
+          "payDate": "",
+          "amountPerShare": 0.07,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-03-27",
+          "payDate": "",
+          "amountPerShare": 0.02,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-11-22",
+          "payDate": "",
+          "amountPerShare": 0.04,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-03-27",
+          "payDate": "",
+          "amountPerShare": 0.02,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-11-21",
+          "payDate": "",
+          "amountPerShare": 0.04,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-03-26",
+          "payDate": "",
+          "amountPerShare": 0.02,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "00926.HK": {
       "symbol": "00926.HK",
@@ -386,22 +1826,44 @@
       "price": 2.45,
       "previousClose": 2.45,
       "dividendPerShareTtm": 0.15,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:26:02.319236Z",
-      "lastExDate": "2025-08-26",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:40.236866Z",
+      "lastExDate": "2025-08-27",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2024-09-05",
+          "payDate": "",
+          "amountPerShare": 0.9,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-18",
+          "payDate": "",
+          "amountPerShare": 0.1,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-08-27",
+          "payDate": "",
+          "amountPerShare": 0.15,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     },
     "09926.HK": {
       "symbol": "09926.HK",
       "name": "康方生物",
       "market": "HK",
       "currency": "HKD",
-      "price": 83.3,
-      "previousClose": 85.45,
+      "price": 91.65,
+      "previousClose": 83.3,
       "dividendPerShareTtm": 0.0,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:26:02.657818Z",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:42.094815Z",
       "lastExDate": "",
       "dividendStatus": "missing",
       "dividends": []
@@ -411,14 +1873,92 @@
       "name": "网龙",
       "market": "HK",
       "currency": "HKD",
-      "price": 6.93,
-      "previousClose": 7.08,
+      "price": 7.17,
+      "previousClose": 6.93,
       "dividendPerShareTtm": 1.0,
-      "dividendSource": "yfinance",
-      "dividendUpdatedAt": "2026-06-26T12:26:02.992361Z",
-      "lastExDate": "2026-06-03",
+      "dividendSource": "yahoo",
+      "dividendUpdatedAt": "2026-06-29T14:02:43.958689Z",
+      "lastExDate": "2026-06-04",
       "dividendStatus": "fresh",
-      "dividends": []
+      "dividends": [
+        {
+          "exDate": "2021-09-08",
+          "payDate": "",
+          "amountPerShare": 0.4,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-02-17",
+          "payDate": "",
+          "amountPerShare": 1.43,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-06-07",
+          "payDate": "",
+          "amountPerShare": 0.4,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2022-09-09",
+          "payDate": "",
+          "amountPerShare": 0.9,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-06-06",
+          "payDate": "",
+          "amountPerShare": 0.4,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2023-09-12",
+          "payDate": "",
+          "amountPerShare": 1.4,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-06-12",
+          "payDate": "",
+          "amountPerShare": 0.4,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2024-09-11",
+          "payDate": "",
+          "amountPerShare": 0.4,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-06-10",
+          "payDate": "",
+          "amountPerShare": 0.5,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2025-09-10",
+          "payDate": "",
+          "amountPerShare": 0.5,
+          "currency": "HKD",
+          "source": "yahoo"
+        },
+        {
+          "exDate": "2026-06-04",
+          "payDate": "",
+          "amountPerShare": 0.5,
+          "currency": "HKD",
+          "source": "yahoo"
+        }
+      ]
     }
   }
 }

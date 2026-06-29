@@ -33,6 +33,7 @@ REQUEST_HEADERS = {
     'Accept-Language': 'en-US,en;q=0.9'
 }
 TENCENT_QUOTE_ENDPOINT = 'https://qt.gtimg.cn/q='
+YAHOO_CHART_ENDPOINT = 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}'
 DIVIDEND_HISTORY_PERIOD = '5y'
 TENCENT_HEADERS = {
     **REQUEST_HEADERS,
@@ -330,6 +331,72 @@ def build_dividend_events_from_series(series, currency):
             'source': 'yfinance'
         })
     return normalize_dividend_events(events, currency=currency)
+
+
+def fetch_yahoo_chart_dividend_events(symbol, currency):
+    now = utc_now()
+    # Add a small buffer so five full calendar years are included even around
+    # leap years and time-zone offsets.
+    period1 = int((now - timedelta(days=365 * 5 + 10)).timestamp())
+    period2 = int(now.timestamp())
+    response = requests.get(
+        YAHOO_CHART_ENDPOINT.format(symbol=to_yfinance_symbol(symbol)),
+        params={
+            'period1': period1,
+            'period2': period2,
+            'interval': '1d',
+            'events': 'div',
+            'includeAdjustedClose': 'true'
+        },
+        timeout=12,
+        headers=REQUEST_HEADERS
+    )
+    response.raise_for_status()
+    payload = response.json()
+    results = payload.get('chart', {}).get('result') or []
+    if not results:
+        errors = payload.get('chart', {}).get('error') or {}
+        message = errors.get('description') or errors.get('code') or 'empty chart result'
+        raise RuntimeError(message)
+
+    raw_events = ((results[0].get('events') or {}).get('dividends') or {})
+    events = []
+    for raw in raw_events.values():
+        if not isinstance(raw, dict):
+            continue
+        events.append({
+            'exDate': normalize_date_string(raw.get('date')),
+            'payDate': '',
+            'amountPerShare': safe_float(raw.get('amount'), 0.0),
+            'currency': currency,
+            'source': 'yahoo'
+        })
+    return normalize_dividend_events(events, symbol, currency)
+
+
+def sum_ttm_dividend_events(events):
+    threshold = utc_now() - timedelta(days=365)
+    total = 0.0
+    for event in events or []:
+        amount = safe_float(event.get('amountPerShare'), 0.0)
+        event_dt = parse_date_value(event.get('exDate'))
+        if amount <= 0 or event_dt is None:
+            continue
+        if event_dt >= threshold:
+            total += amount
+    return round(total, 6)
+
+
+def latest_ex_date_from_events(events):
+    latest_dt = None
+    for event in events or []:
+        if safe_float(event.get('amountPerShare'), 0.0) <= 0:
+            continue
+        event_dt = parse_date_value(event.get('exDate'))
+        if event_dt is None:
+            continue
+        latest_dt = event_dt if latest_dt is None else max(latest_dt, event_dt)
+    return latest_dt.date().isoformat() if latest_dt else ''
 
 
 def is_stale(updated_at, stale_days):
@@ -777,6 +844,95 @@ def fetch_yfinance_snapshot(symbol, previous_quote, stale_days):
     return normalize_quote_entry(symbol, quote, stale_days)
 
 
+def fetch_market_snapshot(symbol, previous_quote, stale_days):
+    previous_quote = normalize_quote_entry(symbol, previous_quote or {}, stale_days)
+    market, fallback_currency = infer_market_currency(symbol)
+    quote_currency = normalize_currency_code(previous_quote.get('currency'), fallback_currency)
+
+    # Tencent prices are merged before this step. Prefer them so dividend
+    # refresh is not blocked by yfinance quote rate limits.
+    price = safe_float(previous_quote.get('price'), 0.0)
+    if price <= 0:
+        try:
+            ticker = yf.Ticker(to_yfinance_symbol(symbol))
+            history = ticker.history(period='10d', interval='1d', auto_adjust=False, actions=False)
+            price = extract_latest_price(ticker, history)
+        except Exception as error:
+            print(f'yfinance price history skipped for {symbol}: {error}')
+        if price <= 0:
+            print(f'warning: no price available for {symbol}, using 0')
+
+    dividend_fetch_error = ''
+    dividend_events = []
+    dividend_source = 'yahoo'
+    chart_loaded = False
+
+    try:
+        dividend_events = fetch_yahoo_chart_dividend_events(symbol, quote_currency)
+        chart_loaded = True
+    except Exception as error:
+        dividend_fetch_error = str(error).strip()
+        print(f'yahoo chart dividends skipped for {symbol}: {error}')
+
+    if not dividend_events and not chart_loaded:
+        try:
+            div_history = yf.Ticker(to_yfinance_symbol(symbol)).history(
+                period=DIVIDEND_HISTORY_PERIOD, auto_adjust=False, actions=True
+            )
+            if div_history is not None and not div_history.empty and 'Dividends' in div_history.columns:
+                dividend_events = build_dividend_events_from_series(div_history['Dividends'], quote_currency)
+                dividend_source = 'yfinance'
+                dividend_fetch_error = ''
+            else:
+                dividend_fetch_error = dividend_fetch_error or 'history returned no dividend column'
+                print(f'yfinance dividends empty for {symbol}')
+        except Exception as error:
+            dividend_fetch_error = dividend_fetch_error or str(error).strip()
+            print(f'yfinance dividends skipped for {symbol}: {error}')
+
+    ttm_dps = sum_ttm_dividend_events(dividend_events)
+    last_ex = latest_ex_date_from_events(dividend_events)
+    quote = {
+        'symbol': symbol,
+        'name': str(previous_quote.get('name') or symbol).strip() or symbol,
+        'market': market,
+        'currency': quote_currency,
+        'price': price
+    }
+
+    if dividend_fetch_error and not dividend_events:
+        quote['dividends'] = previous_quote.get('dividends') or []
+        quote.update(build_dividend_payload(
+            dividend_per_share_ttm=previous_quote.get('dividendPerShareTtm'),
+            dividend_source='cache',
+            dividend_updated_at=previous_quote.get('dividendUpdatedAt'),
+            last_ex_date=previous_quote.get('lastExDate'),
+            stale_days=stale_days,
+            dividend_fetch_error=dividend_fetch_error
+        ))
+    elif ttm_dps <= 0 and not last_ex and safe_float(previous_quote.get('dividendPerShareTtm'), 0) > 0:
+        quote['dividends'] = previous_quote.get('dividends') or []
+        quote.update(build_dividend_payload(
+            dividend_per_share_ttm=previous_quote.get('dividendPerShareTtm'),
+            dividend_source='cache',
+            dividend_updated_at=previous_quote.get('dividendUpdatedAt'),
+            last_ex_date=previous_quote.get('lastExDate'),
+            stale_days=stale_days,
+            dividend_fetch_error='dividend history returned empty series'
+        ))
+    else:
+        quote['dividends'] = dividend_events
+        quote.update(build_dividend_payload(
+            dividend_per_share_ttm=ttm_dps,
+            dividend_source=dividend_source,
+            dividend_updated_at=utc_now_iso(),
+            last_ex_date=last_ex,
+            stale_days=stale_days
+        ))
+
+    return normalize_quote_entry(symbol, quote, stale_days)
+
+
 def fetch_yfinance_snapshots(watchlist, previous_quotes, stale_days):
     snapshots = {}
     previous_quotes = previous_quotes or {}
@@ -785,8 +941,8 @@ def fetch_yfinance_snapshots(watchlist, previous_quotes, stale_days):
         previous_quote = previous_quotes.get(symbol) or {}
         try:
             snapshots[symbol] = fetch_with_retry(
-                f'yfinance snapshot {symbol}',
-                fetch_yfinance_snapshot,
+                f'market snapshot {symbol}',
+                fetch_market_snapshot,
                 symbol,
                 previous_quote,
                 stale_days,
@@ -862,7 +1018,8 @@ def main():
         'provider': {
             'quote': 'tencent-finance',
             'fx': 'frankfurter',
-            'dividend': 'yfinance',
+            'dividend': 'yahoo-chart',
+            'dividendFallback': 'yfinance',
             'dividendHistoryPeriod': DIVIDEND_HISTORY_PERIOD,
             'dividendVerify': 'disabled'
         },
