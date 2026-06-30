@@ -195,9 +195,82 @@ function getForecastCutoffLabel(todayLabel) {
   return formatDateParts(d.getFullYear(), d.getMonth() + 1, d.getDate());
 }
 
-function buildForecastDividendEntries(summary, year, todayLabel, ledgerEntries) {
-  // 同一 (symbol, 到账月) 已有真实账本条目时跳过预估，避免与实际派息重复计数。
-  const ledgerMonthKeys = new Set(ledgerEntries.map((entry) => `${entry.symbol}|${entry.month}`));
+function isAnnouncedDividendEvent(dividend) {
+  return String(dividend && dividend.status || '').trim().toLowerCase() === 'announced';
+}
+
+function buildAnnouncedDividendEntries(summary, year, todayLabel) {
+  const candidates = new Map();
+
+  summary.holdings.forEach((holding) => {
+    const quote = state.quotes[holding.symbol] || {};
+    const dividends = Array.isArray(quote.dividends) ? quote.dividends : [];
+    dividends.forEach((dividend) => {
+      if (!isAnnouncedDividendEvent(dividend)) return;
+      const exParts = getDateParts(dividend && dividend.exDate);
+      const amountPerShare = safeNumber(dividend && dividend.amountPerShare, 0);
+      const shares = safeNumber(holding.quantity, 0);
+      if (!exParts || exParts.label <= todayLabel || amountPerShare <= 0 || shares <= 0) return;
+
+      const currency = dividend.currency || resolveQuoteCurrency(quote, holding.symbol);
+      const effectivePay = resolveEffectivePayDate(exParts.label, dividend.payDate, holding.symbol);
+      const payDate = effectivePay.date || exParts.label;
+      if (payDate <= todayLabel) return;
+      const payParts = getDateParts(payDate);
+      if (!payParts || payParts.year !== year) return;
+
+      const key = `${holding.symbol}|${payParts.month}|${exParts.label}|${amountPerShare}|${currency}`;
+      if (candidates.has(key)) return;
+      candidates.set(key, {
+        holding, quote, dividend, exDate: exParts.label, payDate,
+        month: payParts.month, payDateEstimated: effectivePay.estimated,
+        amountPerShare, currency,
+        sourceId: dividend.sourceId || buildDividendSourceId({
+          symbol: holding.symbol, exDate: exParts.label, amountPerShare, currency
+        })
+      });
+    });
+  });
+
+  return Array.from(candidates.values())
+    .map((item) => {
+      const fxRate = resolveFxRate(item.currency, state.rates);
+      const shares = safeNumber(item.holding.quantity, 0);
+      const taxRate = getHoldingTaxRate(item.holding);
+      const grossCny = roundMoney(item.amountPerShare * shares * fxRate);
+      const netCny = roundMoney(grossCny * (1 - taxRate));
+      return {
+        id: `announced_${item.sourceId.replace(/[^A-Z0-9]+/gi, '_')}`,
+        sourceId: item.sourceId,
+        symbol: item.holding.symbol,
+        name: item.holding.name || item.quote.name || item.holding.symbol,
+        exDate: item.exDate,
+        payDate: item.payDate,
+        payDateEstimated: item.payDateEstimated,
+        month: item.month,
+        amountPerShare: item.amountPerShare,
+        currency: item.currency,
+        shares,
+        sharesSource: 'current',
+        netCny,
+        bucket: item.holding.bucket === 'income' ? 'income' : 'core',
+        status: 'announced',
+        receiptStatus: 'announced',
+        confidence: item.dividend.tentative ? 'estimated' : 'snapshot',
+        confirmed: false,
+        isAnnounced: true,
+        isForecast: false,
+        announceDate: item.dividend.announceDate || '',
+        tentative: item.dividend.tentative === true
+      };
+    })
+    .filter((entry) => entry.month >= 1 && entry.month <= 12 && entry.netCny > 0)
+    .sort((a, b) => `${a.payDate}|${a.symbol}`.localeCompare(`${b.payDate}|${b.symbol}`));
+}
+
+function buildForecastDividendEntries(summary, year, todayLabel, blockingEntries) {
+  // 同一 (symbol, 到账月) 已有真实账本或已公告条目时跳过预估，避免重复计数。
+  const blockedMonthKeys = new Set(blockingEntries.map((entry) => `${entry.symbol}|${entry.month}`));
   // 只用最近 ~13 个月的历史做基准：否则多年历史会把同一笔年度股息（除息日逐年漂移）投影成多条重复。
   const cutoff = getForecastCutoffLabel(todayLabel);
   // 每个 (symbol, 到账月) 只保留一条预估，取最近一次历史派息。
@@ -220,7 +293,7 @@ function buildForecastDividendEntries(summary, year, todayLabel, ledgerEntries) 
       if (forecastPayDate <= todayLabel) return;
       const payParts = getDateParts(forecastPayDate);
       if (!payParts || payParts.year !== year) return;
-      if (ledgerMonthKeys.has(`${holding.symbol}|${payParts.month}`)) return;
+      if (blockedMonthKeys.has(`${holding.symbol}|${payParts.month}`)) return;
       const key = `${holding.symbol}|${payParts.month}`;
       const prev = candidates.get(key);
       if (prev && prev.historyDate >= parts.label) return;
@@ -271,6 +344,7 @@ function buildDividendMonthItems(entries, currentMonth) {
     label: `${index + 1}\u6708`,
     receivedCny: 0,
     pendingCny: 0,
+    announcedCny: 0,
     forecastCny: 0,
     totalCny: 0
   }));
@@ -279,6 +353,7 @@ function buildDividendMonthItems(entries, currentMonth) {
     if (!item) return;
     if (entry.status === 'received') item.receivedCny += entry.netCny;
     else if (entry.status === 'pending') item.pendingCny += entry.netCny;
+    else if (entry.status === 'announced') item.announcedCny += entry.netCny;
     else item.forecastCny += entry.netCny;
     item.totalCny += entry.netCny;
   });
@@ -286,8 +361,9 @@ function buildDividendMonthItems(entries, currentMonth) {
     ...item,
     receivedCny: roundMoney(item.receivedCny),
     pendingCny: roundMoney(item.pendingCny),
+    announcedCny: roundMoney(item.announcedCny),
     forecastCny: roundMoney(item.forecastCny),
-    upcomingCny: roundMoney(item.pendingCny + item.forecastCny),
+    upcomingCny: roundMoney(item.pendingCny + item.announcedCny + item.forecastCny),
     totalCny: roundMoney(item.totalCny),
     phase: item.month < currentMonth ? 'past' : item.month === currentMonth ? 'current' : 'future'
   }));
@@ -302,8 +378,9 @@ export function computeDividendCalendar(today = new Date()) {
   const ledgerEntries = state.dividendLedger
     .map((entry) => buildLedgerDividendEntry(entry, year, todayLabel))
     .filter(Boolean);
-  const forecastEntries = buildForecastDividendEntries(summary, year, todayLabel, ledgerEntries);
-  const entries = [...ledgerEntries, ...forecastEntries]
+  const announcedEntries = buildAnnouncedDividendEntries(summary, year, todayLabel);
+  const forecastEntries = buildForecastDividendEntries(summary, year, todayLabel, [...ledgerEntries, ...announcedEntries]);
+  const entries = [...ledgerEntries, ...announcedEntries, ...forecastEntries]
     .filter((entry) => matchesDividendFilter(entry, filterKey))
     .sort((a, b) => `${a.payDate}|${a.status}|${a.symbol}`.localeCompare(`${b.payDate}|${b.status}|${b.symbol}`));
   const receivedCny = entries
@@ -312,11 +389,14 @@ export function computeDividendCalendar(today = new Date()) {
   const pendingCny = entries
     .filter((entry) => entry.status === 'pending')
     .reduce((sum, entry) => sum + entry.netCny, 0);
+  const announcedCny = entries
+    .filter((entry) => entry.status === 'announced')
+    .reduce((sum, entry) => sum + entry.netCny, 0);
   const forecastCny = entries
     .filter((entry) => entry.status === 'forecast')
     .reduce((sum, entry) => sum + entry.netCny, 0);
-  // 即将到账 = 在途待到账(pending) + 节奏预估(forecast)；预计全年 = 已到账 + 即将到账。
-  const upcomingCny = pendingCny + forecastCny;
+  // 即将到账 = 在途待到账(pending) + 已公告未除息(announced) + 节奏预估(forecast)。
+  const upcomingCny = pendingCny + announcedCny + forecastCny;
   const projectedCny = receivedCny + upcomingCny;
   // 同比：今年「预计全年」对比上一年实际到账总额（同口径筛选）。
   const lastYear = year - 1;
@@ -336,6 +416,7 @@ export function computeDividendCalendar(today = new Date()) {
     metrics: {
       receivedCny: roundMoney(receivedCny),
       pendingCny: roundMoney(pendingCny),
+      announcedCny: roundMoney(announcedCny),
       forecastCny: roundMoney(forecastCny),
       upcomingCny: roundMoney(upcomingCny),
       projectedCny: roundMoney(projectedCny),

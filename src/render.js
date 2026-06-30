@@ -373,9 +373,19 @@ function renderDividendMonths(model) {
   `).join('');
 }
 
-function getMonthDetailDateShort(entry) {
-  const date = entry.payDate || entry.exDate || '';
+function getShortMonthDay(value) {
+  const date = value || '';
   const mmdd = date.length >= 10 ? date.slice(5) : date;
+  return mmdd;
+}
+
+function getMonthDetailDateShort(entry) {
+  if (entry.isAnnounced || entry.status === 'announced') {
+    const ex = getShortMonthDay(entry.exDate);
+    const pay = getShortMonthDay(entry.payDate || entry.exDate);
+    return `${LABELS.dividendExDateLabel} ${ex} \u00b7 ${LABELS.dividendPayDateActual} ${pay}`;
+  }
+  const mmdd = getShortMonthDay(entry.payDate || entry.exDate || '');
   return entry.payDateEstimated ? `${mmdd}(${LABELS.dividendPayDateEstimated})` : mmdd;
 }
 
@@ -393,9 +403,12 @@ export function buildDividendMonthDetail(month) {
   }
   const body = entries.length
     ? entries.map((entry) => {
-        // 灰=节奏预估(不可确认)；绿=已确认到账；黄=自动入账但未确认。
-        const dotState = entry.isForecast ? 'is-forecast' : (entry.confirmed ? 'is-confirmed' : 'is-unconfirmed');
-        const clickable = !entry.isForecast && entry.sourceId;
+        // 灰=节奏预估(不可确认)；蓝=已公告未除息；绿=已确认到账；黄=自动入账但未确认。
+        const dotState = entry.isForecast
+          ? 'is-forecast'
+          : (entry.isAnnounced || entry.status === 'announced') ? 'is-announced'
+            : (entry.confirmed ? 'is-confirmed' : 'is-unconfirmed');
+        const clickable = !entry.isForecast && !(entry.isAnnounced || entry.status === 'announced') && entry.sourceId;
         const tag = clickable ? 'button' : 'div';
         const attrs = clickable
           ? `type="button" data-modal-action="confirm-dividend" data-source-id="${escapeHtml(entry.sourceId)}" aria-pressed="${entry.confirmed ? 'true' : 'false'}"`
@@ -413,7 +426,7 @@ export function buildDividendMonthDetail(month) {
     phase: item ? item.phase : 'future',
     total: item ? formatDisplayMoney(item.totalCny, 'CNY') : formatDisplayMoney(0, 'CNY'),
     summary: summaryParts.join(' · '),
-    hasConfirmable: entries.some((entry) => !entry.isForecast && entry.sourceId),
+    hasConfirmable: entries.some((entry) => !entry.isForecast && !(entry.isAnnounced || entry.status === 'announced') && entry.sourceId),
     body
   };
 }

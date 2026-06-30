@@ -25,6 +25,7 @@ DEFAULT_CONFIG = {
 }
 VALID_DIVIDEND_SOURCES = {'yfinance', 'manual', 'cache', 'yahoo', 'eodhd'}
 VALID_DIVIDEND_STATUSES = {'manual', 'fresh', 'stale', 'missing'}
+VALID_DIVIDEND_EVENT_STATUSES = {'paid', 'ex', 'announced'}
 
 REQUEST_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
@@ -34,10 +35,15 @@ REQUEST_HEADERS = {
 }
 TENCENT_QUOTE_ENDPOINT = 'https://qt.gtimg.cn/q='
 YAHOO_CHART_ENDPOINT = 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}'
+EASTMONEY_SHAREBONUS_ENDPOINT = 'https://datacenter-web.eastmoney.com/api/data/v1/get'
 DIVIDEND_HISTORY_PERIOD = '5y'
 TENCENT_HEADERS = {
     **REQUEST_HEADERS,
     'Referer': 'https://gu.qq.com/'
+}
+EASTMONEY_HEADERS = {
+    **REQUEST_HEADERS,
+    'Referer': 'https://data.eastmoney.com/yjfp/'
 }
 
 
@@ -47,6 +53,10 @@ def utc_now():
 
 def utc_now_iso():
     return utc_now().isoformat().replace('+00:00', 'Z')
+
+
+def local_today_label():
+    return datetime.now(LOCAL_TZ).date().isoformat()
 
 
 def normalize_symbol(raw_symbol):
@@ -288,13 +298,26 @@ def normalize_dividend_event(item, symbol='', currency=''):
     if not ex_date or amount_per_share <= 0:
         return None
 
-    return {
+    event = {
         'exDate': ex_date,
         'payDate': normalize_date_string(item.get('payDate')) if item.get('payDate') else '',
         'amountPerShare': amount_per_share,
         'currency': normalize_currency_code(item.get('currency'), fallback_currency),
         'source': str(item.get('source') or 'yfinance').strip() or 'yfinance'
     }
+
+    status = str(item.get('status') or '').strip().lower()
+    if status in VALID_DIVIDEND_EVENT_STATUSES:
+        event['status'] = status
+
+    announce_date = normalize_date_string(item.get('announceDate'))
+    if announce_date:
+        event['announceDate'] = announce_date
+
+    if 'tentative' in item:
+        event['tentative'] = bool(item.get('tentative'))
+
+    return event
 
 
 def normalize_dividend_events(value, symbol='', currency=''):
@@ -314,6 +337,59 @@ def normalize_dividend_events(value, symbol='', currency=''):
         events.append(event)
 
     return sorted(events, key=lambda event: event['exDate'])
+
+
+def is_announced_dividend_event(event):
+    return str((event or {}).get('status') or '').strip().lower() == 'announced'
+
+
+def is_future_dividend_event(event, today_label=None):
+    ex_date = normalize_date_string((event or {}).get('exDate'))
+    return bool(ex_date and ex_date > (today_label or local_today_label()))
+
+
+def date_distance_days(first, second):
+    first_dt = parse_date_value(first)
+    second_dt = parse_date_value(second)
+    if first_dt is None or second_dt is None:
+        return 999999
+    return abs((first_dt.date() - second_dt.date()).days)
+
+
+def same_dividend_event(left, right):
+    if not left or not right:
+        return False
+    left_currency = normalize_currency_code(left.get('currency'), '')
+    right_currency = normalize_currency_code(right.get('currency'), '')
+    if left_currency and right_currency and left_currency != right_currency:
+        return False
+
+    left_amount = safe_float(left.get('amountPerShare'), 0.0)
+    right_amount = safe_float(right.get('amountPerShare'), 0.0)
+    if left_amount <= 0 or right_amount <= 0:
+        return False
+
+    tolerance = max(0.005, min(left_amount, right_amount) * 0.005)
+    return date_distance_days(left.get('exDate'), right.get('exDate')) <= 1 and abs(left_amount - right_amount) <= tolerance
+
+
+def merge_dividend_event_lists(base_events, next_events, symbol='', currency=''):
+    merged = normalize_dividend_events(base_events, symbol, currency)
+    for raw_event in next_events or []:
+        event = normalize_dividend_event(raw_event, symbol, currency)
+        if not event:
+            continue
+
+        duplicate_index = next((index for index, item in enumerate(merged) if same_dividend_event(item, event)), -1)
+        if duplicate_index < 0:
+            merged.append(event)
+            continue
+
+        existing = merged[duplicate_index]
+        if is_announced_dividend_event(existing):
+            merged[duplicate_index] = {**existing, **event}
+
+    return sorted(merged, key=lambda item: item['exDate'])
 
 
 def build_dividend_events_from_series(series, currency):
@@ -488,6 +564,153 @@ def fetch_with_retry(label, fn, *args, retries=3, delay_seconds=2, **kwargs):
             if attempt < retries:
                 time.sleep(delay_seconds)
     raise last_error
+
+
+def is_cn_equity_symbol(symbol):
+    normalized = normalize_symbol(symbol)
+    code = normalized[:6]
+    if normalized.endswith('.SH'):
+        return bool(re.match(r'^(600|601|603|605|688|689)\d{3}$', code))
+    if normalized.endswith('.SZ'):
+        return bool(re.match(r'^(000|001|002|003|300|301)\d{3}$', code))
+    return False
+
+
+def to_eastmoney_security_code(symbol):
+    normalized = normalize_symbol(symbol)
+    return normalized[:6] if is_cn_equity_symbol(normalized) else ''
+
+
+def fetch_eastmoney_sharebonus_rows(symbol):
+    security_code = to_eastmoney_security_code(symbol)
+    if not security_code:
+        return []
+
+    response = requests.get(
+        EASTMONEY_SHAREBONUS_ENDPOINT,
+        params={
+            'sortColumns': 'SECURITY_CODE,REPORT_DATE',
+            'sortTypes': '1,-1',
+            'pageSize': '20',
+            'pageNumber': '1',
+            'reportName': 'RPT_SHAREBONUS_DET',
+            'columns': 'ALL',
+            'source': 'WEB',
+            'client': 'WEB',
+            'filter': f'(SECURITY_CODE="{security_code}")'
+        },
+        timeout=15,
+        headers=EASTMONEY_HEADERS
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if payload.get('success') is False:
+        raise RuntimeError(payload.get('message') or 'eastmoney sharebonus returned failure')
+    data = payload.get('result', {}).get('data') or []
+    return data if isinstance(data, list) else []
+
+
+def build_eastmoney_announced_event(symbol, row, today_label):
+    amount_per_10 = safe_float((row or {}).get('PRETAX_BONUS_RMB'), 0.0)
+    ex_date = normalize_date_string((row or {}).get('EX_DIVIDEND_DATE'))
+    if amount_per_10 <= 0 or not ex_date or ex_date <= today_label:
+        return None
+
+    progress = str((row or {}).get('ASSIGN_PROGRESS') or '').strip()
+    pay_date = normalize_date_string(
+        (row or {}).get('PAY_DATE')
+        or (row or {}).get('PAYMENT_DATE')
+        or (row or {}).get('CASH_DATE')
+        or (row or {}).get('DIVIDEND_PAYMENT_DATE')
+    ) or ex_date
+    announce_date = normalize_date_string(
+        (row or {}).get('NOTICE_DATE')
+        or (row or {}).get('PLAN_NOTICE_DATE')
+        or (row or {}).get('PUBLISH_DATE')
+    )
+
+    event = {
+        'exDate': ex_date,
+        'payDate': pay_date,
+        'amountPerShare': round(amount_per_10 / 10, 6),
+        'currency': 'CNY',
+        'source': 'eastmoney',
+        'status': 'announced',
+        'tentative': '实施' not in progress
+    }
+    if announce_date:
+        event['announceDate'] = announce_date
+    return event
+
+
+def fetch_eastmoney_announced_dividends(symbol):
+    today_label = local_today_label()
+    events = []
+    for row in fetch_eastmoney_sharebonus_rows(symbol):
+        event = build_eastmoney_announced_event(symbol, row, today_label)
+        if event:
+            events.append(event)
+    return normalize_dividend_events(events, symbol, 'CNY')
+
+
+def fetch_announced_dividends(watchlist):
+    events_by_symbol = {}
+    fetched_symbols = set()
+    for symbol in watchlist or []:
+        if not is_cn_equity_symbol(symbol):
+            continue
+        try:
+            events = fetch_with_retry(
+                f'eastmoney announced dividends {symbol}',
+                fetch_eastmoney_announced_dividends,
+                symbol,
+                retries=2,
+                delay_seconds=1
+            )
+            events_by_symbol[symbol] = events
+            fetched_symbols.add(symbol)
+        except Exception as error:
+            print(f'eastmoney announced dividends skipped for {symbol}: {error}')
+    return events_by_symbol, fetched_symbols
+
+
+def get_previous_future_announced_events(previous_quote, symbol, currency, today_label):
+    dividends = normalize_dividend_events((previous_quote or {}).get('dividends'), symbol, currency)
+    return [
+        event for event in dividends
+        if is_announced_dividend_event(event) and is_future_dividend_event(event, today_label)
+    ]
+
+
+def merge_announced_dividend_snapshots(quotes, previous_quotes, announced_events, fetched_symbols, stale_days):
+    today_label = local_today_label()
+    merged = {}
+    previous_quotes = previous_quotes or {}
+    announced_events = announced_events or {}
+    fetched_symbols = set(fetched_symbols or [])
+
+    for symbol, quote in (quotes or {}).items():
+        normalized_quote = normalize_quote_entry(symbol, quote or {}, stale_days)
+        quote_currency = normalize_currency_code(normalized_quote.get('currency'), infer_market_currency(symbol)[1])
+        base_events = [
+            event for event in normalized_quote.get('dividends', [])
+            if not (symbol in fetched_symbols and is_announced_dividend_event(event))
+        ]
+
+        if symbol in fetched_symbols:
+            next_announced = announced_events.get(symbol) or []
+        else:
+            next_announced = get_previous_future_announced_events(
+                previous_quotes.get(symbol) or {},
+                symbol,
+                quote_currency,
+                today_label
+            )
+
+        normalized_quote['dividends'] = merge_dividend_event_lists(base_events, next_announced, symbol, quote_currency)
+        merged[symbol] = normalize_quote_entry(symbol, normalized_quote, stale_days)
+
+    return merged
 
 
 def to_yfinance_symbol(symbol):
@@ -1013,6 +1236,21 @@ def main():
     except Exception as error:
         print(f'fx refresh skipped: {error}')
 
+    # Step 4: Add announced-but-not-yet-ex-dividend A-share cash dividends.
+    # Failure is non-fatal; previous future announcements are preserved.
+    try:
+        announced_events, fetched_announcement_symbols = fetch_announced_dividends(watchlist)
+    except Exception as error:
+        print(f'announced dividend refresh skipped: {error}')
+        announced_events, fetched_announcement_symbols = {}, set()
+    quotes = merge_announced_dividend_snapshots(
+        quotes,
+        previous_quotes,
+        announced_events,
+        fetched_announcement_symbols,
+        config['staleDays']
+    )
+
     payload = {
         'ok': True,
         'provider': {
@@ -1020,6 +1258,8 @@ def main():
             'fx': 'frankfurter',
             'dividend': 'yahoo-chart',
             'dividendFallback': 'yfinance',
+            'dividendAnnouncement': 'eastmoney-sharebonus',
+            'dividendAnnouncementScope': 'CN',
             'dividendHistoryPeriod': DIVIDEND_HISTORY_PERIOD,
             'dividendVerify': 'disabled'
         },

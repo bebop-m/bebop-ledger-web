@@ -1273,7 +1273,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .month-detail-list { display: grid; gap: 0; max-height: 52vh; overflow-y: auto; }
 .month-detail-row {
   display: grid;
-  grid-template-columns: 10px 1fr auto auto;
+  grid-template-columns: 10px minmax(0, 1fr) minmax(72px, auto) auto;
   align-items: center;
   gap: 10px;
   padding: 9px 2px;
@@ -1298,12 +1298,13 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .month-detail-row.is-clickable:focus-visible { background: rgba(21, 40, 73, 0.04); outline: none; }
 .month-detail-row.is-clickable:active { background: rgba(21, 40, 73, 0.07); }
 .mdr-dot { width: 9px; height: 9px; border-radius: 50%; background: #b3bac6; }
-/* 绿=已确认到账 · 黄=自动入账待确认 · 灰=节奏预估 */
+/* 绿=已确认到账 · 黄=自动入账待确认 · 蓝=已公告未除息 · 灰=节奏预估 */
 .month-detail-row.is-confirmed .mdr-dot { background: #2f8254; box-shadow: 0 0 0 3px rgba(47, 130, 84, 0.14); }
 .month-detail-row.is-unconfirmed .mdr-dot { background: #e0a52e; box-shadow: 0 0 0 3px rgba(224, 165, 46, 0.16); }
+.month-detail-row.is-announced .mdr-dot { background: #3278b8; box-shadow: 0 0 0 3px rgba(50, 120, 184, 0.14); }
 .month-detail-row.is-forecast .mdr-dot { background: #b3bac6; }
 .mdr-name { font-size: 14px; font-weight: 600; color: #27384f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mdr-date { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mdr-date { max-width: 148px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1.25; text-align: right; white-space: normal; }
 .mdr-amount { font-size: 14px; font-weight: 800; color: #1f3357; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .month-detail-empty { padding: 22px; text-align: center; color: var(--muted); font-size: 13px; }
 
@@ -1403,6 +1404,11 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .dividend-status-pill.is-pending {
   background: rgba(173, 132, 48, 0.11);
   color: #8b6b29;
+}
+
+.dividend-status-pill.is-announced {
+  background: rgba(50, 120, 184, 0.11);
+  color: #2f6fa8;
 }
 
 .dividend-status-pill.is-forecast {
