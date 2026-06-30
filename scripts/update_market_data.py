@@ -2,6 +2,7 @@ import json
 import math
 import re
 import time
+import html as html_lib
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -36,6 +37,7 @@ REQUEST_HEADERS = {
 TENCENT_QUOTE_ENDPOINT = 'https://qt.gtimg.cn/q='
 YAHOO_CHART_ENDPOINT = 'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}'
 EASTMONEY_SHAREBONUS_ENDPOINT = 'https://datacenter-web.eastmoney.com/api/data/v1/get'
+ETNET_DIVIDEND_ENDPOINT = 'https://content.etnet.com.hk/content/iq/compinfo/tc/quote_dividend.php'
 DIVIDEND_HISTORY_PERIOD = '5y'
 TENCENT_HEADERS = {
     **REQUEST_HEADERS,
@@ -44,6 +46,11 @@ TENCENT_HEADERS = {
 EASTMONEY_HEADERS = {
     **REQUEST_HEADERS,
     'Referer': 'https://data.eastmoney.com/yjfp/'
+}
+ETNET_HEADERS = {
+    **REQUEST_HEADERS,
+    'Accept-Language': 'zh-HK,zh;q=0.9,en;q=0.8',
+    'Referer': 'https://content.etnet.com.hk/content/iq/compinfo/tc/'
 }
 
 
@@ -653,24 +660,147 @@ def fetch_eastmoney_announced_dividends(symbol):
     return normalize_dividend_events(events, symbol, 'CNY')
 
 
+def is_hk_symbol(symbol):
+    return normalize_symbol(symbol).endswith('.HK')
+
+
+def to_etnet_security_code(symbol):
+    normalized = normalize_symbol(symbol)
+    if not is_hk_symbol(normalized):
+        return ''
+    raw = normalized[:-3].lstrip('0')
+    return raw or '0'
+
+
+def parse_etnet_date(value):
+    raw = str(value or '').strip()
+    if not raw or raw == '--':
+        return ''
+    match = re.fullmatch(r'(\d{1,2})/(\d{1,2})/(\d{4})', raw)
+    if not match:
+        return normalize_date_string(raw)
+    day, month, year = (int(match.group(1)), int(match.group(2)), int(match.group(3)))
+    try:
+        return datetime(year, month, day, tzinfo=timezone.utc).date().isoformat()
+    except Exception:
+        return ''
+
+
+def clean_etnet_cell(value):
+    text = re.sub(r'<[^>]+>', ' ', str(value or ''))
+    return html_lib.unescape(re.sub(r'\s+', ' ', text).strip())
+
+
+def extract_etnet_dividend_rows(html):
+    rows = []
+    for row_match in re.finditer(r'<tr[^>]*class=["\']Row(?:Grey|White)["\'][^>]*>(.*?)</tr>', html, re.S | re.I):
+        cells = [
+            clean_etnet_cell(cell_match.group(1))
+            for cell_match in re.finditer(r'<td[^>]*>(.*?)</td>', row_match.group(1), re.S | re.I)
+        ]
+        if len(cells) >= 7:
+            rows.append(cells[:7])
+    return rows
+
+
+def fetch_etnet_dividend_rows(symbol):
+    code = to_etnet_security_code(symbol)
+    if not code:
+        return []
+
+    response = requests.get(
+        ETNET_DIVIDEND_ENDPOINT,
+        params={'code': code},
+        timeout=15,
+        headers=ETNET_HEADERS
+    )
+    response.raise_for_status()
+    html = response.content.decode('utf-8', 'replace')
+    return extract_etnet_dividend_rows(html)
+
+
+def parse_etnet_cash_dividend(action_text):
+    text = str(action_text or '').strip()
+    if not text or '不派' in text or '息' not in text:
+        return None
+
+    # When a HKD equivalent is published beside RMB, use HKD because HK quotes
+    # and holdings are valued in HKD in the app.
+    currency_patterns = (
+        ('HKD', r'港元\s*([0-9]+(?:\.[0-9]+)?)'),
+        ('USD', r'美元\s*([0-9]+(?:\.[0-9]+)?)'),
+        ('CNY', r'人民[幣币]\s*([0-9]+(?:\.[0-9]+)?)')
+    )
+    for currency, pattern in currency_patterns:
+        match = re.search(pattern, text)
+        if not match:
+            continue
+        amount = round(max(0.0, safe_float(match.group(1), 0.0)), 6)
+        if amount > 0:
+            return amount, currency
+    return None
+
+
+def build_etnet_announced_event(symbol, row, today_label):
+    announce_raw, _fiscal_year, action, ex_raw, _book_from, _book_to, pay_raw = row[:7]
+    cash_dividend = parse_etnet_cash_dividend(action)
+    ex_date = parse_etnet_date(ex_raw)
+    if not cash_dividend or not ex_date or ex_date <= today_label:
+        return None
+
+    amount_per_share, currency = cash_dividend
+    event = {
+        'exDate': ex_date,
+        'payDate': parse_etnet_date(pay_raw),
+        'amountPerShare': amount_per_share,
+        'currency': currency,
+        'source': 'etnet',
+        'status': 'announced',
+        'tentative': False
+    }
+    announce_date = parse_etnet_date(announce_raw)
+    if announce_date:
+        event['announceDate'] = announce_date
+    return event
+
+
+def fetch_etnet_announced_dividends(symbol):
+    today_label = local_today_label()
+    events = []
+    for row in fetch_etnet_dividend_rows(symbol):
+        event = build_etnet_announced_event(symbol, row, today_label)
+        if event:
+            events.append(event)
+    return normalize_dividend_events(events, symbol, 'HKD')
+
+
 def fetch_announced_dividends(watchlist):
     events_by_symbol = {}
     fetched_symbols = set()
     for symbol in watchlist or []:
-        if not is_cn_equity_symbol(symbol):
-            continue
         try:
-            events = fetch_with_retry(
-                f'eastmoney announced dividends {symbol}',
-                fetch_eastmoney_announced_dividends,
-                symbol,
-                retries=2,
-                delay_seconds=1
-            )
+            if is_cn_equity_symbol(symbol):
+                events = fetch_with_retry(
+                    f'eastmoney announced dividends {symbol}',
+                    fetch_eastmoney_announced_dividends,
+                    symbol,
+                    retries=2,
+                    delay_seconds=1
+                )
+            elif is_hk_symbol(symbol):
+                events = fetch_with_retry(
+                    f'etnet announced dividends {symbol}',
+                    fetch_etnet_announced_dividends,
+                    symbol,
+                    retries=2,
+                    delay_seconds=1
+                )
+            else:
+                continue
             events_by_symbol[symbol] = events
             fetched_symbols.add(symbol)
         except Exception as error:
-            print(f'eastmoney announced dividends skipped for {symbol}: {error}')
+            print(f'announced dividends skipped for {symbol}: {error}')
     return events_by_symbol, fetched_symbols
 
 
@@ -1236,7 +1366,7 @@ def main():
     except Exception as error:
         print(f'fx refresh skipped: {error}')
 
-    # Step 4: Add announced-but-not-yet-ex-dividend A-share cash dividends.
+    # Step 4: Add announced-but-not-yet-ex-dividend CN/HK cash dividends.
     # Failure is non-fatal; previous future announcements are preserved.
     try:
         announced_events, fetched_announcement_symbols = fetch_announced_dividends(watchlist)
@@ -1258,8 +1388,8 @@ def main():
             'fx': 'frankfurter',
             'dividend': 'yahoo-chart',
             'dividendFallback': 'yfinance',
-            'dividendAnnouncement': 'eastmoney-sharebonus',
-            'dividendAnnouncementScope': 'CN',
+            'dividendAnnouncement': 'eastmoney-sharebonus+etnet-dividend',
+            'dividendAnnouncementScope': 'CN,HK',
             'dividendHistoryPeriod': DIVIDEND_HISTORY_PERIOD,
             'dividendVerify': 'disabled'
         },
