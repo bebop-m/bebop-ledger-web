@@ -134,6 +134,38 @@ function buildLedgerEntry(symbol, dividend, today) {
   });
 }
 
+// 对账：清理已不匹配当前行情派息事件的「自动」条目。
+// yfinance 偶尔修订同一笔派息（除息日漂移、金额精度变化），会产生新 sourceId 的新条目，
+// 旧条目若不清理就会在同一月留下重复。用户确认/手动条目、以及早于行情覆盖区间的历史条目永不清理。
+function reconcileDividendLedger() {
+  const validBySymbol = new Map();
+  Object.entries(state.quotes).forEach(([symbol, quote]) => {
+    const dividends = Array.isArray(quote && quote.dividends) ? quote.dividends : [];
+    if (!dividends.length) return;
+    const ids = new Set();
+    let minExDate = '';
+    dividends.forEach((dividend) => {
+      const event = normalizeQuoteDividendEvent(dividend, symbol);
+      if (!event || !event.sourceId) return;
+      ids.add(event.sourceId);
+      if (event.exDate && (!minExDate || event.exDate < minExDate)) minExDate = event.exDate;
+    });
+    if (ids.size) validBySymbol.set(symbol, { ids, minExDate });
+  });
+
+  const before = state.dividendLedger.length;
+  state.dividendLedger = state.dividendLedger.filter((entry) => {
+    if (!entry) return false;
+    if (entry.confirmed === true || entry.sharesSource === 'manual') return true;
+    const valid = validBySymbol.get(entry.symbol);
+    if (!valid) return true;                          // 该 symbol 当前无行情派息数据（可能已离开行情）→ 保留
+    if (valid.ids.has(entry.sourceId)) return true;   // 与当前派息事件匹配 → 保留
+    if (entry.exDate && valid.minExDate && entry.exDate < valid.minExDate) return true; // 早于覆盖区间，无法核对 → 保留
+    return false;                                     // 在覆盖区间内却无匹配 → 旧的被修订数据，清理
+  });
+  return before - state.dividendLedger.length;
+}
+
 function generateDividendLedgerEntries(today = formatLocalDate()) {
   // 包含当前持仓 + 历史快照中曾经持有过的 symbol，避免已清仓持仓的派息被漏记（打工仓常见）。
   const relevantSymbols = new Set(state.holdings.map((holding) => holding.symbol).filter(Boolean));
@@ -143,6 +175,7 @@ function generateDividendLedgerEntries(today = formatLocalDate()) {
       if (holding && holding.symbol && safeNumber(holding.shares, 0) > 0) relevantSymbols.add(holding.symbol);
     });
   });
+  const removed = reconcileDividendLedger();
   const additions = [];
   relevantSymbols.forEach((symbol) => {
     const quote = state.quotes[symbol];
@@ -154,12 +187,12 @@ function generateDividendLedgerEntries(today = formatLocalDate()) {
       additions.push(entry);
     });
   });
-  if (!additions.length) return 0;
+  if (!additions.length && !removed) return 0;
   state.dividendLedger = state.dividendLedger
     .map(sanitizeDividendLedgerEntry)
     .filter(Boolean)
     .sort((a, b) => `${a.exDate}|${a.symbol}`.localeCompare(`${b.exDate}|${b.symbol}`));
-  return additions.length;
+  return additions.length + removed;
 }
 
 export function settleRevenueData(date = new Date()) {
