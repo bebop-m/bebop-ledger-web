@@ -1,7 +1,7 @@
 import { state, refs, mutable, saveState } from './state.js';
 import {
   computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems,
-  computeDividendCalendar, computeIncomeSummary
+  computeDividendCalendar, computeIncomeSummary, computeCurrentYearDividendCny
 } from './compute.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
@@ -56,12 +56,14 @@ export function toggleDividendTooltip(button) {
 
 /* ── Summary ── */
 function getSummaryViewModel(summary) {
-  const y = summary.totalMarketValueCny > 0 ? summary.totalDividendCny / summary.totalMarketValueCny : 0;
+  // 首页股息口径 = 当前自然年「预计全年」实收（按每笔除息日真实持股），与股息日历一致；非 TTM 年化。
+  const yearDividendCny = computeCurrentYearDividendCny();
+  const y = summary.totalMarketValueCny > 0 ? yearDividendCny / summary.totalMarketValueCny : 0;
   const pnl = safeNumber(summary.totalDailyPnlCny, 0);
   const hasPnl = summary.holdings.some((h) => safeNumber(h.previousClose, 0) > 0);
   return {
     totalLabel: formatDisplayMoney(summary.netMarketValueCny, 'CNY'),
-    dividendLabel: formatDisplayMoney(summary.totalDividendCny, 'CNY'),
+    dividendLabel: formatDisplayMoney(yearDividendCny, 'CNY'),
     dailyPnlText: hasPnl && state.showAmounts ? formatDailyPnl(pnl, summary.totalMarketValueCny) : '',
     overallYieldText: `${UI_TEXT.overallYieldCompact} ${formatPercent(y)}`,
     usdRateCompactText: `USD/CNY ${safeNumber(state.rates.USD, 0).toFixed(2)}`,

@@ -369,11 +369,11 @@ function buildDividendMonthItems(entries, currentMonth) {
   }));
 }
 
-export function computeDividendCalendar(today = new Date()) {
+export function computeDividendCalendar(today = new Date(), filterKeyOverride = null) {
   const todayLabel = typeof today === 'string' ? formatDateLabel(today) : formatLocalDate(today);
   const todayParts = getDateParts(todayLabel) || getDateParts(formatLocalDate());
   const year = todayParts ? todayParts.year : new Date().getFullYear();
-  const filterKey = getDividendFilterKey();
+  const filterKey = DIVIDEND_FILTER_KEYS.has(filterKeyOverride) ? filterKeyOverride : getDividendFilterKey();
   const summary = computeHoldings();
   const ledgerEntries = state.dividendLedger
     .map((entry) => buildLedgerDividendEntry(entry, year, todayLabel))
@@ -426,6 +426,12 @@ export function computeDividendCalendar(today = new Date()) {
     months: buildDividendMonthItems(entries, currentMonth),
     allDetails: entries
   };
+}
+
+/* 首页用：当前自然年「预计全年」股息（全部仓位，不受日历筛选影响）。
+   = 已到账 + 在途 + 已公告 + 节奏预估，按每笔派息除息日当天真实持股计算。 */
+export function computeCurrentYearDividendCny() {
+  return computeDividendCalendar(new Date(), 'all').metrics.projectedCny;
 }
 
 function getIncomeYear(value) {

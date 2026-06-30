@@ -43,8 +43,8 @@ export const CONFIRM_CLOSE_DELAY_MS = 40;
 
 export const UI_TEXT = {
   sort: '\u6392\u5e8f',
-  overallAverageNetYield: '\u6574\u4f53\u5e73\u5747\u9884\u4f30\u80a1\u606f\u7387',
-  overallYieldCompact: '\u9884\u4f30\u80a1\u606f\u7387',
+  overallAverageNetYield: '\u4eca\u5e74\u6574\u4f53\u80a1\u606f\u7387',
+  overallYieldCompact: '\u4eca\u5e74\u80a1\u606f\u7387',
   pageAssets: '\u8d44\u4ea7',
   pageIncome: '\u6536\u76ca\u6c47\u603b',
   pageDividends: '\u80a1\u606f\u65e5\u5386',
@@ -75,7 +75,7 @@ export const BUCKET_COLORS = { core: '#152849', income: '#f28c28' };
 
 export const LABELS = {
   totalMarketValue: '\u6301\u4ed3\u603b\u91d1\u989d',
-  totalDividend: '\u9884\u4f30\u5e74\u5316\u80a1\u606f',
+  totalDividend: '\u4eca\u5e74\u9884\u8ba1\u80a1\u606f',
   usdRate: '\u7f8e\u5143\u6c47\u7387',
   hkdRate: '\u6e2f\u5e01\u6c47\u7387',
   liability: '\u8d1f\u503a',
