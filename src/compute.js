@@ -128,6 +128,10 @@ function roundMoney(value) {
   return Math.round((safeNumber(value, 0) + Number.EPSILON) * 100) / 100;
 }
 
+function roundQuantity(value) {
+  return Math.round((safeNumber(value, 0) + Number.EPSILON) * 1000000) / 1000000;
+}
+
 function getDividendFilterKey() {
   return DIVIDEND_FILTER_KEYS.has(state.dividendCalendarBucket) ? state.dividendCalendarBucket : 'all';
 }
@@ -182,6 +186,7 @@ function buildLedgerDividendEntry(entry, year, todayLabel) {
     receiptStatus: isReceived ? 'received' : 'pending',
     confidence: entry.confidence || (isReceived ? 'confirmed' : 'estimated'),
     confirmed: entry.confirmed === true,
+    note: typeof entry.note === 'string' ? entry.note : '',
     isForecast: false
   };
 }
@@ -479,6 +484,141 @@ function getCashFlowNetAmount(entry) {
   if (['withdraw', 'withdrawal', 'out', 'outflow'].includes(type)) return -Math.abs(amount);
   if (['deposit', 'in', 'inflow'].includes(type)) return Math.abs(amount);
   return amount;
+}
+
+export function computeCashFlowRecords() {
+  const records = state.cashFlows
+    .map((entry) => {
+      const signedCny = roundMoney(getCashFlowNetAmount(entry));
+      return {
+        ...entry,
+        amountCny: Math.abs(safeNumber(entry && entry.amountCny, 0)),
+        signedCny,
+        isWithdrawal: signedCny < 0
+      };
+    })
+    .sort((a, b) => `${b.date}|${b.id}`.localeCompare(`${a.date}|${a.id}`));
+  return {
+    records,
+    depositCny: roundMoney(records.filter((entry) => !entry.isWithdrawal).reduce((sum, entry) => sum + entry.amountCny, 0)),
+    withdrawalCny: roundMoney(records.filter((entry) => entry.isWithdrawal).reduce((sum, entry) => sum + entry.amountCny, 0)),
+    netInflowCny: roundMoney(records.reduce((sum, entry) => sum + entry.signedCny, 0)),
+    count: records.length
+  };
+}
+
+function getTradeSortKey(entry) {
+  return `${entry && entry.date || ''}|${entry && entry.id || ''}`;
+}
+
+function getTradeValueCny(entry) {
+  return roundMoney(safeNumber(entry && entry.shares, 0) * safeNumber(entry && entry.price, 0) * safeNumber(entry && entry.fxRate, 1));
+}
+
+function getTradeHolding(symbol) {
+  return state.holdings.find((holding) => holding && holding.symbol === symbol) || null;
+}
+
+function buildTradePosition(symbol, raw) {
+  const quote = inferQuote(symbol);
+  const shares = Math.max(0, safeNumber(raw.shares, 0));
+  const costCny = Math.max(0, roundMoney(raw.costCny));
+  const quoteCurrency = resolveQuoteCurrency(quote, symbol);
+  const quoteFxRate = resolveFxRate(quoteCurrency, state.rates);
+  const currentValueCny = roundMoney(safeNumber(quote.price, 0) * shares * quoteFxRate);
+  const holding = getTradeHolding(symbol);
+  const taxRate = getHoldingTaxRate(holding);
+  const annualDividendCny = roundMoney(safeNumber(quote.dividendPerShareTtm, 0) * shares * quoteFxRate * (1 - taxRate));
+  return {
+    symbol,
+    name: quote.name || symbol,
+    bucket: raw.bucket === 'income' ? 'income' : 'core',
+    shares: roundQuantity(shares),
+    costCny,
+    averageCostCny: shares > 0 ? roundMoney(costCny / shares) : 0,
+    currentValueCny,
+    unrealizedPnlCny: roundMoney(currentValueCny - costCny),
+    realizedPnlCny: roundMoney(raw.realizedPnlCny),
+    feeCny: roundMoney(raw.feeCny),
+    annualDividendCny,
+    yieldOnCost: costCny > 0 ? annualDividendCny / costCny : null,
+    currentHoldingShares: holding ? safeNumber(holding.quantity, 0) : null
+  };
+}
+
+export function computeTradeSummary() {
+  const recordsAsc = state.trades
+    .slice()
+    .sort((a, b) => getTradeSortKey(a).localeCompare(getTradeSortKey(b)));
+  const positions = new Map();
+
+  recordsAsc.forEach((entry) => {
+    const symbol = entry.symbol;
+    if (!positions.has(symbol)) {
+      positions.set(symbol, {
+        shares: 0,
+        costCny: 0,
+        realizedPnlCny: 0,
+        feeCny: 0,
+        bucket: entry.bucket === 'income' ? 'income' : 'core'
+      });
+    }
+    const position = positions.get(symbol);
+    position.bucket = entry.bucket === 'income' ? 'income' : position.bucket;
+    const shares = Math.max(0, safeNumber(entry.shares, 0));
+    const valueCny = getTradeValueCny(entry);
+    const feeCny = Math.max(0, safeNumber(entry.feeCny, 0));
+    position.feeCny += feeCny;
+
+    if (entry.side === 'sell') {
+      const averageCost = position.shares > 0 ? position.costCny / position.shares : 0;
+      const costOut = averageCost * shares;
+      const proceeds = valueCny - feeCny;
+      position.realizedPnlCny += proceeds - costOut;
+      position.shares -= shares;
+      position.costCny -= costOut;
+      if (position.shares <= 0.000001) {
+        position.shares = 0;
+        position.costCny = 0;
+      }
+    } else {
+      position.shares += shares;
+      position.costCny += valueCny + feeCny;
+    }
+  });
+
+  const positionRows = Array.from(positions.entries())
+    .map(([symbol, raw]) => buildTradePosition(symbol, raw))
+    .filter((row) => row.shares > 0 || Math.abs(row.realizedPnlCny) > 0 || row.feeCny > 0)
+    .sort((a, b) => {
+      const diff = b.currentValueCny - a.currentValueCny;
+      return Math.abs(diff) > 0.000001 ? diff : a.symbol.localeCompare(b.symbol);
+    });
+
+  const records = state.trades
+    .map((entry) => {
+      const quote = inferQuote(entry.symbol);
+      const valueCny = getTradeValueCny(entry);
+      const feeCny = Math.max(0, safeNumber(entry.feeCny, 0));
+      return {
+        ...entry,
+        name: quote.name || entry.symbol,
+        valueCny,
+        cashImpactCny: roundMoney(entry.side === 'sell' ? valueCny - feeCny : -(valueCny + feeCny))
+      };
+    })
+    .sort((a, b) => getTradeSortKey(b).localeCompare(getTradeSortKey(a)));
+
+  return {
+    records,
+    positions: positionRows,
+    count: records.length,
+    totalCostCny: roundMoney(positionRows.reduce((sum, row) => sum + row.costCny, 0)),
+    totalCurrentValueCny: roundMoney(positionRows.reduce((sum, row) => sum + row.currentValueCny, 0)),
+    totalUnrealizedPnlCny: roundMoney(positionRows.reduce((sum, row) => sum + row.unrealizedPnlCny, 0)),
+    totalRealizedPnlCny: roundMoney(positionRows.reduce((sum, row) => sum + row.realizedPnlCny, 0)),
+    totalAnnualDividendCny: roundMoney(positionRows.reduce((sum, row) => sum + row.annualDividendCny, 0))
+  };
 }
 
 function getNetInflowByYear() {

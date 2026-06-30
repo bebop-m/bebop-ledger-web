@@ -156,7 +156,7 @@ function reconcileDividendLedger() {
   const before = state.dividendLedger.length;
   state.dividendLedger = state.dividendLedger.filter((entry) => {
     if (!entry) return false;
-    if (entry.confirmed === true || entry.sharesSource === 'manual') return true;
+    if (entry.confirmed === true || entry.sharesSource === 'manual' || entry.confidence === 'manual') return true;
     const valid = validBySymbol.get(entry.symbol);
     if (!valid) return true;                          // 该 symbol 当前无行情派息数据（可能已离开行情）→ 保留
     if (valid.ids.has(entry.sourceId)) return true;   // 与当前派息事件匹配 → 保留

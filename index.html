@@ -170,6 +170,41 @@
               </div>
               <div class="income-header-actions">
                 <button
+                  id="incomeCashFlowButton"
+                  class="income-manual-button"
+                  type="button"
+                  aria-label="出入金"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M12 4.8v14.4M6.6 9.8 12 4.8l5.4 5M6.6 14.2l5.4 5 5.4-5"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    ></path>
+                  </svg>
+                  <span>出入金</span>
+                </button>
+                <button
+                  id="incomeTradeButton"
+                  class="income-manual-button"
+                  type="button"
+                  aria-label="交易"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M6 7h12M6 12h9M6 17h12"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                      stroke-linecap="round"
+                    ></path>
+                  </svg>
+                  <span>交易</span>
+                </button>
+                <button
                   id="incomeManualButton"
                   class="income-manual-button"
                   type="button"
@@ -215,6 +250,16 @@
               </div>
             </header>
             <div id="incomeYearList" class="income-year-list"></div>
+          </section>
+
+          <section class="panel">
+            <header class="panel-bar">
+              <div>
+                <h2 class="panel-title">资金与交易记录</h2>
+                <p class="panel-note">出入金用于年度净注入；交易流水用于成本、已实现盈亏和 Yield on Cost。</p>
+              </div>
+            </header>
+            <div id="incomeRecordsList" class="income-records"></div>
           </section>
 
           <section class="panel">

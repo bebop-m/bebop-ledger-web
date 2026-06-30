@@ -1,7 +1,8 @@
 import { state, refs, mutable, saveState } from './state.js';
 import {
   computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems,
-  computeDividendCalendar, computeIncomeSummary, computeCurrentYearDividendCny
+  computeDividendCalendar, computeIncomeSummary, computeCurrentYearDividendCny,
+  computeCashFlowRecords, computeTradeSummary
 } from './compute.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
@@ -413,7 +414,7 @@ export function buildDividendMonthDetail(month) {
         const clickable = !entry.isForecast && !(entry.isAnnounced || entry.status === 'announced') && entry.sourceId;
         const tag = clickable ? 'button' : 'div';
         const attrs = clickable
-          ? `type="button" data-modal-action="confirm-dividend" data-source-id="${escapeHtml(entry.sourceId)}" aria-pressed="${entry.confirmed ? 'true' : 'false'}"`
+          ? `type="button" data-modal-action="edit-dividend-ledger" data-source-id="${escapeHtml(entry.sourceId)}" aria-label="编辑 ${escapeHtml(entry.name)} 股息"`
           : '';
         return `<${tag} class="month-detail-row ${dotState}${clickable ? ' is-clickable' : ''}" ${attrs}>
           <span class="mdr-dot" aria-hidden="true"></span>
@@ -646,6 +647,101 @@ function renderIncomeNorthStar(model) {
   </article>`;
 }
 
+function formatRecordQuantity(value) {
+  return safeNumber(value, 0).toLocaleString('en-US', { maximumFractionDigits: 6 });
+}
+
+function getSignedTone(value) {
+  const numeric = safeNumber(value, 0);
+  if (numeric > 0) return 'is-positive';
+  if (numeric < 0) return 'is-negative';
+  return 'is-flat';
+}
+
+function getCashFlowTypeLabel(entry) {
+  return entry && entry.isWithdrawal ? '出金' : '入金';
+}
+
+function getTradeSideLabel(side) {
+  return side === 'sell' ? '卖出' : '买入';
+}
+
+function getRecordEmptyMarkup(title, note) {
+  return `<div class="income-record-empty"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(note)}</span></div>`;
+}
+
+function renderCashFlowRows(records) {
+  if (!records.length) return getRecordEmptyMarkup('暂无出入金', '新增记录后会自动进入年度净注入口径。');
+  return records.map((entry) => `
+    <button class="income-record-row" type="button" data-cash-flow-id="${escapeHtml(entry.id)}">
+      <span class="record-main">
+        <strong>${escapeHtml(getCashFlowTypeLabel(entry))}</strong>
+        <small>${escapeHtml(entry.date)}${entry.note ? ` · ${escapeHtml(entry.note)}` : ''}</small>
+      </span>
+      <span class="record-amount income-amount ${getSignedTone(entry.signedCny)}">${escapeHtml(formatIncomeSignedMoney(entry.signedCny))}</span>
+    </button>
+  `).join('');
+}
+
+function renderTradeRows(records) {
+  if (!records.length) return getRecordEmptyMarkup('暂无交易', '记录买卖后会生成成本、已实现盈亏和 Yield on Cost。');
+  return records.map((entry) => `
+    <button class="income-record-row income-record-row--trade" type="button" data-trade-id="${escapeHtml(entry.id)}">
+      <span class="record-main">
+        <strong>${escapeHtml(entry.name || entry.symbol)}</strong>
+        <small>${escapeHtml(entry.date)} · ${escapeHtml(getTradeSideLabel(entry.side))} ${escapeHtml(formatRecordQuantity(entry.shares))} · ${escapeHtml(entry.symbol)}</small>
+      </span>
+      <span class="record-amount income-amount ${getSignedTone(entry.cashImpactCny)}">${escapeHtml(formatIncomeSignedMoney(entry.cashImpactCny))}</span>
+    </button>
+  `).join('');
+}
+
+function renderTradePositionRows(rows) {
+  if (!rows.length) return getRecordEmptyMarkup('暂无成本视图', '录入交易后，这里会按股票汇总剩余股数和成本。');
+  return rows.map((row) => {
+    const mismatch = row.currentHoldingShares !== null && Math.abs(row.currentHoldingShares - row.shares) > 0.000001;
+    return `<div class="income-position-row">
+      <div class="position-title">
+        <strong>${escapeHtml(row.name)}</strong>
+        <small>${escapeHtml(row.symbol)}${mismatch ? ` · 当前持仓 ${escapeHtml(formatRecordQuantity(row.currentHoldingShares))}` : ''}</small>
+      </div>
+      <div class="position-grid">
+        <span><small>股数</small><strong>${escapeHtml(formatRecordQuantity(row.shares))}</strong></span>
+        <span><small>成本</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.costCny))}</strong></span>
+        <span><small>浮盈</small><strong class="income-amount ${getSignedTone(row.unrealizedPnlCny)}">${escapeHtml(formatIncomeSignedMoney(row.unrealizedPnlCny))}</strong></span>
+        <span><small>YOC</small><strong>${row.yieldOnCost === null ? '待计算' : escapeHtml(formatPercent(row.yieldOnCost))}</strong></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderIncomeRecords() {
+  if (!refs.incomeRecordsList) return;
+  const cash = computeCashFlowRecords();
+  const trades = computeTradeSummary();
+  refs.incomeRecordsList.innerHTML = `
+    <div class="income-record-overview">
+      <article><span>净注入</span><strong class="income-amount ${getSignedTone(cash.netInflowCny)}">${escapeHtml(formatIncomeSignedMoney(cash.netInflowCny))}</strong></article>
+      <article><span>已实现盈亏</span><strong class="income-amount ${getSignedTone(trades.totalRealizedPnlCny)}">${escapeHtml(formatIncomeSignedMoney(trades.totalRealizedPnlCny))}</strong></article>
+      <article><span>持仓成本</span><strong class="income-amount">${escapeHtml(formatIncomeMoney(trades.totalCostCny))}</strong></article>
+      <article><span>成本股息率</span><strong>${trades.totalCostCny > 0 ? escapeHtml(formatPercent(trades.totalAnnualDividendCny / trades.totalCostCny)) : '待计算'}</strong></article>
+    </div>
+    <div class="income-record-columns">
+      <section class="income-record-block">
+        <div class="income-record-head"><h3>出入金记录</h3><span>${cash.count} 笔</span></div>
+        <div class="income-record-list">${renderCashFlowRows(cash.records)}</div>
+      </section>
+      <section class="income-record-block">
+        <div class="income-record-head"><h3>交易流水</h3><span>${trades.count} 笔</span></div>
+        <div class="income-record-list">${renderTradeRows(trades.records)}</div>
+      </section>
+    </div>
+    <section class="income-record-block income-record-block--wide">
+      <div class="income-record-head"><h3>持仓成本</h3><span>${trades.positions.length} 项</span></div>
+      <div class="income-position-list">${renderTradePositionRows(trades.positions)}</div>
+    </section>`;
+}
+
 export function renderIncomeSummaryPage() {
   const model = computeIncomeSummary();
   renderIncomeFilterButtons(model);
@@ -653,6 +749,7 @@ export function renderIncomeSummaryPage() {
   renderIncomeTrend(model);
   renderIncomeYearList(model);
   renderIncomeNorthStar(model);
+  renderIncomeRecords();
 }
 
 /* ── Holdings ── */

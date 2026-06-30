@@ -7,7 +7,7 @@ import {
   safeNumber, clone, escapeHtml, normalizeSeedQuoteMap, mergeQuotes,
   sanitizeHolding, sanitizePerShareOverrideInput, normalizeSymbol,
   sanitizeDividendLedgerEntry, sanitizeDailySnapshotEntry,
-  sanitizeCashFlowEntry, sanitizeYearlyManualEntry
+  sanitizeCashFlowEntry, sanitizeYearlyManualEntry, sanitizeTradeEntry
 } from './utils.js';
 
 /* ── Default Quotes (normalized from seed data) ── */
@@ -30,6 +30,7 @@ export const state = {
   dividendLedger: [],
   dailySnapshots: [],
   cashFlows: [],
+  trades: [],
   yearlyManual: [],
   lastUpdatedAt: '',
   modal: null,
@@ -73,6 +74,8 @@ export const refs = {
   dividendFilterGroup: document.getElementById('dividendFilterGroup'),
   dividendFilterButtons: Array.from(document.querySelectorAll('[data-dividend-filter]')),
   incomeManualButton: document.getElementById('incomeManualButton'),
+  incomeCashFlowButton: document.getElementById('incomeCashFlowButton'),
+  incomeTradeButton: document.getElementById('incomeTradeButton'),
   incomeFilterGroup: document.getElementById('incomeFilterGroup'),
   incomeFilterButtons: Array.from(document.querySelectorAll('[data-income-filter]')),
   incomeOverviewGrid: document.getElementById('incomeOverviewGrid'),
@@ -80,6 +83,7 @@ export const refs = {
   incomeTrend: document.getElementById('incomeTrend'),
   incomeYearList: document.getElementById('incomeYearList'),
   incomeNorthStar: document.getElementById('incomeNorthStar'),
+  incomeRecordsList: document.getElementById('incomeRecordsList'),
   dividendMetricGrid: document.getElementById('dividendMetricGrid'),
   dividendMonthGrid: document.getElementById('dividendMonthGrid'),
   exportButton: document.getElementById('exportButton'),
@@ -197,6 +201,7 @@ export function createDefaultSnapshot() {
     dividendLedger: [],
     dailySnapshots: [],
     cashFlows: [],
+    trades: [],
     yearlyManual: [],
     lastUpdatedAt: ''
   };
@@ -232,6 +237,9 @@ export function applySnapshot(snapshot) {
   state.cashFlows = Array.isArray(snapshot && snapshot.cashFlows)
     ? snapshot.cashFlows.map(sanitizeCashFlowEntry).filter(Boolean)
     : [];
+  state.trades = Array.isArray(snapshot && snapshot.trades)
+    ? snapshot.trades.map(sanitizeTradeEntry).filter(Boolean)
+    : [];
   state.yearlyManual = Array.isArray(snapshot && snapshot.yearlyManual)
     ? snapshot.yearlyManual.map(sanitizeYearlyManualEntry).filter(Boolean)
     : [];
@@ -247,7 +255,8 @@ export function getPersistedSnapshot() {
     sortDirection: state.sortDirection, legendExpanded: state.legendExpanded,
     liabilityCny: state.liabilityCny, dividendLedger: state.dividendLedger,
     dailySnapshots: state.dailySnapshots, cashFlows: state.cashFlows,
-    yearlyManual: state.yearlyManual, lastUpdatedAt: state.lastUpdatedAt
+    trades: state.trades, yearlyManual: state.yearlyManual,
+    lastUpdatedAt: state.lastUpdatedAt
   };
 }
 
@@ -302,6 +311,9 @@ export function buildPortfolioSnapshot() {
       : [],
     cashFlows: Array.isArray(persisted.cashFlows)
       ? persisted.cashFlows.map(sanitizeCashFlowEntry).filter(Boolean)
+      : [],
+    trades: Array.isArray(persisted.trades)
+      ? persisted.trades.map(sanitizeTradeEntry).filter(Boolean)
       : [],
     yearlyManual: Array.isArray(persisted.yearlyManual)
       ? persisted.yearlyManual.map(sanitizeYearlyManualEntry).filter(Boolean)

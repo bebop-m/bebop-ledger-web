@@ -1065,6 +1065,194 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   font-variant-numeric: tabular-nums;
 }
 
+.income-records {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.income-record-overview {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.income-record-overview article,
+.income-record-block {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+}
+
+.income-record-overview article {
+  padding: 12px;
+}
+
+.income-record-overview span,
+.income-record-head span,
+.income-record-empty span,
+.record-main small,
+.position-title small,
+.position-grid small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.income-record-overview strong {
+  display: block;
+  margin-top: 7px;
+  color: #263b5b;
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.income-record-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.income-record-block {
+  padding: 12px;
+}
+
+.income-record-block--wide {
+  padding: 12px;
+}
+
+.income-record-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.income-record-head h3 {
+  margin: 0;
+  color: #263b5b;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.income-record-list,
+.income-position-list {
+  display: grid;
+  gap: 7px;
+}
+
+.income-record-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 12px;
+  background: #f7f9fc;
+  color: inherit;
+  text-align: left;
+  transition:
+    background-color var(--motion-quick) var(--ease-soft),
+    transform var(--motion-quick) var(--ease-soft);
+}
+
+.income-record-row:hover,
+.income-record-row:focus-visible {
+  background: var(--brand-soft);
+}
+
+.record-main {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.record-main strong {
+  color: #263b5b;
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.record-main small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.record-amount {
+  color: #263b5b;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.is-positive { color: #2f8254 !important; }
+.is-negative { color: #bc473c !important; }
+.is-flat { color: #65748a !important; }
+
+.income-record-empty {
+  display: grid;
+  gap: 4px;
+  padding: 16px 10px;
+  border: 1px dashed #d9e1eb;
+  border-radius: 12px;
+  color: #415674;
+  text-align: center;
+}
+
+.income-record-empty strong {
+  font-size: 13px;
+}
+
+.income-position-row {
+  display: grid;
+  gap: 10px;
+  padding: 11px;
+  border-radius: 12px;
+  background: #f7f9fc;
+}
+
+.position-title {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.position-title strong {
+  color: #263b5b;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.position-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.position-grid span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.position-grid strong {
+  color: #263b5b;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
 .privacy-hidden .income-amount {
   color: transparent !important;
   user-select: none;
@@ -2380,6 +2568,8 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   border-radius: 22px;
   background: #ffffff;
   box-shadow: 0 20px 44px rgba(24, 39, 64, 0.16);
+  max-height: calc(100vh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow-y: auto;
   transform: translateY(100%);
   opacity: 0;
   animation: modal-slide-in 260ms var(--ease-soft) forwards;
@@ -2581,16 +2771,75 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   font-weight: 700;
 }
 
+.modal-note {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.modal-field {
+  display: grid;
+  gap: 7px;
+  margin-top: 14px;
+}
+
+.modal-field span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .modal-input,
 .modal-select {
   width: 100%;
   height: 52px;
-  margin-top: 16px;
   padding: 0 16px;
   border: 1px solid var(--line);
   border-radius: 16px;
   background: #fafbfd;
   color: var(--text);
+}
+
+.modal-sheet > .modal-input,
+.modal-sheet > .modal-select {
+  margin-top: 16px;
+}
+
+.modal-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.modal-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fafbfd;
+  color: #263b5b;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.modal-check input {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #bdc7d5;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.modal-check input:checked {
+  border-color: var(--brand);
+  background:
+    linear-gradient(135deg, transparent 0 38%, #fff 38% 52%, transparent 52%),
+    linear-gradient(45deg, transparent 0 42%, #fff 42% 56%, transparent 56%),
+    var(--brand);
 }
 
 .modal-bucket-group {
@@ -2903,6 +3152,29 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 
   .income-north-star-side {
     min-width: 96px;
+  }
+
+  .income-record-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .income-record-columns {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .income-record-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .record-amount {
+    justify-self: start;
+  }
+
+  .position-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dividend-metric-grid {

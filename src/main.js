@@ -13,7 +13,11 @@ import {
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
   isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset
 } from './render.js';
-import { openModal, closeModal, handleModalSave, handleModalDelete, setModalBucketSelection, toggleDividendConfirm } from './modal.js';
+import {
+  openModal, closeModal, handleModalSave, handleModalDelete,
+  setModalBucketSelection, setModalCashFlowTypeSelection,
+  setModalTradeSideSelection, toggleDividendConfirm
+} from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
 
@@ -59,6 +63,8 @@ refs.legendToggle.addEventListener('click', () => { const t = refs.legendToggle.
 refs.refreshButton.addEventListener('click', () => { refreshMarketData({ silent: false }); });
 refs.addButton.addEventListener('click', () => { openModal('add'); });
 refs.incomeManualButton.addEventListener('click', () => { openModal('yearlyManual'); });
+if (refs.incomeCashFlowButton) refs.incomeCashFlowButton.addEventListener('click', () => { openModal('cashFlow'); });
+if (refs.incomeTradeButton) refs.incomeTradeButton.addEventListener('click', () => { openModal('trade'); });
 
 refs.bottomNav.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-page-nav]');
@@ -111,6 +117,20 @@ refs.incomeYearList.addEventListener('click', (event) => {
     netInflowCny: existing ? existing.netInflowCny : '',
     existing: Boolean(existing)
   });
+});
+
+if (refs.incomeRecordsList) refs.incomeRecordsList.addEventListener('click', (event) => {
+  const cashButton = event.target.closest('[data-cash-flow-id]');
+  if (cashButton) {
+    const entry = state.cashFlows.find((item) => item && item.id === cashButton.dataset.cashFlowId);
+    if (entry) openModal('cashFlow', { ...entry });
+    return;
+  }
+  const tradeButton = event.target.closest('[data-trade-id]');
+  if (tradeButton) {
+    const entry = state.trades.find((item) => item && item.id === tradeButton.dataset.tradeId);
+    if (entry) openModal('trade', { ...entry });
+  }
 });
 
 refs.sortChips.forEach((chip) => {
@@ -196,11 +216,15 @@ refs.stockList.addEventListener('touchcancel', settleHoldingSwipe, { passive: tr
 /* ── Modal click delegation ── */
 refs.modalRoot.addEventListener('click', (event) => {
   const bb = event.target.closest('[data-bucket-option]'); if (bb) { setModalBucketSelection(bb.dataset.bucketOption); return; }
+  const cf = event.target.closest('[data-cash-flow-type]'); if (cf) { setModalCashFlowTypeSelection(cf.dataset.cashFlowType); return; }
+  const ts = event.target.closest('[data-trade-side]'); if (ts) { setModalTradeSideSelection(ts.dataset.tradeSide); return; }
   const a = event.target.closest('[data-modal-action]'); if (!a) return;
   const t = a.dataset.modalAction;
   if (t === 'confirm-dividend') { toggleDividendConfirm(a.dataset.sourceId); return; }
+  if (t === 'edit-dividend-ledger') { openModal('dividendLedger', { sourceId: a.dataset.sourceId }); return; }
   if (t === 'close' || t === 'cancel') { closeModal(); return; }
   if (t === 'delete-yearly-manual') { handleModalDelete(); return; }
+  if (t === 'delete-record') { handleModalDelete(); return; }
   if (t === 'save') handleModalSave();
 });
 

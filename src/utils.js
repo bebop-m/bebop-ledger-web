@@ -447,13 +447,45 @@ export function sanitizeCashFlowEntry(item, index = 0) {
   if (!item || typeof item !== 'object') return null;
   const date = formatDateLabel(item.date);
   if (!date) return null;
-  const amountCny = safeNumber(item.amountCny, 0);
+  const rawAmountCny = safeNumber(item.amountCny, 0);
+  const rawType = String(item.type || '').trim().toLowerCase();
+  const type = ['withdraw', 'withdrawal', 'out', 'outflow'].includes(rawType)
+    ? 'withdrawal'
+    : ['deposit', 'in', 'inflow'].includes(rawType)
+      ? 'deposit'
+      : (rawAmountCny < 0 ? 'withdrawal' : 'deposit');
   return {
     ...item,
     id: typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `cf_${index + 1}`,
     date,
-    amountCny,
-    type: typeof item.type === 'string' && item.type.trim() ? item.type.trim() : (amountCny < 0 ? 'withdrawal' : 'deposit'),
+    amountCny: Math.abs(rawAmountCny),
+    type,
+    note: typeof item.note === 'string' ? item.note : ''
+  };
+}
+
+export function sanitizeTradeEntry(item, index = 0) {
+  if (!item || typeof item !== 'object') return null;
+  const date = formatDateLabel(item.date);
+  const symbol = normalizeSymbol(item.symbol);
+  if (!date || !symbol) return null;
+  const rawSide = String(item.side || '').trim().toLowerCase();
+  const side = rawSide === 'sell' ? 'sell' : 'buy';
+  const shares = Math.max(0, roundTo(safeNumber(item.shares, item.quantity), 6));
+  const price = Math.max(0, roundTo(safeNumber(item.price, 0), 6));
+  if (shares <= 0 || price <= 0) return null;
+  return {
+    ...item,
+    id: typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `tr_${index + 1}`,
+    date,
+    symbol,
+    side,
+    shares,
+    price,
+    currency: normalizeCurrencyCode(item.currency, resolveQuoteCurrency({}, symbol)),
+    fxRate: Math.max(0, roundTo(safeNumber(item.fxRate, 1), 6)),
+    feeCny: Math.max(0, roundTo(safeNumber(item.feeCny, 0), 2)),
+    bucket: item.bucket === 'income' ? 'income' : 'core',
     note: typeof item.note === 'string' ? item.note : ''
   };
 }
