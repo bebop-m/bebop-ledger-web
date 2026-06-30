@@ -392,19 +392,28 @@ export function buildDividendMonthDetail(month) {
     if (item.phase !== 'past') summaryParts.push(`${LABELS.dividendUpcoming} ${formatDisplayMoney(item.upcomingCny, 'CNY')}`);
   }
   const body = entries.length
-    ? entries.map((entry) => `
-        <div class="month-detail-row is-${escapeHtml(entry.status)}">
+    ? entries.map((entry) => {
+        // 灰=节奏预估(不可确认)；绿=已确认到账；黄=自动入账但未确认。
+        const dotState = entry.isForecast ? 'is-forecast' : (entry.confirmed ? 'is-confirmed' : 'is-unconfirmed');
+        const clickable = !entry.isForecast && entry.sourceId;
+        const tag = clickable ? 'button' : 'div';
+        const attrs = clickable
+          ? `type="button" data-modal-action="confirm-dividend" data-source-id="${escapeHtml(entry.sourceId)}" aria-pressed="${entry.confirmed ? 'true' : 'false'}"`
+          : '';
+        return `<${tag} class="month-detail-row ${dotState}${clickable ? ' is-clickable' : ''}" ${attrs}>
           <span class="mdr-dot" aria-hidden="true"></span>
           <span class="mdr-name">${escapeHtml(entry.name)}</span>
           <span class="mdr-date">${escapeHtml(getMonthDetailDateShort(entry))}</span>
           <span class="mdr-amount">${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</span>
-        </div>`).join('')
+        </${tag}>`;
+      }).join('')
     : `<div class="month-detail-empty">${escapeHtml(LABELS.dividendEmptyTitle)}</div>`;
   return {
     title: `${month}${LABELS.dividendMonthSuffix}`,
     phase: item ? item.phase : 'future',
     total: item ? formatDisplayMoney(item.totalCny, 'CNY') : formatDisplayMoney(0, 'CNY'),
     summary: summaryParts.join(' · '),
+    hasConfirmable: entries.some((entry) => !entry.isForecast && entry.sourceId),
     body
   };
 }

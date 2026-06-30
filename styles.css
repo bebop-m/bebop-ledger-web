@@ -1269,6 +1269,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .modal-sheet--detail.is-current .month-detail-title h3,
 .modal-sheet--detail.is-current .month-detail-title strong { color: var(--accent); }
 .month-detail-summary { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+.month-detail-hint { margin: 5px 0 0; font-size: 11px; color: #9aa5b3; }
 .month-detail-list { display: grid; gap: 0; max-height: 52vh; overflow-y: auto; }
 .month-detail-row {
   display: grid;
@@ -1279,9 +1280,27 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   border-bottom: 1px solid var(--line);
 }
 .month-detail-row:last-child { border-bottom: none; }
-.mdr-dot { width: 8px; height: 8px; border-radius: 50%; background: #9aa5b3; }
-.month-detail-row.is-received .mdr-dot { background: #2f8254; }
-.month-detail-row.is-pending .mdr-dot { background: #ad8430; }
+.month-detail-row.is-clickable {
+  width: 100%;
+  margin: 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 6px;
+  transition: background-color 140ms ease;
+}
+.month-detail-row.is-clickable:hover,
+.month-detail-row.is-clickable:focus-visible { background: rgba(21, 40, 73, 0.04); outline: none; }
+.month-detail-row.is-clickable:active { background: rgba(21, 40, 73, 0.07); }
+.mdr-dot { width: 9px; height: 9px; border-radius: 50%; background: #b3bac6; }
+/* 绿=已确认到账 · 黄=自动入账待确认 · 灰=节奏预估 */
+.month-detail-row.is-confirmed .mdr-dot { background: #2f8254; box-shadow: 0 0 0 3px rgba(47, 130, 84, 0.14); }
+.month-detail-row.is-unconfirmed .mdr-dot { background: #e0a52e; box-shadow: 0 0 0 3px rgba(224, 165, 46, 0.16); }
 .month-detail-row.is-forecast .mdr-dot { background: #b3bac6; }
 .mdr-name { font-size: 14px; font-weight: 600; color: #27384f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mdr-date { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }

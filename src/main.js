@@ -13,7 +13,7 @@ import {
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
   isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset
 } from './render.js';
-import { openModal, closeModal, handleModalSave, handleModalDelete, setModalBucketSelection } from './modal.js';
+import { openModal, closeModal, handleModalSave, handleModalDelete, setModalBucketSelection, toggleDividendConfirm } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
 
@@ -198,6 +198,7 @@ refs.modalRoot.addEventListener('click', (event) => {
   const bb = event.target.closest('[data-bucket-option]'); if (bb) { setModalBucketSelection(bb.dataset.bucketOption); return; }
   const a = event.target.closest('[data-modal-action]'); if (!a) return;
   const t = a.dataset.modalAction;
+  if (t === 'confirm-dividend') { toggleDividendConfirm(a.dataset.sourceId); return; }
   if (t === 'close' || t === 'cancel') { closeModal(); return; }
   if (t === 'delete-yearly-manual') { handleModalDelete(); return; }
   if (t === 'save') handleModalSave();

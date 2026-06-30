@@ -103,12 +103,32 @@ function renderMonthDetailModal() {
           <strong>${escapeHtml(detail.total)}</strong>
         </div>
         ${detail.summary ? `<p class="month-detail-summary">${escapeHtml(detail.summary)}</p>` : ''}
+        ${detail.hasConfirmable ? `<p class="month-detail-hint">${escapeHtml(LABELS.dividendConfirmHint)}</p>` : ''}
       </header>
       <div class="month-detail-list">${detail.body}</div>
       <div class="modal-actions">
         <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">${LABELS.cancel === '取消' ? '关闭' : LABELS.cancel}</button>
       </div>
     </section>`;
+}
+
+// 切换某笔股息的「已到账确认」。确认=锁定为已到账(绿点，且对账不再清理)；取消=回到自动判定(黄点)。
+export function toggleDividendConfirm(sourceId) {
+  if (!sourceId) return;
+  const index = state.dividendLedger.findIndex((entry) => entry && entry.sourceId === sourceId);
+  if (index < 0) return;
+  const entry = state.dividendLedger[index];
+  const confirming = entry.confirmed !== true;
+  state.dividendLedger[index] = {
+    ...entry,
+    confirmed: confirming,
+    receiptStatus: confirming ? 'received' : (entry.receiptStatus || 'pending'),
+    confidence: confirming ? 'confirmed' : (entry.confidence === 'confirmed' ? 'snapshot' : entry.confidence),
+    updatedAt: new Date().toISOString()
+  };
+  saveState();
+  renderSavedStateQuietly({ animateHoldingReflow: false });
+  if (state.modal === 'monthDetail') renderMonthDetailModal();
 }
 
 export function handleModalSave() {

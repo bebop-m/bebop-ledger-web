@@ -181,6 +181,7 @@ function buildLedgerDividendEntry(entry, year, todayLabel) {
     status: isReceived ? 'received' : 'pending',
     receiptStatus: isReceived ? 'received' : 'pending',
     confidence: entry.confidence || (isReceived ? 'confirmed' : 'estimated'),
+    confirmed: entry.confirmed === true,
     isForecast: false
   };
 }
