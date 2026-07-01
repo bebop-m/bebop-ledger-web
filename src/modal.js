@@ -99,9 +99,47 @@ function renderSegmentGroup(hiddenId, value, options) {
   </div><input id="${hiddenId}" type="hidden" value="${escapeHtml(value)}">`;
 }
 
-function getTradeCurrencyDefault(symbol) {
-  const quote = inferQuote(symbol);
-  return resolveQuoteCurrency(quote, symbol);
+// 按代码自动判定币种：.HK→港元，.SH/.SZ 或纯 6 位数字→人民币，纯字母（美股）→美元。
+function detectTradeCurrency(symbol) {
+  const s = normalizeSymbol(symbol);
+  if (/\.HK$/i.test(s)) return 'HKD';
+  if (/\.(SS|SH|SZ)$/i.test(s) || /^\d{6}$/.test(s)) return 'CNY';
+  const quote = inferQuote(s);
+  const known = String(quote.currency || '').trim().toUpperCase();
+  if (known === 'CNY' || known === 'USD' || known === 'HKD') return known;
+  if (/^[A-Z][A-Z.]*$/.test(s)) return 'USD';
+  return resolveQuoteCurrency(quote, s);
+}
+
+// 交易弹窗里的实时行情提示：识别到的币种 + 名称 + 现价（外币附当天折人民币）。
+function buildTradeQuoteInfoText(symbol) {
+  const s = normalizeSymbol(symbol);
+  if (!s) return '输入代码后自动识别币种与现价';
+  const currency = detectTradeCurrency(s);
+  const quote = inferQuote(s);
+  const price = safeNumber(quote.price, 0);
+  const name = quote.name && quote.name !== s ? quote.name : '';
+  if (price > 0) {
+    const fx = resolveFxRate(currency, state.rates);
+    const cny = currency === 'CNY' ? '' : `（≈¥${(price * fx).toFixed(2)}）`;
+    return `${name ? name + ' · ' : ''}现价 ${price} ${currency}${cny}`;
+  }
+  return `币种 ${currency} · 未识别到行情，成交价请手动填写`;
+}
+
+// 股票代码输入变化时，刷新行情提示，并在新增交易且价格为空时自动带出现价。
+export function updateTradeQuoteInfo() {
+  const input = document.getElementById('modalTradeSymbolInput');
+  const info = document.getElementById('modalTradeQuoteInfo');
+  if (!input || !info) return;
+  const symbol = normalizeSymbol(input.value);
+  info.textContent = buildTradeQuoteInfoText(symbol);
+  const priceInput = document.getElementById('modalTradePriceInput');
+  const isNew = !(state.modalPayload && state.modalPayload.id);
+  if (priceInput && isNew && !priceInput.value) {
+    const price = safeNumber(inferQuote(symbol).price, 0);
+    if (price > 0) priceInput.value = String(price);
+  }
 }
 
 function renderModal() {
@@ -123,8 +161,9 @@ function renderModal() {
     fields = `<input id="modalLiabilityInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.liabilityPlaceholder}">`;
   } else if (state.modal === 'openingCash') {
     title = '期初现金 · 现金余额模式';
-    note = '填入券商当前可用现金即启用；此后买卖、股息、出入金自动进出现金，主页数量改为通过交易调整';
-    fields = `<label class="modal-field"><span>期初现金（CNY）</span><input id="modalOpeningCashInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(safeNumber(state.openingCashCny, 0)))}" placeholder="0.00"></label>
+    note = '填入券商当前可用现金即启用；此后买卖、股息、出入金自动进出现金';
+    fields = `<label class="modal-field"><span>期初现金（CNY）</span><input id="modalOpeningCashInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(Math.abs(safeNumber(state.openingCashCny, 0))))}" placeholder="0.00"></label>
+      <label class="modal-check"><input id="modalOpeningCashNegativeInput" type="checkbox"${safeNumber(state.openingCashCny, 0) < 0 ? ' checked' : ''}><span>现金为负数（融资 / 透支）</span></label>
       <label class="modal-field"><span>启用日期（期初）</span><input id="modalOpeningDateInput" class="modal-input" type="date" value="${escapeHtml(state.openingDate || getTodayLabel())}"></label>`;
   } else if (state.modal === 'dividendLedger') {
     const entry = getDividendLedgerEntryBySourceId(state.modalPayload && state.modalPayload.sourceId);
@@ -151,12 +190,11 @@ function renderModal() {
     const entry = getTradePayload();
     const symbol = normalizeSymbol(entry && entry.symbol || state.modalPayload && state.modalPayload.symbol || '');
     const side = entry && entry.side === 'sell' ? 'sell' : 'buy';
-    const currency = entry && entry.currency ? entry.currency : getTradeCurrencyDefault(symbol);
-    const fxRate = entry ? entry.fxRate : resolveFxRate(currency, state.rates);
     title = entry ? '编辑交易' : '新增交易';
-    note = '买入扣现金加持仓，卖出加现金减持仓';
+    note = '币种按代码自动识别，汇率按当天自动换算';
     fields = `<label class="modal-field"><span>日期</span><input id="modalTradeDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry && entry.date) || getTodayLabel())}"></label>
       <label class="modal-field"><span>股票代码</span><input id="modalTradeSymbolInput" class="modal-input" type="text" value="${escapeHtml(symbol)}" placeholder="${LABELS.symbolPlaceholder}"></label>
+      <p class="modal-quote-line" id="modalTradeQuoteInfo">${escapeHtml(buildTradeQuoteInfoText(symbol))}</p>
       ${renderSegmentGroup('modalTradeSideInput', side, [
         { value: 'buy', label: '买入', className: 'is-core', dataAttr: 'data-trade-side' },
         { value: 'sell', label: '卖出', className: 'is-income', dataAttr: 'data-trade-side' }
@@ -165,11 +203,7 @@ function renderModal() {
         <label class="modal-field"><span>股数</span><input id="modalTradeSharesInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.shares, 0)) : '')}" placeholder="0"></label>
         <label class="modal-field"><span>成交价</span><input id="modalTradePriceInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.price, 0)) : '')}" placeholder="0.00"></label>
       </div>
-      <div class="modal-grid-2">
-        <label class="modal-field"><span>币种</span><select id="modalTradeCurrencyInput" class="modal-select"><option value="CNY"${currency === 'CNY' ? ' selected' : ''}>CNY</option><option value="HKD"${currency === 'HKD' ? ' selected' : ''}>HKD</option><option value="USD"${currency === 'USD' ? ' selected' : ''}>USD</option></select></label>
-        <label class="modal-field"><span>汇率</span><input id="modalTradeFxInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(safeNumber(fxRate, 1)))}" placeholder="1"></label>
-      </div>
-      <label class="modal-field"><span>费用（CNY）</span><input id="modalTradeFeeInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.feeCny, 0)) : '')}" placeholder="0.00"></label>
+      <label class="modal-field"><span>费用（CNY，可选）</span><input id="modalTradeFeeInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.feeCny, 0)) : '')}" placeholder="0.00"></label>
       ${renderSegmentGroup('modalBucketInput', entry && entry.bucket === 'income' ? 'income' : 'core', [
         { value: 'core', label: LABELS.core, className: 'is-core', dataAttr: 'data-bucket-option' },
         { value: 'income', label: LABELS.income, className: 'is-income', dataAttr: 'data-bucket-option' }
@@ -283,15 +317,18 @@ function saveCashFlowEdit() {
 
 function saveTradeEdit() {
   const previousId = state.modalPayload && state.modalPayload.id;
+  const symbolValue = document.getElementById('modalTradeSymbolInput').value;
+  // 币种按代码自动识别；汇率按当天行情自动换算。
+  const currency = detectTradeCurrency(symbolValue);
   const entry = sanitizeTradeEntry({
     id: previousId || createRecordId('tr'),
     date: document.getElementById('modalTradeDateInput').value,
-    symbol: document.getElementById('modalTradeSymbolInput').value,
+    symbol: symbolValue,
     side: document.getElementById('modalTradeSideInput').value,
     shares: safeNumber(document.getElementById('modalTradeSharesInput').value, 0),
     price: safeNumber(document.getElementById('modalTradePriceInput').value, 0),
-    currency: document.getElementById('modalTradeCurrencyInput').value,
-    fxRate: safeNumber(document.getElementById('modalTradeFxInput').value, 1),
+    currency,
+    fxRate: resolveFxRate(currency, state.rates),
     feeCny: safeNumber(document.getElementById('modalTradeFeeInput').value, 0),
     bucket: document.getElementById('modalBucketInput').value,
     note: document.getElementById('modalTradeNoteInput').value.trim()
@@ -327,7 +364,9 @@ export function handleModalSave() {
   } else if (state.modal === 'liability') {
     state.liabilityCny = Math.max(0, safeNumber(document.getElementById('modalLiabilityInput').value, 0));
   } else if (state.modal === 'openingCash') {
-    state.openingCashCny = Math.max(0, safeNumber(document.getElementById('modalOpeningCashInput').value, 0));
+    const openingAmount = Math.abs(safeNumber(document.getElementById('modalOpeningCashInput').value, 0));
+    const openingNegative = document.getElementById('modalOpeningCashNegativeInput').checked === true;
+    state.openingCashCny = openingNegative ? -openingAmount : openingAmount;
     state.openingDate = formatDateLabel(document.getElementById('modalOpeningDateInput').value) || getTodayLabel();
   } else if (state.modal === 'dividendLedger') {
     if (!saveDividendLedgerEdit()) return;

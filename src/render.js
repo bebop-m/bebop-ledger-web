@@ -465,14 +465,6 @@ function formatIncomeSignedMoney(value) {
   return `${amount > 0 ? '+' : ''}${formatMoney(amount, 'CNY')}`;
 }
 
-function renderIncomeFilterButtons(model) {
-  refs.incomeFilterButtons.forEach((button) => {
-    const isActive = button.dataset.incomeFilter === model.filterKey;
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-  });
-}
-
 function formatIncomeRate(value) {
   if (isIncomeValueMissing(value)) return '待回填';
   if (!state.showAmounts) return MASK_AMOUNT;
@@ -486,7 +478,6 @@ function renderIncomeOverview(model) {
   const row = model.current;
   if (!row || !row.capitalReturnAvailable) {
     refs.incomeOverviewGrid.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无资金收益数据</p><p class="empty-state-note">回填或生成 ${model.currentYear - 1} 年末净值后，这里会展示今年至今的资金收益。</p></div>`;
-    refs.incomeMethodNote.textContent = '';
     return;
   }
   const valueTone = getReturnTone(row.capitalReturnCny);
@@ -509,7 +500,6 @@ function renderIncomeOverview(model) {
         ${cashCell}
       </div>
     </article>`;
-  refs.incomeMethodNote.textContent = '';
 }
 
 function getTrendValue(row, key) {
@@ -714,7 +704,8 @@ function renderIncomeRecords() {
 
 export function renderIncomeSummaryPage() {
   const model = computeIncomeSummary();
-  renderIncomeFilterButtons(model);
+  // 现金模式启用后，把「期初现金」入口从顶部动作栏移进年度明细折叠区。
+  if (refs.incomeSummaryPage) refs.incomeSummaryPage.classList.toggle('is-cash-active', isCashModelActive());
   renderIncomeOverview(model);
   renderIncomeTrend(model);
   renderIncomeYearList(model);

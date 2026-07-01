@@ -734,6 +734,32 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   min-width: 0;
 }
 
+/* 收益汇总：当年收益 hero 下方的动作栏 + 年度明细折叠区内的工具栏。 */
+.income-actions-bar,
+.income-fold-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.income-fold-tools {
+  margin-top: 12px;
+}
+
+/* 期初现金入口：默认放在顶部动作栏；启用现金模式后移入年度明细折叠区。 */
+.income-fold-tools #incomeOpeningCashButtonFold {
+  display: none;
+}
+
+#incomeSummaryPage.is-cash-active .income-actions-bar #incomeOpeningCashButton {
+  display: none;
+}
+
+#incomeSummaryPage.is-cash-active .income-fold-tools #incomeOpeningCashButtonFold {
+  display: inline-flex;
+}
+
 .income-manual-button {
   display: inline-flex;
   align-items: center;
@@ -2880,6 +2906,18 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   color: var(--muted);
   font-size: 13px;
   line-height: 1.4;
+}
+
+.modal-quote-line {
+  margin: 8px 0 2px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgba(21, 40, 73, 0.045);
+  color: var(--brand);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
 }
 
 .modal-field {

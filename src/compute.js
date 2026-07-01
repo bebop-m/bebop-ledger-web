@@ -40,7 +40,7 @@ function getNetTradeSharesBySymbol() {
    全部按期初日之后的记录推算，未启用现金模式时恒为 0。 */
 export function computeCashBalance() {
   if (!isCashModelActive()) return 0;
-  let cash = Math.max(0, safeNumber(state.openingCashCny, 0));
+  let cash = safeNumber(state.openingCashCny, 0);
   state.cashFlows.forEach((entry) => {
     if (entry && isOnOrAfterOpening(entry.date)) cash += getCashFlowNetAmount(entry);
   });

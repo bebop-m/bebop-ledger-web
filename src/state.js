@@ -75,14 +75,12 @@ export const refs = {
   dividendCalendarYear: document.getElementById('dividendCalendarYear'),
   dividendFilterGroup: document.getElementById('dividendFilterGroup'),
   dividendFilterButtons: Array.from(document.querySelectorAll('[data-dividend-filter]')),
+  incomeSummaryPage: document.getElementById('incomeSummaryPage'),
   incomeManualButton: document.getElementById('incomeManualButton'),
   incomeCashFlowButton: document.getElementById('incomeCashFlowButton'),
-  incomeTradeButton: document.getElementById('incomeTradeButton'),
   incomeOpeningCashButton: document.getElementById('incomeOpeningCashButton'),
-  incomeFilterGroup: document.getElementById('incomeFilterGroup'),
-  incomeFilterButtons: Array.from(document.querySelectorAll('[data-income-filter]')),
+  incomeOpeningCashButtonFold: document.getElementById('incomeOpeningCashButtonFold'),
   incomeOverviewGrid: document.getElementById('incomeOverviewGrid'),
-  incomeMethodNote: document.getElementById('incomeMethodNote'),
   incomeTrend: document.getElementById('incomeTrend'),
   incomeYearList: document.getElementById('incomeYearList'),
   incomeRecordsList: document.getElementById('incomeRecordsList'),
@@ -232,7 +230,7 @@ export function applySnapshot(snapshot) {
   state.sortDirection = snapshot && snapshot.sortDirection === 'asc' ? 'asc' : 'desc';
   state.legendExpanded = Boolean(snapshot && snapshot.legendExpanded);
   state.liabilityCny = Math.max(0, safeNumber(snapshot && snapshot.liabilityCny, 0));
-  state.openingCashCny = Math.max(0, safeNumber(snapshot && snapshot.openingCashCny, 0));
+  state.openingCashCny = safeNumber(snapshot && snapshot.openingCashCny, 0);
   state.openingDate = typeof (snapshot && snapshot.openingDate) === 'string' ? snapshot.openingDate : '';
   state.dividendLedger = Array.isArray(snapshot && snapshot.dividendLedger)
     ? snapshot.dividendLedger.map(sanitizeDividendLedgerEntry).filter(Boolean)
@@ -331,7 +329,7 @@ export function buildPortfolioSnapshot() {
     sortDirection: persisted.sortDirection === 'asc' ? 'asc' : 'desc',
     legendExpanded: Boolean(persisted.legendExpanded),
     liabilityCny: Math.max(0, safeNumber(persisted.liabilityCny, 0)),
-    openingCashCny: Math.max(0, safeNumber(persisted.openingCashCny, 0)),
+    openingCashCny: safeNumber(persisted.openingCashCny, 0),
     openingDate: typeof persisted.openingDate === 'string' ? persisted.openingDate : '',
     lastUpdatedAt: typeof persisted.lastUpdatedAt === 'string' ? persisted.lastUpdatedAt : ''
   };

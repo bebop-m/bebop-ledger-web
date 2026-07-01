@@ -157,90 +157,22 @@
 
         <div id="incomeSummaryPage" class="page-view page-stack" data-page-view="income" hidden>
           <section class="panel">
-            <header class="panel-bar panel-bar--spread">
+            <header class="panel-bar">
               <div>
                 <h2 class="panel-title">收益汇总</h2>
               </div>
-              <div class="income-header-actions">
-                <button
-                  id="incomeCashFlowButton"
-                  class="income-manual-button"
-                  type="button"
-                  aria-label="出入金"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M12 4.8v14.4M6.6 9.8 12 4.8l5.4 5M6.6 14.2l5.4 5 5.4-5"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.9"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    ></path>
-                  </svg>
-                  <span>出入金</span>
-                </button>
-                <button
-                  id="incomeTradeButton"
-                  class="income-manual-button"
-                  type="button"
-                  aria-label="交易"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M6 7h12M6 12h9M6 17h12"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.9"
-                      stroke-linecap="round"
-                    ></path>
-                  </svg>
-                  <span>交易</span>
-                </button>
-                <button
-                  id="incomeManualButton"
-                  class="income-manual-button"
-                  type="button"
-                  aria-label="历史回填"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M12 5.2v13.6M5.2 12h13.6"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.9"
-                      stroke-linecap="round"
-                    ></path>
-                  </svg>
-                  <span>历史回填</span>
-                </button>
-                <button
-                  id="incomeOpeningCashButton"
-                  class="income-manual-button"
-                  type="button"
-                  aria-label="期初现金"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path
-                      d="M4 8h16v10H4zM4 8l3-3h10l3 3M15 13h2"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.9"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    ></path>
-                  </svg>
-                  <span>期初现金</span>
-                </button>
-                <div id="incomeFilterGroup" class="segmented-control" aria-label="收益汇总筛选">
-                  <button class="segment-button" type="button" data-income-filter="all">全部</button>
-                  <button class="segment-button" type="button" data-income-filter="core">核心仓</button>
-                  <button class="segment-button" type="button" data-income-filter="income">打工仓</button>
-                </div>
-              </div>
             </header>
             <div id="incomeOverviewGrid" class="income-overview-grid"></div>
-            <p id="incomeMethodNote" class="income-method-note"></p>
+            <div class="income-actions-bar">
+              <button id="incomeCashFlowButton" class="income-manual-button" type="button" aria-label="出入金">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.8v14.4M6.6 9.8 12 4.8l5.4 5M6.6 14.2l5.4 5 5.4-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <span>出入金</span>
+              </button>
+              <button id="incomeOpeningCashButton" class="income-manual-button" type="button" aria-label="期初现金">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v10H4zM4 8l3-3h10l3 3M15 13h2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <span>期初现金</span>
+              </button>
+            </div>
           </section>
 
           <section class="panel">
@@ -260,6 +192,16 @@
                 </div>
                 <span class="income-fold-caret" aria-hidden="true"></span>
               </summary>
+              <div class="income-fold-tools">
+                <button id="incomeManualButton" class="income-manual-button" type="button" aria-label="历史回填">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.2v13.6M5.2 12h13.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path></svg>
+                  <span>历史回填</span>
+                </button>
+                <button id="incomeOpeningCashButtonFold" class="income-manual-button" type="button" aria-label="期初现金">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v10H4zM4 8l3-3h10l3 3M15 13h2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                  <span>期初现金</span>
+                </button>
+              </div>
               <div id="incomeYearList" class="income-year-list"></div>
             </details>
           </section>

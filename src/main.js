@@ -16,7 +16,7 @@ import {
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
   setModalBucketSelection, setModalCashFlowTypeSelection,
-  setModalTradeSideSelection, toggleDividendConfirm
+  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
@@ -65,8 +65,8 @@ refs.refreshButton.addEventListener('click', () => { refreshMarketData({ silent:
 refs.addButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'add'); });
 refs.incomeManualButton.addEventListener('click', () => { openModal('yearlyManual'); });
 if (refs.incomeCashFlowButton) refs.incomeCashFlowButton.addEventListener('click', () => { openModal('cashFlow'); });
-if (refs.incomeTradeButton) refs.incomeTradeButton.addEventListener('click', () => { openModal('trade'); });
 if (refs.incomeOpeningCashButton) refs.incomeOpeningCashButton.addEventListener('click', () => { openModal('openingCash'); });
+if (refs.incomeOpeningCashButtonFold) refs.incomeOpeningCashButtonFold.addEventListener('click', () => { openModal('openingCash'); });
 
 refs.bottomNav.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-page-nav]');
@@ -95,15 +95,6 @@ refs.dividendMonthGrid.addEventListener('click', (event) => {
   const month = Math.floor(safeNumber(btn.dataset.dividendMonth, 0));
   if (month < 1 || month > 12) return;
   openModal('monthDetail', { month });
-});
-
-refs.incomeFilterGroup.addEventListener('click', (event) => {
-  const btn = event.target.closest('[data-income-filter]');
-  if (!btn || !DIVIDEND_FILTER_KEYS.has(btn.dataset.incomeFilter)) return;
-  if (state.dividendCalendarBucket === btn.dataset.incomeFilter) return;
-  state.dividendCalendarBucket = btn.dataset.incomeFilter;
-  saveState();
-  renderApp({ incremental: true, animateHoldingReflow: false });
 });
 
 refs.incomeYearList.addEventListener('click', (event) => {
@@ -232,6 +223,10 @@ refs.modalRoot.addEventListener('click', (event) => {
   if (t === 'delete-yearly-manual') { handleModalDelete(); return; }
   if (t === 'delete-record') { handleModalDelete(); return; }
   if (t === 'save') handleModalSave();
+});
+
+refs.modalRoot.addEventListener('input', (event) => {
+  if (event.target && event.target.id === 'modalTradeSymbolInput') updateTradeQuoteInfo();
 });
 
 /* ── Boot ── */
