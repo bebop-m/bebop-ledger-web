@@ -2,7 +2,7 @@ import { state, refs, mutable, saveState } from './state.js';
 import {
   computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems,
   computeDividendCalendar, computeIncomeSummary, computeCurrentYearDividendCny,
-  computeCashFlowRecords, computeTradeSummary
+  computeCashFlowRecords, computeTradeSummary, isCashModelActive
 } from './compute.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
@@ -489,22 +489,27 @@ function renderIncomeOverview(model) {
     refs.incomeMethodNote.textContent = '';
     return;
   }
-  const valueTone = getSignedTone(row.capitalReturnCny);
-  const rateTone = getSignedTone(row.capitalReturnRate);
+  const valueTone = getReturnTone(row.capitalReturnCny);
+  const rateTone = getReturnTone(row.capitalReturnRate);
+  const cashActive = isCashModelActive();
+  const cashCell = cashActive
+    ? `<span><small>现金余额</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(computeHoldings().cashBalanceCny))}</strong></span>`
+    : '';
   refs.incomeOverviewGrid.innerHTML = `
     <article class="income-hero">
       <div class="income-hero-head">
-        <span class="income-hero-label">${model.currentYear} 年至今资金收益</span>
+        <span class="income-hero-label">当年收益</span>
         <span class="income-hero-rate income-amount ${rateTone}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</span>
       </div>
       <strong class="income-hero-value income-amount ${valueTone}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</strong>
       <div class="income-hero-context">
         <span><small>年初净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearStartNetCny))}</strong></span>
         <span><small>当前净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</strong></span>
-        <span><small>今年净注入</small><strong class="income-amount ${getSignedTone(row.netInflowCny)}">${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</strong></span>
+        <span><small>今年净注入</small><strong class="income-amount">${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</strong></span>
+        ${cashCell}
       </div>
     </article>`;
-  refs.incomeMethodNote.textContent = `资金收益 = 当前净值 − 去年末净值 − 今年净注入；按全账户口径统计，不随核心仓/打工仓筛选拆分。`;
+  refs.incomeMethodNote.textContent = '';
 }
 
 function getTrendValue(row, key) {
@@ -590,8 +595,8 @@ function renderIncomeYearList(model) {
   const rows = model.rows.map((row) => {
     return `<div class="income-year-row" role="row">
       ${getIncomeYearCell('年份', String(row.year), 'is-year')}
-      ${getIncomeYearCell('资金收益', formatIncomeSignedMoney(row.capitalReturnCny), `income-amount ${getSignedTone(row.capitalReturnCny)}`)}
-      ${getIncomeYearCell('收益率', formatIncomeRate(row.capitalReturnRate), `is-compare ${getSignedTone(row.capitalReturnRate)}`)}
+      ${getIncomeYearCell('资金收益', formatIncomeSignedMoney(row.capitalReturnCny), `income-amount ${getReturnTone(row.capitalReturnCny)}`)}
+      ${getIncomeYearCell('收益率', formatIncomeRate(row.capitalReturnRate), `is-compare ${getReturnTone(row.capitalReturnRate)}`)}
       ${getIncomeYearCell('年末净值', formatIncomeMoney(row.yearEndNetCny), 'income-amount')}
       ${getIncomeYearActionCell(row)}
     </div>`;
@@ -612,6 +617,14 @@ function getSignedTone(value) {
   const numeric = safeNumber(value, 0);
   if (numeric > 0) return 'is-positive';
   if (numeric < 0) return 'is-negative';
+  return 'is-flat';
+}
+
+// 盈亏配色按 A 股习惯：赚钱=红，亏钱=绿。用于收益/盈亏类数字。
+function getReturnTone(value) {
+  const numeric = safeNumber(value, 0);
+  if (numeric > 0) return 'is-gain';
+  if (numeric < 0) return 'is-loss';
   return 'is-flat';
 }
 
@@ -665,7 +678,7 @@ function renderTradePositionRows(rows) {
       <div class="position-grid">
         <span><small>股数</small><strong>${escapeHtml(formatRecordQuantity(row.shares))}</strong></span>
         <span><small>成本</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.costCny))}</strong></span>
-        <span><small>浮盈</small><strong class="income-amount ${getSignedTone(row.unrealizedPnlCny)}">${escapeHtml(formatIncomeSignedMoney(row.unrealizedPnlCny))}</strong></span>
+        <span><small>浮盈</small><strong class="income-amount ${getReturnTone(row.unrealizedPnlCny)}">${escapeHtml(formatIncomeSignedMoney(row.unrealizedPnlCny))}</strong></span>
         <span><small>YOC</small><strong>${row.yieldOnCost === null ? '待计算' : escapeHtml(formatPercent(row.yieldOnCost))}</strong></span>
       </div>
     </div>`;
@@ -679,7 +692,7 @@ function renderIncomeRecords() {
   refs.incomeRecordsList.innerHTML = `
     <div class="income-record-overview">
       <article><span>净注入</span><strong class="income-amount ${getSignedTone(cash.netInflowCny)}">${escapeHtml(formatIncomeSignedMoney(cash.netInflowCny))}</strong></article>
-      <article><span>已实现盈亏</span><strong class="income-amount ${getSignedTone(trades.totalRealizedPnlCny)}">${escapeHtml(formatIncomeSignedMoney(trades.totalRealizedPnlCny))}</strong></article>
+      <article><span>已实现盈亏</span><strong class="income-amount ${getReturnTone(trades.totalRealizedPnlCny)}">${escapeHtml(formatIncomeSignedMoney(trades.totalRealizedPnlCny))}</strong></article>
       <article><span>持仓成本</span><strong class="income-amount">${escapeHtml(formatIncomeMoney(trades.totalCostCny))}</strong></article>
       <article><span>成本股息率</span><strong>${trades.totalCostCny > 0 ? escapeHtml(formatPercent(trades.totalAnnualDividendCny / trades.totalCostCny)) : '待计算'}</strong></article>
     </div>

@@ -61,9 +61,6 @@
           <header class="panel-bar panel-bar--spread">
             <div>
               <h2 class="panel-title">&#36164;&#20135;&#24635;&#35272;</h2>
-              <p class="panel-note">
-                价格、今年股息率、汇率换算与今年预计股息（含已到账与即将到账）
-              </p>
             </div>
             <div class="text-actions">
               <button id="exportButton" class="text-button" type="button">
@@ -81,9 +78,6 @@
           <header class="panel-bar">
             <div>
               <h2 class="panel-title">&#25345;&#20179;&#32467;&#26500;</h2>
-              <p class="panel-note">
-                &#20844;&#21496;&#21344;&#27604;&#19982;&#26680;&#24515;&#20179; / &#25171;&#24037;&#20179;&#20998;&#24067;
-              </p>
             </div>
           </header>
           <div class="chart-shell">
@@ -166,7 +160,6 @@
             <header class="panel-bar panel-bar--spread">
               <div>
                 <h2 class="panel-title">收益汇总</h2>
-                <p class="panel-note">今年至今的绝对资金收益，对比去年末净值。</p>
               </div>
               <div class="income-header-actions">
                 <button
@@ -221,6 +214,24 @@
                   </svg>
                   <span>历史回填</span>
                 </button>
+                <button
+                  id="incomeOpeningCashButton"
+                  class="income-manual-button"
+                  type="button"
+                  aria-label="期初现金"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      d="M4 8h16v10H4zM4 8l3-3h10l3 3M15 13h2"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.9"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    ></path>
+                  </svg>
+                  <span>期初现金</span>
+                </button>
                 <div id="incomeFilterGroup" class="segmented-control" aria-label="收益汇总筛选">
                   <button class="segment-button" type="button" data-income-filter="all">全部</button>
                   <button class="segment-button" type="button" data-income-filter="core">核心仓</button>
@@ -236,7 +247,6 @@
             <header class="panel-bar">
               <div>
                 <h2 class="panel-title">历年趋势</h2>
-                <p class="panel-note">绝对资金收益的年度变化。</p>
               </div>
             </header>
             <div id="incomeTrend" class="income-trend"></div>
@@ -247,7 +257,6 @@
               <summary class="panel-bar income-fold-summary">
                 <div>
                   <h2 class="panel-title">年度明细</h2>
-                  <p class="panel-note">历年资金收益、收益率与年末净值，可回填历史。</p>
                 </div>
                 <span class="income-fold-caret" aria-hidden="true"></span>
               </summary>
@@ -260,7 +269,6 @@
               <summary class="panel-bar income-fold-summary">
                 <div>
                   <h2 class="panel-title">资金与交易记录</h2>
-                  <p class="panel-note">出入金用于年度净注入；交易流水用于成本、已实现盈亏和 Yield on Cost。</p>
                 </div>
                 <span class="income-fold-caret" aria-hidden="true"></span>
               </summary>
@@ -289,7 +297,7 @@
             <header class="panel-bar">
               <div>
                 <h2 class="panel-title">按月分布</h2>
-                <p class="panel-note">按实际到账月份统计，点按某月查看当月明细。</p>
+                <p class="panel-note">点按某月查看明细。</p>
               </div>
             </header>
             <div id="dividendMonthGrid" class="dividend-month-grid"></div>

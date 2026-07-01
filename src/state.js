@@ -27,6 +27,8 @@ export const state = {
   sortDirection: 'desc',
   legendExpanded: false,
   liabilityCny: 0,
+  openingCashCny: 0,
+  openingDate: '',
   dividendLedger: [],
   dailySnapshots: [],
   cashFlows: [],
@@ -76,6 +78,7 @@ export const refs = {
   incomeManualButton: document.getElementById('incomeManualButton'),
   incomeCashFlowButton: document.getElementById('incomeCashFlowButton'),
   incomeTradeButton: document.getElementById('incomeTradeButton'),
+  incomeOpeningCashButton: document.getElementById('incomeOpeningCashButton'),
   incomeFilterGroup: document.getElementById('incomeFilterGroup'),
   incomeFilterButtons: Array.from(document.querySelectorAll('[data-income-filter]')),
   incomeOverviewGrid: document.getElementById('incomeOverviewGrid'),
@@ -197,6 +200,8 @@ export function createDefaultSnapshot() {
     sortDirection: 'desc',
     legendExpanded: false,
     liabilityCny: 0,
+    openingCashCny: 0,
+    openingDate: '',
     dividendLedger: [],
     dailySnapshots: [],
     cashFlows: [],
@@ -227,6 +232,8 @@ export function applySnapshot(snapshot) {
   state.sortDirection = snapshot && snapshot.sortDirection === 'asc' ? 'asc' : 'desc';
   state.legendExpanded = Boolean(snapshot && snapshot.legendExpanded);
   state.liabilityCny = Math.max(0, safeNumber(snapshot && snapshot.liabilityCny, 0));
+  state.openingCashCny = Math.max(0, safeNumber(snapshot && snapshot.openingCashCny, 0));
+  state.openingDate = typeof (snapshot && snapshot.openingDate) === 'string' ? snapshot.openingDate : '';
   state.dividendLedger = Array.isArray(snapshot && snapshot.dividendLedger)
     ? snapshot.dividendLedger.map(sanitizeDividendLedgerEntry).filter(Boolean)
     : [];
@@ -252,7 +259,8 @@ export function getPersistedSnapshot() {
     nextId: state.nextId, showAmounts: state.showAmounts, activePage: state.activePage,
     dividendCalendarBucket: state.dividendCalendarBucket, activeDividendMonth: state.activeDividendMonth, sortField: state.sortField,
     sortDirection: state.sortDirection, legendExpanded: state.legendExpanded,
-    liabilityCny: state.liabilityCny, dividendLedger: state.dividendLedger,
+    liabilityCny: state.liabilityCny, openingCashCny: state.openingCashCny, openingDate: state.openingDate,
+    dividendLedger: state.dividendLedger,
     dailySnapshots: state.dailySnapshots, cashFlows: state.cashFlows,
     trades: state.trades, yearlyManual: state.yearlyManual,
     lastUpdatedAt: state.lastUpdatedAt
@@ -323,6 +331,8 @@ export function buildPortfolioSnapshot() {
     sortDirection: persisted.sortDirection === 'asc' ? 'asc' : 'desc',
     legendExpanded: Boolean(persisted.legendExpanded),
     liabilityCny: Math.max(0, safeNumber(persisted.liabilityCny, 0)),
+    openingCashCny: Math.max(0, safeNumber(persisted.openingCashCny, 0)),
+    openingDate: typeof persisted.openingDate === 'string' ? persisted.openingDate : '',
     lastUpdatedAt: typeof persisted.lastUpdatedAt === 'string' ? persisted.lastUpdatedAt : ''
   };
 }

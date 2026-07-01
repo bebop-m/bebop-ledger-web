@@ -5,7 +5,7 @@ import {
   UI_TEXT, LABELS, HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD,
   SWIPE_SUPPRESS_CLICK_MS, PAGE_KEYS, DIVIDEND_FILTER_KEYS
 } from './constants.js';
-import { computeHoldings, getBucketSegments } from './compute.js';
+import { computeHoldings, getBucketSegments, isCashModelActive } from './compute.js';
 import {
   renderApp, renderSavedStateQuietly, renderSortChips, renderBucketsView,
   applyLegendExpandState, applyHoldingSortSelection, updateDividendTooltipSide,
@@ -61,10 +61,12 @@ refs.importButton.addEventListener('click', () => refs.importFileInput.click());
 refs.importFileInput.addEventListener('change', handleImportFile);
 refs.legendToggle.addEventListener('click', () => { const t = refs.legendToggle.getBoundingClientRect().top; state.legendExpanded = !state.legendExpanded; saveState(); applyLegendExpandState({ preserveScroll: true, toggleTop: t }); });
 refs.refreshButton.addEventListener('click', () => { refreshMarketData({ silent: false }); });
-refs.addButton.addEventListener('click', () => { openModal('add'); });
+// 现金模式下，首页「+」直接开一笔买入交易（替代旧的新增持仓）；未启用时仍是新增持仓。
+refs.addButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'add'); });
 refs.incomeManualButton.addEventListener('click', () => { openModal('yearlyManual'); });
 if (refs.incomeCashFlowButton) refs.incomeCashFlowButton.addEventListener('click', () => { openModal('cashFlow'); });
 if (refs.incomeTradeButton) refs.incomeTradeButton.addEventListener('click', () => { openModal('trade'); });
+if (refs.incomeOpeningCashButton) refs.incomeOpeningCashButton.addEventListener('click', () => { openModal('openingCash'); });
 
 refs.bottomNav.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-page-nav]');
@@ -180,7 +182,11 @@ refs.stockList.addEventListener('click', (event) => {
     });
     return;
   }
-  if (action === 'edit-quantity') { openModal('quantity', { localId, name: computed ? computed.name : holding.symbol, value: holding.quantity }); return; }
+  if (action === 'edit-quantity') {
+    // 现金模式下持仓只能通过交易调整，点数量直接开一笔预填该股票的交易。
+    if (isCashModelActive()) { openModal('trade', { symbol: holding.symbol }); return; }
+    openModal('quantity', { localId, name: computed ? computed.name : holding.symbol, value: holding.quantity }); return;
+  }
   if (action === 'edit-tax') { openModal('tax', { localId, name: computed ? computed.name : holding.symbol, value: holding.taxRateOverride }); return; }
   if (action === 'edit-dividend') { openModal('dividend', { localId, name: computed ? computed.name : holding.symbol, currency: computed ? computed.currency : 'HKD', value: holding.dividendPerShareTtmOverride }); }
 });

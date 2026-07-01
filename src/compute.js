@@ -11,13 +11,63 @@ export function inferQuote(symbol) {
   return inferQuoteFromMap(symbol, state.quotes, DEFAULT_QUOTES);
 }
 
+// 现金余额模式是否启用：填过期初日期即启用；否则完全按旧行为（无现金、数量可直接改）。
+export function isCashModelActive() {
+  return Boolean(state.openingDate);
+}
+
+// 期初日之后的事件才计入现金/持仓推算（期初日之前的已经包含在期初值里）。
+function isOnOrAfterOpening(dateValue) {
+  if (!state.openingDate) return true;
+  const label = formatDateLabel(dateValue);
+  return label ? label >= state.openingDate : false;
+}
+
+// 每只股票在期初日之后的买卖净股数（买 +、卖 −）。
+function getNetTradeSharesBySymbol() {
+  const map = new Map();
+  if (!isCashModelActive()) return map;
+  state.trades.forEach((trade) => {
+    if (!trade || !isOnOrAfterOpening(trade.date)) return;
+    const shares = Math.max(0, safeNumber(trade.shares, 0));
+    const delta = trade.side === 'sell' ? -shares : shares;
+    map.set(trade.symbol, safeNumber(map.get(trade.symbol), 0) + delta);
+  });
+  return map;
+}
+
+/* 现金余额 = 期初现金 + 入金 − 出金 + 卖出所得 − 买入花费 + 已到账股息。
+   全部按期初日之后的记录推算，未启用现金模式时恒为 0。 */
+export function computeCashBalance() {
+  if (!isCashModelActive()) return 0;
+  let cash = Math.max(0, safeNumber(state.openingCashCny, 0));
+  state.cashFlows.forEach((entry) => {
+    if (entry && isOnOrAfterOpening(entry.date)) cash += getCashFlowNetAmount(entry);
+  });
+  state.trades.forEach((trade) => {
+    if (!trade || !isOnOrAfterOpening(trade.date)) return;
+    const value = getTradeValueCny(trade);
+    const fee = Math.max(0, safeNumber(trade.feeCny, 0));
+    cash += trade.side === 'sell' ? (value - fee) : -(value + fee);
+  });
+  state.dividendLedger.forEach((entry) => {
+    const received = entry && (entry.confirmed === true || entry.confidence === 'manual');
+    if (!received) return;
+    const payDate = getLedgerEffectivePayDate(entry).date || (entry && entry.exDate);
+    if (isOnOrAfterOpening(payDate)) cash += getLedgerNetCny(entry);
+  });
+  return roundMoney(cash);
+}
+
 export function computeHoldings() {
   const cached = getComputeCache();
   if (cached) return cached;
 
+  const netTradeShares = getNetTradeSharesBySymbol();
   const holdings = state.holdings.map((holding) => {
     const quote = inferQuote(holding.symbol);
-    const quantity = Math.max(0, safeNumber(holding.quantity, 0));
+    // 现金模式下有效股数 = 期初股数 + 期初日之后的买卖净额；否则就是持仓数量本身。
+    const quantity = Math.max(0, safeNumber(holding.quantity, 0) + safeNumber(netTradeShares.get(holding.symbol), 0));
     const price = safeNumber(quote.price, 0);
     const currency = resolveQuoteCurrency(quote, holding.symbol);
     const fxRate = resolveFxRate(currency, state.rates);
@@ -58,10 +108,13 @@ export function computeHoldings() {
   const totalDividendCny = holdings.reduce((s, i) => s + safeNumber(i.netAnnualDividendCny, 0), 0);
   const totalDailyPnlCny = holdings.reduce((s, i) => s + safeNumber(i.dailyPnlCny, 0), 0);
   const divisor = totalMarketValueCny || 1;
+  const cashBalanceCny = computeCashBalance();
   const result = {
     holdings: holdings.map((i) => ({ ...i, holdingWeight: safeNumber(i.marketValueCny, 0) / divisor })),
     totalMarketValueCny, totalDividendCny, totalDailyPnlCny,
-    netMarketValueCny: totalMarketValueCny - state.liabilityCny
+    cashBalanceCny,
+    totalAssetCny: totalMarketValueCny + cashBalanceCny,
+    netMarketValueCny: totalMarketValueCny + cashBalanceCny - state.liabilityCny
   };
   setComputeCache(result);
   return result;
@@ -662,6 +715,14 @@ function getNetInflowByYear() {
 }
 
 function getYearEndNetCny(year, snapshotsByYear, manualByYear, currentYear) {
+  // 现金模式下，当年优先用实时净值（含现金），避免被定时脚本写入的「仅股票」当年快照盖掉、把现金漏掉。
+  if (year === currentYear && isCashModelActive()) {
+    const summary = computeHoldings();
+    if (summary.netMarketValueCny > 0) {
+      return { date: formatLocalDate(), netCny: roundMoney(summary.netMarketValueCny), source: 'current' };
+    }
+  }
+
   const snapshot = snapshotsByYear.get(year);
   if (snapshot) return snapshot;
 

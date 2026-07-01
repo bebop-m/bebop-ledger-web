@@ -1298,6 +1298,9 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .is-positive { color: #2f8254 !important; }
 .is-negative { color: #bc473c !important; }
+/* 盈亏配色（A 股习惯）：赚钱=红，亏钱=绿。 */
+.is-gain { color: #bc473c !important; }
+.is-loss { color: #2f8254 !important; }
 .is-flat { color: #65748a !important; }
 
 .income-record-empty {

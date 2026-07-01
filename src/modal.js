@@ -6,7 +6,7 @@ import {
 } from './utils.js';
 import { LABELS } from './constants.js';
 import { renderSavedStateQuietly, buildDividendMonthDetail } from './render.js';
-import { inferQuote } from './compute.js';
+import { inferQuote, isCashModelActive } from './compute.js';
 
 let _keydownHandler = null;
 
@@ -121,6 +121,11 @@ function renderModal() {
   } else if (state.modal === 'liability') {
     title = LABELS.liabilityTitle; note = LABELS.totalMarketValue;
     fields = `<input id="modalLiabilityInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.liabilityPlaceholder}">`;
+  } else if (state.modal === 'openingCash') {
+    title = '期初现金 · 现金余额模式';
+    note = '填入券商当前可用现金即启用；此后买卖、股息、出入金自动进出现金，主页数量改为通过交易调整';
+    fields = `<label class="modal-field"><span>期初现金（CNY）</span><input id="modalOpeningCashInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(safeNumber(state.openingCashCny, 0)))}" placeholder="0.00"></label>
+      <label class="modal-field"><span>启用日期（期初）</span><input id="modalOpeningDateInput" class="modal-input" type="date" value="${escapeHtml(state.openingDate || getTodayLabel())}"></label>`;
   } else if (state.modal === 'dividendLedger') {
     const entry = getDividendLedgerEntryBySourceId(state.modalPayload && state.modalPayload.sourceId);
     const quote = entry ? inferQuote(entry.symbol) : {};
@@ -134,7 +139,7 @@ function renderModal() {
     const entry = getCashFlowPayload();
     const type = entry && entry.type === 'withdrawal' ? 'withdrawal' : 'deposit';
     title = entry ? '编辑出入金' : '新增出入金';
-    note = '用于年度净注入口径';
+    note = '真实的资金转入 / 转出';
     fields = `<label class="modal-field"><span>日期</span><input id="modalCashFlowDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry && entry.date) || getTodayLabel())}"></label>
       <label class="modal-field"><span>金额（CNY）</span><input id="modalCashFlowAmountInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(Math.abs(safeNumber(entry.amountCny, 0))) : '')}" placeholder="0.00"></label>
       ${renderSegmentGroup('modalCashFlowTypeInput', type, [
@@ -149,7 +154,7 @@ function renderModal() {
     const currency = entry && entry.currency ? entry.currency : getTradeCurrencyDefault(symbol);
     const fxRate = entry ? entry.fxRate : resolveFxRate(currency, state.rates);
     title = entry ? '编辑交易' : '新增交易';
-    note = '用于成本、已实现盈亏和 Yield on Cost';
+    note = '买入扣现金加持仓，卖出加现金减持仓';
     fields = `<label class="modal-field"><span>日期</span><input id="modalTradeDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry && entry.date) || getTodayLabel())}"></label>
       <label class="modal-field"><span>股票代码</span><input id="modalTradeSymbolInput" class="modal-input" type="text" value="${escapeHtml(symbol)}" placeholder="${LABELS.symbolPlaceholder}"></label>
       ${renderSegmentGroup('modalTradeSideInput', side, [
@@ -297,6 +302,14 @@ function saveTradeEdit() {
     .concat(entry)
     .sort((a, b) => `${b.date}|${b.id}`.localeCompare(`${a.date}|${a.id}`));
   state.quotes = mergeQuotes(state.quotes, { [entry.symbol]: inferQuote(entry.symbol) });
+  // 现金模式下买入一只尚未持有的股票时，自动建一条持仓（期初股数 0，有效股数由交易推算），使其出现在首页。
+  if (isCashModelActive() && !state.holdings.some((h) => h.symbol === entry.symbol)) {
+    state.holdings = state.holdings.concat({
+      localId: state.nextId, symbol: entry.symbol, quantity: 0, bucket: entry.bucket === 'income' ? 'income' : 'core',
+      taxRateOverride: '', dividendPerShareTtmOverride: '', dividendPerShareTtmOverrideTouched: false
+    });
+    state.nextId += 1;
+  }
   return true;
 }
 
@@ -313,6 +326,9 @@ export function handleModalSave() {
     state.holdings = state.holdings.map((i) => i.localId === state.modalPayload.localId ? { ...i, dividendPerShareTtmOverride: v, dividendPerShareTtmOverrideTouched: v !== '' } : i);
   } else if (state.modal === 'liability') {
     state.liabilityCny = Math.max(0, safeNumber(document.getElementById('modalLiabilityInput').value, 0));
+  } else if (state.modal === 'openingCash') {
+    state.openingCashCny = Math.max(0, safeNumber(document.getElementById('modalOpeningCashInput').value, 0));
+    state.openingDate = formatDateLabel(document.getElementById('modalOpeningDateInput').value) || getTodayLabel();
   } else if (state.modal === 'dividendLedger') {
     if (!saveDividendLedgerEdit()) return;
   } else if (state.modal === 'cashFlow') {
