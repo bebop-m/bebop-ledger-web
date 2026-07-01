@@ -357,9 +357,11 @@ function renderDividendMetricGrid(model) {
 
 function getDividendMonthRowsMarkup(item) {
   const rows = [`<div><span>${LABELS.dividendReceivedStatus}</span><strong>${escapeHtml(formatDisplayMoney(item.receivedCny, 'CNY'))}</strong></div>`];
-  // 已结束的月份不再展示「即将到账」。
   if (item.phase !== 'past') {
     rows.push(`<div><span>${LABELS.dividendUpcoming}</span><strong>${escapeHtml(formatDisplayMoney(item.upcomingCny, 'CNY'))}</strong></div>`);
+  } else if (item.pendingCny > 0) {
+    // 已结束的月份里，未确认到账的金额按「待确认」展示，而不是计入已到账。
+    rows.push(`<div class="is-due"><span>${LABELS.dividendPending}</span><strong>${escapeHtml(formatDisplayMoney(item.pendingCny, 'CNY'))}</strong></div>`);
   }
   return `<div class="dividend-mini-rows">${rows.join('')}</div>`;
 }
@@ -403,6 +405,7 @@ export function buildDividendMonthDetail(month) {
   if (item) {
     summaryParts.push(`${LABELS.dividendReceivedStatus} ${formatDisplayMoney(item.receivedCny, 'CNY')}`);
     if (item.phase !== 'past') summaryParts.push(`${LABELS.dividendUpcoming} ${formatDisplayMoney(item.upcomingCny, 'CNY')}`);
+    else if (item.pendingCny > 0) summaryParts.push(`${LABELS.dividendPending} ${formatDisplayMoney(item.pendingCny, 'CNY')}`);
   }
   const body = entries.length
     ? entries.map((entry) => {
@@ -462,27 +465,6 @@ function formatIncomeSignedMoney(value) {
   return `${amount > 0 ? '+' : ''}${formatMoney(amount, 'CNY')}`;
 }
 
-function formatIncomeCompare(value) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value))) return '无可比数据';
-  const numeric = safeNumber(value, 0);
-  const sign = numeric > 0 ? '+' : numeric < 0 ? '-' : '';
-  return `${sign}${formatPercent(Math.abs(numeric))}`;
-}
-
-function getIncomeCompareBasisLabel(basis) {
-  if (basis === 'total') return '合计参考同比';
-  if (basis === 'dividend') return '股息收入同比';
-  return '同比';
-}
-
-function getIncomeMetricMarkup(label, value, note = '', tone = '') {
-  return `<article class="income-metric-card${tone ? ` is-${tone}` : ''}">
-    <div class="income-metric-label">${escapeHtml(label)}</div>
-    <div class="income-metric-value income-amount">${escapeHtml(value)}</div>
-    ${note ? `<p class="income-metric-note">${escapeHtml(note)}</p>` : ''}
-  </article>`;
-}
-
 function renderIncomeFilterButtons(model) {
   refs.incomeFilterButtons.forEach((button) => {
     const isActive = button.dataset.incomeFilter === model.filterKey;
@@ -491,30 +473,38 @@ function renderIncomeFilterButtons(model) {
   });
 }
 
+function formatIncomeRate(value) {
+  if (isIncomeValueMissing(value)) return '待回填';
+  if (!state.showAmounts) return MASK_AMOUNT;
+  const numeric = safeNumber(value, 0);
+  const sign = numeric > 0 ? '+' : numeric < 0 ? '-' : '';
+  return `${sign}${formatPercent(Math.abs(numeric))}`;
+}
+
+// 主窗口：今年至今的绝对资金收益 + 收益率，附年初净值 / 当前净值 / 今年净注入口径。
 function renderIncomeOverview(model) {
   const row = model.current;
-  if (!row) {
-    refs.incomeOverviewGrid.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无收益数据</p><p class="empty-state-note">生成快照或导入历史回填后，这里会展示年度口径。</p></div>`;
+  if (!row || !row.capitalReturnAvailable) {
+    refs.incomeOverviewGrid.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无资金收益数据</p><p class="empty-state-note">回填或生成 ${model.currentYear - 1} 年末净值后，这里会展示今年至今的资金收益。</p></div>`;
     refs.incomeMethodNote.textContent = '';
     return;
   }
-  const compareText = formatIncomeCompare(row.compare.value);
-  const compareNote = row.compare.value === null
-    ? '去年值为 0 或缺失'
-    : getIncomeCompareBasisLabel(row.compare.basis);
-  const capitalNote = row.capitalReturnAvailable
-    ? (model.filterKey === 'all' ? '年末净值 - 年初净值 - 净注入' : '资金收益暂按全账户口径')
-    : '需要上一年和本年年末净值';
-  const totalNote = row.totalReferenceCny === null
-    ? '等待净值回填后计算'
-    : '非唯一总收益口径';
-  refs.incomeOverviewGrid.innerHTML = [
-    getIncomeMetricMarkup('股息收入', formatIncomeMoney(row.dividendCny), row.dividendSource === 'manual' ? '使用手动回填值' : `${row.year} 年到账日归属`, 'dividend'),
-    getIncomeMetricMarkup('资金收益', formatIncomeSignedMoney(row.capitalReturnCny), capitalNote, 'capital'),
-    getIncomeMetricMarkup('合计参考', formatIncomeSignedMoney(row.totalReferenceCny), totalNote, 'total'),
-    getIncomeMetricMarkup('较上一年变化', compareText, compareNote, 'compare')
-  ].join('');
-  refs.incomeMethodNote.textContent = `合计为参考值；复利再投资和现金账户未完整跟踪前，股息与资金收益不作为唯一总收益口径。${model.filterKey === 'all' ? '' : ' 当前筛选只精确拆分股息收入；资金收益暂按全账户口径。'}`;
+  const valueTone = getSignedTone(row.capitalReturnCny);
+  const rateTone = getSignedTone(row.capitalReturnRate);
+  refs.incomeOverviewGrid.innerHTML = `
+    <article class="income-hero">
+      <div class="income-hero-head">
+        <span class="income-hero-label">${model.currentYear} 年至今资金收益</span>
+        <span class="income-hero-rate income-amount ${rateTone}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</span>
+      </div>
+      <strong class="income-hero-value income-amount ${valueTone}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</strong>
+      <div class="income-hero-context">
+        <span><small>年初净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearStartNetCny))}</strong></span>
+        <span><small>当前净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</strong></span>
+        <span><small>今年净注入</small><strong class="income-amount ${getSignedTone(row.netInflowCny)}">${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</strong></span>
+      </div>
+    </article>`;
+  refs.incomeMethodNote.textContent = `资金收益 = 当前净值 − 去年末净值 − 今年净注入；按全账户口径统计，不随核心仓/打工仓筛选拆分。`;
 }
 
 function getTrendValue(row, key) {
@@ -555,34 +545,24 @@ function getTrendSeriesMarkup(rows, key, className, minValue, maxValue) {
   </g>`;
 }
 
+// 历年趋势：只画绝对资金收益一条线，保持极简。
 function renderIncomeTrend(model) {
   const rows = model.trendRows;
-  if (!rows.length) {
-    refs.incomeTrend.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无趋势数据</p><p class="empty-state-note">有年度数据后会展示历年趋势。</p></div>`;
+  const values = rows.map((row) => getTrendValue(row, 'capitalReturnCny')).filter((value) => value !== null);
+  if (!values.length) {
+    refs.incomeTrend.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无趋势数据</p><p class="empty-state-note">有历年净值后会展示资金收益趋势。</p></div>`;
     return;
   }
-  const values = rows.flatMap((row) => [
-    getTrendValue(row, 'dividendCny'),
-    getTrendValue(row, 'capitalReturnCny'),
-    getTrendValue(row, 'totalReferenceCny')
-  ]).filter((value) => value !== null);
   const minValue = Math.min(0, ...values);
   const maxValue = Math.max(0, ...values);
-  const zeroPoint = getTrendPoint({ totalReferenceCny: 0 }, 0, 1, 'totalReferenceCny', minValue, maxValue);
+  const zeroPoint = getTrendPoint({ capitalReturnCny: 0 }, 0, 1, 'capitalReturnCny', minValue, maxValue);
   refs.incomeTrend.innerHTML = `
     <div class="income-trend-chart">
-      <svg class="income-trend-svg" viewBox="0 0 720 220" role="img" aria-label="历年收益趋势">
+      <svg class="income-trend-svg" viewBox="0 0 720 220" role="img" aria-label="历年资金收益趋势">
         <line class="income-trend-zero" x1="28" x2="692" y1="${zeroPoint.y}" y2="${zeroPoint.y}"></line>
-        ${getTrendSeriesMarkup(rows, 'dividendCny', 'is-dividend', minValue, maxValue)}
         ${getTrendSeriesMarkup(rows, 'capitalReturnCny', 'is-capital', minValue, maxValue)}
-        ${getTrendSeriesMarkup(rows, 'totalReferenceCny', 'is-total', minValue, maxValue)}
       </svg>
       <div class="income-trend-years">${rows.map((row) => `<span>${row.year}</span>`).join('')}</div>
-    </div>
-    <div class="income-trend-legend" aria-label="趋势图例">
-      <span><i class="is-dividend"></i>股息收入</span>
-      <span><i class="is-capital"></i>资金收益</span>
-      <span><i class="is-total"></i>合计参考</span>
     </div>`;
 }
 
@@ -608,43 +588,20 @@ function renderIncomeYearList(model) {
     return;
   }
   const rows = model.rows.map((row) => {
-    const compareText = row.compare.value === null
-      ? '无可比数据'
-      : `${formatIncomeCompare(row.compare.value)} · ${row.compare.basis === 'total' ? '合计' : '股息'}`;
     return `<div class="income-year-row" role="row">
       ${getIncomeYearCell('年份', String(row.year), 'is-year')}
-      ${getIncomeYearCell('股息收入', formatIncomeMoney(row.dividendCny), 'income-amount')}
-      ${getIncomeYearCell('资金收益', formatIncomeSignedMoney(row.capitalReturnCny), 'income-amount')}
-      ${getIncomeYearCell('合计参考', formatIncomeSignedMoney(row.totalReferenceCny), 'income-amount')}
-      ${getIncomeYearCell('净注入', formatIncomeSignedMoney(row.netInflowCny), 'income-amount')}
+      ${getIncomeYearCell('资金收益', formatIncomeSignedMoney(row.capitalReturnCny), `income-amount ${getSignedTone(row.capitalReturnCny)}`)}
+      ${getIncomeYearCell('收益率', formatIncomeRate(row.capitalReturnRate), `is-compare ${getSignedTone(row.capitalReturnRate)}`)}
       ${getIncomeYearCell('年末净值', formatIncomeMoney(row.yearEndNetCny), 'income-amount')}
-      ${getIncomeYearCell('同比', compareText, 'is-compare')}
       ${getIncomeYearActionCell(row)}
     </div>`;
   }).join('');
-  refs.incomeYearList.innerHTML = `<div class="income-year-table" role="table" aria-label="年度收益列表">
+  refs.incomeYearList.innerHTML = `<div class="income-year-table" role="table" aria-label="年度资金收益列表">
     <div class="income-year-row income-year-head" role="row">
-      <div>年份</div><div>股息收入</div><div>资金收益</div><div>合计参考</div><div>净注入</div><div>年末净值</div><div>同比</div><div>操作</div>
+      <div>年份</div><div>资金收益</div><div>收益率</div><div>年末净值</div><div>操作</div>
     </div>
     ${rows}
   </div>`;
-}
-
-function renderIncomeNorthStar(model) {
-  const ns = model.northStar;
-  const streakText = ns.growthStreak > 0
-    ? `连续增长 ${ns.growthStreak} 年`
-    : (ns.yoy === null ? '等待更多核心仓历史数据' : '尚未形成连续增长');
-  refs.incomeNorthStar.innerHTML = `<article class="income-north-star-card">
-    <div>
-      <p class="income-north-star-label">核心仓股息收入</p>
-      <strong class="income-north-star-value income-amount">${escapeHtml(formatIncomeMoney(ns.coreDividendCny))}</strong>
-    </div>
-    <div class="income-north-star-side">
-      <span>${escapeHtml(formatIncomeCompare(ns.yoy))}</span>
-      <small>${escapeHtml(streakText)}</small>
-    </div>
-  </article>`;
 }
 
 function formatRecordQuantity(value) {
@@ -748,7 +705,6 @@ export function renderIncomeSummaryPage() {
   renderIncomeOverview(model);
   renderIncomeTrend(model);
   renderIncomeYearList(model);
-  renderIncomeNorthStar(model);
   renderIncomeRecords();
 }
 

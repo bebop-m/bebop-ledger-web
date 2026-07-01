@@ -82,7 +82,6 @@ export const refs = {
   incomeMethodNote: document.getElementById('incomeMethodNote'),
   incomeTrend: document.getElementById('incomeTrend'),
   incomeYearList: document.getElementById('incomeYearList'),
-  incomeNorthStar: document.getElementById('incomeNorthStar'),
   incomeRecordsList: document.getElementById('incomeRecordsList'),
   dividendMetricGrid: document.getElementById('dividendMetricGrid'),
   dividendMonthGrid: document.getElementById('dividendMonthGrid'),

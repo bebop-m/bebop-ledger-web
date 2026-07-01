@@ -166,7 +166,7 @@
             <header class="panel-bar panel-bar--spread">
               <div>
                 <h2 class="panel-title">收益汇总</h2>
-                <p class="panel-note">股息收入按实际到账日统计，资金收益按年度净值变化估算。</p>
+                <p class="panel-note">今年至今的绝对资金收益，对比去年末净值。</p>
               </div>
               <div class="income-header-actions">
                 <button
@@ -236,40 +236,36 @@
             <header class="panel-bar">
               <div>
                 <h2 class="panel-title">历年趋势</h2>
-                <p class="panel-note">股息收入、资金收益与合计参考的年度变化。</p>
+                <p class="panel-note">绝对资金收益的年度变化。</p>
               </div>
             </header>
             <div id="incomeTrend" class="income-trend"></div>
           </section>
 
           <section class="panel">
-            <header class="panel-bar">
-              <div>
-                <h2 class="panel-title">年度列表</h2>
-                <p class="panel-note">无历史净值时会提示待回填，不参与资金收益计算。</p>
-              </div>
-            </header>
-            <div id="incomeYearList" class="income-year-list"></div>
+            <details class="income-fold">
+              <summary class="panel-bar income-fold-summary">
+                <div>
+                  <h2 class="panel-title">年度明细</h2>
+                  <p class="panel-note">历年资金收益、收益率与年末净值，可回填历史。</p>
+                </div>
+                <span class="income-fold-caret" aria-hidden="true"></span>
+              </summary>
+              <div id="incomeYearList" class="income-year-list"></div>
+            </details>
           </section>
 
           <section class="panel">
-            <header class="panel-bar">
-              <div>
-                <h2 class="panel-title">资金与交易记录</h2>
-                <p class="panel-note">出入金用于年度净注入；交易流水用于成本、已实现盈亏和 Yield on Cost。</p>
-              </div>
-            </header>
-            <div id="incomeRecordsList" class="income-records"></div>
-          </section>
-
-          <section class="panel">
-            <header class="panel-bar">
-              <div>
-                <h2 class="panel-title">北极星指标</h2>
-                <p class="panel-note">核心仓股息收入，用来观察股息收入是否持续增长。</p>
-              </div>
-            </header>
-            <div id="incomeNorthStar" class="income-north-star"></div>
+            <details class="income-fold">
+              <summary class="panel-bar income-fold-summary">
+                <div>
+                  <h2 class="panel-title">资金与交易记录</h2>
+                  <p class="panel-note">出入金用于年度净注入；交易流水用于成本、已实现盈亏和 Yield on Cost。</p>
+                </div>
+                <span class="income-fold-caret" aria-hidden="true"></span>
+              </summary>
+              <div id="incomeRecordsList" class="income-records"></div>
+            </details>
           </section>
         </div>
 

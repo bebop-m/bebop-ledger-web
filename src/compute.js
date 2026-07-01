@@ -165,7 +165,10 @@ function buildLedgerDividendEntry(entry, year, todayLabel) {
   const payParts = getDateParts(effectivePay.date) || exParts;
   if (payParts.year !== year) return null;
   const quote = inferQuote(entry.symbol);
-  const isReceived = entry.confirmed === true || payParts.label <= todayLabel;
+  // 「已到账」只认用户明确处理过的条目：标记已到账(confirmed) 或 修改过实收金额(confidence==='manual')。
+  // 仅仅预计到账日已过、但用户没确认也没改金额的，不算已到账，归为待确认(due)。
+  const isReceived = entry.confirmed === true || entry.confidence === 'manual';
+  const isDue = !isReceived && payParts.label <= todayLabel;
   const netCny = getLedgerNetCny(entry);
   return {
     id: entry.id || entry.sourceId || buildDividendSourceId(entry),
@@ -183,9 +186,10 @@ function buildLedgerDividendEntry(entry, year, todayLabel) {
     netCny,
     bucket: entry.bucket === 'income' ? 'income' : 'core',
     status: isReceived ? 'received' : 'pending',
-    receiptStatus: isReceived ? 'received' : 'pending',
+    receiptStatus: isReceived ? 'received' : (isDue ? 'due' : 'pending'),
     confidence: entry.confidence || (isReceived ? 'confirmed' : 'estimated'),
     confirmed: entry.confirmed === true,
+    isDue,
     note: typeof entry.note === 'string' ? entry.note : '',
     isForecast: false
   };
@@ -374,6 +378,29 @@ function buildDividendMonthItems(entries, currentMonth) {
   }));
 }
 
+// 同一笔派息的优先级：已确认 > 已到账 > 已公告 > 在途/待确认 > 节奏预估。去重时保留优先级最高的一条。
+function dividendEntryPriority(entry) {
+  if (entry.confirmed === true) return 5;
+  if (entry.status === 'received') return 4;
+  if (entry.status === 'announced' || entry.isAnnounced) return 3;
+  if (entry.status === 'pending') return 2;
+  return 1;
+}
+
+// 以（标的 + 除息日）作为一笔派息的经济身份，折叠账本/公告/预估之间以及账本内部的重复条目，
+// 避免同一只股票在同一月份重复计数（例如 5 月重复出现的京东集团）。
+function dedupeDividendEntries(entries) {
+  const byKey = new Map();
+  entries.forEach((entry) => {
+    const key = `${entry.symbol}|${entry.exDate}`;
+    const prev = byKey.get(key);
+    if (!prev || dividendEntryPriority(entry) > dividendEntryPriority(prev)) {
+      byKey.set(key, entry);
+    }
+  });
+  return Array.from(byKey.values());
+}
+
 export function computeDividendCalendar(today = new Date(), filterKeyOverride = null) {
   const todayLabel = typeof today === 'string' ? formatDateLabel(today) : formatLocalDate(today);
   const todayParts = getDateParts(todayLabel) || getDateParts(formatLocalDate());
@@ -385,7 +412,7 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
     .filter(Boolean);
   const announcedEntries = buildAnnouncedDividendEntries(summary, year, todayLabel);
   const forecastEntries = buildForecastDividendEntries(summary, year, todayLabel, [...ledgerEntries, ...announcedEntries]);
-  const entries = [...ledgerEntries, ...announcedEntries, ...forecastEntries]
+  const entries = dedupeDividendEntries([...ledgerEntries, ...announcedEntries, ...forecastEntries])
     .filter((entry) => matchesDividendFilter(entry, filterKey))
     .sort((a, b) => `${a.payDate}|${a.status}|${a.symbol}`.localeCompare(`${b.payDate}|${b.status}|${b.symbol}`));
   const receivedCny = entries
@@ -714,6 +741,10 @@ export function computeIncomeSummary(today = new Date()) {
     const capitalReturnCny = hasCapitalReturn
       ? roundMoney(yearEnd.netCny - yearStart.netCny - netInflowCny)
       : null;
+    // 收益率 = 当年资金收益 / 年初净值（扣除净注入后的真实回报率）。
+    const capitalReturnRate = (hasCapitalReturn && yearStart.netCny > 0)
+      ? capitalReturnCny / yearStart.netCny
+      : null;
     const totalReferenceCny = capitalReturnCny === null ? null : roundMoney(dividendCny + capitalReturnCny);
 
     rowMap.set(year, {
@@ -724,6 +755,7 @@ export function computeIncomeSummary(today = new Date()) {
       hasManualBackfill: Boolean(manual),
       coreDividendCny,
       capitalReturnCny,
+      capitalReturnRate,
       totalReferenceCny,
       netInflowCny,
       yearEndNetCny: yearEnd.netCny,
