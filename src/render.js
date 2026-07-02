@@ -540,24 +540,29 @@ function getTrendSeriesMarkup(rows, key, className, minValue, maxValue) {
   </g>`;
 }
 
-// 历年趋势：只画绝对资金收益一条线，保持极简。
+// 历年趋势：资金收益率 + 股息收益率两条百分比线，共用同一坐标系。
 function renderIncomeTrend(model) {
   const rows = model.trendRows;
-  const values = rows.map((row) => getTrendValue(row, 'capitalReturnCny')).filter((value) => value !== null);
+  const series = [
+    { key: 'capitalReturnRate', className: 'is-capital', label: '资金收益率' },
+    { key: 'dividendYieldRate', className: 'is-dividend', label: '股息收益率' }
+  ];
+  const values = series.flatMap((item) => rows.map((row) => getTrendValue(row, item.key)).filter((value) => value !== null));
   if (!values.length) {
-    refs.incomeTrend.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无趋势数据</p><p class="empty-state-note">有历年净值后会展示资金收益趋势。</p></div>`;
+    refs.incomeTrend.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无趋势数据</p><p class="empty-state-note">有历年净值或历史回填后会展示收益率趋势。</p></div>`;
     return;
   }
   const minValue = Math.min(0, ...values);
   const maxValue = Math.max(0, ...values);
-  const zeroPoint = getTrendPoint({ capitalReturnCny: 0 }, 0, 1, 'capitalReturnCny', minValue, maxValue);
+  const zeroPoint = getTrendPoint({ rate: 0 }, 0, 1, 'rate', minValue, maxValue);
   refs.incomeTrend.innerHTML = `
     <div class="income-trend-chart">
-      <svg class="income-trend-svg" viewBox="0 0 720 220" role="img" aria-label="历年资金收益趋势">
+      <svg class="income-trend-svg" viewBox="0 0 720 220" role="img" aria-label="历年资金收益率与股息收益率趋势">
         <line class="income-trend-zero" x1="28" x2="692" y1="${zeroPoint.y}" y2="${zeroPoint.y}"></line>
-        ${getTrendSeriesMarkup(rows, 'capitalReturnCny', 'is-capital', minValue, maxValue)}
+        ${series.map((item) => getTrendSeriesMarkup(rows, item.key, item.className, minValue, maxValue)).join('')}
       </svg>
       <div class="income-trend-years">${rows.map((row) => `<span>${row.year}</span>`).join('')}</div>
+      <div class="income-trend-legend">${series.map((item) => `<span><i class="${item.className}"></i>${item.label}</span>`).join('')}</div>
     </div>`;
 }
 
@@ -585,15 +590,17 @@ function renderIncomeYearList(model) {
   const rows = model.rows.map((row) => {
     return `<div class="income-year-row" role="row">
       ${getIncomeYearCell('年份', String(row.year), 'is-year')}
+      ${getIncomeYearCell('股息', formatIncomeMoney(row.dividendCny), 'income-amount')}
+      ${getIncomeYearCell('股息率', formatIncomeRate(row.dividendYieldRate), 'is-compare')}
       ${getIncomeYearCell('资金收益', formatIncomeSignedMoney(row.capitalReturnCny), `income-amount ${getReturnTone(row.capitalReturnCny)}`)}
       ${getIncomeYearCell('收益率', formatIncomeRate(row.capitalReturnRate), `is-compare ${getReturnTone(row.capitalReturnRate)}`)}
       ${getIncomeYearCell('年末净值', formatIncomeMoney(row.yearEndNetCny), 'income-amount')}
       ${getIncomeYearActionCell(row)}
     </div>`;
   }).join('');
-  refs.incomeYearList.innerHTML = `<div class="income-year-table" role="table" aria-label="年度资金收益列表">
+  refs.incomeYearList.innerHTML = `<div class="income-year-table" role="table" aria-label="年度收益列表">
     <div class="income-year-row income-year-head" role="row">
-      <div>年份</div><div>资金收益</div><div>收益率</div><div>年末净值</div><div>操作</div>
+      <div>年份</div><div>股息</div><div>股息率</div><div>资金收益</div><div>收益率</div><div>年末净值</div><div>操作</div>
     </div>
     ${rows}
   </div>`;

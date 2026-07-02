@@ -1,9 +1,9 @@
 import { state } from './state.js';
-import { computeHoldings } from './compute.js';
+import { computeHoldings, computeIncomeSummary } from './compute.js';
 import {
   buildDividendSourceId, formatDateLabel, normalizeQuoteDividendEvent,
   parsePercentOverride, resolveEffectivePayDate, resolveFxRate, safeNumber,
-  sanitizeDailySnapshotEntry, sanitizeDividendLedgerEntry
+  sanitizeDailySnapshotEntry, sanitizeDividendLedgerEntry, sanitizeYearlyManualEntry
 } from './utils.js';
 
 function formatLocalDate(date = new Date()) {
@@ -195,13 +195,43 @@ function generateDividendLedgerEntries(today = formatLocalDate()) {
   return additions.length + removed;
 }
 
+/* 年度归档：跨年后把已结束年份的股息 / 年末净值 / 净注入 / 资金收益冻结进 yearlyManual。
+   之后即使行情派息被修订、快照或流水丢失，年度明细与历年趋势也不受影响。
+   只在该年还没有回填记录时写入，用户随时可以通过历史回填修改或删除。 */
+function archiveCompletedYears(today) {
+  const currentYear = Math.floor(safeNumber(String(today).slice(0, 4), 0));
+  if (!currentYear) return false;
+  const archivedYears = new Set(state.yearlyManual.map((entry) => entry.year));
+  const additions = [];
+  computeIncomeSummary(today, { filterKey: 'all' }).trendRows.forEach((row) => {
+    if (row.year >= currentYear || archivedYears.has(row.year)) return;
+    const hasData = row.dividendCny > 0 || safeNumber(row.yearEndNetCny, 0) > 0 || row.netInflowCny !== 0;
+    if (!hasData) return;
+    additions.push(sanitizeYearlyManualEntry({
+      year: row.year,
+      dividendCny: row.dividendCny,
+      yearEndNetCny: safeNumber(row.yearEndNetCny, 0),
+      netInflowCny: row.netInflowCny,
+      capitalReturnCny: row.capitalReturnCny,
+      capitalReturnRate: row.capitalReturnRate,
+      source: 'auto',
+      archivedAt: new Date().toISOString()
+    }));
+  });
+  if (!additions.length) return false;
+  state.yearlyManual = state.yearlyManual.concat(additions).sort((a, b) => b.year - a.year);
+  return true;
+}
+
 export function settleRevenueData(date = new Date()) {
   const today = formatLocalDate(date);
   const snapshotAdded = ensureTodaySnapshot(today);
   const ledgerAddedCount = generateDividendLedgerEntries(today);
+  const yearsArchived = archiveCompletedYears(today);
   return {
-    changed: snapshotAdded || ledgerAddedCount > 0,
+    changed: snapshotAdded || ledgerAddedCount > 0 || yearsArchived,
     snapshotAdded,
-    ledgerAddedCount
+    ledgerAddedCount,
+    yearsArchived
   };
 }

@@ -26,6 +26,8 @@ export const VALID_DIVIDEND_STATUSES = new Set(['manual', 'fresh', 'stale', 'mis
 export const VALID_RECEIPT_STATUSES = new Set(['received', 'pending']);
 export const VALID_DIVIDEND_CONFIDENCES = new Set(['confirmed', 'snapshot', 'carryForward', 'estimated', 'manual']);
 export const PAGE_KEYS = new Set(['assets', 'income', 'dividends']);
+/* 收益汇总的展示起始年：年度明细与历年趋势只展示该年及以后（更早年份仍参与净值链推算）。 */
+export const INCOME_START_YEAR = 2025;
 export const DIVIDEND_FILTER_KEYS = new Set(['all', 'core', 'income']);
 export const TENCENT_REQUEST_TIMEOUT_MS = 8000;
 export const HOLDING_ENTER_STAGGER_MS = 25;
