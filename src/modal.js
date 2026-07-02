@@ -211,11 +211,13 @@ function renderModal() {
       <label class="modal-field"><span>备注</span><input id="modalTradeNoteInput" class="modal-input" type="text" value="${escapeHtml(entry && entry.note || '')}" placeholder="可选"></label>`;
   } else if (state.modal === 'yearlyManual') {
     title = '历史回填';
-    note = '补齐开始记录之前的年度收益口径';
+    note = '补齐历史年度的股息与收益；资金收益 / 收益率留空时按前后年净值自动推算';
     fields = `<input id="modalManualYearInput" class="modal-input" type="number" inputmode="numeric" value="${escapeHtml(getManualModalValue('year') || String(getDefaultManualYear()))}" placeholder="年份">
-      <input id="modalManualDividendInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('dividendCny'))}" placeholder="手动股息收入（CNY）">
+      <input id="modalManualDividendInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('dividendCny'))}" placeholder="当年股息收入（CNY）">
       <input id="modalManualYearEndInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('yearEndNetCny'))}" placeholder="年末净值（CNY）">
-      <input id="modalManualNetInflowInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('netInflowCny'))}" placeholder="当年净注入（CNY，可为负）">`;
+      <input id="modalManualNetInflowInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('netInflowCny'))}" placeholder="当年净注入（CNY，可为负）">
+      <input id="modalManualCapitalInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('capitalReturnCny'))}" placeholder="资金收益（CNY，可为负，可留空）">
+      <input id="modalManualCapitalRateInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('capitalReturnRatePercent'))}" placeholder="资金收益率（%，可为负，可留空）">`;
   } else if (state.modal === 'add') {
     title = LABELS.addTitle; note = LABELS.addNote;
     fields = `<input id="modalSymbolInput" class="modal-input" type="text" placeholder="${LABELS.symbolPlaceholder}">
@@ -378,11 +380,16 @@ export function handleModalSave() {
     const year = Math.floor(safeNumber(document.getElementById('modalManualYearInput').value, 0));
     if (year < 1900 || year > 2200) { showToast('请输入有效年份', { type: 'error' }); return; }
     const previousYear = Math.floor(safeNumber(state.modalPayload && state.modalPayload.year, 0));
+    const capitalRaw = document.getElementById('modalManualCapitalInput').value.trim();
+    const capitalRateRaw = document.getElementById('modalManualCapitalRateInput').value.trim();
     const entry = {
       year,
       dividendCny: Math.max(0, safeNumber(document.getElementById('modalManualDividendInput').value, 0)),
       yearEndNetCny: Math.max(0, safeNumber(document.getElementById('modalManualYearEndInput').value, 0)),
-      netInflowCny: safeNumber(document.getElementById('modalManualNetInflowInput').value, 0)
+      netInflowCny: safeNumber(document.getElementById('modalManualNetInflowInput').value, 0),
+      // 留空 = null = 由净值链自动推算；填了就以回填值为准（仅历史年份生效）。
+      capitalReturnCny: capitalRaw === '' ? null : safeNumber(capitalRaw, 0),
+      capitalReturnRate: capitalRateRaw === '' ? null : safeNumber(capitalRateRaw, 0) / 100
     };
     state.yearlyManual = state.yearlyManual
       .filter((item) => item.year !== year && item.year !== previousYear)

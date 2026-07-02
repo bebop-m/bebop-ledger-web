@@ -499,7 +499,10 @@ export function sanitizeYearlyManualEntry(item) {
     year,
     dividendCny: safeNumber(item.dividendCny, 0),
     yearEndNetCny: safeNumber(item.yearEndNetCny, 0),
-    netInflowCny: safeNumber(item.netInflowCny, 0)
+    netInflowCny: safeNumber(item.netInflowCny, 0),
+    // 可选的直接回填值：null 表示未填，由净值链自动推算。
+    capitalReturnCny: item.capitalReturnCny === null || item.capitalReturnCny === undefined || item.capitalReturnCny === '' ? null : safeNumber(item.capitalReturnCny, 0),
+    capitalReturnRate: item.capitalReturnRate === null || item.capitalReturnRate === undefined || item.capitalReturnRate === '' ? null : safeNumber(item.capitalReturnRate, 0)
   };
 }
 

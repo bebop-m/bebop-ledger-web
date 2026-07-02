@@ -1064,7 +1064,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .income-year-row {
   display: grid;
-  grid-template-columns: 0.64fr repeat(3, minmax(0, 1fr)) 40px;
+  grid-template-columns: 0.5fr repeat(5, minmax(0, 1fr)) 36px;
   gap: 8px;
   align-items: center;
   min-width: 0;

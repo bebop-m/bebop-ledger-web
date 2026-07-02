@@ -5,7 +5,7 @@ import {
   normalizeDividendSource, normalizeDividendStatus, formatDateLabel,
   buildDividendSourceId, resolveEffectivePayDate
 } from './utils.js';
-import { COMPANY_COLORS, BUCKET_COLORS, LABELS, DIVIDEND_FILTER_KEYS } from './constants.js';
+import { COMPANY_COLORS, BUCKET_COLORS, LABELS, DIVIDEND_FILTER_KEYS, INCOME_START_YEAR } from './constants.js';
 
 export function inferQuote(symbol) {
   return inferQuoteFromMap(symbol, state.quotes, DEFAULT_QUOTES);
@@ -763,11 +763,12 @@ function getCoreGrowthStreak(rowsAsc) {
   return streak;
 }
 
-export function computeIncomeSummary(today = new Date()) {
+export function computeIncomeSummary(today = new Date(), options = {}) {
   const todayLabel = typeof today === 'string' ? formatDateLabel(today) : formatLocalDate(today);
   const todayParts = getDateParts(todayLabel) || getDateParts(formatLocalDate());
   const currentYear = todayParts ? todayParts.year : new Date().getFullYear();
-  const filterKey = getDividendFilterKey();
+  // filterKey 可被覆盖：年度归档等后台口径必须用 'all'，不能跟随日历页当前筛选。
+  const filterKey = DIVIDEND_FILTER_KEYS.has(options.filterKey) ? options.filterKey : getDividendFilterKey();
   const manualByYear = getManualByYear();
   const dividendEntriesByYear = getDividendEntriesByYear();
   const snapshotsByYear = getSnapshotsByYear();
@@ -799,13 +800,31 @@ export function computeIncomeSummary(today = new Date()) {
     const yearEnd = getYearEndNetCny(year, snapshotsByYear, manualByYear, currentYear);
     const yearStart = getYearEndNetCny(year - 1, snapshotsByYear, manualByYear, currentYear);
     const hasCapitalReturn = yearEnd.netCny !== null && yearStart.netCny !== null;
-    const capitalReturnCny = hasCapitalReturn
+    // 历史年份允许直接回填资金收益/收益率（回填值优先）；当年始终按净值链实时推算。
+    const manualCapitalCny = manual && manual.capitalReturnCny !== null && manual.capitalReturnCny !== undefined
+      ? roundMoney(manual.capitalReturnCny) : null;
+    const manualCapitalRate = manual && manual.capitalReturnRate !== null && manual.capitalReturnRate !== undefined
+      ? safeNumber(manual.capitalReturnRate, 0) : null;
+    const derivedCapitalCny = hasCapitalReturn
       ? roundMoney(yearEnd.netCny - yearStart.netCny - netInflowCny)
       : null;
+    const preferManual = year < currentYear;
+    const capitalReturnCny = preferManual && manualCapitalCny !== null
+      ? manualCapitalCny
+      : (derivedCapitalCny !== null ? derivedCapitalCny : manualCapitalCny);
     // 收益率 = 当年资金收益 / 年初净值（扣除净注入后的真实回报率）。
-    const capitalReturnRate = (hasCapitalReturn && yearStart.netCny > 0)
+    const derivedCapitalRate = capitalReturnCny !== null && yearStart.netCny > 0
       ? capitalReturnCny / yearStart.netCny
       : null;
+    const capitalReturnRate = preferManual && manualCapitalRate !== null
+      ? manualCapitalRate
+      : (derivedCapitalRate !== null ? derivedCapitalRate : manualCapitalRate);
+    // 股息收益率分母：优先年初净值；缺失时用回填的资金收益额/率反推年初净值。
+    let dividendRateBaseCny = yearStart.netCny !== null && yearStart.netCny > 0 ? yearStart.netCny : null;
+    if (dividendRateBaseCny === null && manualCapitalCny !== null && manualCapitalRate) {
+      dividendRateBaseCny = Math.abs(manualCapitalCny / manualCapitalRate);
+    }
+    const dividendYieldRate = dividendRateBaseCny ? dividendCny / dividendRateBaseCny : null;
     const totalReferenceCny = capitalReturnCny === null ? null : roundMoney(dividendCny + capitalReturnCny);
 
     rowMap.set(year, {
@@ -817,13 +836,14 @@ export function computeIncomeSummary(today = new Date()) {
       coreDividendCny,
       capitalReturnCny,
       capitalReturnRate,
+      dividendYieldRate,
       totalReferenceCny,
       netInflowCny,
       yearEndNetCny: yearEnd.netCny,
       yearEndSource: yearEnd.source,
       yearEndDate: yearEnd.date,
       yearStartNetCny: yearStart.netCny,
-      capitalReturnAvailable: hasCapitalReturn,
+      capitalReturnAvailable: capitalReturnCny !== null,
       dividendYoy: null,
       capitalReturnYoy: null,
       totalReferenceYoy: null,
@@ -843,13 +863,15 @@ export function computeIncomeSummary(today = new Date()) {
   const current = rowMap.get(currentYear) || rowsAsc[rowsAsc.length - 1] || null;
   const previousCurrent = rowMap.get(currentYear - 1) || null;
   const coreYoy = current ? getIncomeYoy(current.coreDividendCny, previousCurrent && previousCurrent.coreDividendCny) : null;
+  // 展示从 INCOME_START_YEAR 起；更早年份仍留在 rowMap 里参与净值链与同比计算。
+  const visibleRowsAsc = rowsAsc.filter((row) => row.year >= INCOME_START_YEAR);
 
   return {
     currentYear,
     filterKey,
     today: todayLabel,
-    rows: rowsAsc.slice().sort((a, b) => b.year - a.year),
-    trendRows: rowsAsc,
+    rows: visibleRowsAsc.slice().sort((a, b) => b.year - a.year),
+    trendRows: visibleRowsAsc,
     current,
     northStar: {
       year: currentYear,

@@ -108,6 +108,8 @@ refs.incomeYearList.addEventListener('click', (event) => {
     dividendCny: existing ? existing.dividendCny : '',
     yearEndNetCny: existing ? existing.yearEndNetCny : '',
     netInflowCny: existing ? existing.netInflowCny : '',
+    capitalReturnCny: existing && existing.capitalReturnCny !== null && existing.capitalReturnCny !== undefined ? existing.capitalReturnCny : '',
+    capitalReturnRatePercent: existing && existing.capitalReturnRate !== null && existing.capitalReturnRate !== undefined ? Math.round(existing.capitalReturnRate * 10000) / 100 : '',
     existing: Boolean(existing)
   });
 });
