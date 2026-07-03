@@ -73,7 +73,7 @@ function renderHomeHero(summary) {
   const pnlArrow = pnl > 0 ? '\u25b2' : pnl < 0 ? '\u25bc' : '';
   refs.homeHero.innerHTML = `
     <div class="home-hero-label-row">
-      <span class="home-hero-label">${LABELS.totalMarketValue}</span>
+      <span class="home-hero-label">总资产</span>
       <button class="ghost-minus" type="button" data-summary-action="liability" aria-label="${LABELS.liability}">-</button>
     </div>
     <strong class="home-hero-value">${escapeHtml(formatDisplayMoney(summary.netMarketValueCny, 'CNY'))}</strong>

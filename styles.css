@@ -4840,3 +4840,439 @@ body[data-active-page="home"] .quick-add-button {
     justify-content: flex-end;
   }
 }
+
+/* ============================================================
+   Finance comfort pass: softer material, narrower home rhythm.
+   Inspired by recent high-polish finance apps: pearl surfaces,
+   slate typography, restrained red/green semantic accents.
+   ============================================================ */
+
+:root {
+  --color-ink: #2b3642;
+  --color-ink-strong: #182431;
+  --color-primary: #d94d3f;
+  --color-loss: #318464;
+  --color-bg: #fbfcfd;
+  --color-bg-muted: #f1f4f7;
+  --color-frame-bg: #edf2f6;
+  --color-hairline: #dce2e8;
+  --color-text-secondary: #87919d;
+  --color-text-hint: #adb5bf;
+  --color-surface-soft: #f6f8fa;
+  --color-surface-warm: #ffffff;
+  --border-compact: 1px solid var(--color-hairline);
+  --border-thin: 1px solid var(--color-hairline);
+  --border-medium: 2px solid var(--color-ink);
+  --border-thick: 2px solid var(--color-ink);
+  --tint-primary: rgba(217, 77, 63, 0.1);
+  --ring-primary: 0 0 0 3px rgba(217, 77, 63, 0.18);
+  --panel: var(--color-surface-warm);
+  --line: var(--color-hairline);
+  --line-soft: var(--color-bg-muted);
+  --text: var(--color-ink);
+  --muted: var(--color-text-secondary);
+  --brand: var(--color-ink-strong);
+  --brand-soft: var(--color-bg-muted);
+  --accent: var(--color-primary);
+  --surface: var(--color-surface-warm);
+  --shadow: 0 12px 34px rgba(25, 39, 55, 0.07);
+}
+
+html {
+  background:
+    radial-gradient(circle at 50% -18%, rgba(255, 255, 255, 0.96) 0, rgba(255, 255, 255, 0) 42%),
+    linear-gradient(180deg, #f8fafc 0%, #edf2f6 100%);
+}
+
+body {
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
+}
+
+body[data-active-page="home"] {
+  padding: max(24px, env(safe-area-inset-top)) 24px calc(48px + env(safe-area-inset-bottom));
+}
+
+body[data-active-page="home"] .app-shell {
+  width: min(100%, 376px);
+}
+
+@media (min-width: 431px) {
+  .app-shell::before {
+    top: 8px;
+    bottom: 8px;
+    width: min(414px, calc(100% - 20px));
+    border: 1px solid rgba(131, 144, 158, 0.2);
+    border-radius: 34px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 22px 70px rgba(29, 43, 58, 0.12);
+  }
+
+  body[data-active-page="home"] {
+    padding-top: 22px;
+  }
+}
+
+body[data-active-page="home"] .page-stack {
+  gap: 0;
+}
+
+button:focus-visible {
+  box-shadow: var(--ring-primary);
+}
+
+.home-brand,
+.top-bar-title,
+.panel-title,
+.holding-name,
+.home-nav-title,
+.modal-title,
+.confirm-message {
+  color: var(--color-ink-strong);
+}
+
+.home-top {
+  padding: 18px 0 18px;
+  border-bottom: 2px solid var(--color-ink);
+}
+
+.home-brand {
+  font-size: 13px;
+  font-weight: 760;
+  letter-spacing: 5px;
+}
+
+.home-top-actions {
+  gap: 18px;
+}
+
+.summary-action-button {
+  width: 30px;
+  height: 30px;
+  color: var(--color-ink);
+}
+
+.summary-action-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.summary-action-button:hover,
+.summary-action-button:focus-visible {
+  color: var(--color-primary);
+}
+
+.home-hero {
+  padding: 27px 0 24px;
+}
+
+.home-hero-label-row {
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.home-hero-label,
+.hm-label,
+.section-label {
+  color: var(--color-text-secondary);
+  font-weight: 760;
+  letter-spacing: 1.4px;
+}
+
+.home-hero-label {
+  font-size: 14px;
+}
+
+.home-hero .ghost-minus {
+  color: var(--color-text-hint);
+  font-size: 15px;
+  font-weight: 760;
+}
+
+.home-hero-value {
+  color: var(--color-ink-strong);
+  font-size: 44px;
+  font-weight: 760;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.home-hero-pnl {
+  display: block;
+  margin-top: 10px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 760;
+  letter-spacing: 0;
+}
+
+.home-hero-pnl strong.is-gain,
+.hm-value.is-gain,
+.hm-sub strong.is-gain,
+.income-amount.is-gain {
+  color: var(--color-primary);
+}
+
+.home-hero-pnl strong.is-loss,
+.hm-value.is-loss,
+.hm-sub strong.is-loss,
+.income-amount.is-loss {
+  color: var(--color-loss);
+}
+
+.home-hero-fx {
+  margin-top: 8px;
+  color: #9aa3ad;
+  font-size: 11px;
+  font-weight: 680;
+  letter-spacing: 0.4px;
+}
+
+.home-metrics {
+  grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+  gap: 0 24px;
+  margin-top: 0;
+  padding: 21px 0 22px;
+  border-top: 1px solid var(--color-hairline);
+}
+
+.home-metric {
+  grid-template-rows: 18px 32px 8px 18px;
+  row-gap: 6px;
+}
+
+.home-metric-divider {
+  background: #d7dee5;
+}
+
+.hm-label {
+  font-size: 12px;
+  letter-spacing: 1.1px;
+}
+
+.hm-value {
+  color: var(--color-ink-strong);
+  font-size: 23px;
+  font-weight: 780;
+  letter-spacing: 0;
+}
+
+.hm-value.is-empty {
+  color: #9ba3ad;
+  font-weight: 760;
+}
+
+.hm-bar {
+  height: 5px;
+  background: #edf0f3;
+}
+
+.hm-bar i {
+  background: var(--color-ink);
+}
+
+.hm-sub {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 720;
+  letter-spacing: 0;
+}
+
+.section-label {
+  margin: 0 0 5px;
+  font-size: 12px;
+}
+
+.home-nav-item {
+  min-height: 62px;
+  padding: 16px 0 15px;
+  border-bottom-color: var(--color-hairline);
+}
+
+.home-nav-item:active {
+  background: rgba(238, 243, 247, 0.76);
+}
+
+.home-nav-title {
+  font-size: 18px;
+  font-weight: 780;
+  letter-spacing: 0;
+}
+
+.home-nav-side {
+  gap: 10px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 740;
+  letter-spacing: 0;
+}
+
+.home-nav-summary {
+  color: var(--color-text-secondary);
+}
+
+.home-nav-side svg {
+  width: 15px;
+  height: 15px;
+  color: var(--color-ink);
+}
+
+.quick-add-button {
+  min-height: 58px;
+  margin-top: 24px;
+  padding: 0;
+  border-radius: 6px;
+  background: #1b2734;
+  box-shadow: 0 14px 30px rgba(27, 39, 52, 0.12);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 780;
+  letter-spacing: 2px;
+}
+
+.quick-add-button:active {
+  transform: scale(0.985);
+}
+
+.top-bar {
+  border-bottom-color: var(--color-ink);
+}
+
+.circle-button {
+  background: rgba(246, 248, 250, 0.88);
+  box-shadow: inset 0 0 0 1px rgba(188, 198, 208, 0.58);
+  color: var(--color-ink);
+}
+
+.circle-button:hover,
+.circle-button:focus-visible {
+  color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px rgba(217, 77, 63, 0.28);
+}
+
+.panel {
+  border-top-color: var(--color-hairline);
+}
+
+.holding-card,
+.income-year-row:not(.income-year-head),
+.income-record-block,
+.dividend-month-row {
+  border-bottom-color: var(--color-hairline);
+}
+
+.metric-label,
+.metric-label-button,
+.holding-code,
+.holding-price,
+.legend-label,
+.legend-value,
+.panel-note,
+.modal-note,
+.text-button {
+  color: var(--color-text-secondary);
+}
+
+.metric-value,
+.dividend-status-button--value,
+.dm-value,
+.dmr-total,
+.record-amount {
+  color: var(--color-ink-strong);
+}
+
+.weight-pill.is-core {
+  background: var(--color-ink);
+  color: #fff;
+}
+
+.weight-pill.is-income {
+  border-color: rgba(34, 42, 51, 0.52);
+  color: var(--color-ink);
+}
+
+.segment-button,
+.sort-chip,
+.income-manual-button,
+.modal-bucket-button,
+.quick-add-option {
+  border-color: rgba(34, 42, 51, 0.36);
+}
+
+.segment-button.is-active,
+.sort-chip.is-active,
+.modal-bucket-button.is-active,
+.modal-bucket-button.is-core.is-active,
+.modal-bucket-button.is-income.is-active {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+}
+
+.empty-state,
+.income-record-overview article {
+  background: var(--color-surface-soft);
+}
+
+.dividend-metric-badge.is-up {
+  background: rgba(49, 132, 100, 0.12);
+  color: var(--color-loss);
+}
+
+.dividend-metric-badge.is-down,
+.toast.is-error {
+  color: var(--color-primary);
+}
+
+.modal-sheet,
+.confirm-sheet {
+  border-color: rgba(34, 42, 51, 0.28);
+  border-radius: 8px;
+  box-shadow: 0 24px 80px rgba(14, 24, 35, 0.2);
+}
+
+.modal-input {
+  border-color: rgba(34, 42, 51, 0.34);
+}
+
+.modal-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(217, 77, 63, 0.1);
+}
+
+.modal-button,
+.confirm-button,
+.toast {
+  border-radius: 6px;
+}
+
+.modal-button--primary,
+.confirm-button--ok {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+}
+
+.modal-button--danger,
+.confirm-button--danger {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+@media (max-width: 380px) {
+  .home-hero-value {
+    font-size: 40px;
+  }
+
+  .home-metrics {
+    gap: 0 20px;
+  }
+
+  .home-nav-title {
+    font-size: 17px;
+  }
+
+  .home-nav-side {
+    font-size: 12px;
+  }
+}
