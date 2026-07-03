@@ -5,10 +5,10 @@ import {
   UI_TEXT, LABELS, HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD,
   SWIPE_SUPPRESS_CLICK_MS, PAGE_KEYS, DIVIDEND_FILTER_KEYS
 } from './constants.js';
-import { computeHoldings, isCashModelActive } from './compute.js';
+import { computeHoldings, getBucketSegments, isCashModelActive } from './compute.js';
 import {
   renderApp, renderSavedStateQuietly, renderSortChips, renderBucketsView,
-  renderHoldingsView, applyHoldingSortSelection, updateDividendTooltipSide,
+  applyLegendExpandState, applyHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
   isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset
@@ -44,6 +44,7 @@ refs.privacyButton.addEventListener('click', () => { state.showAmounts = !state.
 refs.exportButton.addEventListener('click', syncPortfolioToCloud);
 refs.importButton.addEventListener('click', () => refs.importFileInput.click());
 refs.importFileInput.addEventListener('change', handleImportFile);
+refs.legendToggle.addEventListener('click', () => { const t = refs.legendToggle.getBoundingClientRect().top; state.legendExpanded = !state.legendExpanded; saveState(); applyLegendExpandState({ preserveScroll: true, toggleTop: t }); });
 refs.refreshButton.addEventListener('click', () => { refreshMarketData({ silent: false }); });
 // 现金模式下，首页「+」直接开一笔买入交易（替代旧的新增持仓）；未启用时仍是新增持仓。
 refs.addButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'add'); });
@@ -124,7 +125,8 @@ refs.bucketTrack.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-bucket-toggle]'); if (!btn) return;
   const key = btn.dataset.bucketToggle;
   state.activeBucketKey = state.activeBucketKey === key ? null : key;
-  renderBucketsView(computeHoldings().holdings, { animateDetail: true });
+  const summary = computeHoldings();
+  renderBucketsView(getBucketSegments(summary.holdings), summary.holdings, summary, { animateDetail: true });
 });
 
 refs.stockList.addEventListener('mouseover', (e) => { const b = e.target.closest('.dividend-status-button'); if (b) updateDividendTooltipSide(b); });
@@ -136,17 +138,7 @@ refs.stockList.addEventListener('click', (event) => {
   const tb = event.target.closest('.dividend-status-button');
   if (tb) { if (tb.classList.contains('dividend-status-button--value')) { event.preventDefault(); event.stopPropagation(); toggleDividendTooltip(tb); return; } updateDividendTooltipSide(tb); }
   const button = event.target.closest('[data-action]'), targetItem = event.target.closest('.holding-card') || event.target.closest('.holding-swipe');
-  // 点按行本体（非操作按钮）→ 展开/收起该行的编辑区。
-  if (!button) {
-    const card = event.target.closest('.holding-card');
-    const localId = card ? safeNumber(card.dataset.id, 0) : 0;
-    if (!localId) return;
-    closeActiveDividendTooltip(true);
-    mutable.expandedHoldingId = mutable.expandedHoldingId === localId ? 0 : localId;
-    renderHoldingsView(computeHoldings().holdings, { animate: false });
-    return;
-  }
-  if (!targetItem) return;
+  if (!button || !targetItem) return;
   const localId = safeNumber(targetItem.dataset.id, 0);
   const holding = state.holdings.find((i) => i.localId === localId); if (!holding) return;
   const computed = computeHoldings().holdings.find((i) => i.localId === localId);
@@ -155,16 +147,15 @@ refs.stockList.addEventListener('click', (event) => {
     const name = computed ? computed.name : holding.symbol;
     showConfirm(LABELS.deleteConfirm, { sub: name, okLabel: '\u5220\u9664', danger: true, cancelLabel: LABELS.cancel }).then((confirmed) => {
       if (!confirmed) return;
-      if (mutable.expandedHoldingId === localId) mutable.expandedHoldingId = 0;
       const w = refs.stockList.querySelector(`.holding-swipe[data-id="${localId}"]`);
       if (w) {
         const prev = captureHoldingPositions(localId);
         animateHoldingRemoval(w, () => {
           if (mutable.activeDividendTooltipButton && w.contains(mutable.activeDividendTooltipButton)) mutable.activeDividendTooltipButton = null;
           w.remove(); state.holdings = state.holdings.filter((i) => i.localId !== localId); saveState();
-          renderApp({ animateBucketDetail: false, animateHoldings: false, renderHoldingsList: false }); animateHoldingReflow(prev);
+          renderApp({ animateLegend: false, animateBucketDetail: false, animateHoldings: false, renderHoldingsList: false }); animateHoldingReflow(prev);
         });
-      } else { state.holdings = state.holdings.filter((i) => i.localId !== localId); saveState(); renderApp({ animateBucketDetail: false, animateHoldings: false, renderHoldingsList: false }); }
+      } else { state.holdings = state.holdings.filter((i) => i.localId !== localId); saveState(); renderApp({ animateLegend: false, animateBucketDetail: false, animateHoldings: false, renderHoldingsList: false }); }
     });
     return;
   }

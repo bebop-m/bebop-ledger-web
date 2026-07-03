@@ -5,7 +5,7 @@ import {
   normalizeDividendSource, normalizeDividendStatus, formatDateLabel,
   buildDividendSourceId, resolveEffectivePayDate
 } from './utils.js';
-import { LABELS, DIVIDEND_FILTER_KEYS, INCOME_START_YEAR } from './constants.js';
+import { COMPANY_COLORS, BUCKET_COLORS, LABELS, DIVIDEND_FILTER_KEYS, INCOME_START_YEAR } from './constants.js';
 
 export function inferQuote(symbol) {
   return inferQuoteFromMap(symbol, state.quotes, DEFAULT_QUOTES);
@@ -120,10 +120,30 @@ export function computeHoldings() {
   return result;
 }
 
+export function getCompanySegments(holdings) {
+  return holdings.filter((i) => safeNumber(i.marketValueCny, 0) > 0)
+    .sort((a, b) => safeNumber(b.marketValueCny, 0) - safeNumber(a.marketValueCny, 0))
+    .map((item, index) => ({
+      key: String(item.localId), label: item.name,
+      value: safeNumber(item.marketValueCny, 0),
+      color: COMPANY_COLORS[index % COMPANY_COLORS.length]
+    }));
+}
+
+export function getBucketSegments(holdings) {
+  const totals = { core: 0, income: 0 };
+  holdings.forEach((i) => { totals[i.bucket] += safeNumber(i.marketValueCny, 0); });
+  const sum = totals.core + totals.income || 1;
+  return [
+    { key: 'core', label: LABELS.core, value: totals.core, percent: totals.core / sum, color: BUCKET_COLORS.core },
+    { key: 'income', label: LABELS.income, value: totals.income, percent: totals.income / sum, color: BUCKET_COLORS.income }
+  ].filter((i) => i.value > 0);
+}
+
 export function getBucketSummaryItems(holdings) {
   const groups = {
-    core: { key: 'core', label: LABELS.core, marketValueCny: 0, totalDividendCny: 0 },
-    income: { key: 'income', label: LABELS.income, marketValueCny: 0, totalDividendCny: 0 }
+    core: { key: 'core', label: LABELS.core, color: BUCKET_COLORS.core, marketValueCny: 0, totalDividendCny: 0 },
+    income: { key: 'income', label: LABELS.income, color: BUCKET_COLORS.income, marketValueCny: 0, totalDividendCny: 0 }
   };
   holdings.forEach((i) => {
     const k = i.bucket === 'income' ? 'income' : 'core';

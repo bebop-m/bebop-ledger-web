@@ -14,6 +14,8 @@ export const GITHUB_TOKEN_STORAGE_KEY = 'bebop-ledger-github-token-v2';
 export const TENCENT_REALTIME_ENDPOINT = 'https://qt.gtimg.cn/q=';
 export const TENCENT_BATCH_SIZE = 60;
 export const PORTFOLIO_SNAPSHOT_VERSION = 2;
+export const LEGEND_COLLAPSED_COUNT = 5;
+export const LEGEND_TOGGLE_ANIMATION_MS = 220;
 export const MASK_AMOUNT = '******';
 export const MASK_PRICE = '***.**';
 export const DEFAULT_STALE_DAYS = 7;
@@ -32,6 +34,7 @@ export const DIVIDEND_FILTER_KEYS = new Set(['all', 'core', 'income']);
 export const TENCENT_REQUEST_TIMEOUT_MS = 8000;
 export const HOLDING_ENTER_STAGGER_MS = 25;
 export const HOLDING_ENTER_STAGGER_MAX_MS = 400;
+export const LEGEND_ENTER_STAGGER_MS = 30;
 export const TOAST_DEFAULT_DURATION_MS = 2200;
 export const HOLDING_REMOVAL_FALLBACK_MS = 260;
 export const SWIPE_SUPPRESS_CLICK_MS = 280;
@@ -56,6 +59,7 @@ export const UI_TEXT = {
   dividendFilterIncome: '\u6253\u5de5\u4ed3'
 };
 
+export const BUCKET_CHIP_COMPACT_THRESHOLD = 0.16;
 export const HOLDING_SWIPE_DELETE_WIDTH = 72;
 export const HOLDING_SWIPE_OPEN_THRESHOLD = 34;
 
@@ -65,6 +69,15 @@ export const DEFAULT_RATES = { CNY: 1, USD: 7.22, HKD: 0.92 };
    A 股现金红利基本除息日当天到账（lag 0）；港股通常除息后数周才派付；美股约两周。
    真实 payDate 或用户确认值优先，缺失时才用这里估算。 */
 export const PAYDATE_LAG_DAYS = { CN: 0, HK: 30, US: 14 };
+
+export const COMPANY_COLORS = [
+  '#152849', '#f28c28', '#cfd6e1', '#8e9aae', '#e7d7c7',
+  '#6d7b90', '#f5b36b', '#2a4168', '#d9e0e8', '#a2acba',
+  '#f3c58f', '#1e3357', '#bcc6d2', '#7f8ca0', '#eadfce',
+  '#5d6d86', '#f0a04b', '#314b72', '#d4dae3', '#95a1b3'
+];
+
+export const BUCKET_COLORS = { core: '#152849', income: '#f28c28' };
 
 export const LABELS = {
   totalMarketValue: '\u6301\u4ed3\u603b\u91d1\u989d',
@@ -77,9 +90,6 @@ export const LABELS = {
   sortMarketValue: '\u6301\u4ed3\u5e02\u503c',
   sortDividendYield: '\u9884\u4f30\u80a1\u606f\u7387',
   sortDividendAmount: '\u9884\u4f30\u5e74\u5316\u80a1\u606f',
-  /* \u6301\u4ed3\u884c\u526f\u6307\u6807\u77ed\u6807\u7b7e */
-  shortMarketValue: '\u5e02\u503c',
-  shortDividendYield: '\u80a1\u606f\u7387',
   core: '\u6838\u5fc3\u4ed3',
   income: '\u6253\u5de5\u4ed3',
   cancel: '\u53d6\u6d88',
@@ -148,6 +158,9 @@ export const LABELS = {
   dividendStatusFresh: '\u5df2\u66f4\u65b0',
   dividendStatusStale: '\u7f13\u5b58',
   dividendStatusMissing: '\u7f3a\u5931',
+  expandLegend: '\u5c55\u5f00\u5168\u90e8',
+  collapseLegend: '\u6536\u8d77',
+  itemsUnit: '\u9879',
   unknownHK: '\u672a\u8bc6\u522b\u6e2f\u80a1',
   unknownCN: '\u672a\u8bc6\u522bA\u80a1',
   unknownUS: '\u672a\u8bc6\u522b\u7f8e\u80a1'

@@ -1,6 +1,6 @@
 import { state, refs, mutable, saveState } from './state.js';
 import {
-  computeHoldings, getBucketSummaryItems,
+  computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems,
   computeDividendCalendar, computeIncomeSummary,
   computeCashFlowRecords, computeTradeSummary, isCashModelActive
 } from './compute.js';
@@ -11,8 +11,9 @@ import {
 } from './utils.js';
 import {
   MASK_AMOUNT, MASK_PRICE, LABELS, UI_TEXT,
+  LEGEND_COLLAPSED_COUNT, LEGEND_TOGGLE_ANIMATION_MS, LEGEND_ENTER_STAGGER_MS,
   HOLDING_ENTER_STAGGER_MS, HOLDING_ENTER_STAGGER_MAX_MS, TOOLTIP_FALLBACK_WIDTH,
-  TOOLTIP_GAP, HOLDING_REMOVAL_FALLBACK_MS,
+  TOOLTIP_GAP, BUCKET_CHIP_COMPACT_THRESHOLD, HOLDING_REMOVAL_FALLBACK_MS,
   HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD
 } from './constants.js';
 
@@ -20,6 +21,8 @@ import {
 export function formatDisplayMoney(value, currency = 'CNY') {
   return state.showAmounts ? formatMoney(value, currency) : MASK_AMOUNT;
 }
+
+function getHoldingTitleDivider() { return '\u00b7'; }
 
 /* ── Tooltip helpers ── */
 export function updateDividendTooltipSide(button) {
@@ -127,50 +130,151 @@ function renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems
   });
 }
 
-/* ── Buckets：结构条（黑=核心仓，蓝=打工仓，点按段落看小计）── */
+/* ── Legend ── */
+function getLegendSegmentKey(seg, i) {
+  if (seg && seg.key != null) return String(seg.key);
+  if (seg && seg.label) return String(seg.label);
+  return `legend-${i}`;
+}
+
+function getLegendViewModel(segments) {
+  const total = segments.reduce((s, i) => s + i.value, 0) || 1;
+  const cc = Math.min(segments.length, LEGEND_COLLAPSED_COUNT);
+  return { total, collapsedCount: cc, canToggleLegend: cc < segments.length };
+}
+
+function getLegendRowMarkup(seg, pct, index, opts = {}) {
+  const { animate = true } = opts;
+  return `<div class="legend-row${animate ? ' is-entering' : ''}" data-legend-key="${escapeHtml(getLegendSegmentKey(seg, index))}" style="animation-delay:${index * LEGEND_ENTER_STAGGER_MS}ms">
+    <div class="legend-row-shell"><div class="legend-main"><span class="legend-bar" aria-hidden="true"><i style="width:${Math.max(3, pct * 100).toFixed(1)}%"></i></span><span class="legend-label">${escapeHtml(seg.label)}</span></div>
+    <span class="legend-value">${(pct * 100).toFixed(1)}%</span></div></div>`;
+}
+
+function syncLegendRow(row, seg, pct, index, opts = {}) {
+  const bar = row.querySelector('.legend-bar i'), label = row.querySelector('.legend-label'), value = row.querySelector('.legend-value');
+  if (!bar || !label || !value) return false;
+  row.dataset.legendKey = getLegendSegmentKey(seg, index);
+  row.className = `legend-row${opts.animate ? ' is-entering' : ''}`;
+  row.style.animationDelay = `${index * LEGEND_ENTER_STAGGER_MS}ms`;
+  bar.style.width = `${Math.max(3, pct * 100).toFixed(1)}%`; label.textContent = seg.label; value.textContent = `${(pct * 100).toFixed(1)}%`;
+  return true;
+}
+
+function keepLegendToggleStable(prevTop) {
+  if (!Number.isFinite(prevTop)) return;
+  const adjust = () => { const d = refs.legendToggle.getBoundingClientRect().top - prevTop; if (Math.abs(d) > 1) window.scrollBy(0, d); };
+  requestAnimationFrame(() => { adjust(); window.setTimeout(adjust, LEGEND_TOGGLE_ANIMATION_MS + 40); });
+}
+
+export function applyLegendExpandState(opts = {}) {
+  const { preserveScroll = false, toggleTop = 0 } = opts;
+  const segments = getCompanySegments(computeHoldings().holdings);
+  const v = getLegendViewModel(segments);
+  const visible = state.legendExpanded ? segments : segments.slice(0, v.collapsedCount);
+  refs.companyLegend.innerHTML = visible.map((s, i) => getLegendRowMarkup(s, s.value / v.total, i, { animate: false })).join('');
+  refs.legendToggle.hidden = !v.canToggleLegend;
+  refs.legendToggle.textContent = state.legendExpanded ? LABELS.collapseLegend
+    : `${LABELS.expandLegend} ${segments.length} ${LABELS.itemsUnit}`;
+  if (preserveScroll) keepLegendToggleStable(toggleTop);
+}
+
+export function renderLegendView(segments, opts = {}) {
+  const { animate = true } = opts;
+  const v = getLegendViewModel(segments);
+  const visible = state.legendExpanded ? segments : segments.slice(0, v.collapsedCount);
+  refs.companyLegend.innerHTML = visible.map((s, i) => getLegendRowMarkup(s, s.value / v.total, i, { animate })).join('');
+  refs.legendToggle.hidden = !v.canToggleLegend;
+  if (v.canToggleLegend) refs.legendToggle.textContent = state.legendExpanded ? LABELS.collapseLegend : `${LABELS.expandLegend} ${segments.length} ${LABELS.itemsUnit}`;
+}
+
+export function patchLegendView(segments) {
+  if (!segments.length) { refs.companyLegend.innerHTML = ''; refs.legendToggle.hidden = true; return; }
+  const v = getLegendViewModel(segments);
+  const visible = state.legendExpanded ? segments : segments.slice(0, v.collapsedCount);
+  const rows = Array.from(refs.companyLegend.querySelectorAll('.legend-row'));
+  const keyedRows = new Map(rows.filter((r) => r.dataset.legendKey).map((r) => [r.dataset.legendKey, r]));
+  if (rows.length && keyedRows.size !== rows.length) { renderLegendView(segments, { animate: false }); return; }
+  const nextKeys = visible.map((s, i) => getLegendSegmentKey(s, i));
+  const reorder = rows.length !== nextKeys.length || rows.some((r, i) => r.dataset.legendKey !== nextKeys[i]);
+  let fallback = false;
+  visible.forEach((seg, i) => {
+    if (fallback) return;
+    let row = keyedRows.get(nextKeys[i]);
+    if (!row) row = createElementFromHtml(getLegendRowMarkup(seg, seg.value / v.total, i, { animate: false }));
+    if (!row || !syncLegendRow(row, seg, seg.value / v.total, i)) { fallback = true; return; }
+    if (reorder || !row.isConnected) refs.companyLegend.appendChild(row);
+  });
+  if (fallback) { renderLegendView(segments, { animate: false }); return; }
+  keyedRows.forEach((row, key) => { if (!nextKeys.includes(key)) row.remove(); });
+  refs.legendToggle.hidden = !v.canToggleLegend;
+}
+
+/* ── Buckets ── */
 function getBucketLabelText(l) { return String(l || '').replace(/[：:]\s*$/, ''); }
 
-function getBucketViewModel(holdings) {
+function getBucketViewModel(segments, holdings, summary) {
+  const total = segments.reduce((s, i) => s + safeNumber(i.value, 0), 0);
   const items = getBucketSummaryItems(holdings);
   if (state.activeBucketKey && !items.some((i) => i.key === state.activeBucketKey)) state.activeBucketKey = null;
-  const total = items.reduce((s, i) => s + safeNumber(i.marketValueCny, 0), 0) || 1;
-  return { items, total, activeItem: items.find((i) => i.key === state.activeBucketKey) || null };
+  return { totalMarketValue: total, bucketItems: items, activeItem: items.find((i) => i.key === state.activeBucketKey) || null, overallNetYield: total > 0 ? summary.totalDividendCny / total : 0 };
 }
 
-function getBucketSegMarkup(item, total) {
-  const share = item.marketValueCny / total;
+function getBucketChipMarkup(item, total) {
+  const share = item.marketValueCny / (total || 1);
   const isActive = state.activeBucketKey === item.key;
-  return `<button class="bucket-bar-seg is-${item.key}${isActive ? ' is-active' : ''}" type="button" data-bucket-toggle="${item.key}" style="width:${(share * 100).toFixed(2)}%" aria-expanded="${isActive}" aria-label="${escapeHtml(item.label)} ${(share * 100).toFixed(1)}%"></button>`;
+  return `<button class="bucket-chip is-${item.key}${isActive ? ' is-active' : ''}${share < BUCKET_CHIP_COMPACT_THRESHOLD ? ' is-compact' : ''}" type="button" data-bucket-toggle="${item.key}" style="--bucket-share:${share.toFixed(4)};" aria-expanded="${isActive}"><span class="bucket-chip-label">${escapeHtml(item.label)}</span><span class="bucket-chip-value">${(share * 100).toFixed(1)}%</span></button>`;
 }
 
-function getBucketBarLabelMarkup(item, total) {
+function syncBucketChip(btn, item, total) {
+  const l = btn.querySelector('.bucket-chip-label'), v = btn.querySelector('.bucket-chip-value');
+  if (!l || !v) return false;
+  const share = item.marketValueCny / (total || 1);
   const isActive = state.activeBucketKey === item.key;
-  return `<button class="bucket-bar-label is-${item.key}${isActive ? ' is-active' : ''}" type="button" data-bucket-toggle="${item.key}" aria-expanded="${isActive}"><span class="bucket-bar-name">${escapeHtml(item.label)}</span><strong class="bucket-bar-pct">${((item.marketValueCny / total) * 100).toFixed(1)}%</strong></button>`;
+  btn.className = `bucket-chip is-${item.key}${isActive ? ' is-active' : ''}${share < BUCKET_CHIP_COMPACT_THRESHOLD ? ' is-compact' : ''}`;
+  btn.dataset.bucketToggle = item.key; btn.style.setProperty('--bucket-share', share.toFixed(4));
+  btn.setAttribute('aria-expanded', isActive ? 'true' : 'false'); l.textContent = item.label; v.textContent = `${(share * 100).toFixed(1)}%`;
+  return true;
 }
 
 function getBucketDetailMarkup(activeItem, opts = {}) {
   if (!activeItem) return '';
   const { animateDetail = true } = opts;
-  return `<div class="bucket-detail-v3${animateDetail ? ' is-entering' : ''}">
-    <div class="bd-col"><span class="bd-label">${getBucketLabelText(LABELS.marketValue)}</span><strong class="bd-value" data-bucket-field="marketValue">${formatDisplayMoney(activeItem.marketValueCny, 'CNY')}</strong></div>
-    <i class="bd-divider" aria-hidden="true"></i>
-    <div class="bd-col"><span class="bd-label">${getBucketLabelText(LABELS.annualDividend)}</span><strong class="bd-value" data-bucket-field="annualDividend">${formatDisplayMoney(activeItem.totalDividendCny, 'CNY')}</strong></div>
-    <i class="bd-divider" aria-hidden="true"></i>
-    <div class="bd-col"><span class="bd-label">${getBucketLabelText(LABELS.dividendYield)}</span><strong class="bd-value" data-bucket-field="averageYield">${formatPercent(activeItem.averageYield)}</strong></div>
-  </div>`;
+  return `<div class="bucket-detail-card${animateDetail ? ' is-entering' : ''}">
+    <div class="bucket-detail-row"><span class="bucket-detail-label">${getBucketLabelText(LABELS.marketValue)}</span><span class="bucket-detail-value" data-bucket-field="marketValue">${formatDisplayMoney(activeItem.marketValueCny, 'CNY')}</span></div>
+    <div class="bucket-detail-row"><span class="bucket-detail-label">${getBucketLabelText(LABELS.annualDividend)}</span><span class="bucket-detail-value is-income" data-bucket-field="annualDividend">${formatDisplayMoney(activeItem.totalDividendCny, 'CNY')}</span></div>
+    <div class="bucket-detail-row"><span class="bucket-detail-label">${getBucketLabelText(LABELS.dividendYield)}</span><span class="bucket-detail-value" data-bucket-field="averageYield">${formatPercent(activeItem.averageYield)}</span></div></div>`;
 }
 
-export function renderBucketsView(holdings, opts = {}) {
-  const v = getBucketViewModel(holdings);
-  refs.bucketTrack.innerHTML = `<div class="bucket-summary-v3${v.activeItem ? ' has-active' : ''}">
-    <div class="bucket-bar">${v.items.map((i) => getBucketSegMarkup(i, v.total)).join('')}</div>
-    <div class="bucket-bar-labels">${v.items.map((i) => getBucketBarLabelMarkup(i, v.total)).join('')}</div>
-    ${getBucketDetailMarkup(v.activeItem, opts)}
-  </div>`;
+function syncBucketDetail(card, item) {
+  const mv = card.querySelector('[data-bucket-field="marketValue"]'), ad = card.querySelector('[data-bucket-field="annualDividend"]'), ay = card.querySelector('[data-bucket-field="averageYield"]');
+  if (!mv || !ad || !ay) return false;
+  card.className = 'bucket-detail-card'; mv.textContent = formatDisplayMoney(item.marketValueCny, 'CNY');
+  ad.textContent = formatDisplayMoney(item.totalDividendCny, 'CNY'); ay.textContent = formatPercent(item.averageYield);
+  return true;
 }
 
-export function patchBucketsView(holdings) {
-  renderBucketsView(holdings, { animateDetail: false });
+export function renderBucketsView(segments, holdings, summary, opts = {}) {
+  refs.bucketTrack.classList.add('bucket-track--summary-v2');
+  const v = getBucketViewModel(segments, holdings, summary);
+  refs.bucketTrack.innerHTML = `<div class="bucket-summary-v2"><div class="bucket-chip-row">${v.bucketItems.map((i) => getBucketChipMarkup(i, v.totalMarketValue)).join('')}</div>${getBucketDetailMarkup(v.activeItem, opts)}</div>`;
+}
+
+export function patchBucketsView(segments, holdings, summary) {
+  refs.bucketTrack.classList.add('bucket-track--summary-v2');
+  const root = refs.bucketTrack.querySelector('.bucket-summary-v2'), chipRow = refs.bucketTrack.querySelector('.bucket-chip-row');
+  if (!root || !chipRow) { renderBucketsView(segments, holdings, summary, { animateDetail: false }); return; }
+  const v = getBucketViewModel(segments, holdings, summary);
+  const btns = new Map(Array.from(chipRow.querySelectorAll('.bucket-chip[data-bucket-toggle]')).map((b) => [b.dataset.bucketToggle, b]));
+  let fb = false;
+  v.bucketItems.forEach((item) => { if (fb) return; let b = btns.get(item.key); if (!b) b = createElementFromHtml(getBucketChipMarkup(item, v.totalMarketValue)); if (!b || !syncBucketChip(b, item, v.totalMarketValue)) { fb = true; return; } chipRow.appendChild(b); });
+  if (fb) { renderBucketsView(segments, holdings, summary, { animateDetail: false }); return; }
+  btns.forEach((b, k) => { if (!v.bucketItems.some((i) => i.key === k)) b.remove(); });
+  let dc = root.querySelector('.bucket-detail-card');
+  const oy = root.querySelector('[data-bucket-field="overallYield"]'); if (oy) oy.remove();
+  if (!v.activeItem) { if (dc) dc.remove(); return; }
+  if (!dc) dc = createElementFromHtml(getBucketDetailMarkup(v.activeItem, { animateDetail: false }));
+  if (!dc || !syncBucketDetail(dc, v.activeItem)) { renderBucketsView(segments, holdings, summary, { animateDetail: false }); return; }
+  root.appendChild(dc);
 }
 
 /* ── Sort Chips ── */
@@ -615,71 +719,40 @@ export function renderIncomeSummaryPage() {
   renderIncomeYearList(model);
 }
 
-/* ── Holdings：账本行（主数字跟随排序字段，点按行展开编辑区）── */
-const HOLDING_HERO_MAP = {
-  marketValueCny: { hero: 'marketValueText', secondLabelKey: 'shortDividendYield', second: 'yieldText' },
-  effectiveYield: { hero: 'yieldText', secondLabelKey: 'shortMarketValue', second: 'marketValueText' },
-  netAnnualDividendCny: { hero: 'annualDividendText', secondLabelKey: 'shortDividendYield', second: 'yieldText' }
-};
-
+/* ── Holdings ── */
 function getHoldingViewModel(item, index = 0) {
   const tl = buildDividendTooltipLines(item), sk = normalizeDividendStatus(item.dividendStatus, 'missing');
-  const v = {
+  return {
     priceText: state.showAmounts ? formatPlainPrice(item.price) : MASK_PRICE,
     marketValueText: state.showAmounts ? formatMoney(item.marketValueCny, 'CNY') : MASK_AMOUNT,
     annualDividendText: state.showAmounts ? formatMoney(item.netAnnualDividendCny, 'CNY') : MASK_AMOUNT,
     quantityText: state.showAmounts ? String(item.quantity) : MASK_AMOUNT,
     weightText: `${(item.holdingWeight * 100).toFixed(1)}%`,
-    weightPct: (safeNumber(item.holdingWeight, 0) * 100).toFixed(1),
     statusKey: sk, statusLabel: getDividendStatusLabel(sk), tooltipLines: tl,
     tooltipHtml: buildDividendTooltipHtml(tl), yieldText: formatPercent(item.effectiveYield),
     bucketTone: item.bucket === 'income' ? 'income' : 'core',
-    bucketLabel: item.bucket === 'income' ? LABELS.income : LABELS.core,
-    isExpanded: mutable.expandedHoldingId === item.localId,
     staggerDelay: Math.min(index * HOLDING_ENTER_STAGGER_MS, HOLDING_ENTER_STAGGER_MAX_MS)
   };
-  const heroMap = HOLDING_HERO_MAP[state.sortField] || HOLDING_HERO_MAP.marketValueCny;
-  v.heroText = v[heroMap.hero];
-  v.secondLabel = LABELS[heroMap.secondLabelKey];
-  v.secondText = v[heroMap.second];
-  return v;
-}
-
-function getHoldingDetailMarkup(item, v) {
-  return `<div class="hr-detail">
-    <div class="hr-detail-grid">
-      <button class="hr-cell" type="button" data-action="edit-quantity"><span class="hr-cell-label">${getBucketLabelText(LABELS.quantity)}</span><strong class="hr-cell-value" data-holding-field="quantity">${escapeHtml(v.quantityText)}</strong></button>
-      <i class="hr-cell-divider" aria-hidden="true"></i>
-      <button class="hr-cell" type="button" data-action="edit-tax"><span class="hr-cell-label">${getBucketLabelText(LABELS.annualDividend)}</span><strong class="hr-cell-value" data-holding-field="annualDividend">${escapeHtml(v.annualDividendText)}</strong></button>
-      <i class="hr-cell-divider" aria-hidden="true"></i>
-      <div class="hr-cell hr-cell--yield">
-        <button class="hr-cell-label hr-cell-label--button" type="button" data-action="edit-dividend">${getBucketLabelText(LABELS.dividendYield)}</button>
-        <button class="dividend-status-button dividend-status-button--value is-${v.statusKey}" type="button" aria-label="${escapeHtml(v.statusLabel)}" aria-expanded="false" data-tooltip-side="left" data-holding-field="effectiveYield"><span class="dividend-status-value" data-holding-field="effectiveYieldValue">${escapeHtml(v.yieldText)}</span><span class="dividend-status-tooltip" data-holding-field="dividendTooltip">${v.tooltipHtml}</span></button>
-      </div>
-    </div>
-    <div class="hr-detail-foot">
-      <span class="hr-bucket-tag is-${v.bucketTone}"><span data-holding-field="bucketLabel">${escapeHtml(v.bucketLabel)}</span><span class="hr-dot">·</span>权重 <span data-holding-field="weight">${escapeHtml(v.weightText)}</span></span>
-      <button class="hr-delete-link" type="button" data-action="delete">删除持仓</button>
-    </div>
-  </div>`;
 }
 
 function getHoldingMarkup(item, index, opts = {}) {
   const { animate = true } = opts, v = getHoldingViewModel(item, index);
   return `<div class="holding-swipe${animate ? ' is-entering' : ''}" data-id="${item.localId}" style="--holding-swipe-offset:0px;animation-delay:${v.staggerDelay}ms;">
     <button class="holding-swipe-delete" type="button" data-action="delete" aria-label="${LABELS.deleteConfirm} ${escapeHtml(item.name)}"><span>\u5220\u9664</span></button>
-    <article class="holding-card holding-row${v.isExpanded ? ' is-expanded' : ''}" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
-      <div class="hr-line">
-        <h3 class="hr-name">${escapeHtml(item.name)}</h3>
-        <strong class="hr-hero" data-holding-field="hero">${escapeHtml(v.heroText)}</strong>
-      </div>
-      <div class="hr-line hr-line--sub">
-        <span class="hr-meta"><span data-holding-field="symbol">${escapeHtml(item.symbol)}</span><span class="hr-dot">\u00b7</span><span data-holding-field="price">${escapeHtml(v.priceText)}</span></span>
-        <span class="hr-second"><span class="hr-second-label" data-holding-field="secondLabel">${escapeHtml(v.secondLabel)}</span><span data-holding-field="second">${escapeHtml(v.secondText)}</span></span>
-      </div>
-      ${v.isExpanded ? getHoldingDetailMarkup(item, v) : ''}
-      <span class="hr-weightbar" aria-hidden="true"><i class="is-${v.bucketTone}" data-holding-field="weightbar" style="width:${v.weightPct}%"></i></span>
-    </article></div>`;
+    <article class="holding-card" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
+    <header class="holding-head"><div class="holding-main"><h3 class="holding-name">${escapeHtml(item.name)}</h3>
+    <div class="holding-meta-row"><span class="holding-price" data-holding-field="price">${escapeHtml(v.priceText)}</span><span class="holding-divider">${getHoldingTitleDivider()}</span><span class="holding-code">${escapeHtml(item.symbol)}</span></div></div>
+    <div class="holding-side"><span class="weight-pill is-${v.bucketTone}" data-holding-field="weight">${escapeHtml(v.weightText)}</span>
+    <button class="ghost-minus" type="button" data-action="delete" aria-label="${LABELS.deleteConfirm} ${escapeHtml(item.name)}">-</button></div></header>
+    <div class="holding-grid">
+    <div class="metric-static"><div class="metric-row"><span class="metric-label">${LABELS.marketValue}</span><span class="metric-value" data-holding-field="marketValue">${escapeHtml(v.marketValueText)}</span></div></div>
+    <button class="metric-button metric-right" type="button" data-action="edit-quantity"><div class="metric-row metric-right"><span class="metric-label">${LABELS.quantity}</span><span class="metric-value" data-holding-field="quantity">${escapeHtml(v.quantityText)}</span></div></button>
+    <button class="metric-button" type="button" data-action="edit-tax"><div class="metric-row"><span class="metric-label">${LABELS.annualDividend}</span><span class="metric-value is-income" data-holding-field="annualDividend">${escapeHtml(v.annualDividendText)}</span></div></button>
+    <div class="metric-static metric-right metric-static--yield"><div class="metric-row metric-right metric-row--yield">
+    <button class="metric-label-button" type="button" data-action="edit-dividend">${LABELS.dividendYield}</button>
+    <button class="dividend-status-button dividend-status-button--value is-${v.statusKey}" type="button" aria-label="${escapeHtml(v.statusLabel)}" aria-expanded="false" data-tooltip-side="left" data-holding-field="effectiveYield">
+    <span class="dividend-status-value" data-holding-field="effectiveYieldValue">${escapeHtml(v.yieldText)}</span>
+    <span class="dividend-status-tooltip" data-holding-field="dividendTooltip">${v.tooltipHtml}</span></button></div></div></div></article></div>`;
 }
 
 export function renderHoldingsView(holdings, opts = {}) {
@@ -689,36 +762,24 @@ export function renderHoldingsView(holdings, opts = {}) {
 }
 
 function syncHoldingRow(wrapper, item) {
-  const card = wrapper.querySelector('.holding-card');
-  if (!card) return false;
+  const card = wrapper.querySelector('.holding-card'), price = wrapper.querySelector('[data-holding-field="price"]');
+  const weight = wrapper.querySelector('[data-holding-field="weight"]'), mv = wrapper.querySelector('[data-holding-field="marketValue"]');
+  const qty = wrapper.querySelector('[data-holding-field="quantity"]'), ad = wrapper.querySelector('[data-holding-field="annualDividend"]');
+  const ey = wrapper.querySelector('[data-holding-field="effectiveYield"]'), eyv = wrapper.querySelector('[data-holding-field="effectiveYieldValue"]');
+  const tt = wrapper.querySelector('[data-holding-field="dividendTooltip"]'), name = wrapper.querySelector('.holding-name');
+  const code = wrapper.querySelector('.holding-code'), divider = wrapper.querySelector('.holding-divider');
+  if (!card || !price || !weight || !mv || !qty || !ad || !ey || !eyv || !tt || !name || !code || !divider) return false;
   const v = getHoldingViewModel(item);
-  // 展开状态与 DOM 结构不一致时放弃增量同步，交给上层整表重渲。
-  if (card.classList.contains('is-expanded') !== v.isExpanded) return false;
-  const name = wrapper.querySelector('.hr-name'), hero = wrapper.querySelector('[data-holding-field="hero"]');
-  const symbol = wrapper.querySelector('[data-holding-field="symbol"]'), price = wrapper.querySelector('[data-holding-field="price"]');
-  const secondLabel = wrapper.querySelector('[data-holding-field="secondLabel"]'), second = wrapper.querySelector('[data-holding-field="second"]');
-  const weightbar = wrapper.querySelector('[data-holding-field="weightbar"]');
-  if (!name || !hero || !symbol || !price || !secondLabel || !second || !weightbar) return false;
   wrapper.dataset.id = String(item.localId); wrapper.classList.remove('is-entering'); wrapper.style.animationDelay = '0ms';
   card.dataset.id = String(item.localId); card.dataset.dividendStatus = item.dividendStatus || 'missing';
-  name.textContent = item.name; hero.textContent = v.heroText;
-  symbol.textContent = item.symbol; price.textContent = v.priceText;
-  secondLabel.textContent = v.secondLabel; second.textContent = v.secondText;
-  weightbar.className = `is-${v.bucketTone}`; weightbar.style.width = `${v.weightPct}%`;
-  if (v.isExpanded) {
-    const qty = wrapper.querySelector('[data-holding-field="quantity"]'), ad = wrapper.querySelector('[data-holding-field="annualDividend"]');
-    const ey = wrapper.querySelector('[data-holding-field="effectiveYield"]'), eyv = wrapper.querySelector('[data-holding-field="effectiveYieldValue"]');
-    const tt = wrapper.querySelector('[data-holding-field="dividendTooltip"]'), weight = wrapper.querySelector('[data-holding-field="weight"]');
-    const bucketLabel = wrapper.querySelector('[data-holding-field="bucketLabel"]'), tag = wrapper.querySelector('.hr-bucket-tag');
-    if (!qty || !ad || !ey || !eyv || !tt || !weight || !bucketLabel || !tag) return false;
-    qty.textContent = v.quantityText; ad.textContent = v.annualDividendText;
-    weight.textContent = v.weightText; bucketLabel.textContent = v.bucketLabel;
-    tag.className = `hr-bucket-tag is-${v.bucketTone}`;
-    const keepOpen = ey.classList.contains('is-tooltip-open');
-    ey.className = `dividend-status-button dividend-status-button--value is-${v.statusKey}${keepOpen ? ' is-tooltip-open' : ''}`;
-    ey.setAttribute('aria-label', v.statusLabel); ey.setAttribute('aria-expanded', keepOpen ? 'true' : 'false');
-    ey.removeAttribute('title'); ey.dataset.tooltipSide = 'left'; eyv.textContent = v.yieldText; tt.innerHTML = v.tooltipHtml;
-  }
+  name.textContent = item.name; code.textContent = item.symbol; divider.textContent = getHoldingTitleDivider();
+  price.textContent = v.priceText; weight.textContent = v.weightText;
+  weight.classList.remove('is-core', 'is-income'); weight.classList.add(`is-${v.bucketTone}`);
+  mv.textContent = v.marketValueText; qty.textContent = v.quantityText; ad.textContent = v.annualDividendText;
+  const keepOpen = ey.classList.contains('is-tooltip-open');
+  ey.className = `dividend-status-button dividend-status-button--value is-${v.statusKey}${keepOpen ? ' is-tooltip-open' : ''}`;
+  ey.setAttribute('aria-label', v.statusLabel); ey.setAttribute('aria-expanded', keepOpen ? 'true' : 'false');
+  ey.removeAttribute('title'); ey.dataset.tooltipSide = 'left'; eyv.textContent = v.yieldText; tt.innerHTML = v.tooltipHtml;
   wrapper.querySelectorAll('[data-action="delete"]').forEach((b) => { b.setAttribute('aria-label', `${LABELS.deleteConfirm} ${item.name}`); });
   return true;
 }
@@ -788,9 +849,9 @@ export function animateHoldingRemoval(wrapper, onComplete) {
 }
 
 /* ── Dashboard Orchestration ── */
-function renderDashboardIncrementally(summary, opts = {}) {
-  renderHomePage(summary);
-  patchBucketsView(summary.holdings);
+function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
+  renderHomePage(summary); patchLegendView(cs);
+  patchBucketsView(bs, summary.holdings, summary);
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
   renderIncomeRecords();
@@ -803,12 +864,14 @@ export function renderSavedStateQuietly(opts = {}) {
 }
 
 export function renderApp(opts = {}) {
-  const { animateBucketDetail = true, animateHoldings = true, renderHoldingsList = true, incremental = false, animateHoldingReflow = false } = opts;
+  const { animateLegend = true, animateBucketDetail = true, animateHoldings = true, renderHoldingsList = true, incremental = false, animateHoldingReflow = false } = opts;
   const summary = computeHoldings();
+  const cs = getCompanySegments(summary.holdings);
+  const bs = getBucketSegments(summary.holdings);
   renderPageChrome();
-  if (incremental) { renderDashboardIncrementally(summary, { animateHoldingReflow }); return; }
-  renderHomePage(summary);
-  renderBucketsView(summary.holdings, { animateDetail: animateBucketDetail });
+  if (incremental) { renderDashboardIncrementally(summary, cs, bs, { animateHoldingReflow }); return; }
+  renderHomePage(summary); renderLegendView(cs, { animate: animateLegend });
+  renderBucketsView(bs, summary.holdings, summary, { animateDetail: animateBucketDetail });
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
   renderIncomeRecords();
