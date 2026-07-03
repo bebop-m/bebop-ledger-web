@@ -25,7 +25,6 @@ export const state = {
   activeDividendMonth: null,
   sortField: 'marketValueCny',
   sortDirection: 'desc',
-  legendExpanded: false,
   liabilityCny: 0,
   openingCashCny: 0,
   openingDate: '',
@@ -49,7 +48,9 @@ export const mutable = {
   activeDividendTooltipButton: null,
   suppressHoldingClickUntil: 0,
   cloudSyncSuccessTimer: 0,
-  sortToggleButton: null
+  sortToggleButton: null,
+  /* 持仓行展开态：仅会话内有效，不入快照。0 = 全部收起 */
+  expandedHoldingId: 0
 };
 
 /* ── Compute Cache ── */
@@ -91,8 +92,6 @@ export const refs = {
   exportButton: document.getElementById('exportButton'),
   importButton: document.getElementById('importButton'),
   importFileInput: document.getElementById('importFileInput'),
-  companyLegend: document.getElementById('companyLegend'),
-  legendToggle: document.getElementById('legendToggle'),
   bucketTrack: document.getElementById('bucketTrack'),
   marketTimestamp: document.getElementById('marketTimestamp'),
   refreshButton: document.getElementById('refreshButton'),
@@ -193,7 +192,6 @@ export function createDefaultSnapshot() {
     activeDividendMonth: null,
     sortField: 'marketValueCny',
     sortDirection: 'desc',
-    legendExpanded: false,
     liabilityCny: 0,
     openingCashCny: 0,
     openingDate: '',
@@ -228,7 +226,6 @@ export function applySnapshot(snapshot) {
   state.activeDividendMonth = activeDividendMonth >= 1 && activeDividendMonth <= 12 ? activeDividendMonth : null;
   state.sortField = snapshot && ['effectiveYield', 'netAnnualDividendCny'].includes(snapshot.sortField) ? snapshot.sortField : 'marketValueCny';
   state.sortDirection = snapshot && snapshot.sortDirection === 'asc' ? 'asc' : 'desc';
-  state.legendExpanded = Boolean(snapshot && snapshot.legendExpanded);
   state.liabilityCny = Math.max(0, safeNumber(snapshot && snapshot.liabilityCny, 0));
   state.openingCashCny = safeNumber(snapshot && snapshot.openingCashCny, 0);
   state.openingDate = typeof (snapshot && snapshot.openingDate) === 'string' ? snapshot.openingDate : '';
@@ -256,7 +253,7 @@ export function getPersistedSnapshot() {
     holdings: state.holdings, quotes: state.quotes, rates: state.rates,
     nextId: state.nextId, showAmounts: state.showAmounts, activePage: state.activePage,
     dividendCalendarBucket: state.dividendCalendarBucket, activeDividendMonth: state.activeDividendMonth, sortField: state.sortField,
-    sortDirection: state.sortDirection, legendExpanded: state.legendExpanded,
+    sortDirection: state.sortDirection,
     liabilityCny: state.liabilityCny, openingCashCny: state.openingCashCny, openingDate: state.openingDate,
     dividendLedger: state.dividendLedger,
     dailySnapshots: state.dailySnapshots, cashFlows: state.cashFlows,
@@ -327,7 +324,6 @@ export function buildPortfolioSnapshot() {
     showAmounts: persisted.showAmounts !== false,
     sortField: ['effectiveYield', 'netAnnualDividendCny'].includes(persisted.sortField) ? persisted.sortField : 'marketValueCny',
     sortDirection: persisted.sortDirection === 'asc' ? 'asc' : 'desc',
-    legendExpanded: Boolean(persisted.legendExpanded),
     liabilityCny: Math.max(0, safeNumber(persisted.liabilityCny, 0)),
     openingCashCny: safeNumber(persisted.openingCashCny, 0),
     openingDate: typeof persisted.openingDate === 'string' ? persisted.openingDate : '',
