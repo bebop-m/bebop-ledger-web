@@ -1,21 +1,40 @@
 :root {
   color-scheme: light;
-  --bg-top: #f6f7f9;
-  --bg-bottom: #eceff3;
-  --panel: rgba(255, 255, 255, 0.96);
-  --line: #e7ecf3;
-  --line-soft: #edf2f7;
-  --text: #1d304b;
-  --muted: #8c98a8;
-  --brand: #152849;
-  --brand-soft: #eef3f8;
-  --accent: #f28c28;
-  --surface: #fbfcfe;
-  --shadow: 0 18px 42px rgba(24, 39, 64, 0.08);
-  --radius-xl: 24px;
-  --radius-lg: 18px;
-  --radius-pill: 999px;
-  --font: "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+  /* 闁冲厜鍋撻柍鍏夊亾 濠⒀佸妿閸ゅ海鎷嬮幑鎰靛悁閻犲浂鍙€閳诲牓鏁嶉崼婵堝敤闁告垵妫寸槐鐨€ihonggo-go-claude闁挎稑顦弨銏ゅ煘閳?*/
+  --color-ink: #1a1a1a;
+  --color-primary: #dc3545;
+  --color-loss: #1b7f3b;
+  --color-bg: #fafaf8;
+  --color-bg-muted: #f0f0ec;
+  --color-frame-bg: #e8e8e4;
+  --color-text-secondary: #999;
+  --color-text-hint: #aaa;
+  --border-compact: 2px solid var(--color-ink);
+  --border-thin: 2.5px solid var(--color-ink);
+  --border-medium: 3px solid var(--color-ink);
+  --border-thick: 4px solid var(--color-ink);
+  --radius-card: 16px;
+  --radius-control: 12px;
+  --radius-chip: 10px;
+  --tint-primary: rgba(220, 53, 69, 0.08);
+  --ring-primary: 0 0 0 3px rgba(220, 53, 69, 0.15);
+  /* 闁冲厜鍋撻柍鍏夊亾 闁哄唲鍐ㄧ秮闂佹彃绻愰幃鏇㈠礆椤愩垺鍊抽柨娑樼墣椤斺偓閻庢稒锕㈤崳铏规喆閸曨偄鐏熼柡浣虹節缂嶅骞戦姀锝呬簽闁挎稑顒ase 5 闂侇偅鍔栭鐐哄绩閸撲胶妞介柨娑橆槴閺€銏ゅ煘閳?*/
+  --bg-top: var(--color-bg);
+  --bg-bottom: var(--color-bg);
+  --panel: #ffffff;
+  --line: var(--color-ink);
+  --line-soft: var(--color-bg-muted);
+  --text: var(--color-ink);
+  --muted: var(--color-text-secondary);
+  --brand: var(--color-ink);
+  --brand-soft: var(--color-bg-muted);
+  --accent: var(--color-primary);
+  --surface: #ffffff;
+  --shadow: none;
+  --radius-xl: var(--radius-card);
+  --radius-lg: var(--radius-control);
+  --radius-pill: 20px;
+  --font: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", sans-serif;
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-quick: 150ms;
   --motion-base: 220ms;
@@ -32,10 +51,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  background:
-    radial-gradient(circle at top left, rgba(248, 249, 252, 0.96), transparent 28%),
-    radial-gradient(circle at top right, rgba(250, 246, 241, 0.72), transparent 30%),
-    linear-gradient(180deg, var(--bg-top) 0%, #f1f3f7 48%, var(--bg-bottom) 100%);
+  background: var(--color-bg);
 }
 
 body {
@@ -48,8 +64,30 @@ body {
   font-family: var(--font);
 }
 
-body.ui-refined-accent {
-  --accent: #de8846;
+@media (min-width: 431px) {
+  html {
+    background: var(--color-frame-bg);
+  }
+
+  body {
+    padding-top: 32px;
+    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  }
+
+  /* 闁归潧顑嗗┃鈧俊妤€妫欓悘锕傛晬濮橆剙寮块幖瀛樻⒒閺併倝宕娆戭伇闁稿繋娴囬蹇涙儍閸曨剙顫岀憸?*/
+  .app-shell::before {
+    content: "";
+    position: fixed;
+    top: 12px;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(430px, 100%);
+    background: var(--color-bg);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    z-index: -1;
+  }
 }
 
 body.modal-open {
@@ -80,8 +118,8 @@ button {
 }
 
 button:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--ring-primary);
 }
 
 .circle-button:active,
@@ -93,7 +131,6 @@ button:focus-visible {
 .text-button:active,
 .metric-label-button:active,
 .summary-action-button:active,
-.bottom-nav-button:active,
 .segment-button:active {
   transform: scale(0.96);
   opacity: 0.8;
@@ -113,15 +150,13 @@ svg {
 }
 
 .app-shell {
-  width: min(100%, 860px);
+  width: min(100%, 402px);
   margin: 0 auto;
+  position: relative;
 }
-
-.app-header,
 .panel-bar,
 .text-actions,
 .icon-actions,
-.summary-top,
 .sort-group,
 .legend-row,
 .metric-row,
@@ -135,40 +170,6 @@ svg {
   align-items: center;
 }
 
-.app-header {
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-  margin-bottom: 10px;
-  padding: 0 2px 2px;
-  background: transparent;
-  box-shadow: none;
-}
-
-.app-brand {
-  display: grid;
-  gap: 1px;
-  min-width: 0;
-  background: transparent;
-}
-
-.app-kicker {
-  margin: 0;
-  color: #9aa5b3;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-}
-
-.app-title {
-  margin: 0;
-  font-size: clamp(28px, 4vw, 34px);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.04;
-}
-
 .page-stack {
   display: grid;
   gap: 16px;
@@ -177,44 +178,6 @@ svg {
 .app-pages,
 .page-view {
   min-width: 0;
-}
-
-.bottom-nav {
-  position: fixed;
-  left: 50%;
-  bottom: max(10px, env(safe-area-inset-bottom));
-  z-index: 20;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
-  width: min(860px, calc(100% - 20px));
-  padding: 5px;
-  border: 1px solid rgba(21, 40, 73, 0.08);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 42px rgba(24, 39, 64, 0.16);
-  backdrop-filter: blur(14px);
-  transform: translateX(-50%);
-}
-
-.bottom-nav-button {
-  min-width: 0;
-  min-height: 42px;
-  padding: 0 8px;
-  border-radius: 16px;
-  color: #7c8797;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  transition:
-    background-color var(--motion-quick) var(--ease-soft),
-    color var(--motion-quick) var(--ease-soft),
-    transform var(--motion-quick) var(--ease-soft);
-}
-
-.bottom-nav-button.is-active {
-  background: var(--brand-soft);
-  color: var(--brand);
 }
 
 .panel {
@@ -255,8 +218,6 @@ svg {
 }
 
 .panel-note,
-.summary-label,
-.summary-note,
 .holding-code,
 .metric-label,
 .metric-label-button,
@@ -269,15 +230,8 @@ svg {
 }
 
 .panel-note,
-.summary-note,
 .modal-note {
   margin: 6px 0 0;
-}
-
-.summary-note.summary-note--yield {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #98a4b3;
 }
 
 .text-actions,
@@ -290,11 +244,6 @@ svg {
 .text-button {
   padding: 0;
   font-weight: 600;
-}
-
-.text-actions.summary-actions-cluster {
-  gap: 18px;
-  margin-left: auto;
 }
 
 .summary-action-button {
@@ -367,7 +316,7 @@ svg {
   opacity: 0;
   transform: scale(0.45);
   transform-origin: 50% 50%;
-  box-shadow: 0 0 0 0 rgba(21, 40, 73, 0.08);
+  box-shadow: 0 0 0 0 rgba(26, 26, 26, 0.08);
   transition:
     opacity var(--motion-quick) var(--ease-soft),
     transform var(--motion-base) var(--ease-soft);
@@ -392,9 +341,9 @@ svg {
   min-height: 44px;
   flex: 0 0 44px;
   border-radius: 50%;
-  background: #f7f9fc;
+  background: var(--color-bg-muted);
   box-shadow: inset 0 0 0 1px var(--line);
-  color: #6d7b8f;
+  color: var(--color-text-secondary);
   transition:
     background-color var(--motion-quick) var(--ease-soft),
     box-shadow var(--motion-quick) var(--ease-soft),
@@ -544,50 +493,8 @@ svg {
   cursor: default;
 }
 
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 16px;
-  transition: opacity 180ms var(--ease-soft);
-}
-
-.summary-grid.summary-grid--compact-fx {
-  display: block;
-}
-
-.summary-grid-main {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.summary-card {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, #ffffff 0%, var(--surface) 100%);
-  transition: opacity 180ms var(--ease-soft), transform 180ms var(--ease-soft);
-}
-
-.summary-top {
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.summary-value {
-  margin-top: 8px;
-  font-size: clamp(24px, 3vw, 29px);
-  font-weight: 700;
-  line-height: 1.08;
-  font-variant-numeric: tabular-nums;
-  transition: opacity 180ms var(--ease-soft);
-}
-
-.privacy-hidden .summary-value,
 .privacy-hidden .metric-value,
 .privacy-hidden .holding-price,
-.privacy-hidden .summary-note,
 .privacy-hidden .dividend-status-button--value {
   color: transparent !important;
   user-select: none;
@@ -595,8 +502,6 @@ svg {
   position: relative;
   transition: color 180ms var(--ease-soft);
 }
-
-.privacy-hidden .summary-value::after,
 .privacy-hidden .holding-price::after {
   content: '******';
   position: absolute;
@@ -627,38 +532,11 @@ svg {
   font-weight: inherit;
 }
 
-.privacy-hidden .summary-note::after {
-  content: '';
-}
 
-body:not(.privacy-hidden) .summary-value,
 body:not(.privacy-hidden) .metric-value,
 body:not(.privacy-hidden) .holding-price,
 body:not(.privacy-hidden) .dividend-status-button--value {
   transition: color 180ms var(--ease-soft);
-}
-
-.summary-value.is-income {
-  color: var(--accent);
-}
-
-.summary-fx-strip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  padding: 0 4px;
-  color: var(--muted);
-  font-size: 12px;
-  letter-spacing: 0.02em;
-}
-
-.summary-fx-item {
-  white-space: nowrap;
-}
-
-.summary-fx-divider {
-  color: #ccd4df;
 }
 
 .placeholder-panel {
@@ -670,9 +548,9 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   place-items: center;
   min-height: 176px;
   padding: 22px;
-  border: 1px dashed #d9e1eb;
+  border: 1px dashed var(--color-bg-muted);
   border-radius: var(--radius-lg);
-  background: #fafbfd;
+  background: var(--color-bg-muted);
   text-align: center;
 }
 
@@ -682,7 +560,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .empty-state-title {
   margin: 0;
-  color: #415674;
+  color: var(--color-ink);
   font-size: 16px;
   font-weight: 700;
 }
@@ -703,7 +581,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   padding: 4px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: #f7f9fc;
+  background: var(--color-bg-muted);
 }
 
 .segment-button {
@@ -711,7 +589,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   min-width: 0;
   padding: 0 10px;
   border-radius: 12px;
-  color: #718095;
+  color: var(--color-text-secondary);
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
@@ -724,7 +602,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .segment-button.is-active {
   background: #ffffff;
   color: var(--brand);
-  box-shadow: 0 5px 14px rgba(24, 39, 64, 0.08);
+  box-shadow: none;
 }
 
 .income-header-actions {
@@ -734,30 +612,16 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   min-width: 0;
 }
 
-/* 收益汇总：当年收益 hero 下方的动作栏 + 年度明细折叠区内的工具栏。 */
-.income-actions-bar,
-.income-fold-tools {
+/* 闁衡偓閸撲焦鎶勬慨鐟版处閳ь兛绱槐鎷屻亹閹惧啿瀣€闁衡偓閸撲焦鎶?hero 濞戞挸顑嗛弻鐔兼儍閸曨偄袟濞达絾绮嶉悥?+ 妤犵偞娼欑€规娊寮版惔锝囩煄闁硅埖锚瑜版棃宕犻崫鍕暥闁汇劌瀚导鎰板礂闁垮鍩夐柕?*/
+.income-actions-bar{
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 14px;
 }
 
-.income-fold-tools {
-  margin-top: 12px;
-}
-
-/* 期初现金入口：默认放在顶部动作栏；启用现金模式后移入年度明细折叠区。 */
-.income-fold-tools #incomeOpeningCashButtonFold {
-  display: none;
-}
-
 #incomeSummaryPage.is-cash-active .income-actions-bar #incomeOpeningCashButton {
   display: none;
-}
-
-#incomeSummaryPage.is-cash-active .income-fold-tools #incomeOpeningCashButtonFold {
-  display: inline-flex;
 }
 
 .income-manual-button {
@@ -766,14 +630,14 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   gap: 7px;
   min-height: 36px;
   padding: 0 12px;
-  border: 1px solid rgba(21, 40, 73, 0.08);
+  border: 1px solid rgba(26, 26, 26, 0.08);
   border-radius: 14px;
   background: #ffffff;
   color: var(--brand);
   font-size: 13px;
   font-weight: 800;
   white-space: nowrap;
-  box-shadow: 0 8px 18px rgba(24, 39, 64, 0.06);
+  box-shadow: none;
   transition:
     background-color var(--motion-quick) var(--ease-soft),
     box-shadow var(--motion-quick) var(--ease-soft),
@@ -789,7 +653,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .income-manual-button:hover,
 .income-manual-button:focus-visible {
   background: var(--brand-soft);
-  box-shadow: 0 10px 22px rgba(24, 39, 64, 0.1);
+  box-shadow: none;
 }
 
 .income-overview-grid {
@@ -855,105 +719,20 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .income-hero-context strong {
-  color: #263b5b;
+  color: var(--color-ink);
   font-size: 15px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 
-/* 折叠区块（年度明细 / 资金与交易记录），默认收起保持极简。 */
-.income-fold {
-  min-width: 0;
-}
-
-.income-fold-summary {
-  cursor: pointer;
-  list-style: none;
-  align-items: center;
-  gap: 12px;
-}
-
-.income-fold-summary::-webkit-details-marker {
-  display: none;
-}
-
-.income-fold-caret {
-  flex: 0 0 auto;
-  width: 10px;
-  height: 10px;
-  border-right: 2px solid var(--muted);
-  border-bottom: 2px solid var(--muted);
-  transform: rotate(45deg);
-  transition: transform var(--motion-quick) var(--ease-soft);
-}
-
-.income-fold[open] .income-fold-caret {
-  transform: rotate(-135deg);
-}
-
-.income-fold[open] .income-fold-summary {
-  margin-bottom: 4px;
-}
-
-.income-fold[open] #incomeYearList {
-  margin-top: 12px;
-}
-
-.income-metric-card {
-  min-width: 0;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
-}
-
-.income-metric-card.is-dividend {
-  box-shadow: inset 0 0 0 1px rgba(222, 136, 70, 0.08);
-}
-
-.income-metric-card.is-capital {
-  box-shadow: inset 0 0 0 1px rgba(79, 124, 100, 0.07);
-}
-
-.income-metric-card.is-total {
-  box-shadow: inset 0 0 0 1px rgba(21, 40, 73, 0.06);
-}
-
-.income-metric-label,
-.income-metric-note,
 .income-method-note,
 .income-trend-legend,
 .income-trend-years,
 .income-year-head,
-.income-year-cell::before,
-.income-north-star-label,
-.income-north-star-side small {
+.income-year-cell::before{
   color: var(--muted);
   font-size: 12px;
-}
-
-.income-metric-value {
-  margin-top: 8px;
-  color: #263b5b;
-  font-size: clamp(20px, 2.7vw, 25px);
-  font-weight: 800;
-  line-height: 1.04;
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
-
-.income-metric-card.is-dividend .income-metric-value {
-  color: var(--accent);
-}
-
-.income-metric-card.is-capital .income-metric-value {
-  color: #4f7c64;
-}
-
-.income-metric-note {
-  margin: 7px 0 0;
-  line-height: 1.35;
 }
 
 .income-method-note {
@@ -972,7 +751,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   padding: 12px 12px 10px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
 }
 
 .income-trend-svg {
@@ -1082,12 +861,12 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .income-year-row:not(.income-year-head) {
-  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
 }
 
 .income-year-row > div {
   min-width: 0;
-  color: #263b5b;
+  color: var(--color-ink);
   font-size: 13px;
   font-weight: 700;
   line-height: 1.25;
@@ -1106,7 +885,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .income-year-cell.is-compare {
-  color: #65748a;
+  color: var(--color-text-secondary);
 }
 
 .income-year-action-cell {
@@ -1121,7 +900,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   height: 34px;
   border-radius: 12px;
   color: #7a8798;
-  background: #f7f9fc;
+  background: var(--color-bg-muted);
   box-shadow: inset 0 0 0 1px var(--line);
   transition:
     background-color var(--motion-quick) var(--ease-soft),
@@ -1137,59 +916,15 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .income-year-action-button.is-filled {
   color: #855a32;
-  background: rgba(222, 136, 70, 0.1);
-  box-shadow: inset 0 0 0 1px rgba(222, 136, 70, 0.18);
+  background: rgba(26, 26, 26, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.18);
 }
 
 .income-year-action-button:hover,
 .income-year-action-button:focus-visible {
   color: var(--brand);
   background: var(--brand-soft);
-  box-shadow: inset 0 0 0 1px rgba(21, 40, 73, 0.12);
-}
-
-.income-north-star {
-  margin-top: 14px;
-}
-
-.income-north-star-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-width: 0;
-  padding: 16px;
-  border: 1px solid rgba(222, 136, 70, 0.16);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, #ffffff 0%, #fffaf5 100%);
-}
-
-.income-north-star-label {
-  margin: 0;
-}
-
-.income-north-star-value {
-  display: block;
-  margin-top: 8px;
-  color: var(--accent);
-  font-size: clamp(24px, 3vw, 30px);
-  line-height: 1.04;
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
-
-.income-north-star-side {
-  display: grid;
-  justify-items: end;
-  gap: 5px;
-  min-width: 112px;
-}
-
-.income-north-star-side span {
-  color: #263b5b;
-  font-size: 17px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.12);
 }
 
 .income-records {
@@ -1209,7 +944,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
 }
 
 .income-record-overview article {
@@ -1229,7 +964,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .income-record-overview strong {
   display: block;
   margin-top: 7px;
-  color: #263b5b;
+  color: var(--color-ink);
   font-size: 18px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -1260,7 +995,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .income-record-head h3 {
   margin: 0;
-  color: #263b5b;
+  color: var(--color-ink);
   font-size: 14px;
   font-weight: 800;
 }
@@ -1280,7 +1015,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   min-width: 0;
   padding: 10px;
   border-radius: 12px;
-  background: #f7f9fc;
+  background: var(--color-bg-muted);
   color: inherit;
   text-align: left;
   transition:
@@ -1300,7 +1035,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .record-main strong {
-  color: #263b5b;
+  color: var(--color-ink);
   font-size: 13px;
   font-weight: 800;
   overflow: hidden;
@@ -1315,7 +1050,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .record-amount {
-  color: #263b5b;
+  color: var(--color-ink);
   font-size: 13px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -1324,18 +1059,18 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .is-positive { color: #2f8254 !important; }
 .is-negative { color: #bc473c !important; }
-/* 盈亏配色（A 股习惯）：赚钱=红，亏钱=绿。 */
+/* 闁烩晛鐗呯花顓㈡煀瀹ュ牆顥忛柨娑樻箯 闁兼祴鈧尙鐦庨柟顖ｅ灲缁辨岸鏁嶅宕囶洶闂?缂佺虎婢佺槐婵囩韫囨稒灏?缂備浇锟ラ埀?*/
 .is-gain { color: #bc473c !important; }
 .is-loss { color: #2f8254 !important; }
-.is-flat { color: #65748a !important; }
+.is-flat { color: var(--color-text-secondary) !important; }
 
 .income-record-empty {
   display: grid;
   gap: 4px;
   padding: 16px 10px;
-  border: 1px dashed #d9e1eb;
+  border: 1px dashed var(--color-bg-muted);
   border-radius: 12px;
-  color: #415674;
+  color: var(--color-ink);
   text-align: center;
 }
 
@@ -1348,7 +1083,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   gap: 10px;
   padding: 11px;
   border-radius: 12px;
-  background: #f7f9fc;
+  background: var(--color-bg-muted);
 }
 
 .position-title {
@@ -1358,7 +1093,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .position-title strong {
-  color: #263b5b;
+  color: var(--color-ink);
   font-size: 14px;
   font-weight: 800;
 }
@@ -1376,7 +1111,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .position-grid strong {
-  color: #263b5b;
+  color: var(--color-ink);
   font-size: 13px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -1418,7 +1153,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
 }
 
 .dividend-metric-card {
@@ -1434,7 +1169,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .dividend-metric-card.is-projected {
-  box-shadow: inset 0 0 0 1px rgba(21, 40, 73, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.06);
 }
 
 .dividend-metric-label,
@@ -1449,7 +1184,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .dividend-metric-value {
   margin-top: 8px;
-  color: #263b5b;
+  color: var(--color-ink);
   font-size: clamp(20px, 2.7vw, 25px);
   font-weight: 800;
   line-height: 1.04;
@@ -1459,7 +1194,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .dividend-metric-card.is-upcoming .dividend-metric-value,
 .dividend-metric-card.is-received .dividend-metric-value {
-  color: var(--accent);
+  color: var(--color-ink);
 }
 
 .dividend-metric-note {
@@ -1487,14 +1222,14 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .dividend-month-card.is-empty {
-  background: #fbfcfe;
+  background: #ffffff;
   opacity: 0.72;
 }
 
 .dividend-month-card:hover,
 .dividend-month-card.is-active {
   border-color: rgba(242, 140, 40, 0.46);
-  box-shadow: 0 10px 24px rgba(21, 40, 73, 0.08);
+  box-shadow: none;
 }
 
 .dividend-month-card.is-active {
@@ -1520,7 +1255,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .dividend-month-head strong,
 .dividend-mini-rows strong {
-  color: #263b5b;
+  color: var(--color-ink);
   font-size: 13px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -1538,7 +1273,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   white-space: nowrap;
 }
 
-/* ── Calendar refinements: YoY badge, month phase colors, big label/total ── */
+/* 闁冲厜鍋撻柍鍏夊亾 Calendar refinements: YoY badge, month phase colors, big label/total 闁冲厜鍋撻柍鍏夊亾 */
 .dividend-metric-badge {
   display: inline-flex;
   align-items: center;
@@ -1548,7 +1283,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   font-size: 11px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  background: rgba(21, 40, 73, 0.06);
+  background: rgba(26, 26, 26, 0.06);
   color: var(--muted);
 }
 .dividend-metric-badge.is-up { background: rgba(47, 130, 84, 0.13); color: #2f8254; }
@@ -1559,22 +1294,22 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .dividend-month-card.is-current {
   background: linear-gradient(180deg, #fff6ec 0%, #ffffff 100%);
   border-color: rgba(242, 140, 40, 0.5);
-  box-shadow: 0 8px 20px rgba(242, 140, 40, 0.12);
+  box-shadow: none;
 }
 .dividend-month-card.is-empty { opacity: 0.62; }
 .dividend-month-card.is-current.is-empty { opacity: 0.92; }
 
-.dividend-month-head .dmh-label { font-size: 18px; color: #1f3357; }
+.dividend-month-head .dmh-label { font-size: 18px; color: var(--color-ink); }
 .dividend-month-card.is-past .dmh-label { color: #6b788c; }
 .dividend-month-card.is-current .dmh-label { color: var(--accent); }
-.dividend-month-head .dmh-total { font-size: 19px; color: #1f3357; }
+.dividend-month-head .dmh-total { font-size: 19px; color: var(--color-ink); }
 .dividend-month-card.is-current .dmh-total { color: var(--accent); }
 .dividend-month-card .dividend-mini-rows { margin-top: 10px; gap: 5px; }
 .dividend-month-card .dividend-mini-rows span,
 .dividend-month-card .dividend-mini-rows strong { font-size: 11px; font-weight: 600; }
 .dividend-month-card .dividend-mini-rows strong { color: #5a6b85; }
 
-/* ── Month detail modal (compact) ── */
+/* 闁冲厜鍋撻柍鍏夊亾 Month detail modal (compact) 闁冲厜鍋撻柍鍏夊亾 */
 .modal-sheet--detail .month-detail-head { margin-bottom: 10px; }
 .month-detail-title {
   display: flex;
@@ -1582,12 +1317,12 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   justify-content: space-between;
   gap: 12px;
 }
-.month-detail-title h3 { margin: 0; font-size: 20px; font-weight: 800; color: #1f3357; }
-.month-detail-title strong { font-size: 20px; font-weight: 800; color: #1f3357; font-variant-numeric: tabular-nums; }
+.month-detail-title h3 { margin: 0; font-size: 20px; font-weight: 800; color: var(--color-ink); }
+.month-detail-title strong { font-size: 20px; font-weight: 800; color: var(--color-ink); font-variant-numeric: tabular-nums; }
 .modal-sheet--detail.is-current .month-detail-title h3,
 .modal-sheet--detail.is-current .month-detail-title strong { color: var(--accent); }
 .month-detail-summary { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
-.month-detail-hint { margin: 5px 0 0; font-size: 11px; color: #9aa5b3; }
+.month-detail-hint { margin: 5px 0 0; font-size: 11px; color: var(--color-text-hint); }
 .month-detail-list { display: grid; gap: 0; max-height: 52vh; overflow-y: auto; }
 .month-detail-row {
   display: grid;
@@ -1613,17 +1348,17 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   transition: background-color 140ms ease;
 }
 .month-detail-row.is-clickable:hover,
-.month-detail-row.is-clickable:focus-visible { background: rgba(21, 40, 73, 0.04); outline: none; }
-.month-detail-row.is-clickable:active { background: rgba(21, 40, 73, 0.07); }
-.mdr-dot { width: 9px; height: 9px; border-radius: 50%; background: #b3bac6; }
-/* 绿=已确认到账 · 黄=自动入账待确认 · 蓝=已公告未除息 · 灰=节奏预估 */
+.month-detail-row.is-clickable:focus-visible { background: rgba(26, 26, 26, 0.04); outline: none; }
+.month-detail-row.is-clickable:active { background: rgba(26, 26, 26, 0.07); }
+.mdr-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--color-text-hint); }
+/* 缂?鐎规瓕灏欓垾妯兼媼閵堝懎鐓傞悹?鐠?濮?闁煎浜滄慨鈺呭礂閵夈劌顦╃€垫澘鎳愰垾妯兼媼?鐠?闁?鐎瑰憡褰冮崣鏇㈠川婵犲啯寮撻梻鍕╁€栨导?鐠?闁?闁煎搫鍊搁〃鏃€锛愰崟顏勫挤 */
 .month-detail-row.is-confirmed .mdr-dot { background: #2f8254; box-shadow: 0 0 0 3px rgba(47, 130, 84, 0.14); }
 .month-detail-row.is-unconfirmed .mdr-dot { background: #e0a52e; box-shadow: 0 0 0 3px rgba(224, 165, 46, 0.16); }
 .month-detail-row.is-announced .mdr-dot { background: #3278b8; box-shadow: 0 0 0 3px rgba(50, 120, 184, 0.14); }
-.month-detail-row.is-forecast .mdr-dot { background: #b3bac6; }
+.month-detail-row.is-forecast .mdr-dot { background: var(--color-text-hint); }
 .mdr-name { font-size: 14px; font-weight: 600; color: #27384f; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mdr-date { max-width: 148px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; line-height: 1.25; text-align: right; white-space: normal; }
-.mdr-amount { font-size: 14px; font-weight: 800; color: #1f3357; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mdr-amount { font-size: 14px; font-weight: 800; color: var(--color-ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .month-detail-empty { padding: 22px; text-align: center; color: var(--muted); font-size: 13px; }
 
 .dividend-stock-list,
@@ -1678,7 +1413,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   justify-content: space-between;
   gap: 10px;
   padding: 2px 2px 4px;
-  color: #63738a;
+  color: var(--color-text-secondary);
   font-size: 13px;
   font-weight: 800;
 }
@@ -1694,8 +1429,8 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   margin: 12px 0 0;
   padding: 10px 12px;
   border-radius: 8px;
-  background: #f7f9fc;
-  color: #263b5b;
+  background: var(--color-bg-muted);
+  color: var(--color-ink);
   font-size: 14px;
   font-weight: 800;
   line-height: 1.35;
@@ -1708,7 +1443,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   padding: 6px 9px;
   border-radius: 999px;
   background: #f4f7fb;
-  color: #63738a;
+  color: var(--color-text-secondary);
   font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
@@ -1730,7 +1465,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .dividend-status-pill.is-forecast {
-  background: rgba(222, 136, 70, 0.11);
+  background: rgba(26, 26, 26, 0.11);
   color: #8d643c;
 }
 
@@ -1749,7 +1484,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .dividend-detail-grid strong {
   min-width: 0;
-  color: #263b5b;
+  color: var(--color-ink);
   font-size: 14px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -1880,7 +1615,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   min-height: 44px;
   margin-top: 16px;
   border-radius: var(--radius-pill);
-  background: #f7f9fc;
+  background: var(--color-bg-muted);
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
@@ -1940,7 +1675,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .bucket-chip-label {
-  color: #718095;
+  color: var(--color-text-secondary);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -1965,23 +1700,23 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .bucket-chip.is-core {
-  background: linear-gradient(180deg, rgba(21, 40, 73, 0.055) 0%, rgba(21, 40, 73, 0.024) 100%);
-  box-shadow: inset 0 0 0 1px rgba(21, 40, 73, 0.06);
+  background: linear-gradient(180deg, rgba(26, 26, 26, 0.055) 0%, rgba(26, 26, 26, 0.024) 100%);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.06);
 }
 
 .bucket-chip.is-income {
-  background: linear-gradient(180deg, rgba(222, 136, 70, 0.072) 0%, rgba(222, 136, 70, 0.028) 100%);
-  box-shadow: inset 0 0 0 1px rgba(222, 136, 70, 0.072);
+  background: linear-gradient(180deg, rgba(26, 26, 26, 0.072) 0%, rgba(26, 26, 26, 0.028) 100%);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.072);
 }
 
 .bucket-chip.is-core.is-active {
-  background: linear-gradient(180deg, rgba(21, 40, 73, 0.072) 0%, rgba(21, 40, 73, 0.034) 100%);
-  box-shadow: inset 0 0 0 1px rgba(21, 40, 73, 0.088);
+  background: linear-gradient(180deg, rgba(26, 26, 26, 0.072) 0%, rgba(26, 26, 26, 0.034) 100%);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.088);
 }
 
 .bucket-chip.is-income.is-active {
-  background: linear-gradient(180deg, rgba(222, 136, 70, 0.095) 0%, rgba(222, 136, 70, 0.04) 100%);
-  box-shadow: inset 0 0 0 1px rgba(222, 136, 70, 0.098);
+  background: linear-gradient(180deg, rgba(26, 26, 26, 0.095) 0%, rgba(26, 26, 26, 0.04) 100%);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.098);
 }
 
 .bucket-chip.is-core .bucket-chip-value {
@@ -2098,10 +1833,10 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   width: min(228px, calc(100vw - 72px));
   max-width: calc(100vw - 72px);
   padding: 6px;
-  border: 1px solid rgba(21, 40, 73, 0.08);
+  border: 1px solid rgba(26, 26, 26, 0.08);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 18px 34px rgba(24, 39, 64, 0.12);
+  box-shadow: none;
   backdrop-filter: blur(10px);
   order: 0;
   gap: 6px;
@@ -2119,9 +1854,9 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   min-width: 92px;
   padding: 9px 12px;
   border-radius: var(--radius-pill);
-  background: #f8fafc;
+  background: var(--color-bg-muted);
   box-shadow: inset 0 0 0 1px var(--line);
-  color: #6d7b8f;
+  color: var(--color-text-secondary);
   font-size: 13px;
   font-weight: 600;
   line-height: 1;
@@ -2142,7 +1877,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   padding: 7px 10px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.58);
-  box-shadow: inset 0 0 0 1px rgba(21, 40, 73, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.08);
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
@@ -2157,7 +1892,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .sort-group.sort-group--subtle .sort-chip.is-active {
-  background: rgba(21, 40, 73, 0.06);
+  background: rgba(26, 26, 26, 0.06);
   color: var(--brand);
 }
 
@@ -2317,7 +2052,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .holding-divider {
   margin: 0 7px;
-  color: #c4ccd7;
+  color: var(--color-text-hint);
 }
 
 .holding-price {
@@ -2328,22 +2063,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   line-height: 1.1;
   white-space: nowrap;
   transition: opacity 180ms var(--ease-soft);
-}
-
-body.ui-refined-accent .holding-price {
-  color: var(--accent);
-}
-
-body.ui-refined-accent .holding-divider {
-  color: #d2d9e2;
-}
-
-body.ui-refined-accent .holding-grid .metric-value.is-income {
-  color: #607188;
-}
-
-body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value {
-  color: #8d643c;
 }
 
 .holding-code {
@@ -2360,9 +2079,9 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   min-width: 80px;
   padding: 8px 12px;
   border-radius: var(--radius-pill);
-  background: #f5f7fa;
+  background: var(--color-bg-muted);
   box-shadow: inset 0 0 0 1px var(--line);
-  color: #445873;
+  color: var(--color-text-secondary);
   font-size: 17px;
   font-weight: 700;
   text-align: center;
@@ -2374,14 +2093,14 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 }
 
 .weight-pill.is-core {
-  background: linear-gradient(180deg, rgba(21, 40, 73, 0.05) 0%, rgba(21, 40, 73, 0.018) 100%);
-  box-shadow: inset 0 0 0 1px rgba(21, 40, 73, 0.06);
+  background: linear-gradient(180deg, rgba(26, 26, 26, 0.05) 0%, rgba(26, 26, 26, 0.018) 100%);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.06);
   color: #425777;
 }
 
 .weight-pill.is-income {
-  background: linear-gradient(180deg, rgba(222, 136, 70, 0.06) 0%, rgba(222, 136, 70, 0.02) 100%);
-  box-shadow: inset 0 0 0 1px rgba(222, 136, 70, 0.062);
+  background: linear-gradient(180deg, rgba(26, 26, 26, 0.06) 0%, rgba(26, 26, 26, 0.02) 100%);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.062);
   color: #7c6447;
 }
 
@@ -2421,7 +2140,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   height: 10px;
   border-radius: 50%;
   background: #d6dde8;
-  box-shadow: inset 0 0 0 1px rgba(21, 40, 73, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.08);
 }
 
 .dividend-status-button.is-fresh .dividend-status-dot {
@@ -2485,7 +2204,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   background: rgba(255, 255, 255, 0.97);
   color: var(--text);
   border: 1px solid var(--line);
-  box-shadow: 0 8px 24px rgba(21, 40, 73, 0.1);
+  box-shadow: none;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -2667,7 +2386,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   position: fixed;
   inset: 0;
   z-index: 30;
-  background: rgba(24, 38, 60, 0.22);
+  background: rgba(26, 26, 26, 0.22);
   backdrop-filter: blur(2px);
   opacity: 0;
   animation: modal-fade-in 200ms var(--ease-soft) forwards;
@@ -2697,7 +2416,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   border: 1px solid var(--line);
   border-radius: 22px;
   background: #ffffff;
-  box-shadow: 0 20px 44px rgba(24, 39, 64, 0.16);
+  box-shadow: none;
   max-height: calc(100vh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow-y: auto;
   transform: translateY(100%);
@@ -2738,7 +2457,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   border: 1px solid var(--line);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.97);
-  box-shadow: 0 12px 32px rgba(24, 39, 64, 0.14);
+  box-shadow: none;
   color: var(--text);
   font-size: 14px;
   font-weight: 500;
@@ -2776,7 +2495,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   position: fixed;
   inset: 0;
   z-index: 35;
-  background: rgba(24, 38, 60, 0.22);
+  background: rgba(26, 26, 26, 0.22);
   backdrop-filter: blur(2px);
   opacity: 0;
   animation: confirm-fade-in 180ms var(--ease-soft) forwards;
@@ -2796,7 +2515,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   border: 1px solid var(--line);
   border-radius: 22px;
   background: #ffffff;
-  box-shadow: 0 20px 44px rgba(24, 39, 64, 0.16);
+  box-shadow: none;
   opacity: 0;
   transform: translateY(18px) scale(0.985);
   transform-origin: 50% 100%;
@@ -2821,7 +2540,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 
 .confirm-sheet.is-danger {
   border-color: rgba(224, 92, 77, 0.14);
-  box-shadow: 0 22px 48px rgba(24, 39, 64, 0.16);
+  box-shadow: none;
 }
 
 @keyframes confirm-fade-in {
@@ -2880,9 +2599,9 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 }
 
 .confirm-button--cancel {
-  background: #f7f8fb;
+  background: var(--color-bg-muted);
   box-shadow: inset 0 0 0 1px var(--line);
-  color: #66758d;
+  color: var(--color-text-secondary);
 }
 
 .confirm-button--ok {
@@ -2912,7 +2631,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   margin: 8px 0 2px;
   padding: 8px 12px;
   border-radius: 12px;
-  background: rgba(21, 40, 73, 0.045);
+  background: rgba(26, 26, 26, 0.045);
   color: var(--brand);
   font-size: 13px;
   font-weight: 700;
@@ -2939,7 +2658,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   padding: 0 16px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: #fafbfd;
+  background: var(--color-bg-muted);
   color: var(--text);
 }
 
@@ -2962,8 +2681,8 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   padding: 13px 14px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: #fafbfd;
-  color: #263b5b;
+  background: var(--color-bg-muted);
+  color: var(--color-ink);
   font-size: 14px;
   font-weight: 800;
 }
@@ -2994,9 +2713,9 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 .modal-bucket-button {
   min-height: 50px;
   padding: 0 16px;
-  border: 1px solid rgba(21, 40, 73, 0.06);
+  border: 1px solid rgba(26, 26, 26, 0.06);
   border-radius: 16px;
-  background: #fafbfd;
+  background: var(--color-bg-muted);
   color: #6c7c93;
   font-size: 16px;
   font-weight: 700;
@@ -3010,16 +2729,16 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 }
 
 .modal-bucket-button.is-core.is-active {
-  background: linear-gradient(180deg, rgba(21, 40, 73, 0.09) 0%, rgba(21, 40, 73, 0.038) 100%);
-  border-color: rgba(21, 40, 73, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(21, 40, 73, 0.08);
+  background: linear-gradient(180deg, rgba(26, 26, 26, 0.09) 0%, rgba(26, 26, 26, 0.038) 100%);
+  border-color: rgba(26, 26, 26, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.08);
   color: #1f3556;
 }
 
 .modal-bucket-button.is-income.is-active {
-  background: linear-gradient(180deg, rgba(222, 136, 70, 0.11) 0%, rgba(222, 136, 70, 0.04) 100%);
-  border-color: rgba(222, 136, 70, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(222, 136, 70, 0.08);
+  background: linear-gradient(180deg, rgba(26, 26, 26, 0.11) 0%, rgba(26, 26, 26, 0.04) 100%);
+  border-color: rgba(26, 26, 26, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.08);
   color: #855a32;
 }
 
@@ -3037,9 +2756,9 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 }
 
 .modal-button--secondary {
-  background: #f7f8fb;
+  background: var(--color-bg-muted);
   box-shadow: inset 0 0 0 1px var(--line);
-  color: #66758d;
+  color: var(--color-text-secondary);
 }
 
 .modal-button--primary {
@@ -3062,56 +2781,22 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 }
 
 @media (max-width: 560px) {
-  html {
-    background: #ffffff !important;
-  }
-
   body {
     padding: max(14px, env(safe-area-inset-top)) 10px calc(88px + env(safe-area-inset-bottom));
-    background: #ffffff !important;
   }
 
   .app-shell {
     width: 100%;
   }
 
-  .app-header {
-    align-items: flex-start;
-    margin-bottom: 8px;
-    padding-inline: 1px;
-  }
-
-  .app-kicker {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-  }
-
-  .app-title {
-    font-size: 24px;
-    line-height: 1.03;
-  }
-
   .page-stack {
     gap: 12px;
-  }
-
-  .bottom-nav {
-    width: calc(100% - 16px);
-    bottom: max(8px, env(safe-area-inset-bottom));
-    border-radius: 18px;
-  }
-
-  .bottom-nav-button {
-    min-height: 40px;
-    padding-inline: 4px;
-    border-radius: 14px;
-    font-size: 12px;
   }
 
   .panel {
     padding: 15px;
     border-radius: 22px;
-    box-shadow: 0 14px 32px rgba(24, 39, 64, 0.08);
+    box-shadow: none;
   }
 
   .panel-title {
@@ -3140,46 +2825,8 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     justify-content: flex-start;
   }
 
-  .text-actions.summary-actions-cluster {
-    width: auto;
-    justify-content: flex-end;
-  }
-
   .summary-action-button {
     padding: 0;
-  }
-
-  .summary-value {
-    margin-top: 6px;
-    font-size: clamp(18px, 5.2vw, 22px);
-    line-height: 1.02;
-    letter-spacing: -0.03em;
-    white-space: nowrap;
-  }
-
-  .summary-card:first-child .summary-value {
-    font-size: clamp(16px, 4.8vw, 21px);
-  }
-
-  .summary-grid {
-    gap: 8px;
-    margin-top: 12px;
-  }
-
-  .summary-grid-main {
-    gap: 8px;
-  }
-
-  .summary-card {
-    padding: 13px;
-    border-radius: 16px;
-  }
-
-  .summary-fx-strip {
-    gap: 8px;
-    margin-top: 10px;
-    padding: 0 2px;
-    font-size: 11px;
   }
 
   .segmented-control {
@@ -3223,15 +2870,6 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 
   .income-hero-context strong {
     font-size: 14px;
-  }
-
-  .income-metric-card {
-    padding: 12px;
-    border-radius: 16px;
-  }
-
-  .income-metric-value {
-    font-size: clamp(17px, 5vw, 21px);
   }
 
   .income-method-note {
@@ -3293,20 +2931,6 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 
   .income-year-action-cell {
     justify-content: flex-start;
-  }
-
-  .income-north-star {
-    margin-top: 12px;
-  }
-
-  .income-north-star-card {
-    align-items: flex-start;
-    padding: 14px;
-    border-radius: 16px;
-  }
-
-  .income-north-star-side {
-    min-width: 96px;
   }
 
   .income-record-overview {
@@ -3689,8 +3313,6 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   }
 
   .panel-note,
-  .summary-label,
-  .summary-note,
   .holding-code,
   .metric-label,
   .metric-label-button,
@@ -3713,11 +3335,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     justify-content: space-between;
   }
 
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
 
-  .summary-grid-main,
   .bucket-chip-row,
   .income-overview-grid {
     grid-template-columns: 1fr;
@@ -3737,12 +3355,741 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     grid-template-columns: 1fr;
   }
 
-  .income-north-star-card {
-    display: grid;
-  }
+}
 
-  .income-north-star-side {
-    justify-items: start;
-    min-width: 0;
-  }
+/* 閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜
+   婢с劎鍤庣紒鍕鐏炲偊绱橮hase 3閿涘绱伴弬鎵波閺嬪嫭鐗卞?+ 闁鏆€缂佸嫪娆㈢憰鍡欐磰閵?
+   Phase 5 濞撳懐鎮婇弮褑顫夐崚娆忔倵閿涘本婀扮仦鍌氬祮閺堚偓缂佸牆鑸伴幀浣碘偓?
+   閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜 */
+
+/* 閳光偓閳光偓 鐏忓繗濡弽鍥╊劮閿涙艾鍙忔惔鏃傛暏缂佺喍绔撮惃?11px 鐎硅棄鐡х捄婵囩垼缁?閳光偓閳光偓 */
+.section-label,
+.panel-title,
+.home-hero-label,
+.home-focus-label {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--color-text-hint);
+  text-transform: uppercase;
+}
+
+.section-label {
+  margin: 26px 4px 10px;
+}
+
+.panel-note {
+  margin: 2px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-hint);
+  letter-spacing: 0.5px;
+}
+
+/* 閳光偓閳光偓 妞ょ敻娼扮€圭懓娅?閳光偓閳光偓 */
+.page-stack {
+  display: grid;
+  gap: 12px;
+}
+
+.panel {
+  padding: 16px 14px;
+  border: var(--border-thin);
+  border-radius: var(--radius-card);
+  background: #fff;
+  box-shadow: none;
+}
+
+/* 閳光偓閳光偓 妫ｆ牠銆夋い鎯邦攽 閳光偓閳光偓 */
+.home-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px 0;
+}
+
+.home-brand {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--color-text-hint);
+}
+
+.home-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.summary-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: none;
+  border: none;
+  color: var(--color-ink);
+  box-shadow: none;
+}
+
+.summary-action-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* 閳光偓閳光偓 妫ｆ牠銆?Hero閿涙艾鐪虫稉顓炪亣閺佹澘鐡?閳光偓閳光偓 */
+.home-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 18px 0 4px;
+}
+
+.home-hero-label-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-hero-label {
+  letter-spacing: 3px;
+}
+
+.home-hero .ghost-minus {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  color: var(--color-text-hint);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  border-radius: 50%;
+}
+
+.home-hero-value {
+  margin-top: 6px;
+  font-size: 40px;
+  font-weight: 900;
+  letter-spacing: -1px;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-hero-pnl {
+  margin-top: 8px;
+  padding: 5px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-muted);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.home-hero-pnl.is-gain {
+  background: var(--tint-primary);
+  color: var(--color-primary);
+}
+
+.home-hero-pnl.is-loss {
+  background: rgba(27, 127, 59, 0.08);
+  color: var(--color-loss);
+}
+
+.home-hero-fx {
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-hint);
+  letter-spacing: 0.5px;
+}
+
+/* 閳光偓閳光偓 妫ｆ牠銆夐悞锔惧仯娑撹宕遍敍?px 缁顢?閳光偓閳光偓 */
+.home-focus {
+  margin-top: 10px;
+  padding: 16px;
+  border: var(--border-thick);
+  border-radius: var(--radius-card);
+  background: #fff;
+}
+
+.home-focus-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.home-focus-ratio {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.home-focus-amounts {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.home-focus-received {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-focus-projected {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-focus-track {
+  height: 10px;
+  margin-top: 10px;
+  border: var(--border-compact);
+  border-radius: 5px;
+  background: var(--color-bg-muted);
+  overflow: hidden;
+}
+
+.home-focus-track i {
+  display: block;
+  height: 100%;
+  background: var(--color-primary);
+}
+
+.home-focus-capital {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.home-focus-capital strong {
+  font-weight: 900;
+}
+
+.home-focus-capital.is-empty span {
+  color: var(--color-text-hint);
+}
+
+/* 閳光偓閳光偓 妫ｆ牠銆夎箛顐︹偓鐔稿瘹閺嶅洩顢?閳光偓閳光偓 */
+.home-quick-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding: 0 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-hint);
+}
+
+.home-quick-stats strong {
+  color: var(--color-ink);
+  font-weight: 900;
+}
+
+.home-quick-stats strong.is-primary {
+  color: var(--color-primary);
+}
+
+/* 閳光偓閳光偓 妫ｆ牠銆夊〒鍛礋瀵繐鐡欐い闈涘弳閸?閳光偓閳光偓 */
+.home-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.home-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 14px;
+  border: var(--border-thin);
+  border-radius: var(--radius-control);
+  background: #fff;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.home-nav-item:active {
+  transform: scale(0.98);
+  background: var(--color-bg-muted);
+}
+
+.home-nav-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.home-nav-side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+}
+
+.home-nav-side svg {
+  width: 15px;
+  height: 15px;
+  color: var(--color-ink);
+}
+
+/* 閳光偓閳光偓 鐠侀绔寸粭鏃囧厡閸ュ绱伴崗銊ョ潌閸烆垯绔寸痪銏ｅ娑撴槒顢戦崝?閳光偓閳光偓 */
+.quick-add-button {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 30;
+  display: none;
+  padding: 12px 34px;
+  border: var(--border-medium);
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+body[data-active-page="home"] .quick-add-button {
+  display: block;
+}
+
+.quick-add-button:active {
+  transform: translateX(-50%) scale(0.96);
+}
+
+/* 閳光偓閳光偓 鐎涙劙銆夋い鑸电埉 閳光偓閳光偓 */
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border: none;
+  background: none;
+  color: var(--color-ink);
+}
+
+.back-button svg {
+  width: 22px;
+  height: 22px;
+}
+
+.back-button:active {
+  opacity: 0.4;
+}
+
+.top-bar-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.top-bar-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--color-ink);
+}
+
+.top-bar .icon-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 閳光偓閳光偓 閸﹀棗鑸伴崝銊ょ稊閹稿鎸?閳光偓閳光偓 */
+.circle-button {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  flex: 0 0 38px;
+  border: var(--border-compact);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--color-ink);
+  box-shadow: none;
+}
+
+.circle-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* 閳光偓閳光偓 閹烘帒绨?chips 閳光偓閳光偓 */
+.sort-chip {
+  min-width: 0;
+  padding: 8px 12px;
+  border: var(--border-compact);
+  border-radius: var(--radius-chip);
+  background: #fff;
+  box-shadow: none;
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sort-chip.is-active {
+  background: var(--color-ink);
+  color: #fff;
+}
+
+/* 閳光偓閳光偓 閸掑棙顔岄幒褌娆㈤敍鍫ｅ亗閹垱妫╅崢鍡欑摣闁绱氶埞鈧埞鈧?*/
+.segmented-control {
+  display: inline-flex;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
+
+.segment-button {
+  min-height: 32px;
+  padding: 0 14px;
+  border: var(--border-compact);
+  border-radius: var(--radius-chip);
+  background: #fff;
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.segment-button.is-active {
+  background: var(--color-ink);
+  color: #fff;
+}
+
+/* 閳光偓閳光偓 閺€鍓佹抄妞ら潧浼愰崗閿嬪瘻闁?閳光偓閳光偓 */
+.income-manual-button {
+  border: var(--border-compact);
+  border-radius: var(--radius-control);
+  background: #fff;
+  color: var(--color-ink);
+  font-weight: 800;
+  box-shadow: none;
+}
+
+/* 閳光偓閳光偓 閹镐椒绮ㄩ崡?閳光偓閳光偓 */
+.holding-card {
+  border: var(--border-thin);
+  border-radius: var(--radius-card);
+  background: #fff;
+}
+
+.weight-pill {
+  min-width: 64px;
+  padding: 6px 10px;
+  border-radius: var(--radius-chip);
+  box-shadow: none;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.weight-pill.is-core {
+  background: var(--color-ink);
+  color: #fff;
+}
+
+.weight-pill.is-income {
+  background: #fff;
+  border: var(--border-compact);
+  color: var(--color-ink);
+}
+
+/* 閳光偓閳光偓 閹镐椒绮ㄧ紒鎾寸€崶鍙ョ伐閿涙艾宕熼懝鍙夋綀闁插秴鈪烽弶?閳光偓閳光偓 */
+.legend-bar {
+  display: inline-block;
+  width: 44px;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-bg-muted);
+  overflow: hidden;
+  flex: 0 0 44px;
+}
+
+.legend-bar i {
+  display: block;
+  height: 100%;
+  background: var(--color-ink);
+  border-radius: 4px;
+}
+
+/* 閳光偓閳光偓 閼测剝浼呴弮銉ュ坊閸楋紕澧?閳光偓閳光偓 */
+.dividend-metric-card {
+  border: var(--border-thin);
+  border-radius: var(--radius-control);
+  background: #fff;
+}
+
+.dividend-metric-card.is-received,
+.dividend-metric-card.is-upcoming,
+.dividend-metric-card.is-projected {
+  box-shadow: none;
+}
+
+.dividend-month-card {
+  border: var(--border-compact);
+  border-radius: var(--radius-control);
+  box-shadow: none;
+}
+
+.dividend-month-card.is-current {
+  border: var(--border-thin);
+  box-shadow: var(--ring-primary);
+}
+
+/* 閳光偓閳光偓 quickAdd 闁瀚ㄥ鍦崶 閳光偓閳光偓 */
+.quick-add-options {
+  display: grid;
+  gap: 10px;
+}
+
+.quick-add-option {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: var(--border-thin);
+  border-radius: var(--radius-control);
+  background: #fff;
+  text-align: left;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.quick-add-option:active {
+  transform: scale(0.98);
+  background: var(--color-bg-muted);
+}
+
+.quick-add-option strong {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.quick-add-option span {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+/* 鈹€鈹€ 鑹插僵鏀舵暃锛氱孩鑹插彧鐣欑粰娑ㄨ穼/鏀剁泭/涓昏鍔?鈹€鈹€ */
+.holding-price {
+  color: var(--color-text-secondary);
+}
+
+.metric-value.is-income,
+.bucket-detail-value.is-income,
+.dividend-metric-value {
+  color: var(--color-ink);
+}
+
+/* 鈹€鈹€ 鑲℃伅鏈堝崱锛氱櫧搴曞ⅷ绾匡紝褰撳墠鏈堢孩鐜?鈹€鈹€ */
+.dividend-month-card,
+.dividend-month-card.is-past,
+.dividend-month-card.is-future,
+.dividend-month-card.is-current {
+  background: #fff;
+  color: var(--color-ink);
+}
+
+.dividend-month-card.is-empty {
+  background: var(--color-bg-muted);
+  border-color: rgba(26, 26, 26, 0.35);
+}
+
+.dmh-label {
+  color: var(--color-text-secondary);
+  font-weight: 700;
+}
+
+.dmh-total {
+  color: var(--color-ink);
+  font-weight: 900;
+}
+
+/* 鈹€鈹€ 绌烘€?鈹€鈹€ */
+.empty-state {
+  border: 2px dashed rgba(26, 26, 26, 0.25);
+  border-radius: var(--radius-control);
+  background: var(--color-bg-muted);
+  box-shadow: none;
+}
+
+.empty-state-title {
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+.empty-state-note {
+  color: var(--color-text-secondary);
+}
+
+/* 鈹€鈹€ 鑲℃伅鐜囩姸鎬佽壊鏀舵暃锛氭甯告€佺敤澧ㄨ壊锛屽紓甯告€佷繚鐣欏姛鑳借壊 鈹€鈹€ */
+.dividend-status-button--value.is-fresh {
+  color: var(--color-ink);
+}
+
+.dividend-status-button--value.is-manual {
+  color: var(--color-text-secondary);
+}
+
+/* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲
+   寮圭獥 / 纭 / Toast 澧ㄧ嚎鍖栵紙Phase 4锛?   鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
+
+.modal-sheet,
+.confirm-sheet {
+  border: var(--border-thin);
+  border-radius: var(--radius-card);
+  background: #fff;
+  box-shadow: none;
+}
+
+.modal-title,
+.confirm-message {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--color-ink);
+}
+
+.modal-note,
+.confirm-sub {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.modal-input {
+  border: var(--border-compact);
+  border-radius: var(--radius-control);
+  background: #fff;
+  box-shadow: none;
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.modal-input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: none;
+}
+
+.modal-input::placeholder {
+  color: var(--color-text-hint);
+  font-weight: 500;
+}
+
+.modal-field > span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--color-text-hint);
+}
+
+.modal-bucket-button {
+  border: var(--border-compact);
+  border-radius: var(--radius-control);
+  background: #fff;
+  box-shadow: none;
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+.modal-bucket-button.is-active,
+.modal-bucket-button.is-core.is-active,
+.modal-bucket-button.is-income.is-active {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+.modal-button {
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  letter-spacing: 1px;
+  box-shadow: none;
+}
+
+.modal-button--secondary {
+  border: var(--border-compact);
+  background: #fff;
+  color: var(--color-ink);
+}
+
+.modal-button--primary {
+  border: var(--border-compact);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.modal-button--danger {
+  border: 2px solid var(--color-primary);
+  background: #fff;
+  color: var(--color-primary);
+}
+
+.confirm-button {
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.confirm-button--cancel {
+  border: var(--border-compact);
+  background: #fff;
+  color: var(--color-ink);
+}
+
+.confirm-button--ok {
+  border: var(--border-compact);
+  background: var(--color-ink);
+  color: #fff;
+}
+
+.confirm-button--danger {
+  border: var(--border-compact);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.toast {
+  border: var(--border-compact);
+  border-radius: var(--radius-control);
+  background: #fff;
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.toast.is-error {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.toast.is-success {
+  border-color: var(--color-ink);
 }

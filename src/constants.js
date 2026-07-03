@@ -25,7 +25,9 @@ export const VALID_DIVIDEND_SOURCES = new Set(['yfinance', 'yahoo', 'eodhd', 'ma
 export const VALID_DIVIDEND_STATUSES = new Set(['manual', 'fresh', 'stale', 'missing']);
 export const VALID_RECEIPT_STATUSES = new Set(['received', 'pending']);
 export const VALID_DIVIDEND_CONFIDENCES = new Set(['confirmed', 'snapshot', 'carryForward', 'estimated', 'manual']);
-export const PAGE_KEYS = new Set(['assets', 'income', 'dividends']);
+export const PAGE_KEYS = new Set(['home', 'holdings', 'dividends', 'income', 'records']);
+/* 旧快照里的页面键 → 新信息架构页面键。 */
+export const LEGACY_PAGE_MAP = { assets: 'home' };
 /* 收益汇总的展示起始年：年度明细与历年趋势只展示该年及以后（更早年份仍参与净值链推算）。 */
 export const INCOME_START_YEAR = 2025;
 export const DIVIDEND_FILTER_KEYS = new Set(['all', 'core', 'income']);
@@ -47,9 +49,11 @@ export const UI_TEXT = {
   sort: '\u6392\u5e8f',
   overallAverageNetYield: '\u4eca\u5e74\u6574\u4f53\u80a1\u606f\u7387',
   overallYieldCompact: '\u4eca\u5e74\u80a1\u606f\u7387',
-  pageAssets: '\u8d44\u4ea7',
-  pageIncome: '\u6536\u76ca\u6c47\u603b',
+  pageHome: '\u9996\u9875',
+  pageHoldings: '\u6301\u4ed3',
+  pageIncome: '\u6536\u76ca\u660e\u7ec6',
   pageDividends: '\u80a1\u606f\u65e5\u5386',
+  pageRecords: '\u8d44\u91d1\u4e0e\u4ea4\u6613',
   dividendFilterAll: '\u5168\u90e8',
   dividendFilterCore: '\u6838\u5fc3\u4ed3',
   dividendFilterIncome: '\u6253\u5de5\u4ed3'
