@@ -738,12 +738,10 @@ function getHoldingViewModel(item, index = 0) {
 function getHoldingMarkup(item, index, opts = {}) {
   const { animate = true } = opts, v = getHoldingViewModel(item, index);
   return `<div class="holding-swipe${animate ? ' is-entering' : ''}" data-id="${item.localId}" style="--holding-swipe-offset:0px;animation-delay:${v.staggerDelay}ms;">
-    <button class="holding-swipe-delete" type="button" data-action="delete" aria-label="${LABELS.deleteConfirm} ${escapeHtml(item.name)}"><span>\u5220\u9664</span></button>
     <article class="holding-card" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
     <header class="holding-head"><div class="holding-main"><h3 class="holding-name">${escapeHtml(item.name)}</h3>
     <div class="holding-meta-row"><span class="holding-price" data-holding-field="price">${escapeHtml(v.priceText)}</span><span class="holding-divider">${getHoldingTitleDivider()}</span><span class="holding-code">${escapeHtml(item.symbol)}</span></div></div>
-    <div class="holding-side"><span class="weight-pill is-${v.bucketTone}" data-holding-field="weight">${escapeHtml(v.weightText)}</span>
-    <button class="ghost-minus" type="button" data-action="delete" aria-label="${LABELS.deleteConfirm} ${escapeHtml(item.name)}">-</button></div></header>
+    <div class="holding-side"><span class="weight-pill is-${v.bucketTone}" data-holding-field="weight">${escapeHtml(v.weightText)}</span></div></header>
     <div class="holding-grid">
     <div class="metric-static"><div class="metric-row"><span class="metric-label">${LABELS.marketValue}</span><span class="metric-value" data-holding-field="marketValue">${escapeHtml(v.marketValueText)}</span></div></div>
     <button class="metric-button metric-right" type="button" data-action="edit-quantity"><div class="metric-row metric-right"><span class="metric-label">${LABELS.quantity}</span><span class="metric-value" data-holding-field="quantity">${escapeHtml(v.quantityText)}</span></div></button>
@@ -892,7 +890,7 @@ export function applyHoldingSortSelection(nextField) {
 }
 
 /* ── Swipe helpers (exported for main.js) ── */
-export function isHoldingSwipeEnabled() { return window.matchMedia('(max-width: 560px)').matches; }
+export function isHoldingSwipeEnabled() { return false; }
 export function getHoldingSwipeOffset(w) { return safeNumber(w.style.getPropertyValue('--holding-swipe-offset').replace('px', ''), 0); }
 export function setHoldingSwipeOffset(w, offset) {
   const c = Math.max(0, Math.min(HOLDING_SWIPE_DELETE_WIDTH, offset));
