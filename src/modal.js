@@ -2,7 +2,7 @@ import { state, refs, saveState, showToast } from './state.js';
 import {
   safeNumber, escapeHtml, normalizeSymbol, sanitizePerShareOverrideInput,
   mergeQuotes, sanitizeCashFlowEntry, sanitizeTradeEntry, formatDateLabel,
-  resolveQuoteCurrency, resolveFxRate
+  resolveQuoteCurrency, resolveFxRate, markCurrencyAmountElements
 } from './utils.js';
 import { LABELS } from './constants.js';
 import { renderSavedStateQuietly, buildDividendMonthDetail } from './render.js';
@@ -134,6 +134,7 @@ export function updateTradeQuoteInfo() {
   if (!input || !info) return;
   const symbol = normalizeSymbol(input.value);
   info.textContent = buildTradeQuoteInfoText(symbol);
+  markCurrencyAmountElements(refs.modalRoot);
   const priceInput = document.getElementById('modalTradePriceInput');
   const isNew = !(state.modalPayload && state.modalPayload.id);
   if (priceInput && isNew && !priceInput.value) {
@@ -243,6 +244,7 @@ function renderModal() {
     ${state.modal === 'trade' && state.modalPayload && state.modalPayload.id ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-record">删除</button>' : ''}
     <button class="modal-button modal-button--secondary" type="button" data-modal-action="cancel">${LABELS.cancel}</button>
     ${state.modal === 'quickAdd' ? '' : `<button class="modal-button modal-button--primary" type="button" data-modal-action="save">${LABELS.save}</button>`}</div></section>`;
+  markCurrencyAmountElements(refs.modalRoot);
 }
 
 function renderMonthDetailModal() {
@@ -263,6 +265,7 @@ function renderMonthDetailModal() {
         <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">${LABELS.cancel === '取消' ? '关闭' : LABELS.cancel}</button>
       </div>
     </section>`;
+  markCurrencyAmountElements(refs.modalRoot);
 }
 
 // 切换某笔股息的「已到账确认」。确认=锁定为已到账(绿点，且对账不再清理)；取消=回到自动判定(黄点)。
