@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  /* 閳光偓閳光偓 婢с劎鍤庣拋鎹愵吀鐠囶叀鈻堥敍鍫濈唨閸戝棴绱皀ihonggo-go-claude閿涘鏀㈤埞鈧?*/
+  /* 闁冲厜鍋撻柍鍏夊亾 濠⒀佸妿閸ゅ海鎷嬮幑鎰靛悁閻犲浂鍙€閳诲牓鏁嶉崼婵堝敤闁告垵妫寸槐鐨€ihonggo-go-claude闁挎稑顦弨銏ゅ煘閳?*/
   --color-ink: #1a1a1a;
   --color-primary: #dc3545;
   --color-loss: #1b7f3b;
@@ -18,7 +18,7 @@
   --radius-chip: 10px;
   --tint-primary: rgba(220, 53, 69, 0.08);
   --ring-primary: 0 0 0 3px rgba(220, 53, 69, 0.15);
-  /* 閳光偓閳光偓 閺冄冨綁闁插繐鎮曢崚顐㈡倳閿涘牐顔€鐎涙﹢鍣虹憴鍕灟閺佺繝缍嬮幑銏ｅ亞閿涘hase 5 闁劖顒為弨鍓佺椽閿涘鏀㈤埞鈧?*/
+  /* 闁冲厜鍋撻柍鍏夊亾 闁哄唲鍐ㄧ秮闂佹彃绻愰幃鏇㈠礆椤愩垺鍊抽柨娑樼墣椤斺偓閻庢稒锕㈤崳铏规喆閸曨偄鐏熼柡浣虹節缂嶅骞戦姀锝呬簽闁挎稑顒ase 5 闂侇偅鍔栭鐐哄绩閸撲胶妞介柨娑橆槴閺€銏ゅ煘閳?*/
   --bg-top: var(--color-bg);
   --bg-bottom: var(--color-bg);
   --panel: #ffffff;
@@ -74,7 +74,7 @@ body {
     padding-bottom: calc(110px + env(safe-area-inset-bottom));
   }
 
-  /* 閹靛婧€濡楀棙鐏﹂敍姘弿鎼存梻鏁ら崬顖欑閸忎浇顔忛惃鍕瑜?*/
+  /* 闁归潧顑嗗┃鈧俊妤€妫欓悘锕傛晬濮橆剙寮块幖瀛樻⒒閺併倝宕娆戭伇闁稿繋娴囬蹇涙儍閸曨剙顫岀憸?*/
   .app-shell::before {
     content: "";
     position: fixed;
@@ -131,7 +131,6 @@ button:focus-visible {
 .text-button:active,
 .metric-label-button:active,
 .summary-action-button:active,
-.bottom-nav-button:active,
 .segment-button:active {
   transform: scale(0.96);
   opacity: 0.8;
@@ -155,12 +154,9 @@ svg {
   margin: 0 auto;
   position: relative;
 }
-
-.app-header,
 .panel-bar,
 .text-actions,
 .icon-actions,
-.summary-top,
 .sort-group,
 .legend-row,
 .metric-row,
@@ -174,40 +170,6 @@ svg {
   align-items: center;
 }
 
-.app-header {
-  justify-content: space-between;
-  gap: 16px;
-  align-items: flex-start;
-  margin-bottom: 10px;
-  padding: 0 2px 2px;
-  background: transparent;
-  box-shadow: none;
-}
-
-.app-brand {
-  display: grid;
-  gap: 1px;
-  min-width: 0;
-  background: transparent;
-}
-
-.app-kicker {
-  margin: 0;
-  color: var(--color-text-hint);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-}
-
-.app-title {
-  margin: 0;
-  font-size: clamp(28px, 4vw, 34px);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.04;
-}
-
 .page-stack {
   display: grid;
   gap: 16px;
@@ -216,44 +178,6 @@ svg {
 .app-pages,
 .page-view {
   min-width: 0;
-}
-
-.bottom-nav {
-  position: fixed;
-  left: 50%;
-  bottom: max(10px, env(safe-area-inset-bottom));
-  z-index: 20;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
-  width: min(860px, calc(100% - 20px));
-  padding: 5px;
-  border: 1px solid rgba(26, 26, 26, 0.08);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: none;
-  backdrop-filter: blur(14px);
-  transform: translateX(-50%);
-}
-
-.bottom-nav-button {
-  min-width: 0;
-  min-height: 42px;
-  padding: 0 8px;
-  border-radius: 16px;
-  color: #7c8797;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  transition:
-    background-color var(--motion-quick) var(--ease-soft),
-    color var(--motion-quick) var(--ease-soft),
-    transform var(--motion-quick) var(--ease-soft);
-}
-
-.bottom-nav-button.is-active {
-  background: var(--brand-soft);
-  color: var(--brand);
 }
 
 .panel {
@@ -294,8 +218,6 @@ svg {
 }
 
 .panel-note,
-.summary-label,
-.summary-note,
 .holding-code,
 .metric-label,
 .metric-label-button,
@@ -308,15 +230,8 @@ svg {
 }
 
 .panel-note,
-.summary-note,
 .modal-note {
   margin: 6px 0 0;
-}
-
-.summary-note.summary-note--yield {
-  margin-top: 4px;
-  font-size: 12px;
-  color: #98a4b3;
 }
 
 .text-actions,
@@ -329,11 +244,6 @@ svg {
 .text-button {
   padding: 0;
   font-weight: 600;
-}
-
-.text-actions.summary-actions-cluster {
-  gap: 18px;
-  margin-left: auto;
 }
 
 .summary-action-button {
@@ -583,50 +493,8 @@ svg {
   cursor: default;
 }
 
-.summary-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 16px;
-  transition: opacity 180ms var(--ease-soft);
-}
-
-.summary-grid.summary-grid--compact-fx {
-  display: block;
-}
-
-.summary-grid-main {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.summary-card {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, #ffffff 0%, var(--surface) 100%);
-  transition: opacity 180ms var(--ease-soft), transform 180ms var(--ease-soft);
-}
-
-.summary-top {
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.summary-value {
-  margin-top: 8px;
-  font-size: clamp(24px, 3vw, 29px);
-  font-weight: 700;
-  line-height: 1.08;
-  font-variant-numeric: tabular-nums;
-  transition: opacity 180ms var(--ease-soft);
-}
-
-.privacy-hidden .summary-value,
 .privacy-hidden .metric-value,
 .privacy-hidden .holding-price,
-.privacy-hidden .summary-note,
 .privacy-hidden .dividend-status-button--value {
   color: transparent !important;
   user-select: none;
@@ -634,8 +502,6 @@ svg {
   position: relative;
   transition: color 180ms var(--ease-soft);
 }
-
-.privacy-hidden .summary-value::after,
 .privacy-hidden .holding-price::after {
   content: '******';
   position: absolute;
@@ -666,38 +532,11 @@ svg {
   font-weight: inherit;
 }
 
-.privacy-hidden .summary-note::after {
-  content: '';
-}
 
-body:not(.privacy-hidden) .summary-value,
 body:not(.privacy-hidden) .metric-value,
 body:not(.privacy-hidden) .holding-price,
 body:not(.privacy-hidden) .dividend-status-button--value {
   transition: color 180ms var(--ease-soft);
-}
-
-.summary-value.is-income {
-  color: var(--accent);
-}
-
-.summary-fx-strip {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  padding: 0 4px;
-  color: var(--muted);
-  font-size: 12px;
-  letter-spacing: 0.02em;
-}
-
-.summary-fx-item {
-  white-space: nowrap;
-}
-
-.summary-fx-divider {
-  color: #ccd4df;
 }
 
 .placeholder-panel {
@@ -773,30 +612,16 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   min-width: 0;
 }
 
-/* 閺€鍓佹抄濮瑰洦鈧紮绱拌ぐ鎾冲嬀閺€鍓佹抄 hero 娑撳鏌熼惃鍕З娴ｆ粍鐖?+ 楠炴潙瀹抽弰搴ｇ矎閹舵ê褰旈崠鍝勫敶閻ㄥ嫬浼愰崗閿嬬埉閵?*/
-.income-actions-bar,
-.income-fold-tools {
+/* 闁衡偓閸撲焦鎶勬慨鐟版处閳ь兛绱槐鎷屻亹閹惧啿瀣€闁衡偓閸撲焦鎶?hero 濞戞挸顑嗛弻鐔兼儍閸曨偄袟濞达絾绮嶉悥?+ 妤犵偞娼欑€规娊寮版惔锝囩煄闁硅埖锚瑜版棃宕犻崫鍕暥闁汇劌瀚导鎰板礂闁垮鍩夐柕?*/
+.income-actions-bar{
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 14px;
 }
 
-.income-fold-tools {
-  margin-top: 12px;
-}
-
-/* 閺堢喎鍨甸悳浼村櫨閸忋儱褰涢敍姘剁帛鐠併倖鏂侀崷銊┿€婇柈銊ュЗ娴ｆ粍鐖敍娑樻儙閻劎骞囬柌鎴災佸蹇撴倵缁夎鍙嗛獮鏉戝閺勫海绮忛幎妯哄綌閸栨亽鈧?*/
-.income-fold-tools #incomeOpeningCashButtonFold {
-  display: none;
-}
-
 #incomeSummaryPage.is-cash-active .income-actions-bar #incomeOpeningCashButton {
   display: none;
-}
-
-#incomeSummaryPage.is-cash-active .income-fold-tools #incomeOpeningCashButtonFold {
-  display: inline-flex;
 }
 
 .income-manual-button {
@@ -901,98 +726,13 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   overflow-wrap: anywhere;
 }
 
-/* 閹舵ê褰旈崠鍝勬健閿涘牆鍕炬惔锔芥缂?/ 鐠у嫰鍣炬稉搴濇唉閺勬捁顔囪ぐ鏇礆閿涘矂绮拋銈嗘暪鐠ц渹绻氶幐浣圭€粻鈧妴?*/
-.income-fold {
-  min-width: 0;
-}
-
-.income-fold-summary {
-  cursor: pointer;
-  list-style: none;
-  align-items: center;
-  gap: 12px;
-}
-
-.income-fold-summary::-webkit-details-marker {
-  display: none;
-}
-
-.income-fold-caret {
-  flex: 0 0 auto;
-  width: 10px;
-  height: 10px;
-  border-right: 2px solid var(--muted);
-  border-bottom: 2px solid var(--muted);
-  transform: rotate(45deg);
-  transition: transform var(--motion-quick) var(--ease-soft);
-}
-
-.income-fold[open] .income-fold-caret {
-  transform: rotate(-135deg);
-}
-
-.income-fold[open] .income-fold-summary {
-  margin-bottom: 4px;
-}
-
-.income-fold[open] #incomeYearList {
-  margin-top: 12px;
-}
-
-.income-metric-card {
-  min-width: 0;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
-}
-
-.income-metric-card.is-dividend {
-  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.08);
-}
-
-.income-metric-card.is-capital {
-  box-shadow: inset 0 0 0 1px rgba(79, 124, 100, 0.07);
-}
-
-.income-metric-card.is-total {
-  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.06);
-}
-
-.income-metric-label,
-.income-metric-note,
 .income-method-note,
 .income-trend-legend,
 .income-trend-years,
 .income-year-head,
-.income-year-cell::before,
-.income-north-star-label,
-.income-north-star-side small {
+.income-year-cell::before{
   color: var(--muted);
   font-size: 12px;
-}
-
-.income-metric-value {
-  margin-top: 8px;
-  color: var(--color-ink);
-  font-size: clamp(20px, 2.7vw, 25px);
-  font-weight: 800;
-  line-height: 1.04;
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
-
-.income-metric-card.is-dividend .income-metric-value {
-  color: var(--accent);
-}
-
-.income-metric-card.is-capital .income-metric-value {
-  color: #4f7c64;
-}
-
-.income-metric-note {
-  margin: 7px 0 0;
-  line-height: 1.35;
 }
 
 .income-method-note {
@@ -1187,50 +927,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.12);
 }
 
-.income-north-star {
-  margin-top: 14px;
-}
-
-.income-north-star-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  min-width: 0;
-  padding: 16px;
-  border: 1px solid rgba(26, 26, 26, 0.16);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, #ffffff 0%, #fffaf5 100%);
-}
-
-.income-north-star-label {
-  margin: 0;
-}
-
-.income-north-star-value {
-  display: block;
-  margin-top: 8px;
-  color: var(--accent);
-  font-size: clamp(24px, 3vw, 30px);
-  line-height: 1.04;
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
-}
-
-.income-north-star-side {
-  display: grid;
-  justify-items: end;
-  gap: 5px;
-  min-width: 112px;
-}
-
-.income-north-star-side span {
-  color: var(--color-ink);
-  font-size: 17px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
 .income-records {
   display: grid;
   gap: 12px;
@@ -1363,7 +1059,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .is-positive { color: #2f8254 !important; }
 .is-negative { color: #bc473c !important; }
-/* 閻╁牅绨柊宥堝閿涘湏 閼测€茬瘎閹垽绱氶敍姘崇闁?缁绢澁绱濇禍蹇涙尪=缂佽￥鈧?*/
+/* 闁烩晛鐗呯花顓㈡煀瀹ュ牆顥忛柨娑樻箯 闁兼祴鈧尙鐦庨柟顖ｅ灲缁辨岸鏁嶅宕囶洶闂?缂佺虎婢佺槐婵囩韫囨稒灏?缂備浇锟ラ埀?*/
 .is-gain { color: #bc473c !important; }
 .is-loss { color: #2f8254 !important; }
 .is-flat { color: var(--color-text-secondary) !important; }
@@ -1577,7 +1273,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   white-space: nowrap;
 }
 
-/* 閳光偓閳光偓 Calendar refinements: YoY badge, month phase colors, big label/total 閳光偓閳光偓 */
+/* 闁冲厜鍋撻柍鍏夊亾 Calendar refinements: YoY badge, month phase colors, big label/total 闁冲厜鍋撻柍鍏夊亾 */
 .dividend-metric-badge {
   display: inline-flex;
   align-items: center;
@@ -1613,7 +1309,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .dividend-month-card .dividend-mini-rows strong { font-size: 11px; font-weight: 600; }
 .dividend-month-card .dividend-mini-rows strong { color: #5a6b85; }
 
-/* 閳光偓閳光偓 Month detail modal (compact) 閳光偓閳光偓 */
+/* 闁冲厜鍋撻柍鍏夊亾 Month detail modal (compact) 闁冲厜鍋撻柍鍏夊亾 */
 .modal-sheet--detail .month-detail-head { margin-bottom: 10px; }
 .month-detail-title {
   display: flex;
@@ -1655,7 +1351,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .month-detail-row.is-clickable:focus-visible { background: rgba(26, 26, 26, 0.04); outline: none; }
 .month-detail-row.is-clickable:active { background: rgba(26, 26, 26, 0.07); }
 .mdr-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--color-text-hint); }
-/* 缂?瀹歌尙鈥樼拋銈呭煂鐠?璺?姒?閼奉亜濮╅崗銉ㄥ瀵板懐鈥樼拋?璺?閽?瀹告彃鍙曢崨濠冩弓闂勩倖浼?璺?閻?閼哄倸顨旀０鍕強 */
+/* 缂?鐎规瓕灏欓垾妯兼媼閵堝懎鐓傞悹?鐠?濮?闁煎浜滄慨鈺呭礂閵夈劌顦╃€垫澘鎳愰垾妯兼媼?鐠?闁?鐎瑰憡褰冮崣鏇㈠川婵犲啯寮撻梻鍕╁€栨导?鐠?闁?闁煎搫鍊搁〃鏃€锛愰崟顏勫挤 */
 .month-detail-row.is-confirmed .mdr-dot { background: #2f8254; box-shadow: 0 0 0 3px rgba(47, 130, 84, 0.14); }
 .month-detail-row.is-unconfirmed .mdr-dot { background: #e0a52e; box-shadow: 0 0 0 3px rgba(224, 165, 46, 0.16); }
 .month-detail-row.is-announced .mdr-dot { background: #3278b8; box-shadow: 0 0 0 3px rgba(50, 120, 184, 0.14); }
@@ -2367,22 +2063,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   line-height: 1.1;
   white-space: nowrap;
   transition: opacity 180ms var(--ease-soft);
-}
-
-body.ui-refined-accent .holding-price {
-  color: var(--accent);
-}
-
-body.ui-refined-accent .holding-divider {
-  color: #d2d9e2;
-}
-
-body.ui-refined-accent .holding-grid .metric-value.is-income {
-  color: #607188;
-}
-
-body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value {
-  color: #8d643c;
 }
 
 .holding-code {
@@ -3109,37 +2789,8 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     width: 100%;
   }
 
-  .app-header {
-    align-items: flex-start;
-    margin-bottom: 8px;
-    padding-inline: 1px;
-  }
-
-  .app-kicker {
-    font-size: 9px;
-    letter-spacing: 0.2em;
-  }
-
-  .app-title {
-    font-size: 24px;
-    line-height: 1.03;
-  }
-
   .page-stack {
     gap: 12px;
-  }
-
-  .bottom-nav {
-    width: calc(100% - 16px);
-    bottom: max(8px, env(safe-area-inset-bottom));
-    border-radius: 18px;
-  }
-
-  .bottom-nav-button {
-    min-height: 40px;
-    padding-inline: 4px;
-    border-radius: 14px;
-    font-size: 12px;
   }
 
   .panel {
@@ -3174,46 +2825,8 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     justify-content: flex-start;
   }
 
-  .text-actions.summary-actions-cluster {
-    width: auto;
-    justify-content: flex-end;
-  }
-
   .summary-action-button {
     padding: 0;
-  }
-
-  .summary-value {
-    margin-top: 6px;
-    font-size: clamp(18px, 5.2vw, 22px);
-    line-height: 1.02;
-    letter-spacing: -0.03em;
-    white-space: nowrap;
-  }
-
-  .summary-card:first-child .summary-value {
-    font-size: clamp(16px, 4.8vw, 21px);
-  }
-
-  .summary-grid {
-    gap: 8px;
-    margin-top: 12px;
-  }
-
-  .summary-grid-main {
-    gap: 8px;
-  }
-
-  .summary-card {
-    padding: 13px;
-    border-radius: 16px;
-  }
-
-  .summary-fx-strip {
-    gap: 8px;
-    margin-top: 10px;
-    padding: 0 2px;
-    font-size: 11px;
   }
 
   .segmented-control {
@@ -3257,15 +2870,6 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 
   .income-hero-context strong {
     font-size: 14px;
-  }
-
-  .income-metric-card {
-    padding: 12px;
-    border-radius: 16px;
-  }
-
-  .income-metric-value {
-    font-size: clamp(17px, 5vw, 21px);
   }
 
   .income-method-note {
@@ -3327,20 +2931,6 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 
   .income-year-action-cell {
     justify-content: flex-start;
-  }
-
-  .income-north-star {
-    margin-top: 12px;
-  }
-
-  .income-north-star-card {
-    align-items: flex-start;
-    padding: 14px;
-    border-radius: 16px;
-  }
-
-  .income-north-star-side {
-    min-width: 96px;
   }
 
   .income-record-overview {
@@ -3723,8 +3313,6 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   }
 
   .panel-note,
-  .summary-label,
-  .summary-note,
   .holding-code,
   .metric-label,
   .metric-label-button,
@@ -3747,11 +3335,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     justify-content: space-between;
   }
 
-  .summary-grid {
-    grid-template-columns: 1fr;
-  }
 
-  .summary-grid-main,
   .bucket-chip-row,
   .income-overview-grid {
     grid-template-columns: 1fr;
@@ -3771,22 +3355,14 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
     grid-template-columns: 1fr;
   }
 
-  .income-north-star-card {
-    display: grid;
-  }
-
-  .income-north-star-side {
-    justify-items: start;
-    min-width: 0;
-  }
 }
 
-/* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲
-   澧ㄧ嚎缁勪欢灞傦紙Phase 3锛夛細鏂扮粨鏋勬牱寮?+ 閬楃暀缁勪欢瑕嗙洊銆?
-   Phase 5 娓呯悊鏃ц鍒欏悗锛屾湰灞傚嵆鏈€缁堝舰鎬併€?
-   鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
+/* 閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜
+   婢с劎鍤庣紒鍕鐏炲偊绱橮hase 3閿涘绱伴弬鎵波閺嬪嫭鐗卞?+ 闁鏆€缂佸嫪娆㈢憰鍡欐磰閵?
+   Phase 5 濞撳懐鎮婇弮褑顫夐崚娆忔倵閿涘本婀扮仦鍌氬祮閺堚偓缂佸牆鑸伴幀浣碘偓?
+   閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜 */
 
-/* 鈹€鈹€ 灏忚妭鏍囩锛氬叏搴旂敤缁熶竴鐨?11px 瀹藉瓧璺濇爣绛?鈹€鈹€ */
+/* 閳光偓閳光偓 鐏忓繗濡弽鍥╊劮閿涙艾鍙忔惔鏃傛暏缂佺喍绔撮惃?11px 鐎硅棄鐡х捄婵囩垼缁?閳光偓閳光偓 */
 .section-label,
 .panel-title,
 .home-hero-label,
@@ -3811,7 +3387,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   letter-spacing: 0.5px;
 }
 
-/* 鈹€鈹€ 椤甸潰瀹瑰櫒 鈹€鈹€ */
+/* 閳光偓閳光偓 妞ょ敻娼扮€圭懓娅?閳光偓閳光偓 */
 .page-stack {
   display: grid;
   gap: 12px;
@@ -3825,7 +3401,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   box-shadow: none;
 }
 
-/* 鈹€鈹€ 棣栭〉椤惰 鈹€鈹€ */
+/* 閳光偓閳光偓 妫ｆ牠銆夋い鎯邦攽 閳光偓閳光偓 */
 .home-top {
   display: flex;
   align-items: center;
@@ -3864,7 +3440,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   height: 20px;
 }
 
-/* 鈹€鈹€ 棣栭〉 Hero锛氬眳涓ぇ鏁板瓧 鈹€鈹€ */
+/* 閳光偓閳光偓 妫ｆ牠銆?Hero閿涙艾鐪虫稉顓炪亣閺佹澘鐡?閳光偓閳光偓 */
 .home-hero {
   display: flex;
   flex-direction: column;
@@ -3932,7 +3508,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   letter-spacing: 0.5px;
 }
 
-/* 鈹€鈹€ 棣栭〉鐒︾偣涓诲崱锛?px 绮楁 鈹€鈹€ */
+/* 閳光偓閳光偓 妫ｆ牠銆夐悞锔惧仯娑撹宕遍敍?px 缁顢?閳光偓閳光偓 */
 .home-focus {
   margin-top: 10px;
   padding: 16px;
@@ -4006,7 +3582,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   color: var(--color-text-hint);
 }
 
-/* 鈹€鈹€ 棣栭〉蹇€熸寚鏍囪 鈹€鈹€ */
+/* 閳光偓閳光偓 妫ｆ牠銆夎箛顐︹偓鐔稿瘹閺嶅洩顢?閳光偓閳光偓 */
 .home-quick-stats {
   display: flex;
   justify-content: space-between;
@@ -4026,7 +3602,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   color: var(--color-primary);
 }
 
-/* 鈹€鈹€ 棣栭〉娓呭崟寮忓瓙椤靛叆鍙?鈹€鈹€ */
+/* 閳光偓閳光偓 妫ｆ牠銆夊〒鍛礋瀵繐鐡欐い闈涘弳閸?閳光偓閳光偓 */
 .home-nav-list {
   display: flex;
   flex-direction: column;
@@ -4070,7 +3646,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   color: var(--color-ink);
 }
 
-/* 鈹€鈹€ 璁颁竴绗旇兌鍥婏細鍏ㄥ睆鍞竴绾㈣壊涓昏鍔?鈹€鈹€ */
+/* 閳光偓閳光偓 鐠侀绔寸粭鏃囧厡閸ュ绱伴崗銊ョ潌閸烆垯绔寸痪銏ｅ娑撴槒顢戦崝?閳光偓閳光偓 */
 .quick-add-button {
   position: fixed;
   left: 50%;
@@ -4096,7 +3672,7 @@ body[data-active-page="home"] .quick-add-button {
   transform: translateX(-50%) scale(0.96);
 }
 
-/* 鈹€鈹€ 瀛愰〉椤舵爮 鈹€鈹€ */
+/* 閳光偓閳光偓 鐎涙劙銆夋い鑸电埉 閳光偓閳光偓 */
 .top-bar {
   display: flex;
   align-items: center;
@@ -4144,7 +3720,7 @@ body[data-active-page="home"] .quick-add-button {
   gap: 8px;
 }
 
-/* 鈹€鈹€ 鍦嗗舰鍔ㄤ綔鎸夐挳 鈹€鈹€ */
+/* 閳光偓閳光偓 閸﹀棗鑸伴崝銊ょ稊閹稿鎸?閳光偓閳光偓 */
 .circle-button {
   width: 38px;
   height: 38px;
@@ -4163,7 +3739,7 @@ body[data-active-page="home"] .quick-add-button {
   height: 18px;
 }
 
-/* 鈹€鈹€ 鎺掑簭 chips 鈹€鈹€ */
+/* 閳光偓閳光偓 閹烘帒绨?chips 閳光偓閳光偓 */
 .sort-chip {
   min-width: 0;
   padding: 8px 12px;
@@ -4181,7 +3757,7 @@ body[data-active-page="home"] .quick-add-button {
   color: #fff;
 }
 
-/* 鈹€鈹€ 鍒嗘鎺т欢锛堣偂鎭棩鍘嗙瓫閫夛級鈹€鈹€ */
+/* 閳光偓閳光偓 閸掑棙顔岄幒褌娆㈤敍鍫ｅ亗閹垱妫╅崢鍡欑摣闁绱氶埞鈧埞鈧?*/
 .segmented-control {
   display: inline-flex;
   gap: 6px;
@@ -4207,7 +3783,7 @@ body[data-active-page="home"] .quick-add-button {
   color: #fff;
 }
 
-/* 鈹€鈹€ 鏀剁泭椤靛伐鍏锋寜閽?鈹€鈹€ */
+/* 閳光偓閳光偓 閺€鍓佹抄妞ら潧浼愰崗閿嬪瘻闁?閳光偓閳光偓 */
 .income-manual-button {
   border: var(--border-compact);
   border-radius: var(--radius-control);
@@ -4217,7 +3793,7 @@ body[data-active-page="home"] .quick-add-button {
   box-shadow: none;
 }
 
-/* 鈹€鈹€ 鎸佷粨鍗?鈹€鈹€ */
+/* 閳光偓閳光偓 閹镐椒绮ㄩ崡?閳光偓閳光偓 */
 .holding-card {
   border: var(--border-thin);
   border-radius: var(--radius-card);
@@ -4244,7 +3820,7 @@ body[data-active-page="home"] .quick-add-button {
   color: var(--color-ink);
 }
 
-/* 鈹€鈹€ 鎸佷粨缁撴瀯鍥句緥锛氬崟鑹叉潈閲嶅ⅷ鏉?鈹€鈹€ */
+/* 閳光偓閳光偓 閹镐椒绮ㄧ紒鎾寸€崶鍙ョ伐閿涙艾宕熼懝鍙夋綀闁插秴鈪烽弶?閳光偓閳光偓 */
 .legend-bar {
   display: inline-block;
   width: 44px;
@@ -4262,7 +3838,7 @@ body[data-active-page="home"] .quick-add-button {
   border-radius: 4px;
 }
 
-/* 鈹€鈹€ 鑲℃伅鏃ュ巻鍗＄墖 鈹€鈹€ */
+/* 閳光偓閳光偓 閼测剝浼呴弮銉ュ坊閸楋紕澧?閳光偓閳光偓 */
 .dividend-metric-card {
   border: var(--border-thin);
   border-radius: var(--radius-control);
@@ -4286,7 +3862,7 @@ body[data-active-page="home"] .quick-add-button {
   box-shadow: var(--ring-primary);
 }
 
-/* 鈹€鈹€ quickAdd 閫夋嫨寮圭獥 鈹€鈹€ */
+/* 閳光偓閳光偓 quickAdd 闁瀚ㄥ鍦崶 閳光偓閳光偓 */
 .quick-add-options {
   display: grid;
   gap: 10px;
@@ -4321,7 +3897,7 @@ body[data-active-page="home"] .quick-add-button {
   color: var(--color-text-secondary);
 }
 
-/* ── 色彩收敛：红色只留给涨跌/收益/主行动 ── */
+/* 鈹€鈹€ 鑹插僵鏀舵暃锛氱孩鑹插彧鐣欑粰娑ㄨ穼/鏀剁泭/涓昏鍔?鈹€鈹€ */
 .holding-price {
   color: var(--color-text-secondary);
 }
@@ -4332,7 +3908,7 @@ body[data-active-page="home"] .quick-add-button {
   color: var(--color-ink);
 }
 
-/* ── 股息月卡：白底墨线，当前月红环 ── */
+/* 鈹€鈹€ 鑲℃伅鏈堝崱锛氱櫧搴曞ⅷ绾匡紝褰撳墠鏈堢孩鐜?鈹€鈹€ */
 .dividend-month-card,
 .dividend-month-card.is-past,
 .dividend-month-card.is-future,
@@ -4356,7 +3932,7 @@ body[data-active-page="home"] .quick-add-button {
   font-weight: 900;
 }
 
-/* ── 空态 ── */
+/* 鈹€鈹€ 绌烘€?鈹€鈹€ */
 .empty-state {
   border: 2px dashed rgba(26, 26, 26, 0.25);
   border-radius: var(--radius-control);
@@ -4373,11 +3949,147 @@ body[data-active-page="home"] .quick-add-button {
   color: var(--color-text-secondary);
 }
 
-/* ── 股息率状态色收敛：正常态用墨色，异常态保留功能色 ── */
+/* 鈹€鈹€ 鑲℃伅鐜囩姸鎬佽壊鏀舵暃锛氭甯告€佺敤澧ㄨ壊锛屽紓甯告€佷繚鐣欏姛鑳借壊 鈹€鈹€ */
 .dividend-status-button--value.is-fresh {
   color: var(--color-ink);
 }
 
 .dividend-status-button--value.is-manual {
   color: var(--color-text-secondary);
+}
+
+/* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲
+   寮圭獥 / 纭 / Toast 澧ㄧ嚎鍖栵紙Phase 4锛?   鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
+
+.modal-sheet,
+.confirm-sheet {
+  border: var(--border-thin);
+  border-radius: var(--radius-card);
+  background: #fff;
+  box-shadow: none;
+}
+
+.modal-title,
+.confirm-message {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--color-ink);
+}
+
+.modal-note,
+.confirm-sub {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.modal-input {
+  border: var(--border-compact);
+  border-radius: var(--radius-control);
+  background: #fff;
+  box-shadow: none;
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.modal-input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: none;
+}
+
+.modal-input::placeholder {
+  color: var(--color-text-hint);
+  font-weight: 500;
+}
+
+.modal-field > span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--color-text-hint);
+}
+
+.modal-bucket-button {
+  border: var(--border-compact);
+  border-radius: var(--radius-control);
+  background: #fff;
+  box-shadow: none;
+  color: var(--color-ink);
+  font-weight: 800;
+}
+
+.modal-bucket-button.is-active,
+.modal-bucket-button.is-core.is-active,
+.modal-bucket-button.is-income.is-active {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+  color: #fff;
+  box-shadow: none;
+}
+
+.modal-button {
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  letter-spacing: 1px;
+  box-shadow: none;
+}
+
+.modal-button--secondary {
+  border: var(--border-compact);
+  background: #fff;
+  color: var(--color-ink);
+}
+
+.modal-button--primary {
+  border: var(--border-compact);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.modal-button--danger {
+  border: 2px solid var(--color-primary);
+  background: #fff;
+  color: var(--color-primary);
+}
+
+.confirm-button {
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  box-shadow: none;
+}
+
+.confirm-button--cancel {
+  border: var(--border-compact);
+  background: #fff;
+  color: var(--color-ink);
+}
+
+.confirm-button--ok {
+  border: var(--border-compact);
+  background: var(--color-ink);
+  color: #fff;
+}
+
+.confirm-button--danger {
+  border: var(--border-compact);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.toast {
+  border: var(--border-compact);
+  border-radius: var(--radius-control);
+  background: #fff;
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.toast.is-error {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.toast.is-success {
+  border-color: var(--color-ink);
 }
