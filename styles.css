@@ -5293,3 +5293,816 @@ button:focus-visible {
     font-size: 12px;
   }
 }
+
+/* ============================================================
+   Home-rhythm subpage refresh.
+   Keep red-up / green-down semantics and use muted orange only as
+   a small visual accent across the app.
+   ============================================================ */
+
+:root {
+  --color-primary: #d94b3d;
+  --color-loss: #2f8254;
+  --color-pop: #c98a5a;
+  --color-pop-strong: #a76737;
+  --color-pop-soft: rgba(201, 138, 90, 0.15);
+  --color-pop-line: rgba(201, 138, 90, 0.38);
+  --tint-primary: rgba(217, 75, 61, 0.1);
+  --ring-primary: 0 0 0 3px rgba(201, 138, 90, 0.2);
+}
+
+body,
+body[data-active-page="home"] {
+  padding: max(24px, env(safe-area-inset-top)) 24px calc(48px + env(safe-area-inset-bottom));
+}
+
+.app-shell,
+body[data-active-page="home"] .app-shell {
+  width: 376px;
+  max-width: none;
+}
+
+.page-stack,
+body[data-active-page="home"] .page-stack {
+  gap: 0;
+}
+
+.home-top,
+.top-bar {
+  position: relative;
+}
+
+.home-top::after,
+.top-bar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 44px;
+  height: 2px;
+  background: var(--color-pop);
+}
+
+.is-gain,
+.is-positive {
+  color: var(--color-primary) !important;
+}
+
+.is-loss,
+.is-negative {
+  color: var(--color-loss) !important;
+}
+
+.home-hero-pnl strong.is-gain,
+.hm-value.is-gain,
+.hm-sub strong.is-gain,
+.income-amount.is-gain {
+  color: var(--color-primary);
+}
+
+.home-hero-pnl strong.is-loss,
+.hm-value.is-loss,
+.hm-sub strong.is-loss,
+.income-amount.is-loss {
+  color: var(--color-loss);
+}
+
+.home-top {
+  padding: 18px 0;
+}
+
+.top-bar {
+  min-height: 68px;
+  padding: 18px 0;
+  border-bottom: 2px solid var(--color-ink);
+}
+
+.top-bar-title {
+  font-family: var(--font-number);
+  font-size: 16.5px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.back-button,
+.circle-button {
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
+  flex-basis: 30px;
+}
+
+.back-button svg,
+.circle-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.circle-button {
+  background: transparent;
+  box-shadow: none;
+}
+
+.circle-button:hover,
+.circle-button:focus-visible,
+.summary-action-button:hover,
+.summary-action-button:focus-visible {
+  color: var(--color-pop-strong);
+  box-shadow: none;
+}
+
+.page-view:not([data-page-view="home"]) > .panel {
+  padding: 21px 0 22px;
+  border: 0;
+  border-top: 1px solid var(--color-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.page-view:not([data-page-view="home"]) > .panel:first-of-type {
+  border-top: 0;
+}
+
+.panel-title {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 580;
+  letter-spacing: 0;
+}
+
+.panel-note {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 560;
+  letter-spacing: 0;
+}
+
+.panel-bar {
+  align-items: center;
+}
+
+.chart-shell {
+  margin-top: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.bucket-summary-v2 {
+  gap: 14px;
+}
+
+.bucket-chip-row {
+  gap: 8px;
+}
+
+.bucket-chip {
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--color-hairline);
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+}
+
+.bucket-chip.is-core,
+.bucket-chip.is-income,
+.bucket-chip.is-core.is-active,
+.bucket-chip.is-income.is-active {
+  background: #fff;
+  box-shadow: none;
+}
+
+.bucket-chip.is-active,
+.bucket-chip.is-core.is-active,
+.bucket-chip.is-income.is-active {
+  border-color: var(--color-pop-line);
+  box-shadow: inset 0 -2px 0 var(--color-pop);
+}
+
+.bucket-chip-label,
+.bucket-detail-label,
+.legend-label,
+.legend-value {
+  color: var(--color-text-secondary);
+}
+
+.bucket-chip-value,
+.bucket-chip.is-core .bucket-chip-value,
+.bucket-chip.is-income .bucket-chip-value {
+  color: var(--color-ink-strong);
+  font-family: var(--font-number);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.bucket-detail-card {
+  padding: 13px 0 0;
+  border: 0;
+  border-top: 1px solid var(--color-hairline);
+  border-radius: 0;
+  background: transparent;
+}
+
+.bucket-detail-row {
+  min-height: 24px;
+}
+
+.bucket-detail-value,
+.metric-value,
+.dividend-status-button--value,
+.dm-value,
+.dmr-total,
+.record-amount,
+.income-amount,
+.legend-value {
+  font-family: var(--font-number);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.bucket-detail-value.is-income,
+.metric-value.is-income {
+  color: var(--color-ink-strong);
+}
+
+.legend-row {
+  padding: 9px 0;
+}
+
+.legend-bar,
+.legend-bar i {
+  border-radius: 999px;
+}
+
+.legend-bar i {
+  background: var(--color-pop);
+}
+
+.stock-list {
+  gap: 0;
+  margin-top: 0;
+}
+
+.holding-swipe {
+  border-radius: 0;
+}
+
+.holding-card {
+  padding: 18px 0 17px;
+  border: 0;
+  border-bottom: 1px solid var(--color-hairline);
+  border-radius: 0;
+  background: transparent;
+}
+
+.holding-head {
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.holding-name {
+  font-family: var(--font-number);
+  font-size: 16.5px;
+  font-weight: 650;
+  line-height: 1.18;
+  letter-spacing: 0;
+}
+
+.holding-meta-row {
+  margin-top: 7px;
+}
+
+.holding-price,
+.holding-code,
+.metric-label,
+.metric-label-button {
+  font-size: 12px;
+  font-weight: 560;
+}
+
+.holding-price {
+  color: var(--color-text-secondary);
+}
+
+.weight-pill {
+  min-width: 54px;
+  padding: 4px 8px;
+  border-radius: 0;
+  font-family: var(--font-number);
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.weight-pill.is-core {
+  background: var(--color-ink);
+  color: #fff;
+}
+
+.weight-pill.is-income {
+  border: 1px solid var(--color-pop-line);
+  background: var(--color-pop-soft);
+  color: var(--color-pop-strong);
+}
+
+.holding-grid {
+  gap: 11px 18px;
+  margin-top: 16px;
+}
+
+.metric-value,
+.dividend-status-button--value {
+  color: var(--color-ink-strong);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.dividend-status-button--value.is-fresh,
+.dividend-status-button--value.is-manual,
+.dividend-status-button--value.is-stale,
+.dividend-status-button--value.is-missing {
+  color: var(--color-ink-strong);
+}
+
+.dividend-status-button.is-stale .dividend-status-dot,
+.month-detail-row.is-unconfirmed .mdr-dot {
+  background: var(--color-pop);
+  box-shadow: 0 0 0 3px var(--color-pop-soft);
+}
+
+.segmented-control {
+  gap: 8px;
+}
+
+.segment-button,
+.sort-chip,
+.income-manual-button {
+  border: 1px solid var(--color-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-ink);
+}
+
+.segment-button.is-active,
+.sort-chip.is-active {
+  border-color: var(--color-pop-line);
+  background: var(--color-pop-soft);
+  color: var(--color-ink-strong);
+  box-shadow: inset 0 -2px 0 var(--color-pop);
+}
+
+.icon-actions > .sort-group.sort-group--subtle {
+  border-radius: 0;
+  border-color: var(--color-hairline);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.sort-group.sort-group--subtle .sort-chip.is-active {
+  background: var(--color-pop-soft);
+  color: var(--color-ink-strong);
+}
+
+.dividend-metric-grid {
+  grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr) 1px minmax(0, 1fr);
+  gap: 0 20px;
+  margin-top: 0;
+}
+
+.dm-col {
+  grid-template-rows: 18px 32px 18px;
+  row-gap: 6px;
+}
+
+.dm-label {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 580;
+}
+
+.dm-value {
+  color: var(--color-ink-strong);
+  font-size: 20px;
+  font-weight: 650;
+}
+
+.dm-divider {
+  background: var(--color-hairline);
+}
+
+.dividend-metric-badge {
+  margin-top: 0;
+  border-radius: 0;
+  font-weight: 650;
+}
+
+.dividend-metric-badge.is-up {
+  background: var(--tint-primary);
+  color: var(--color-primary);
+}
+
+.dividend-metric-badge.is-down {
+  background: rgba(47, 130, 84, 0.12);
+  color: var(--color-loss);
+}
+
+.dividend-month-grid {
+  gap: 0;
+  margin-top: 0;
+}
+
+.dividend-month-row {
+  position: relative;
+  min-height: 57px;
+  padding: 14px 0;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.dividend-month-row.is-current::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 38px;
+  height: 2px;
+  background: var(--color-pop);
+}
+
+.dividend-month-row.is-current .dmr-label {
+  color: var(--color-pop-strong);
+}
+
+.dmr-label,
+.dmr-total {
+  font-family: var(--font-number);
+  font-weight: 650;
+}
+
+.dmr-label {
+  font-size: 14px;
+}
+
+.dmr-total {
+  color: var(--color-ink-strong);
+  font-size: 14.5px;
+}
+
+.dmr-status {
+  color: var(--color-text-secondary);
+  font-size: 11.5px;
+  font-weight: 560;
+}
+
+.income-overview-grid,
+.income-year-list,
+.income-trend,
+.income-records {
+  margin-top: 0;
+}
+
+.income-hero {
+  padding: 6px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.income-hero-label {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 580;
+  letter-spacing: 0;
+}
+
+.income-hero-rate {
+  font-family: var(--font-number);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.income-hero-value {
+  margin-top: 10px;
+  font-family: var(--font-number);
+  font-size: 36px;
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.income-hero-context {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-hairline);
+  gap: 12px 18px;
+}
+
+.income-hero-context small {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 560;
+}
+
+.income-hero-context strong {
+  color: var(--color-ink-strong);
+  font-family: var(--font-number);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.income-actions-bar {
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.income-manual-button {
+  min-height: 40px;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.income-actions-bar .income-manual-button:first-child,
+#incomeCashFlowButton {
+  border-color: var(--color-pop-line);
+  background: var(--color-pop-soft);
+  color: var(--color-pop-strong);
+}
+
+.income-trend-chart {
+  padding: 2px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.income-trend-zero {
+  stroke: var(--color-hairline);
+}
+
+.income-trend-series.is-dividend polyline,
+.income-trend-series.is-dividend circle,
+.income-trend-legend i.is-dividend {
+  stroke: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.income-trend-series.is-capital polyline,
+.income-trend-series.is-capital circle,
+.income-trend-legend i.is-capital {
+  stroke: var(--color-loss);
+  background: var(--color-loss);
+}
+
+.income-year-table {
+  gap: 0;
+}
+
+.income-year-row:not(.income-year-head) {
+  padding: 15px 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-hairline);
+  border-radius: 0;
+  background: transparent;
+}
+
+.income-year-cell,
+.income-year-row > div,
+.record-main strong,
+.position-title strong,
+.position-grid strong {
+  color: var(--color-ink-strong);
+  font-family: var(--font-number);
+  font-weight: 650;
+}
+
+.income-year-action-button {
+  border-color: var(--color-hairline);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.income-year-action-button.is-filled {
+  color: var(--color-pop-strong);
+  background: var(--color-pop-soft);
+  box-shadow: inset 0 -2px 0 var(--color-pop);
+}
+
+.income-record-overview {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.income-record-overview article {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.income-record-overview article span,
+.income-record-head span,
+.income-record-empty span,
+.record-main small,
+.position-title small,
+.position-grid small {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 560;
+}
+
+.income-record-overview article strong {
+  margin-top: 6px;
+  color: var(--color-ink-strong);
+  font-family: var(--font-number);
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.income-record-columns {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.position-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.income-record-block,
+.income-record-block--wide {
+  padding: 18px 0 0;
+  border: 0;
+  border-top: 1px solid var(--color-hairline);
+  border-radius: 0;
+  background: transparent;
+}
+
+.income-record-block:first-of-type {
+  border-top: 0;
+}
+
+.income-record-head {
+  margin-bottom: 10px;
+}
+
+.income-record-head h3 {
+  color: var(--color-ink-strong);
+  font-family: var(--font-number);
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.income-record-list,
+.income-position-list {
+  gap: 0;
+}
+
+.income-record-row,
+.income-position-row {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--color-hairline);
+  border-radius: 0;
+  background: transparent;
+}
+
+.income-record-row:last-child,
+.income-position-row:last-child {
+  border-bottom: 0;
+}
+
+.income-record-row:hover,
+.income-record-row:focus-visible {
+  background: rgba(201, 138, 90, 0.06);
+}
+
+.empty-state {
+  border: 1px dashed var(--color-pop-line);
+  border-radius: 0;
+  background: var(--color-pop-soft);
+}
+
+.modal-input:focus {
+  border-color: var(--color-pop);
+  box-shadow: 0 0 0 3px var(--color-pop-soft);
+}
+
+.modal-button--primary,
+.confirm-button--ok {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+}
+
+@media (max-width: 560px) {
+  body,
+  body[data-active-page="home"] {
+    padding: max(24px, env(safe-area-inset-top)) 24px calc(48px + env(safe-area-inset-bottom));
+  }
+
+  .app-shell,
+  body[data-active-page="home"] .app-shell {
+    width: 376px;
+    max-width: none;
+  }
+
+  .page-stack {
+    gap: 0;
+  }
+
+  .page-view:not([data-page-view="home"]) > .panel {
+    padding: 21px 0 22px;
+  }
+
+  .panel {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .segmented-control {
+    width: auto;
+  }
+
+  .segment-button {
+    min-height: 32px;
+    padding-inline: 12px;
+    font-size: 12px;
+  }
+
+  .dividend-metric-grid {
+    grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr) 1px minmax(0, 1fr);
+    gap: 0 14px;
+    margin-top: 0;
+  }
+
+  .dm-value {
+    font-size: 16.5px;
+  }
+
+  .dm-label,
+  .dm-sub,
+  .dividend-metric-badge {
+    font-size: 10.5px;
+  }
+
+  .dividend-month-grid {
+    gap: 0;
+    margin-top: 0;
+  }
+
+  .income-record-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 18px;
+  }
+
+  .income-record-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .income-record-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 414px) {
+  .app-shell,
+  body[data-active-page="home"] .app-shell {
+    width: calc(100vw - 48px);
+  }
+}
+
+@media (max-width: 360px) {
+  body,
+  body[data-active-page="home"] {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .app-shell,
+  body[data-active-page="home"] .app-shell {
+    width: min(376px, calc(100vw - 36px));
+  }
+
+  .home-hero-value {
+    font-size: 36px;
+  }
+
+  .income-hero-value {
+    font-size: 31px;
+  }
+
+  .dividend-metric-grid {
+    gap: 0 10px;
+  }
+
+  .dm-value {
+    font-size: 15px;
+  }
+}
