@@ -4848,18 +4848,18 @@ body[data-active-page="home"] .quick-add-button {
    ============================================================ */
 
 :root {
-  --color-ink: #2b3642;
-  --color-ink-strong: #182431;
-  --color-primary: #d94d3f;
-  --color-loss: #318464;
-  --color-bg: #fbfcfd;
-  --color-bg-muted: #f1f4f7;
-  --color-frame-bg: #edf2f6;
-  --color-hairline: #dce2e8;
-  --color-text-secondary: #87919d;
-  --color-text-hint: #adb5bf;
-  --color-surface-soft: #f6f8fa;
-  --color-surface-warm: #ffffff;
+  --color-ink: #20242a;
+  --color-ink-strong: #0f1115;
+  --color-primary: #d94b3d;
+  --color-loss: #53616e;
+  --color-bg: #fbfbfa;
+  --color-bg-muted: #eceff2;
+  --color-frame-bg: #f1f3f5;
+  --color-hairline: #e0e3e7;
+  --color-text-secondary: #767d86;
+  --color-text-hint: #a9b0b8;
+  --color-surface-soft: #f3f4f5;
+  --color-surface-warm: #fbfbfa;
   --border-compact: 1px solid var(--color-hairline);
   --border-thin: 1px solid var(--color-hairline);
   --border-medium: 2px solid var(--color-ink);
@@ -4875,13 +4875,13 @@ body[data-active-page="home"] .quick-add-button {
   --brand-soft: var(--color-bg-muted);
   --accent: var(--color-primary);
   --surface: var(--color-surface-warm);
-  --shadow: 0 12px 34px rgba(25, 39, 55, 0.07);
+  --shadow: 0 12px 30px rgba(25, 32, 41, 0.07);
+  --font: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-number: "Segoe UI Variable Display", "Segoe UI", "Noto Sans SC", sans-serif;
 }
 
 html {
-  background:
-    radial-gradient(circle at 50% -18%, rgba(255, 255, 255, 0.96) 0, rgba(255, 255, 255, 0) 42%),
-    linear-gradient(180deg, #f8fafc 0%, #edf2f6 100%);
+  background: var(--color-frame-bg);
 }
 
 body {
@@ -4905,8 +4905,8 @@ body[data-active-page="home"] .app-shell {
     width: min(414px, calc(100% - 20px));
     border: 1px solid rgba(131, 144, 158, 0.2);
     border-radius: 34px;
-    background: rgba(255, 255, 255, 0.94);
-    box-shadow: 0 22px 70px rgba(29, 43, 58, 0.12);
+    background: var(--color-bg);
+    box-shadow: 0 24px 60px rgba(26, 34, 44, 0.11);
   }
 
   body[data-active-page="home"] {
@@ -4920,6 +4920,14 @@ body[data-active-page="home"] .page-stack {
 
 button:focus-visible {
   box-shadow: var(--ring-primary);
+}
+
+.is-positive {
+  color: var(--color-primary) !important;
+}
+
+.is-loss {
+  color: var(--color-loss) !important;
 }
 
 .home-brand,
@@ -4938,9 +4946,10 @@ button:focus-visible {
 }
 
 .home-brand {
+  font-family: var(--font-number);
   font-size: 13px;
   font-weight: 760;
-  letter-spacing: 5px;
+  letter-spacing: 3px;
 }
 
 .home-top-actions {
@@ -4976,8 +4985,8 @@ button:focus-visible {
 .hm-label,
 .section-label {
   color: var(--color-text-secondary);
-  font-weight: 760;
-  letter-spacing: 1.4px;
+  font-weight: 580;
+  letter-spacing: 0;
 }
 
 .home-hero-label {
@@ -4987,15 +4996,17 @@ button:focus-visible {
 .home-hero .ghost-minus {
   color: var(--color-text-hint);
   font-size: 15px;
-  font-weight: 760;
+  font-weight: 620;
 }
 
 .home-hero-value {
   color: var(--color-ink-strong);
-  font-size: 44px;
-  font-weight: 760;
+  font-family: var(--font-number);
+  font-size: 41px;
+  font-weight: 650;
   letter-spacing: 0;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .home-hero-pnl {
@@ -5003,7 +5014,7 @@ button:focus-visible {
   margin-top: 10px;
   color: var(--color-text-secondary);
   font-size: 14px;
-  font-weight: 760;
+  font-weight: 600;
   letter-spacing: 0;
 }
 
@@ -5024,9 +5035,10 @@ button:focus-visible {
 .home-hero-fx {
   margin-top: 8px;
   color: #9aa3ad;
+  font-family: var(--font-number);
   font-size: 11px;
-  font-weight: 680;
-  letter-spacing: 0.4px;
+  font-weight: 560;
+  letter-spacing: 0;
 }
 
 .home-metrics {
@@ -5043,39 +5055,44 @@ button:focus-visible {
 }
 
 .home-metric-divider {
-  background: #d7dee5;
+  background: var(--color-hairline);
 }
 
 .hm-label {
   font-size: 12px;
-  letter-spacing: 1.1px;
+  letter-spacing: 0;
 }
 
 .hm-value {
   color: var(--color-ink-strong);
-  font-size: 23px;
-  font-weight: 780;
+  font-family: var(--font-number);
+  font-size: 21.5px;
+  font-weight: 650;
   letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .hm-value.is-empty {
   color: #9ba3ad;
-  font-weight: 760;
+  font-weight: 650;
 }
 
 .hm-bar {
   height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
   background: #edf0f3;
 }
 
 .hm-bar i {
+  border-radius: inherit;
   background: var(--color-ink);
 }
 
 .hm-sub {
   color: var(--color-text-secondary);
   font-size: 12px;
-  font-weight: 720;
+  font-weight: 560;
   letter-spacing: 0;
 }
 
@@ -5095,8 +5112,8 @@ button:focus-visible {
 }
 
 .home-nav-title {
-  font-size: 18px;
-  font-weight: 780;
+  font-size: 16.5px;
+  font-weight: 650;
   letter-spacing: 0;
 }
 
@@ -5104,7 +5121,7 @@ button:focus-visible {
   gap: 10px;
   color: var(--color-text-secondary);
   font-size: 13px;
-  font-weight: 740;
+  font-weight: 560;
   letter-spacing: 0;
 }
 
@@ -5122,13 +5139,13 @@ button:focus-visible {
   min-height: 58px;
   margin-top: 24px;
   padding: 0;
-  border-radius: 6px;
-  background: #1b2734;
+  border-radius: 14px;
+  background: #161a20;
   box-shadow: 0 14px 30px rgba(27, 39, 52, 0.12);
   color: #fff;
   font-size: 17px;
-  font-weight: 780;
-  letter-spacing: 2px;
+  font-weight: 650;
+  letter-spacing: 1px;
 }
 
 .quick-add-button:active {
@@ -5216,7 +5233,7 @@ button:focus-visible {
 }
 
 .dividend-metric-badge.is-up {
-  background: rgba(49, 132, 100, 0.12);
+  background: rgba(83, 97, 110, 0.12);
   color: var(--color-loss);
 }
 
