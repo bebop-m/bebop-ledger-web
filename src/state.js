@@ -72,7 +72,6 @@ export const refs = {
   pageViews: Array.from(document.querySelectorAll('[data-page-view]')),
   homeHero: document.getElementById('homeHero'),
   homeFocusCard: document.getElementById('homeFocusCard'),
-  homeQuickStats: document.getElementById('homeQuickStats'),
   homeNavList: document.getElementById('homeNavList'),
   pageBackButtons: Array.from(document.querySelectorAll('[data-page-back]')),
   quickAddButton: document.getElementById('quickAddButton'),
