@@ -1,7 +1,7 @@
 import {
   DEFAULT_RATES, DEFAULT_HOLDINGS, SEED_QUOTES, STORAGE_KEY,
   LABELS, TOAST_DEFAULT_DURATION_MS, CONFIRM_CLOSE_DELAY_MS,
-  PORTFOLIO_SNAPSHOT_VERSION, PAGE_KEYS, DIVIDEND_FILTER_KEYS
+  PORTFOLIO_SNAPSHOT_VERSION, PAGE_KEYS, LEGACY_PAGE_MAP, DIVIDEND_FILTER_KEYS
 } from './constants.js';
 import {
   safeNumber, clone, escapeHtml, normalizeSeedQuoteMap, mergeQuotes,
@@ -20,7 +20,7 @@ export const state = {
   rates: { ...DEFAULT_RATES },
   nextId: 1,
   showAmounts: true,
-  activePage: 'assets',
+  activePage: 'home',
   dividendCalendarBucket: 'all',
   activeDividendMonth: null,
   sortField: 'marketValueCny',
@@ -70,8 +70,12 @@ export function setComputeCache(result) {
 export const refs = {
   privacyButton: document.getElementById('privacyButton'),
   pageViews: Array.from(document.querySelectorAll('[data-page-view]')),
-  bottomNav: document.getElementById('bottomNav'),
-  bottomNavButtons: Array.from(document.querySelectorAll('[data-page-nav]')),
+  homeHero: document.getElementById('homeHero'),
+  homeFocusCard: document.getElementById('homeFocusCard'),
+  homeQuickStats: document.getElementById('homeQuickStats'),
+  homeNavList: document.getElementById('homeNavList'),
+  pageBackButtons: Array.from(document.querySelectorAll('[data-page-back]')),
+  quickAddButton: document.getElementById('quickAddButton'),
   dividendCalendarYear: document.getElementById('dividendCalendarYear'),
   dividendFilterGroup: document.getElementById('dividendFilterGroup'),
   dividendFilterButtons: Array.from(document.querySelectorAll('[data-dividend-filter]')),
@@ -79,7 +83,6 @@ export const refs = {
   incomeManualButton: document.getElementById('incomeManualButton'),
   incomeCashFlowButton: document.getElementById('incomeCashFlowButton'),
   incomeOpeningCashButton: document.getElementById('incomeOpeningCashButton'),
-  incomeOpeningCashButtonFold: document.getElementById('incomeOpeningCashButtonFold'),
   incomeOverviewGrid: document.getElementById('incomeOverviewGrid'),
   incomeTrend: document.getElementById('incomeTrend'),
   incomeYearList: document.getElementById('incomeYearList'),
@@ -89,17 +92,12 @@ export const refs = {
   exportButton: document.getElementById('exportButton'),
   importButton: document.getElementById('importButton'),
   importFileInput: document.getElementById('importFileInput'),
-  appKicker: document.querySelector('.app-kicker'),
-  summaryActions: document.querySelector('.panel-bar--spread .text-actions'),
-  summaryGrid: document.getElementById('summaryGrid'),
   companyLegend: document.getElementById('companyLegend'),
   legendToggle: document.getElementById('legendToggle'),
   bucketTrack: document.getElementById('bucketTrack'),
-  chartLayout: document.querySelector('.chart-layout'),
   marketTimestamp: document.getElementById('marketTimestamp'),
   refreshButton: document.getElementById('refreshButton'),
   addButton: document.getElementById('addButton'),
-  iconActions: document.querySelector('.icon-actions'),
   stockList: document.getElementById('stockList'),
   modalRoot: document.getElementById('modalRoot'),
   confirmRoot: document.getElementById('confirmRoot'),
@@ -191,7 +189,7 @@ export function createDefaultSnapshot() {
     rates: { ...DEFAULT_RATES },
     nextId: DEFAULT_HOLDINGS.length + 1,
     showAmounts: true,
-    activePage: 'assets',
+    activePage: 'home',
     dividendCalendarBucket: 'all',
     activeDividendMonth: null,
     sortField: 'marketValueCny',
@@ -222,7 +220,10 @@ export function applySnapshot(snapshot) {
   state.rates = { ...DEFAULT_RATES, ...((snapshot && snapshot.rates) || {}) };
   state.nextId = Math.max(maxLocalId + 1, Math.floor(safeNumber(snapshot && snapshot.nextId, defaults.nextId)));
   state.showAmounts = snapshot && snapshot.showAmounts === false ? false : true;
-  state.activePage = PAGE_KEYS.has(snapshot && snapshot.activePage) ? snapshot.activePage : 'assets';
+  // 旧快照的 activePage 键（如 'assets'）映射到新信息架构。
+  const rawPage = snapshot && snapshot.activePage;
+  const mappedPage = LEGACY_PAGE_MAP[rawPage] || rawPage;
+  state.activePage = PAGE_KEYS.has(mappedPage) ? mappedPage : 'home';
   state.dividendCalendarBucket = DIVIDEND_FILTER_KEYS.has(snapshot && snapshot.dividendCalendarBucket) ? snapshot.dividendCalendarBucket : 'all';
   const activeDividendMonth = Math.floor(safeNumber(snapshot && snapshot.activeDividendMonth, 0));
   state.activeDividendMonth = activeDividendMonth >= 1 && activeDividendMonth <= 12 ? activeDividendMonth : null;

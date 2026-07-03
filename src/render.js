@@ -1,7 +1,7 @@
 import { state, refs, mutable, saveState } from './state.js';
 import {
   computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems,
-  computeDividendCalendar, computeIncomeSummary, computeCurrentYearDividendCny,
+  computeDividendCalendar, computeIncomeSummary,
   computeCashFlowRecords, computeTradeSummary, isCashModelActive
 } from './compute.js';
 import {
@@ -55,67 +55,81 @@ export function toggleDividendTooltip(button) {
   mutable.activeDividendTooltipButton = button;
 }
 
-/* ── Summary ── */
-function getSummaryViewModel(summary) {
-  // 首页股息口径 = 当前自然年「预计全年」实收（按每笔除息日真实持股），与股息日历一致；非 TTM 年化。
-  const yearDividendCny = computeCurrentYearDividendCny();
-  const y = summary.totalMarketValueCny > 0 ? yearDividendCny / summary.totalMarketValueCny : 0;
+/* ── Home Dashboard ── */
+export function renderHomePage(summary) {
+  const calendarModel = computeDividendCalendar();
+  const incomeModel = computeIncomeSummary();
+  const bucketItems = getBucketSummaryItems(summary.holdings);
+  const totalMv = bucketItems.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0) || 1;
+  renderHomeHero(summary);
+  renderHomeFocusCard(calendarModel, incomeModel);
+  renderHomeQuickStats(calendarModel, bucketItems, totalMv);
+  renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems, totalMv);
+}
+
+function renderHomeHero(summary) {
   const pnl = safeNumber(summary.totalDailyPnlCny, 0);
   const hasPnl = summary.holdings.some((h) => safeNumber(h.previousClose, 0) > 0);
-  return {
-    totalLabel: formatDisplayMoney(summary.netMarketValueCny, 'CNY'),
-    dividendLabel: formatDisplayMoney(yearDividendCny, 'CNY'),
-    dailyPnlText: hasPnl && state.showAmounts ? formatDailyPnl(pnl, summary.totalMarketValueCny) : '',
-    overallYieldText: `${UI_TEXT.overallYieldCompact} ${formatPercent(y)}`,
-    usdRateCompactText: `USD/CNY ${safeNumber(state.rates.USD, 0).toFixed(2)}`,
-    hkdRateCompactText: `HKD/CNY ${safeNumber(state.rates.HKD, 0).toFixed(4)}`,
-    usdRateText: `1 USD = ${safeNumber(state.rates.USD, 0).toFixed(2)} CNY`,
-    hkdRateText: `1 HKD = ${safeNumber(state.rates.HKD, 0).toFixed(4)} CNY`
+  const pnlText = hasPnl && state.showAmounts ? formatDailyPnl(pnl, summary.totalMarketValueCny) : '';
+  refs.homeHero.innerHTML = `
+    <div class="home-hero-label-row">
+      <span class="home-hero-label">${LABELS.totalMarketValue}</span>
+      <button class="ghost-minus" type="button" data-summary-action="liability" aria-label="${LABELS.liability}">-</button>
+    </div>
+    <strong class="home-hero-value">${escapeHtml(formatDisplayMoney(summary.netMarketValueCny, 'CNY'))}</strong>
+    ${pnlText ? `<span class="home-hero-pnl ${getReturnTone(pnl)}">\u4eca\u65e5 ${escapeHtml(pnlText)}</span>` : ''}
+    <span class="home-hero-fx">USD/CNY ${safeNumber(state.rates.USD, 0).toFixed(2)} \u00b7 HKD/CNY ${safeNumber(state.rates.HKD, 0).toFixed(4)}</span>`;
+}
+
+function renderHomeFocusCard(calendarModel, incomeModel) {
+  const m = calendarModel.metrics;
+  const received = safeNumber(m.receivedCny, 0);
+  const projected = safeNumber(m.projectedCny, 0);
+  const ratio = projected > 0 ? Math.min(1, Math.max(0, received / projected)) : 0;
+  const cur = incomeModel.current;
+  const capitalRow = cur && cur.capitalReturnAvailable
+    ? `<div class="home-focus-capital">
+        <span>\u8d44\u91d1\u6536\u76ca <strong class="income-amount ${getReturnTone(cur.capitalReturnCny)}">${escapeHtml(formatIncomeSignedMoney(cur.capitalReturnCny))}</strong></span>
+        <span>\u6536\u76ca\u7387 <strong class="income-amount ${getReturnTone(cur.capitalReturnRate)}">${escapeHtml(formatIncomeRate(cur.capitalReturnRate))}</strong></span>
+      </div>`
+    : `<div class="home-focus-capital is-empty"><span>\u56de\u586b ${incomeModel.currentYear - 1} \u5e74\u672b\u51c0\u503c\u540e\u5c55\u793a\u8d44\u91d1\u6536\u76ca</span></div>`;
+  refs.homeFocusCard.innerHTML = `
+    <div class="home-focus-head">
+      <span class="home-focus-label">\u4eca\u5e74\u80a1\u606f\u8fdb\u5ea6</span>
+      <span class="home-focus-ratio">${Math.round(ratio * 100)}%</span>
+    </div>
+    <div class="home-focus-amounts">
+      <strong class="home-focus-received">${escapeHtml(formatDisplayMoney(received, 'CNY'))}</strong>
+      <span class="home-focus-projected">/ ${escapeHtml(formatDisplayMoney(projected, 'CNY'))}</span>
+    </div>
+    <div class="home-focus-track"><i style="width:${(ratio * 100).toFixed(1)}%"></i></div>
+    ${capitalRow}`;
+}
+
+function renderHomeQuickStats(calendarModel, bucketItems, totalMv) {
+  const bucketStats = bucketItems.map((item) => `<span>${escapeHtml(item.label)} <strong>${((item.marketValueCny / totalMv) * 100).toFixed(1)}%</strong></span>`).join('');
+  const monthItem = calendarModel.months[new Date().getMonth()] || null;
+  const monthStat = monthItem
+    ? `<span>${escapeHtml(monthItem.label)}\u5728\u9014 <strong class="is-primary">${escapeHtml(formatDisplayMoney(monthItem.upcomingCny, 'CNY'))}</strong></span>`
+    : '';
+  refs.homeQuickStats.innerHTML = bucketStats + monthStat;
+}
+
+function renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems, totalMv) {
+  const cash = computeCashFlowRecords();
+  const trades = computeTradeSummary();
+  const monthItem = calendarModel.months[new Date().getMonth()] || null;
+  const coreItem = bucketItems.find((item) => item.key === 'core');
+  const cur = incomeModel.current;
+  const summaries = {
+    holdings: `${summary.holdings.length} \u9879${coreItem ? ` \u00b7 ${LABELS.core} ${((coreItem.marketValueCny / totalMv) * 100).toFixed(1)}%` : ''}`,
+    dividends: monthItem ? `${monthItem.label}\u5728\u9014 ${formatDisplayMoney(monthItem.upcomingCny, 'CNY')}` : '',
+    income: cur && cur.capitalReturnAvailable ? `\u5f53\u5e74 ${formatIncomeSignedMoney(cur.capitalReturnCny)}` : '\u5386\u5e74\u8d8b\u52bf \u00b7 \u5e74\u5ea6\u8868',
+    records: `${cash.count} \u51fa\u5165\u91d1 \u00b7 ${trades.count} \u4ea4\u6613`
   };
-}
-
-function getSummaryMainCardsMarkup(v) {
-  return `
-    <article class="summary-card">
-      <div class="summary-top">
-        <span class="summary-label">${LABELS.totalMarketValue}</span>
-        <button class="ghost-minus" type="button" data-summary-action="liability" aria-label="${LABELS.liability}">-</button>
-      </div>
-      <div class="summary-value" data-summary-field="totalValue">${escapeHtml(v.totalLabel)}</div>
-      <p class="summary-note" data-summary-field="dailyPnl"${v.dailyPnlText ? '' : ' hidden'}>${escapeHtml(v.dailyPnlText)}</p>
-    </article>
-    <article class="summary-card">
-      <div class="summary-label">${LABELS.totalDividend}</div>
-      <div class="summary-value is-income" data-summary-field="dividendValue">${escapeHtml(v.dividendLabel)}</div>
-      <p class="summary-note summary-note--yield" data-summary-field="overallYield">${escapeHtml(v.overallYieldText)}</p>
-    </article>`;
-}
-
-export function renderSummaryView(summary) {
-  const v = getSummaryViewModel(summary);
-  refs.summaryGrid.classList.add('summary-grid--compact-fx');
-  refs.summaryGrid.innerHTML = `<div class="summary-grid-main">${getSummaryMainCardsMarkup(v)}</div>
-    <div class="summary-fx-strip" aria-label="${LABELS.usdRate} / ${LABELS.hkdRate}">
-      <span class="summary-fx-item" data-summary-field="usdRate">${escapeHtml(v.usdRateCompactText)}</span>
-      <span class="summary-fx-divider">\u00b7</span>
-      <span class="summary-fx-item" data-summary-field="hkdRate">${escapeHtml(v.hkdRateCompactText)}</span>
-    </div>`;
-}
-
-export function patchSummaryView(summary) {
-  const isCompact = refs.summaryGrid.classList.contains('summary-grid--compact-fx');
-  if (!refs.summaryGrid.children.length || !isCompact) { renderSummaryView(summary); return; }
-  const tv = refs.summaryGrid.querySelector('[data-summary-field="totalValue"]');
-  const dp = refs.summaryGrid.querySelector('[data-summary-field="dailyPnl"]');
-  const dv = refs.summaryGrid.querySelector('[data-summary-field="dividendValue"]');
-  const ur = refs.summaryGrid.querySelector('[data-summary-field="usdRate"]');
-  const hr = refs.summaryGrid.querySelector('[data-summary-field="hkdRate"]');
-  const oy = refs.summaryGrid.querySelector('[data-summary-field="overallYield"]');
-  if (!tv || !dp || !dv || !ur || !hr || !oy) { renderSummaryView(summary); return; }
-  const v = getSummaryViewModel(summary);
-  tv.textContent = v.totalLabel; dp.textContent = v.dailyPnlText; dp.hidden = !v.dailyPnlText;
-  dv.textContent = v.dividendLabel; ur.textContent = v.usdRateCompactText;
-  hr.textContent = v.hkdRateCompactText; oy.textContent = v.overallYieldText;
+  refs.homeNavList.querySelectorAll('[data-nav-summary]').forEach((el) => {
+    el.textContent = summaries[el.dataset.navSummary] || '';
+  });
 }
 
 /* ── Legend ── */
@@ -134,17 +148,17 @@ function getLegendViewModel(segments) {
 function getLegendRowMarkup(seg, pct, index, opts = {}) {
   const { animate = true } = opts;
   return `<div class="legend-row${animate ? ' is-entering' : ''}" data-legend-key="${escapeHtml(getLegendSegmentKey(seg, index))}" style="animation-delay:${index * LEGEND_ENTER_STAGGER_MS}ms">
-    <div class="legend-row-shell"><div class="legend-main"><span class="legend-dot" style="background:${seg.color}"></span><span class="legend-label">${escapeHtml(seg.label)}</span></div>
+    <div class="legend-row-shell"><div class="legend-main"><span class="legend-bar" aria-hidden="true"><i style="width:${Math.max(3, pct * 100).toFixed(1)}%"></i></span><span class="legend-label">${escapeHtml(seg.label)}</span></div>
     <span class="legend-value">${(pct * 100).toFixed(1)}%</span></div></div>`;
 }
 
 function syncLegendRow(row, seg, pct, index, opts = {}) {
-  const dot = row.querySelector('.legend-dot'), label = row.querySelector('.legend-label'), value = row.querySelector('.legend-value');
-  if (!dot || !label || !value) return false;
+  const bar = row.querySelector('.legend-bar i'), label = row.querySelector('.legend-label'), value = row.querySelector('.legend-value');
+  if (!bar || !label || !value) return false;
   row.dataset.legendKey = getLegendSegmentKey(seg, index);
   row.className = `legend-row${opts.animate ? ' is-entering' : ''}`;
   row.style.animationDelay = `${index * LEGEND_ENTER_STAGGER_MS}ms`;
-  dot.style.background = seg.color; label.textContent = seg.label; value.textContent = `${(pct * 100).toFixed(1)}%`;
+  bar.style.width = `${Math.max(3, pct * 100).toFixed(1)}%`; label.textContent = seg.label; value.textContent = `${(pct * 100).toFixed(1)}%`;
   return true;
 }
 
@@ -299,14 +313,8 @@ export function renderPrivacyButton() {
 }
 
 /* ── Page Chrome ── */
-function getPageLabel(page) {
-  if (page === 'income') return UI_TEXT.pageIncome;
-  if (page === 'dividends') return UI_TEXT.pageDividends;
-  return UI_TEXT.pageAssets;
-}
-
 function getActivePage() {
-  return ['assets', 'income', 'dividends'].includes(state.activePage) ? state.activePage : 'assets';
+  return ['home', 'holdings', 'dividends', 'income', 'records'].includes(state.activePage) ? state.activePage : 'home';
 }
 
 export function renderPageChrome() {
@@ -314,12 +322,8 @@ export function renderPageChrome() {
   refs.pageViews.forEach((view) => {
     view.hidden = view.dataset.pageView !== activePage;
   });
-  refs.bottomNavButtons.forEach((button) => {
-    const isActive = button.dataset.pageNav === activePage;
-    button.classList.toggle('is-active', isActive);
-    button.setAttribute('aria-current', isActive ? 'page' : 'false');
-    button.textContent = getPageLabel(button.dataset.pageNav);
-  });
+  // CSS 钩子：记一笔胶囊只在首页出现，子页样式也按此区分。
+  document.body.dataset.activePage = activePage;
 }
 
 /* ── Dividend Calendar ── */
@@ -682,7 +686,7 @@ function renderTradePositionRows(rows) {
   }).join('');
 }
 
-function renderIncomeRecords() {
+export function renderIncomeRecords() {
   if (!refs.incomeRecordsList) return;
   const cash = computeCashFlowRecords();
   const trades = computeTradeSummary();
@@ -711,12 +715,11 @@ function renderIncomeRecords() {
 
 export function renderIncomeSummaryPage() {
   const model = computeIncomeSummary();
-  // 现金模式启用后，把「期初现金」入口从顶部动作栏移进年度明细折叠区。
+  // 现金模式启用后，收益页隐藏「期初现金」重复入口（CSS 按此类名区分）。
   if (refs.incomeSummaryPage) refs.incomeSummaryPage.classList.toggle('is-cash-active', isCashModelActive());
   renderIncomeOverview(model);
   renderIncomeTrend(model);
   renderIncomeYearList(model);
-  renderIncomeRecords();
 }
 
 /* ── Holdings ── */
@@ -850,10 +853,11 @@ export function animateHoldingRemoval(wrapper, onComplete) {
 
 /* ── Dashboard Orchestration ── */
 function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
-  patchSummaryView(summary); patchLegendView(cs);
+  renderHomePage(summary); patchLegendView(cs);
   patchBucketsView(bs, summary.holdings, summary);
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
+  renderIncomeRecords();
   renderDividendCalendarPage();
   syncRenderedHoldingsView(summary.holdings, { animateReflow: opts.animateHoldingReflow });
 }
@@ -867,15 +871,13 @@ export function renderApp(opts = {}) {
   const summary = computeHoldings();
   const cs = getCompanySegments(summary.holdings);
   const bs = getBucketSegments(summary.holdings);
-  const chartShell = refs.chartLayout && refs.chartLayout.parentElement;
-  if (chartShell) chartShell.insertBefore(refs.bucketTrack, refs.chartLayout);
-  document.body.classList.add('ui-refined-accent');
   renderPageChrome();
   if (incremental) { renderDashboardIncrementally(summary, cs, bs, { animateHoldingReflow }); return; }
-  renderSummaryView(summary); renderLegendView(cs, { animate: animateLegend });
+  renderHomePage(summary); renderLegendView(cs, { animate: animateLegend });
   renderBucketsView(bs, summary.holdings, summary, { animateDetail: animateBucketDetail });
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
+  renderIncomeRecords();
   renderDividendCalendarPage();
   if (renderHoldingsList) renderHoldingsView(summary.holdings, { animate: animateHoldings });
   else syncRenderedHoldingsView(summary.holdings, { animateReflow: false });

@@ -21,38 +21,23 @@ import {
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
 
-/* ── Sort Toggle Button ── */
-function ensureSortToggleButton() {
-  if (mutable.sortToggleButton || !refs.iconActions) return mutable.sortToggleButton;
-  const btn = document.createElement('button');
-  btn.type = 'button'; btn.className = 'circle-button sort-toggle-button';
-  btn.setAttribute('aria-label', UI_TEXT.sort); btn.setAttribute('aria-expanded', 'false');
-  btn.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.2v11.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path><path d="M8.6 9.6L12 6.2l3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path><path d="M8.6 14.4L12 17.8l3.4-3.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
-  refs.iconActions.insertBefore(btn, refs.refreshButton);
-  btn.addEventListener('click', (e) => { e.stopPropagation(); state.sortMenuOpen = !state.sortMenuOpen; renderSortChips(); });
-  mutable.sortToggleButton = btn;
-  return btn;
+/* ── Sort Toggle Button（静态节点，只补事件与无障碍标签，图标由 renderSortChips 填充）── */
+mutable.sortToggleButton = document.getElementById('sortToggleButton');
+if (mutable.sortToggleButton) {
+  mutable.sortToggleButton.setAttribute('aria-label', UI_TEXT.sort);
+  mutable.sortToggleButton.addEventListener('click', (e) => { e.stopPropagation(); state.sortMenuOpen = !state.sortMenuOpen; renderSortChips(); });
 }
 
-/* ── UI Chrome ── */
-function configureUiChrome() {
-  if (refs.appKicker) { refs.appKicker.textContent = 'BEBOP'; if (refs.appKicker.parentElement) refs.appKicker.parentElement.classList.add('app-brand'); }
-  if (refs.summaryActions) { refs.summaryActions.classList.add('summary-actions-cluster'); refs.summaryActions.append(refs.exportButton, refs.privacyButton); }
-  refs.privacyButton.classList.remove('circle-button'); refs.privacyButton.classList.add('summary-action-button');
-  refs.exportButton.className = 'summary-action-button summary-action-button--cloud';
-  refs.exportButton.setAttribute('aria-label', '\u540c\u6b65\u5230\u4e91\u7aef'); refs.exportButton.title = '\u540c\u6b65\u5230\u4e91\u7aef';
-  refs.exportButton.innerHTML = '<span class="cloud-sync-icon" aria-hidden="true"><svg class="cloud-sync-base" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 17a3.5 3.5 0 0 0-1.6-6.4h-.5A6.2 6.2 0 0 0 6 9.6 4.4 4.4 0 0 0 6.5 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="cloud-sync-badge"></span><svg class="cloud-sync-check" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4 4.9 9 9.8 3.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>';
-  refs.importButton.hidden = true; refs.importButton.setAttribute('aria-hidden', 'true'); refs.importButton.tabIndex = -1;
-  const btn = ensureSortToggleButton(); if (btn) btn.hidden = false;
-  if (refs.sortGroup && refs.iconActions) {
-    refs.sortGroup.classList.remove('sort-group--popover');
-    if (refs.sortGroup.parentElement !== refs.iconActions) refs.iconActions.insertBefore(refs.sortGroup, refs.refreshButton);
-    else if (refs.refreshButton && refs.sortGroup.nextElementSibling !== refs.refreshButton) refs.iconActions.insertBefore(refs.sortGroup, refs.refreshButton);
-  }
+/* ── Page Navigation ── */
+function navigateTo(page) {
+  if (!PAGE_KEYS.has(page) || state.activePage === page) return;
+  closeActiveDividendTooltip(true);
+  state.activePage = page;
+  state.sortMenuOpen = false;
+  saveState();
+  renderApp({ incremental: true, animateHoldingReflow: false });
+  window.scrollTo({ top: 0, behavior: 'auto' });
 }
-
-/* ── Init Chrome ── */
-configureUiChrome();
 
 /* ── Event Bindings ── */
 refs.privacyButton.addEventListener('click', () => { state.showAmounts = !state.showAmounts; saveState(); renderSavedStateQuietly({ animateHoldingReflow: false }); });
@@ -66,19 +51,18 @@ refs.addButton.addEventListener('click', () => { openModal(isCashModelActive() ?
 refs.incomeManualButton.addEventListener('click', () => { openModal('yearlyManual'); });
 if (refs.incomeCashFlowButton) refs.incomeCashFlowButton.addEventListener('click', () => { openModal('cashFlow'); });
 if (refs.incomeOpeningCashButton) refs.incomeOpeningCashButton.addEventListener('click', () => { openModal('openingCash'); });
-if (refs.incomeOpeningCashButtonFold) refs.incomeOpeningCashButtonFold.addEventListener('click', () => { openModal('openingCash'); });
 
-refs.bottomNav.addEventListener('click', (event) => {
+refs.homeNavList.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-page-nav]');
-  if (!btn || !PAGE_KEYS.has(btn.dataset.pageNav)) return;
-  if (state.activePage === btn.dataset.pageNav) return;
-  closeActiveDividendTooltip(true);
-  state.activePage = btn.dataset.pageNav;
-  state.sortMenuOpen = false;
-  saveState();
-  renderApp({ incremental: true, animateHoldingReflow: false });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (btn) navigateTo(btn.dataset.pageNav);
 });
+
+refs.pageBackButtons.forEach((button) => {
+  button.addEventListener('click', () => navigateTo('home'));
+});
+
+// 首页主行动：现金模式直接记一笔交易，否则先选择记录类型。
+refs.quickAddButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'quickAdd'); });
 
 refs.dividendFilterGroup.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-dividend-filter]');
@@ -147,7 +131,7 @@ refs.bucketTrack.addEventListener('click', (event) => {
 
 refs.stockList.addEventListener('mouseover', (e) => { const b = e.target.closest('.dividend-status-button'); if (b) updateDividendTooltipSide(b); });
 refs.stockList.addEventListener('focusin', (e) => { const b = e.target.closest('.dividend-status-button'); if (b) updateDividendTooltipSide(b); });
-refs.summaryGrid.addEventListener('click', (e) => { if (e.target.closest('[data-summary-action="liability"]')) openModal('liability', { value: state.liabilityCny > 0 ? String(state.liabilityCny) : '' }); });
+refs.homeHero.addEventListener('click', (e) => { if (e.target.closest('[data-summary-action="liability"]')) openModal('liability', { value: state.liabilityCny > 0 ? String(state.liabilityCny) : '' }); });
 
 refs.stockList.addEventListener('click', (event) => {
   if (Date.now() < mutable.suppressHoldingClickUntil) { event.preventDefault(); event.stopPropagation(); return; }
@@ -221,6 +205,8 @@ refs.modalRoot.addEventListener('click', (event) => {
   const t = a.dataset.modalAction;
   if (t === 'confirm-dividend') { toggleDividendConfirm(a.dataset.sourceId); return; }
   if (t === 'edit-dividend-ledger') { openModal('dividendLedger', { sourceId: a.dataset.sourceId }); return; }
+  if (t === 'open-trade') { openModal('trade'); return; }
+  if (t === 'open-cash-flow') { openModal('cashFlow'); return; }
   if (t === 'close' || t === 'cancel') { closeModal(); return; }
   if (t === 'delete-yearly-manual') { handleModalDelete(); return; }
   if (t === 'delete-record') { handleModalDelete(); return; }

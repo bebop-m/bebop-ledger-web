@@ -1,21 +1,40 @@
 :root {
   color-scheme: light;
-  --bg-top: #f6f7f9;
-  --bg-bottom: #eceff3;
-  --panel: rgba(255, 255, 255, 0.96);
-  --line: #e7ecf3;
-  --line-soft: #edf2f7;
-  --text: #1d304b;
-  --muted: #8c98a8;
-  --brand: #152849;
-  --brand-soft: #eef3f8;
-  --accent: #f28c28;
-  --surface: #fbfcfe;
-  --shadow: 0 18px 42px rgba(24, 39, 64, 0.08);
-  --radius-xl: 24px;
-  --radius-lg: 18px;
-  --radius-pill: 999px;
-  --font: "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+  /* 鈹€鈹€ 澧ㄧ嚎璁捐璇█锛堝熀鍑嗭細nihonggo-go-claude锛夆攢鈹€ */
+  --color-ink: #1a1a1a;
+  --color-primary: #dc3545;
+  --color-loss: #1b7f3b;
+  --color-bg: #fafaf8;
+  --color-bg-muted: #f0f0ec;
+  --color-frame-bg: #e8e8e4;
+  --color-text-secondary: #999;
+  --color-text-hint: #aaa;
+  --border-compact: 2px solid var(--color-ink);
+  --border-thin: 2.5px solid var(--color-ink);
+  --border-medium: 3px solid var(--color-ink);
+  --border-thick: 4px solid var(--color-ink);
+  --radius-card: 16px;
+  --radius-control: 12px;
+  --radius-chip: 10px;
+  --tint-primary: rgba(220, 53, 69, 0.08);
+  --ring-primary: 0 0 0 3px rgba(220, 53, 69, 0.15);
+  /* 鈹€鈹€ 鏃у彉閲忓悕鍒悕锛堣瀛橀噺瑙勫垯鏁翠綋鎹㈣偆锛孭hase 5 閫愭鏀剁紪锛夆攢鈹€ */
+  --bg-top: var(--color-bg);
+  --bg-bottom: var(--color-bg);
+  --panel: #ffffff;
+  --line: var(--color-ink);
+  --line-soft: var(--color-bg-muted);
+  --text: var(--color-ink);
+  --muted: var(--color-text-secondary);
+  --brand: var(--color-ink);
+  --brand-soft: var(--color-bg-muted);
+  --accent: var(--color-primary);
+  --surface: #ffffff;
+  --shadow: none;
+  --radius-xl: var(--radius-card);
+  --radius-lg: var(--radius-control);
+  --radius-pill: 20px;
+  --font: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", sans-serif;
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-quick: 150ms;
   --motion-base: 220ms;
@@ -32,10 +51,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  background:
-    radial-gradient(circle at top left, rgba(248, 249, 252, 0.96), transparent 28%),
-    radial-gradient(circle at top right, rgba(250, 246, 241, 0.72), transparent 30%),
-    linear-gradient(180deg, var(--bg-top) 0%, #f1f3f7 48%, var(--bg-bottom) 100%);
+  background: var(--color-bg);
 }
 
 body {
@@ -48,8 +64,30 @@ body {
   font-family: var(--font);
 }
 
-body.ui-refined-accent {
-  --accent: #de8846;
+@media (min-width: 431px) {
+  html {
+    background: var(--color-frame-bg);
+  }
+
+  body {
+    padding-top: 32px;
+    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  }
+
+  /* 鎵嬫満妗嗘灦锛氬叏搴旂敤鍞竴鍏佽鐨勬姇褰?*/
+  .app-shell::before {
+    content: "";
+    position: fixed;
+    top: 12px;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(430px, 100%);
+    background: var(--color-bg);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    z-index: -1;
+  }
 }
 
 body.modal-open {
@@ -80,8 +118,8 @@ button {
 }
 
 button:focus-visible {
-  outline: 2px solid var(--brand);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--ring-primary);
 }
 
 .circle-button:active,
@@ -113,8 +151,9 @@ svg {
 }
 
 .app-shell {
-  width: min(100%, 860px);
+  width: min(100%, 402px);
   margin: 0 auto;
+  position: relative;
 }
 
 .app-header,
@@ -192,7 +231,7 @@ svg {
   border: 1px solid rgba(21, 40, 73, 0.08);
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 42px rgba(24, 39, 64, 0.16);
+  box-shadow: none;
   backdrop-filter: blur(14px);
   transform: translateX(-50%);
 }
@@ -724,7 +763,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .segment-button.is-active {
   background: #ffffff;
   color: var(--brand);
-  box-shadow: 0 5px 14px rgba(24, 39, 64, 0.08);
+  box-shadow: none;
 }
 
 .income-header-actions {
@@ -734,7 +773,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   min-width: 0;
 }
 
-/* 收益汇总：当年收益 hero 下方的动作栏 + 年度明细折叠区内的工具栏。 */
+/* 鏀剁泭姹囨€伙細褰撳勾鏀剁泭 hero 涓嬫柟鐨勫姩浣滄爮 + 骞村害鏄庣粏鎶樺彔鍖哄唴鐨勫伐鍏锋爮銆?*/
 .income-actions-bar,
 .income-fold-tools {
   display: flex;
@@ -747,7 +786,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   margin-top: 12px;
 }
 
-/* 期初现金入口：默认放在顶部动作栏；启用现金模式后移入年度明细折叠区。 */
+/* 鏈熷垵鐜伴噾鍏ュ彛锛氶粯璁ゆ斁鍦ㄩ《閮ㄥ姩浣滄爮锛涘惎鐢ㄧ幇閲戞ā寮忓悗绉诲叆骞村害鏄庣粏鎶樺彔鍖恒€?*/
 .income-fold-tools #incomeOpeningCashButtonFold {
   display: none;
 }
@@ -773,7 +812,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   font-size: 13px;
   font-weight: 800;
   white-space: nowrap;
-  box-shadow: 0 8px 18px rgba(24, 39, 64, 0.06);
+  box-shadow: none;
   transition:
     background-color var(--motion-quick) var(--ease-soft),
     box-shadow var(--motion-quick) var(--ease-soft),
@@ -789,7 +828,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .income-manual-button:hover,
 .income-manual-button:focus-visible {
   background: var(--brand-soft);
-  box-shadow: 0 10px 22px rgba(24, 39, 64, 0.1);
+  box-shadow: none;
 }
 
 .income-overview-grid {
@@ -862,7 +901,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   overflow-wrap: anywhere;
 }
 
-/* 折叠区块（年度明细 / 资金与交易记录），默认收起保持极简。 */
+/* 鎶樺彔鍖哄潡锛堝勾搴︽槑缁?/ 璧勯噾涓庝氦鏄撹褰曪級锛岄粯璁ゆ敹璧蜂繚鎸佹瀬绠€銆?*/
 .income-fold {
   min-width: 0;
 }
@@ -1324,7 +1363,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .is-positive { color: #2f8254 !important; }
 .is-negative { color: #bc473c !important; }
-/* 盈亏配色（A 股习惯）：赚钱=红，亏钱=绿。 */
+/* 鐩堜簭閰嶈壊锛圓 鑲′範鎯級锛氳禋閽?绾紝浜忛挶=缁裤€?*/
 .is-gain { color: #bc473c !important; }
 .is-loss { color: #2f8254 !important; }
 .is-flat { color: #65748a !important; }
@@ -1494,7 +1533,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .dividend-month-card:hover,
 .dividend-month-card.is-active {
   border-color: rgba(242, 140, 40, 0.46);
-  box-shadow: 0 10px 24px rgba(21, 40, 73, 0.08);
+  box-shadow: none;
 }
 
 .dividend-month-card.is-active {
@@ -1538,7 +1577,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   white-space: nowrap;
 }
 
-/* ── Calendar refinements: YoY badge, month phase colors, big label/total ── */
+/* 鈹€鈹€ Calendar refinements: YoY badge, month phase colors, big label/total 鈹€鈹€ */
 .dividend-metric-badge {
   display: inline-flex;
   align-items: center;
@@ -1559,7 +1598,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .dividend-month-card.is-current {
   background: linear-gradient(180deg, #fff6ec 0%, #ffffff 100%);
   border-color: rgba(242, 140, 40, 0.5);
-  box-shadow: 0 8px 20px rgba(242, 140, 40, 0.12);
+  box-shadow: none;
 }
 .dividend-month-card.is-empty { opacity: 0.62; }
 .dividend-month-card.is-current.is-empty { opacity: 0.92; }
@@ -1574,7 +1613,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .dividend-month-card .dividend-mini-rows strong { font-size: 11px; font-weight: 600; }
 .dividend-month-card .dividend-mini-rows strong { color: #5a6b85; }
 
-/* ── Month detail modal (compact) ── */
+/* 鈹€鈹€ Month detail modal (compact) 鈹€鈹€ */
 .modal-sheet--detail .month-detail-head { margin-bottom: 10px; }
 .month-detail-title {
   display: flex;
@@ -1616,7 +1655,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .month-detail-row.is-clickable:focus-visible { background: rgba(21, 40, 73, 0.04); outline: none; }
 .month-detail-row.is-clickable:active { background: rgba(21, 40, 73, 0.07); }
 .mdr-dot { width: 9px; height: 9px; border-radius: 50%; background: #b3bac6; }
-/* 绿=已确认到账 · 黄=自动入账待确认 · 蓝=已公告未除息 · 灰=节奏预估 */
+/* 缁?宸茬‘璁ゅ埌璐?路 榛?鑷姩鍏ヨ处寰呯‘璁?路 钃?宸插叕鍛婃湭闄ゆ伅 路 鐏?鑺傚棰勪及 */
 .month-detail-row.is-confirmed .mdr-dot { background: #2f8254; box-shadow: 0 0 0 3px rgba(47, 130, 84, 0.14); }
 .month-detail-row.is-unconfirmed .mdr-dot { background: #e0a52e; box-shadow: 0 0 0 3px rgba(224, 165, 46, 0.16); }
 .month-detail-row.is-announced .mdr-dot { background: #3278b8; box-shadow: 0 0 0 3px rgba(50, 120, 184, 0.14); }
@@ -2101,7 +2140,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   border: 1px solid rgba(21, 40, 73, 0.08);
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 18px 34px rgba(24, 39, 64, 0.12);
+  box-shadow: none;
   backdrop-filter: blur(10px);
   order: 0;
   gap: 6px;
@@ -2485,7 +2524,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   background: rgba(255, 255, 255, 0.97);
   color: var(--text);
   border: 1px solid var(--line);
-  box-shadow: 0 8px 24px rgba(21, 40, 73, 0.1);
+  box-shadow: none;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -2697,7 +2736,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   border: 1px solid var(--line);
   border-radius: 22px;
   background: #ffffff;
-  box-shadow: 0 20px 44px rgba(24, 39, 64, 0.16);
+  box-shadow: none;
   max-height: calc(100vh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow-y: auto;
   transform: translateY(100%);
@@ -2738,7 +2777,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   border: 1px solid var(--line);
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.97);
-  box-shadow: 0 12px 32px rgba(24, 39, 64, 0.14);
+  box-shadow: none;
   color: var(--text);
   font-size: 14px;
   font-weight: 500;
@@ -2796,7 +2835,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   border: 1px solid var(--line);
   border-radius: 22px;
   background: #ffffff;
-  box-shadow: 0 20px 44px rgba(24, 39, 64, 0.16);
+  box-shadow: none;
   opacity: 0;
   transform: translateY(18px) scale(0.985);
   transform-origin: 50% 100%;
@@ -2821,7 +2860,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
 
 .confirm-sheet.is-danger {
   border-color: rgba(224, 92, 77, 0.14);
-  box-shadow: 0 22px 48px rgba(24, 39, 64, 0.16);
+  box-shadow: none;
 }
 
 @keyframes confirm-fade-in {
@@ -3111,7 +3150,7 @@ body.ui-refined-accent .bucket-chip.is-income:not(.is-active) .bucket-chip-value
   .panel {
     padding: 15px;
     border-radius: 22px;
-    box-shadow: 0 14px 32px rgba(24, 39, 64, 0.08);
+    box-shadow: none;
   }
 
   .panel-title {

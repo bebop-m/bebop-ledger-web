@@ -146,7 +146,14 @@ function renderModal() {
   if (!state.modal) { refs.modalRoot.innerHTML = ''; return; }
   if (state.modal === 'monthDetail') { renderMonthDetailModal(); return; }
   let title = '', note = '', fields = '';
-  if (state.modal === 'quantity') {
+  if (state.modal === 'quickAdd') {
+    title = '记一笔';
+    note = '选择要记录的类型';
+    fields = `<div class="quick-add-options">
+      <button class="quick-add-option" type="button" data-modal-action="open-trade"><strong>交易</strong><span>买入 / 卖出一笔股票</span></button>
+      <button class="quick-add-option" type="button" data-modal-action="open-cash-flow"><strong>出入金</strong><span>真实的资金转入 / 转出</span></button>
+    </div>`;
+  } else if (state.modal === 'quantity') {
     title = LABELS.quantityTitle; note = state.modalPayload.name || '';
     fields = `<input id="modalQuantityInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.quantityPlaceholder}">`;
   } else if (state.modal === 'tax') {
@@ -235,7 +242,7 @@ function renderModal() {
     ${state.modal === 'cashFlow' && state.modalPayload && state.modalPayload.id ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-record">删除</button>' : ''}
     ${state.modal === 'trade' && state.modalPayload && state.modalPayload.id ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-record">删除</button>' : ''}
     <button class="modal-button modal-button--secondary" type="button" data-modal-action="cancel">${LABELS.cancel}</button>
-    <button class="modal-button modal-button--primary" type="button" data-modal-action="save">${LABELS.save}</button></div></section>`;
+    ${state.modal === 'quickAdd' ? '' : `<button class="modal-button modal-button--primary" type="button" data-modal-action="save">${LABELS.save}</button>`}</div></section>`;
 }
 
 function renderMonthDetailModal() {
@@ -354,6 +361,7 @@ function saveTradeEdit() {
 
 export function handleModalSave() {
   if (state.modal === 'monthDetail') { closeModal(); return; }
+  if (state.modal === 'quickAdd') return;
   if (state.modal === 'quantity') {
     const v = Math.max(0, safeNumber(document.getElementById('modalQuantityInput').value, 0));
     state.holdings = state.holdings.map((i) => i.localId === state.modalPayload.localId ? { ...i, quantity: v } : i);
