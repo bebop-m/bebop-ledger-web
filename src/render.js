@@ -7,8 +7,7 @@ import {
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
   formatTimestamp, normalizeDividendStatus, getDividendStatusLabel,
-  buildDividendTooltipLines, buildDividendTooltipHtml, createElementFromHtml,
-  markCurrencyAmountElements
+  buildDividendTooltipLines, buildDividendTooltipHtml, createElementFromHtml
 } from './utils.js';
 import {
   MASK_AMOUNT, MASK_PRICE, LABELS, UI_TEXT,
@@ -370,17 +369,11 @@ function getDividendMonthStatusText(item) {
   return parts.length ? parts.join(' · ') : '—';
 }
 
-function getDividendMonthProgress(item) {
-  const total = safeNumber(item && item.totalCny, 0);
-  if (total <= 0) return 0;
-  return Math.min(1, Math.max(0, safeNumber(item.receivedCny, 0) / total));
-}
-
 function renderDividendMonths(model) {
   refs.dividendMonthGrid.innerHTML = model.months.map((item) => `
-    <button class="dividend-month-row is-${item.phase}${item.totalCny > 0 ? '' : ' is-empty'}" type="button" data-dividend-month="${item.month}" style="--month-progress:${(getDividendMonthProgress(item) * 100).toFixed(1)}%">
+    <button class="dividend-month-row is-${item.phase}${item.totalCny > 0 ? '' : ' is-empty'}" type="button" data-dividend-month="${item.month}">
       <span class="dmr-label">${escapeHtml(item.label)}</span>
-      <span class="dmr-main"><span class="dmr-status">${escapeHtml(getDividendMonthStatusText(item))}</span><span class="dmr-progress"><i aria-hidden="true"></i></span></span>
+      <span class="dmr-status">${escapeHtml(getDividendMonthStatusText(item))}</span>
       <strong class="dmr-total">${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}</strong>
     </button>
   `).join('');
@@ -745,10 +738,12 @@ function getHoldingViewModel(item, index = 0) {
 function getHoldingMarkup(item, index, opts = {}) {
   const { animate = true } = opts, v = getHoldingViewModel(item, index);
   return `<div class="holding-swipe${animate ? ' is-entering' : ''}" data-id="${item.localId}" style="--holding-swipe-offset:0px;animation-delay:${v.staggerDelay}ms;">
+    <button class="holding-swipe-delete" type="button" data-action="delete" aria-label="${LABELS.deleteConfirm} ${escapeHtml(item.name)}"><span>\u5220\u9664</span></button>
     <article class="holding-card" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
     <header class="holding-head"><div class="holding-main"><h3 class="holding-name">${escapeHtml(item.name)}</h3>
     <div class="holding-meta-row"><span class="holding-price" data-holding-field="price">${escapeHtml(v.priceText)}</span><span class="holding-divider">${getHoldingTitleDivider()}</span><span class="holding-code">${escapeHtml(item.symbol)}</span></div></div>
-    <div class="holding-side"><span class="weight-pill is-${v.bucketTone}" data-holding-field="weight">${escapeHtml(v.weightText)}</span></div></header>
+    <div class="holding-side"><span class="weight-pill is-${v.bucketTone}" data-holding-field="weight">${escapeHtml(v.weightText)}</span>
+    <button class="ghost-minus" type="button" data-action="delete" aria-label="${LABELS.deleteConfirm} ${escapeHtml(item.name)}">-</button></div></header>
     <div class="holding-grid">
     <div class="metric-static"><div class="metric-row"><span class="metric-label">${LABELS.marketValue}</span><span class="metric-value" data-holding-field="marketValue">${escapeHtml(v.marketValueText)}</span></div></div>
     <button class="metric-button metric-right" type="button" data-action="edit-quantity"><div class="metric-row metric-right"><span class="metric-label">${LABELS.quantity}</span><span class="metric-value" data-holding-field="quantity">${escapeHtml(v.quantityText)}</span></div></button>
@@ -764,7 +759,6 @@ export function renderHoldingsView(holdings, opts = {}) {
   mutable.activeDividendTooltipButton = null;
   if (!holdings.length) { refs.stockList.innerHTML = '<article class="holding-card empty-card"></article>'; return; }
   refs.stockList.innerHTML = holdings.map((item, i) => getHoldingMarkup(item, i, opts)).join('');
-  markCurrencyAmountElements(refs.stockList);
 }
 
 function syncHoldingRow(wrapper, item) {
@@ -817,7 +811,6 @@ export function syncRenderedHoldingsView(holdings, opts = {}) {
     }
   });
   if (mutable.activeDividendTooltipButton && !refs.stockList.contains(mutable.activeDividendTooltipButton)) mutable.activeDividendTooltipButton = null;
-  markCurrencyAmountElements(refs.stockList);
   if (prevPos) animateHoldingReflow(prevPos);
 }
 
@@ -864,7 +857,6 @@ function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
   renderIncomeRecords();
   renderDividendCalendarPage();
   syncRenderedHoldingsView(summary.holdings, { animateReflow: opts.animateHoldingReflow });
-  markCurrencyAmountElements();
 }
 
 export function renderSavedStateQuietly(opts = {}) {
@@ -886,7 +878,6 @@ export function renderApp(opts = {}) {
   renderDividendCalendarPage();
   if (renderHoldingsList) renderHoldingsView(summary.holdings, { animate: animateHoldings });
   else syncRenderedHoldingsView(summary.holdings, { animateReflow: false });
-  markCurrencyAmountElements();
 }
 
 export function applyHoldingSortSelection(nextField) {
@@ -901,7 +892,7 @@ export function applyHoldingSortSelection(nextField) {
 }
 
 /* ── Swipe helpers (exported for main.js) ── */
-export function isHoldingSwipeEnabled() { return false; }
+export function isHoldingSwipeEnabled() { return window.matchMedia('(max-width: 560px)').matches; }
 export function getHoldingSwipeOffset(w) { return safeNumber(w.style.getPropertyValue('--holding-swipe-offset').replace('px', ''), 0); }
 export function setHoldingSwipeOffset(w, offset) {
   const c = Math.max(0, Math.min(HOLDING_SWIPE_DELETE_WIDTH, offset));

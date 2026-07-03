@@ -38,38 +38,6 @@ export function createElementFromHtml(markup) {
   return template.content.firstElementChild;
 }
 
-const _CURRENCY_AMOUNT_RE = /[¥￥]/;
-const _CURRENCY_AMOUNT_SELECTOR = [
-  '.home-hero-value',
-  '.home-hero-pnl strong',
-  '.hm-value',
-  '.hm-sub',
-  '.home-nav-summary',
-  '.bucket-detail-value',
-  '.metric-value',
-  '.dm-value',
-  '.dmr-status',
-  '.dmr-total',
-  '.month-detail-title strong',
-  '.month-detail-summary',
-  '.mdr-amount',
-  '.income-amount',
-  '.record-amount',
-  '.position-grid strong',
-  '.income-record-overview strong',
-  '.dividend-detail-grid strong',
-  '.dividend-detail-formula',
-  '.modal-note',
-  '.modal-quote-line'
-].join(',');
-
-export function markCurrencyAmountElements(root = document) {
-  if (!root || typeof root.querySelectorAll !== 'function') return;
-  root.querySelectorAll(_CURRENCY_AMOUNT_SELECTOR).forEach((el) => {
-    el.classList.toggle('money-amount', _CURRENCY_AMOUNT_RE.test(el.textContent || ''));
-  });
-}
-
 /* ── Formatting ── */
 export function formatMoney(value, currency) {
   const amount = safeNumber(value, 0);
