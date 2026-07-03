@@ -340,42 +340,41 @@ function formatYoyBadge(yoy) {
   return `<span class="dividend-metric-badge is-${up ? 'up' : 'down'}">${escapeHtml(pct)} · ${escapeHtml(LABELS.dividendVsLastYear)}</span>`;
 }
 
-function getDividendMetricMarkup(label, value, tone = '', badge = '') {
-  return `<article class="dividend-metric-card${tone ? ` is-${tone}` : ''}">
-    <div class="dividend-metric-label">${escapeHtml(label)}</div>
-    <div class="dividend-metric-value">${escapeHtml(formatDisplayMoney(value, 'CNY'))}</div>
-    ${badge}
-  </article>`;
+// 三栏排版式指标：竖发丝线分隔，无卡片框。
+function getDividendMetricColumn(label, value, sub = '') {
+  return `<div class="dm-col">
+    <span class="dm-label">${escapeHtml(label)}</span>
+    <strong class="dm-value">${escapeHtml(formatDisplayMoney(value, 'CNY'))}</strong>
+    <span class="dm-sub">${sub}</span>
+  </div>`;
 }
 
 function renderDividendMetricGrid(model) {
   const m = model.metrics;
   refs.dividendMetricGrid.innerHTML = [
-    getDividendMetricMarkup(LABELS.dividendReceived, m.receivedCny, 'received'),
-    getDividendMetricMarkup(LABELS.dividendUpcoming, m.upcomingCny, 'upcoming'),
-    getDividendMetricMarkup(LABELS.dividendProjected, m.projectedCny, 'projected', formatYoyBadge(m.projectedYoy))
+    getDividendMetricColumn(LABELS.dividendReceived, m.receivedCny),
+    '<div class="dm-divider" aria-hidden="true"></div>',
+    getDividendMetricColumn(LABELS.dividendUpcoming, m.upcomingCny),
+    '<div class="dm-divider" aria-hidden="true"></div>',
+    getDividendMetricColumn(LABELS.dividendProjected, m.projectedCny, formatYoyBadge(m.projectedYoy))
   ].join('');
 }
 
-function getDividendMonthRowsMarkup(item) {
-  const rows = [`<div><span>${LABELS.dividendReceivedStatus}</span><strong>${escapeHtml(formatDisplayMoney(item.receivedCny, 'CNY'))}</strong></div>`];
-  if (item.phase !== 'past') {
-    rows.push(`<div><span>${LABELS.dividendUpcoming}</span><strong>${escapeHtml(formatDisplayMoney(item.upcomingCny, 'CNY'))}</strong></div>`);
-  } else if (item.pendingCny > 0) {
-    // 已结束的月份里，未确认到账的金额按「待确认」展示，而不是计入已到账。
-    rows.push(`<div class="is-due"><span>${LABELS.dividendPending}</span><strong>${escapeHtml(formatDisplayMoney(item.pendingCny, 'CNY'))}</strong></div>`);
-  }
-  return `<div class="dividend-mini-rows">${rows.join('')}</div>`;
+// 月份状态摘要：只列非零项，空月显示破折号，压低视觉噪音。
+function getDividendMonthStatusText(item) {
+  const parts = [];
+  if (item.receivedCny > 0) parts.push(`${LABELS.dividendReceivedStatus} ${formatDisplayMoney(item.receivedCny, 'CNY')}`);
+  if (item.phase !== 'past' && item.upcomingCny > 0) parts.push(`在途 ${formatDisplayMoney(item.upcomingCny, 'CNY')}`);
+  if (item.phase === 'past' && item.pendingCny > 0) parts.push(`${LABELS.dividendPending} ${formatDisplayMoney(item.pendingCny, 'CNY')}`);
+  return parts.length ? parts.join(' · ') : '—';
 }
 
 function renderDividendMonths(model) {
   refs.dividendMonthGrid.innerHTML = model.months.map((item) => `
-    <button class="dividend-month-card is-${item.phase}${item.totalCny > 0 ? '' : ' is-empty'}" type="button" data-dividend-month="${item.month}">
-      <div class="dividend-month-head">
-        <span class="dmh-label">${escapeHtml(item.label)}</span>
-        <strong class="dmh-total">${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}</strong>
-      </div>
-      ${getDividendMonthRowsMarkup(item)}
+    <button class="dividend-month-row is-${item.phase}${item.totalCny > 0 ? '' : ' is-empty'}" type="button" data-dividend-month="${item.month}">
+      <span class="dmr-label">${escapeHtml(item.label)}</span>
+      <span class="dmr-status">${escapeHtml(getDividendMonthStatusText(item))}</span>
+      <strong class="dmr-total">${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}</strong>
     </button>
   `).join('');
 }

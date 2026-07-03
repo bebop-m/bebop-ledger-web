@@ -4506,3 +4506,337 @@ body[data-active-page="home"] .quick-add-button {
   background: var(--color-bg-muted);
   box-shadow: none;
 }
+
+/* ============================================================
+   Swiss density pass: mockup-true type scale, lighter weights,
+   de-boxed income + dividend pages, in-flow action bar.
+   ============================================================ */
+
+/* -- 全局字阶下调：样板 350px 的比例移植到真机 -- */
+.section-label,
+.panel-title,
+.home-hero-label,
+.hm-label,
+.dm-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+}
+
+.section-label { margin: 18px 0 0; }
+
+.panel { padding: 12px 0 4px; }
+
+.page-stack { gap: 8px; }
+
+/* -- 首页 -- */
+.home-top { padding: 2px 0 10px; }
+
+.home-brand { font-size: 10px; letter-spacing: 2.5px; }
+
+.summary-action-button { width: 30px; height: 30px; }
+.summary-action-button svg { width: 18px; height: 18px; }
+
+.home-hero { padding: 12px 0 0; }
+
+.home-hero-value {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+
+.home-hero-pnl { font-size: 12px; margin-top: 3px; }
+
+.home-hero-fx { font-size: 10px; margin-top: 6px; }
+
+.home-metrics { margin-top: 12px; padding-top: 10px; }
+
+.home-metric { grid-template-rows: 13px 22px 8px 13px; row-gap: 3px; }
+
+.hm-value { font-size: 16px; font-weight: 700; }
+
+.hm-sub { font-size: 10.5px; }
+
+.hm-bar { height: 3px; }
+
+.home-nav-item { padding: 12px 2px; }
+
+.home-nav-title { font-size: 13.5px; font-weight: 700; }
+
+.home-nav-side { font-size: 11px; }
+
+.home-nav-side svg { width: 12px; height: 12px; }
+
+.quick-add-button {
+  position: static;
+  transform: none;
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px 0;
+  font-size: 12.5px;
+  display: block;
+}
+
+.quick-add-button:active { transform: scale(0.99); }
+
+/* -- 子页顶栏 -- */
+.top-bar { padding: 2px 0 8px; }
+.top-bar-title { font-size: 14px; font-weight: 700; letter-spacing: 1.5px; }
+.panel-note { font-size: 10px; }
+.circle-button svg { width: 16px; height: 16px; }
+.circle-button { width: 32px; height: 32px; min-width: 32px; min-height: 32px; flex-basis: 32px; }
+.back-button { width: 32px; height: 32px; flex-basis: 32px; }
+.back-button svg { width: 18px; height: 18px; }
+
+/* -- 持仓页：削黑块、缩字阶 -- */
+.holding-card { padding: 12px 2px; }
+
+.holding-name { font-size: 14.5px; font-weight: 700; }
+
+.holding-price { font-size: 12px; font-weight: 600; }
+
+.holding-code { font-size: 11px; }
+
+.weight-pill {
+  min-width: 0;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.metric-label { font-size: 10.5px; }
+
+.metric-value { font-size: 13px; font-weight: 700; }
+
+.bucket-chip { min-height: 30px; padding: 4px 9px; }
+.bucket-chip-value { font-size: 12px; font-weight: 700; }
+.bucket-chip-label { font-size: 10px; }
+.bucket-detail-label { font-size: 10.5px; }
+.bucket-detail-value { font-size: 12.5px; font-weight: 700; }
+.legend-label { font-size: 12px; }
+.legend-value { font-size: 11.5px; }
+.legend-bar { width: 36px; height: 6px; flex-basis: 36px; }
+
+/* -- 股息日历：三栏排版式指标 -- */
+.dividend-metric-grid {
+  display: grid;
+  grid-template-columns: 1fr 1px 1.05fr 1px 1.05fr;
+  gap: 0 10px;
+  align-items: stretch;
+}
+
+.dm-col {
+  display: grid;
+  grid-template-rows: 13px 20px 16px;
+  row-gap: 3px;
+  align-items: center;
+  min-width: 0;
+}
+
+.dm-label {
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dm-value {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dm-sub { min-width: 0; overflow: hidden; }
+
+.dm-divider { background: var(--color-hairline); }
+
+.dividend-metric-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 0;
+}
+
+/* -- 股息日历：行式月分布 -- */
+.dividend-month-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dividend-month-row {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 2px;
+  border: none;
+  border-bottom: 1px solid var(--color-hairline);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dividend-month-row:last-child { border-bottom: none; }
+
+.dividend-month-row:active { background: var(--color-bg-muted); }
+
+.dmr-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.dividend-month-row.is-current .dmr-label { color: var(--color-primary); }
+
+.dividend-month-row.is-empty .dmr-label { color: var(--color-text-hint); }
+
+.dmr-status {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dmr-total {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.dividend-month-row.is-empty .dmr-total,
+.dividend-month-row.is-empty .dmr-status { color: var(--color-text-hint); }
+
+/* -- 收益明细：hero 去框、排版化 -- */
+.income-overview-grid { border: none; }
+
+.income-hero {
+  border: none;
+  background: none;
+  box-shadow: none;
+  padding: 4px 0 0;
+}
+
+.income-hero-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--color-text-secondary); }
+
+.income-hero-rate { font-size: 13px; font-weight: 700; }
+
+.income-hero-value { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+
+.income-hero-context {
+  border-top: 1px solid var(--color-hairline);
+  margin-top: 10px;
+  padding-top: 10px;
+  gap: 8px 14px;
+}
+
+.income-hero-context small { font-size: 10px; }
+
+.income-hero-context strong { font-size: 12.5px; font-weight: 700; }
+
+.income-actions-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.income-manual-button {
+  min-height: 34px;
+  font-size: 12px;
+  font-weight: 700;
+  justify-content: center;
+}
+
+.income-manual-button svg { width: 14px; height: 14px; }
+
+/* -- 年度明细：发丝线行 -- */
+.income-year-row:not(.income-year-head) {
+  border: none;
+  border-bottom: 1px solid var(--color-hairline);
+  background: none;
+  padding: 12px 2px;
+}
+
+.income-year-row:not(.income-year-head):last-child { border-bottom: none; }
+
+.income-year-cell { font-size: 12.5px; font-weight: 700; }
+
+.income-year-cell::before { font-size: 10px; font-weight: 600; color: var(--color-text-secondary); }
+
+.income-year-cell.is-year { font-size: 14px; font-weight: 800; }
+
+.income-year-action-button {
+  border: 1px solid var(--color-hairline);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* -- 历年趋势：资金线用墨色，股息线用红 -- */
+.income-trend-series.is-capital polyline,
+.income-trend-series.is-capital circle {
+  stroke: var(--color-ink);
+}
+
+.income-trend-legend i.is-capital { background: var(--color-ink); }
+
+.income-trend-chart { border: none; background: none; padding: 0; }
+
+/* -- 记录页 -- */
+.income-record-overview article { border-radius: 0; }
+.income-record-overview article span { font-size: 10px; }
+.income-record-overview article strong { font-size: 13px; font-weight: 700; }
+.income-record-block { border: none; border-top: 1px solid var(--color-hairline); border-radius: 0; background: none; }
+.income-record-head h3 { font-size: 12.5px; font-weight: 700; }
+.income-record-row { border-radius: 0; }
+.record-main strong { font-size: 12.5px; }
+.record-amount { font-size: 12.5px; font-weight: 700; }
+
+/* 年度明细：两列成对排布，年份通栏 */
+.income-year-row:not(.income-year-head) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+}
+
+.income-year-cell.is-year {
+  grid-column: 1 / -1;
+}
+
+.income-year-action-cell {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.income-year-action-button {
+  width: 30px;
+  height: 30px;
+}
+
+.income-year-action-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* 窄屏也保持名称行与权重角标同排（角标已足够小） */
+@media (max-width: 390px) {
+  .holding-head {
+    flex-direction: row;
+  }
+
+  .holding-side {
+    width: auto;
+    justify-content: flex-end;
+  }
+}
