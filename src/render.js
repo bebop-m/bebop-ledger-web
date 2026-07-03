@@ -778,7 +778,6 @@ function syncHoldingRow(wrapper, item) {
   ey.className = `dividend-status-button dividend-status-button--value is-${v.statusKey}${keepOpen ? ' is-tooltip-open' : ''}`;
   ey.setAttribute('aria-label', v.statusLabel); ey.setAttribute('aria-expanded', keepOpen ? 'true' : 'false');
   ey.removeAttribute('title'); ey.dataset.tooltipSide = 'left'; eyv.textContent = v.yieldText; tt.innerHTML = v.tooltipHtml;
-  wrapper.querySelectorAll('[data-action="delete"]').forEach((b) => { b.setAttribute('aria-label', `${LABELS.deleteConfirm} ${item.name}`); });
   return true;
 }
 
