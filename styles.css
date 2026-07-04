@@ -5698,9 +5698,10 @@ body[data-active-page="home"] .page-stack {
 #dividendFilterGroup.segmented-control .segment-button.is-active::after {
   content: "";
   position: absolute;
-  right: 0;
   bottom: 0;
-  left: 0;
+  left: 50%;
+  width: min(96px, 72%);
+  transform: translateX(-50%);
   height: 2px;
   background: var(--color-ink);
 }
@@ -5721,19 +5722,28 @@ body[data-active-page="home"] .page-stack {
   text-align: center;
 }
 
-.dm-value.is-received,
-.dm-value.is-upcoming,
-.dm-value.is-projected {
+.dm-value.is-received {
   color: #b9835f;
+}
+
+.dm-value.is-upcoming {
+  color: var(--color-text-secondary);
+}
+
+.dm-value.is-projected {
+  color: var(--color-ink-strong);
 }
 
 .dividend-yoy-text {
   color: var(--color-text-secondary);
 }
 
-.dividend-metric-percent.is-received,
-.dividend-metric-percent.is-upcoming {
+.dividend-metric-percent.is-received {
   color: #b9835f;
+}
+
+.dividend-metric-percent.is-upcoming {
+  color: var(--color-text-secondary);
 }
 
 .dividend-yoy-number.is-up {
