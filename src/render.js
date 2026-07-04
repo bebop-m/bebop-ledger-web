@@ -345,6 +345,12 @@ function getDividendPercentSub(value, total, tone) {
   return `<span class="dividend-metric-percent is-${tone}">${Math.round(Math.min(1, Math.max(0, ratio)) * 100)}%</span>`;
 }
 
+function getDividendProgressPercent(value, total) {
+  if (safeNumber(total, 0) <= 0) return '0.0';
+  const ratio = Math.min(1, Math.max(0, safeNumber(value, 0) / safeNumber(total, 0)));
+  return (ratio * 100).toFixed(1);
+}
+
 // 三栏排版式指标：竖发丝线分隔，无卡片框。
 function getDividendMetricColumn(label, value, sub = '', tone = '') {
   return `<div class="dm-col">
@@ -376,7 +382,7 @@ function getDividendMonthStatusText(item) {
 
 function renderDividendMonths(model) {
   refs.dividendMonthGrid.innerHTML = model.months.map((item) => `
-    <button class="dividend-month-row is-${item.phase}${item.totalCny > 0 ? '' : ' is-empty'}" type="button" data-dividend-month="${item.month}">
+    <button class="dividend-month-row is-${item.phase}${item.totalCny > 0 ? '' : ' is-empty'}" type="button" data-dividend-month="${item.month}" style="--dmr-progress:${getDividendProgressPercent(item.receivedCny, item.totalCny)}%;">
       <span class="dmr-label">${escapeHtml(item.label)}</span>
       <span class="dmr-status">${escapeHtml(getDividendMonthStatusText(item))}</span>
       <strong class="dmr-total">${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}</strong>
