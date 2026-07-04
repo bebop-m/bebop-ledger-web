@@ -754,11 +754,11 @@ function getHoldingMarkup(item, index, opts = {}) {
     <div class="holding-meta-row"><span class="holding-price" data-holding-field="price">${escapeHtml(v.priceText)}</span><span class="holding-divider">${getHoldingTitleDivider()}</span><span class="holding-code">${escapeHtml(item.symbol)}</span></div></div>
     <div class="holding-side"><span class="weight-pill is-${v.bucketTone}" data-holding-field="weight">${escapeHtml(v.weightText)}</span></div></header>
     <div class="holding-grid">
-    <div class="metric-static"><div class="metric-row"><span class="metric-label">${LABELS.marketValue}</span><span class="metric-value" data-holding-field="marketValue">${escapeHtml(v.marketValueText)}</span></div></div>
-    <button class="metric-button metric-right" type="button" data-action="edit-quantity"><div class="metric-row metric-right"><span class="metric-label">${LABELS.quantity}</span><span class="metric-value" data-holding-field="quantity">${escapeHtml(v.quantityText)}</span></div></button>
-    <button class="metric-button" type="button" data-action="edit-tax"><div class="metric-row"><span class="metric-label">${LABELS.annualDividend}</span><span class="metric-value is-income" data-holding-field="annualDividend">${escapeHtml(v.annualDividendText)}</span></div></button>
+    <div class="metric-static"><div class="metric-row"><span class="metric-label">持仓市值</span><span class="metric-value" data-holding-field="marketValue">${escapeHtml(v.marketValueText)}</span></div></div>
+    <button class="metric-button metric-right" type="button" data-action="edit-quantity"><div class="metric-row metric-right"><span class="metric-label">数量</span><span class="metric-value" data-holding-field="quantity">${escapeHtml(v.quantityText)}</span></div></button>
+    <button class="metric-button" type="button" data-action="edit-tax"><div class="metric-row"><span class="metric-label">年化股息</span><span class="metric-value is-income" data-holding-field="annualDividend">${escapeHtml(v.annualDividendText)}</span></div></button>
     <div class="metric-static metric-right metric-static--yield"><div class="metric-row metric-right metric-row--yield">
-    <button class="metric-label-button" type="button" data-action="edit-dividend">${LABELS.dividendYield}</button>
+    <button class="metric-label-button" type="button" data-action="edit-dividend">股息率</button>
     <button class="dividend-status-button dividend-status-button--value is-${v.statusKey}" type="button" aria-label="${escapeHtml(v.statusLabel)}" aria-expanded="false" data-tooltip-side="left" data-holding-field="effectiveYield">
     <span class="dividend-status-value" data-holding-field="effectiveYieldValue">${escapeHtml(v.yieldText)}</span>
     <span class="dividend-status-tooltip" data-holding-field="dividendTooltip">${v.tooltipHtml}</span></button></div></div></div></article></div>`;
