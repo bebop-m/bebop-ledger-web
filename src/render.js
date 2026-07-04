@@ -333,18 +333,23 @@ function getDividendFilterLabel(filterKey) {
 
 function formatYoyBadge(yoy) {
   if (yoy === null || yoy === undefined || !Number.isFinite(Number(yoy))) {
-    return `<span class="dividend-metric-badge is-flat">${escapeHtml(LABELS.dividendNoCompare)}</span>`;
+    return `<span class="dividend-yoy-text">${escapeHtml(LABELS.dividendNoCompare)}</span>`;
   }
   const up = yoy >= 0;
   const pct = `${up ? '+' : '-'}${formatPercent(Math.abs(yoy))}`;
-  return `<span class="dividend-metric-badge is-${up ? 'up' : 'down'}">${escapeHtml(pct)} · ${escapeHtml(LABELS.dividendVsLastYear)}</span>`;
+  return `<span class="dividend-yoy-text"><span class="dividend-yoy-number is-${up ? 'up' : 'down'}">${escapeHtml(pct)}</span> · ${escapeHtml(LABELS.dividendVsLastYear)}</span>`;
+}
+
+function getDividendPercentSub(value, total, tone) {
+  const ratio = safeNumber(total, 0) > 0 ? safeNumber(value, 0) / safeNumber(total, 0) : 0;
+  return `<span class="dividend-metric-percent is-${tone}">${Math.round(Math.min(1, Math.max(0, ratio)) * 100)}%</span>`;
 }
 
 // 三栏排版式指标：竖发丝线分隔，无卡片框。
-function getDividendMetricColumn(label, value, sub = '') {
+function getDividendMetricColumn(label, value, sub = '', tone = '') {
   return `<div class="dm-col">
     <span class="dm-label">${escapeHtml(label)}</span>
-    <strong class="dm-value">${escapeHtml(formatDisplayMoney(value, 'CNY'))}</strong>
+    <strong class="dm-value${tone ? ` is-${tone}` : ''}">${escapeHtml(formatDisplayMoney(value, 'CNY'))}</strong>
     <span class="dm-sub">${sub}</span>
   </div>`;
 }
@@ -352,11 +357,11 @@ function getDividendMetricColumn(label, value, sub = '') {
 function renderDividendMetricGrid(model) {
   const m = model.metrics;
   refs.dividendMetricGrid.innerHTML = [
-    getDividendMetricColumn(LABELS.dividendReceived, m.receivedCny),
+    getDividendMetricColumn(LABELS.dividendReceived, m.receivedCny, getDividendPercentSub(m.receivedCny, m.projectedCny, 'received'), 'received'),
     '<div class="dm-divider" aria-hidden="true"></div>',
-    getDividendMetricColumn(LABELS.dividendUpcoming, m.upcomingCny),
+    getDividendMetricColumn(LABELS.dividendUpcoming, m.upcomingCny, getDividendPercentSub(m.upcomingCny, m.projectedCny, 'upcoming'), 'upcoming'),
     '<div class="dm-divider" aria-hidden="true"></div>',
-    getDividendMetricColumn(LABELS.dividendProjected, m.projectedCny, formatYoyBadge(m.projectedYoy))
+    getDividendMetricColumn(LABELS.dividendProjected, m.projectedCny, formatYoyBadge(m.projectedYoy), 'projected')
   ].join('');
 }
 

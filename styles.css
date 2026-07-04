@@ -5661,6 +5661,98 @@ body[data-active-page="home"] .page-stack {
   color: var(--color-loss);
 }
 
+#dividendFilterGroup.segmented-control {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 41px;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+#dividendFilterGroup.segmented-control .segment-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 38px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-ink-strong);
+  font-size: 14px;
+  font-weight: 650;
+  text-align: center;
+}
+
+#dividendFilterGroup.segmented-control .segment-button + .segment-button {
+  border-left: 0;
+}
+
+#dividendFilterGroup.segmented-control .segment-button.is-active {
+  background: transparent;
+  box-shadow: none;
+}
+
+#dividendFilterGroup.segmented-control .segment-button.is-active::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-ink);
+}
+
+.dividend-metric-grid {
+  align-items: stretch;
+}
+
+.dm-col {
+  justify-items: center;
+  text-align: center;
+}
+
+.dm-label,
+.dm-value,
+.dm-sub {
+  width: 100%;
+  text-align: center;
+}
+
+.dm-value.is-received {
+  color: var(--color-loss);
+}
+
+.dm-value.is-upcoming {
+  color: var(--color-primary);
+}
+
+.dm-value.is-projected {
+  color: #f28c28;
+}
+
+.dividend-yoy-text {
+  color: var(--color-text-secondary);
+}
+
+.dividend-metric-percent.is-received {
+  color: var(--color-loss);
+}
+
+.dividend-metric-percent.is-upcoming {
+  color: var(--color-primary);
+}
+
+.dividend-yoy-number.is-up {
+  color: var(--color-primary);
+}
+
+.dividend-yoy-number.is-down {
+  color: var(--color-loss);
+}
+
 .dividend-month-grid {
   gap: 0;
   margin-top: 0;
@@ -5973,6 +6065,10 @@ body[data-active-page="home"] .page-stack {
     width: 100%;
   }
 
+  #dividendFilterGroup.segmented-control {
+    column-gap: 29px;
+  }
+
   .segment-button {
     min-height: 32px;
     padding-inline: 12px;
@@ -6039,6 +6135,10 @@ body[data-active-page="home"] .page-stack {
 
   .income-hero-value {
     font-size: 31px;
+  }
+
+  #dividendFilterGroup.segmented-control {
+    column-gap: 21px;
   }
 
   .dividend-metric-grid {
