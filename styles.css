@@ -5028,6 +5028,14 @@ button:focus-visible {
   background: var(--color-ink);
 }
 
+.home-metric--dividend .hm-value {
+  color: #b9835f;
+}
+
+.home-metric--dividend .hm-bar i {
+  background: #b9835f;
+}
+
 .hm-sub {
   color: var(--color-text-secondary);
   font-size: 12px;

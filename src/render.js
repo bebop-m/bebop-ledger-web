@@ -105,7 +105,7 @@ function renderHomeMetrics(calendarModel, incomeModel) {
   refs.homeFocusCard.innerHTML = `
     ${capitalCell}
     <div class="home-metric-divider" aria-hidden="true"></div>
-    <div class="home-metric">
+    <div class="home-metric home-metric--dividend">
       <span class="hm-label">\u80a1\u606f \u00b7 \u5df2\u5230\u8d26 ${Math.round(ratio * 100)}%</span>
       <strong class="hm-value">${escapeHtml(formatDisplayMoney(received, 'CNY'))}</strong>
       <span class="hm-bar"><i style="width:${(ratio * 100).toFixed(1)}%"></i></span>
