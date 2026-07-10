@@ -94,14 +94,36 @@ export function getCurrentMonthReportModel(today = localToday()) {
   };
 }
 
+/* 未来财报（默认限当前持仓），按日期升序；symbol 传入时只看该公司。 */
+export function getUpcomingReportEvents(opts = {}) {
+  const { symbol = '', withinDays = 0, today = localToday() } = opts;
+  const holdingSymbols = symbol ? null : getHoldingSymbols();
+  const limit = withinDays > 0
+    ? new Date(new Date(`${today}T00:00:00`).getTime() + withinDays * 86400000).toISOString().slice(0, 10)
+    : '';
+  return (_data && _data.events || [])
+    .filter((event) => (symbol ? event.symbol === symbol : holdingSymbols.has(event.symbol)))
+    .filter((event) => event.reportDate >= today && (!limit || event.reportDate <= limit))
+    .map((event) => ({ ...event, name: displayName(event.symbol) }))
+    .sort((a, b) => `${a.reportDate}|${a.symbol}`.localeCompare(`${b.reportDate}|${b.symbol}`));
+}
+
+export function getNextReportEvent(symbol) {
+  return getUpcomingReportEvents({ symbol })[0] || null;
+}
+
+function formatShortDate(dateLabel) {
+  return `${Number(dateLabel.slice(5, 7))}月${Number(dateLabel.slice(8, 10))}日`;
+}
+
+/* 首页摘要：本月有财报 →「7月财报 · N家」；本月没有 →「下场财报 腾讯控股 8月12日」。 */
 export function getReportHomeSummary() {
   const model = getCurrentMonthReportModel();
-  if (!model.companyCount) return '';
-  if (model.upcoming) {
-    const date = `${Number(model.upcoming.reportDate.slice(5, 7))}月${Number(model.upcoming.reportDate.slice(8, 10))}日`;
-    return `${model.label} ${model.companyCount}家 · 最近 ${model.upcoming.name} ${date}`;
+  if (model.companyCount) {
+    return model.upcoming ? `${model.label} · ${model.companyCount}家` : `${model.label} · 本月已发布`;
   }
-  return `${model.label} ${model.companyCount}家 · 本月已发布`;
+  const next = getUpcomingReportEvents()[0];
+  return next ? `下场财报 ${next.name} ${formatShortDate(next.reportDate)}` : '';
 }
 
 function statusLabel(status) {
@@ -110,22 +132,23 @@ function statusLabel(status) {
   return '预计';
 }
 
+/* 页尾折叠面板：未来 90 天的持仓财报，默认收起；覆盖率作小注。 */
 export function renderReportCalendarPanel() {
   if (!refs.reportCalendarPanel) return;
   const model = getCurrentMonthReportModel();
-  const coverage = model.coverage.total > 0 ? `已收录 ${model.coverage.covered}/${model.coverage.total} 家` : '数据准备中';
-  const rows = model.events.length
-    ? model.events.map((event) => `<button class="report-event-row${event.isPast ? ' is-past' : ''}" type="button" data-report-symbol="${escapeHtml(event.symbol)}">
-        <span class="report-event-date"><strong>${Number(event.reportDate.slice(8, 10))}</strong><small>${model.month}月</small></span>
+  const events = getUpcomingReportEvents({ withinDays: 90 });
+  const coverage = model.coverage.total > 0 ? `已收录 ${model.coverage.covered}/${model.coverage.total} 家，公告后自动补齐` : '数据准备中';
+  const wasOpen = Boolean(refs.reportCalendarPanel.querySelector('details[open]'));
+  const rows = events.length
+    ? events.map((event) => `<button class="report-event-row" type="button" data-report-symbol="${escapeHtml(event.symbol)}">
+        <span class="report-event-date"><strong>${Number(event.reportDate.slice(8, 10))}</strong><small>${Number(event.reportDate.slice(5, 7))}月</small></span>
         <span class="report-event-company"><strong>${escapeHtml(event.name)}</strong><small>${escapeHtml(event.reportType)} · ${escapeHtml(event.symbol)}</small></span>
         <span class="report-event-status is-${escapeHtml(event.dateStatus)}">${statusLabel(event.dateStatus)}</span>
       </button>`).join('')
-    : '<div class="report-calendar-empty">本月暂未收录持仓财报日期</div>';
-  refs.reportCalendarPanel.innerHTML = `<section class="panel report-calendar-panel-inner">
-    <header class="report-calendar-head">
-      <div><span>持仓财报</span><h3>${escapeHtml(model.label)}${model.companyCount ? ` · ${model.companyCount} 家` : ''}</h3></div>
-      <small>${escapeHtml(coverage)}</small>
-    </header>
+    : '<div class="report-calendar-empty">未来 90 天暂未收录持仓财报日期</div>';
+  refs.reportCalendarPanel.innerHTML = `<details class="fund-fold"${wasOpen ? ' open' : ''}>
+    <summary><span>持仓财报日历</span><small>${events.length ? `未来 90 天 · ${events.length} 场` : '暂无收录'}</small></summary>
     <div class="report-event-list">${rows}</div>
-  </section>`;
+    <p class="report-calendar-coverage">${escapeHtml(coverage)}</p>
+  </details>`;
 }

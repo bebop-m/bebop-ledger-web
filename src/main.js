@@ -20,7 +20,7 @@ import {
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
-import { loadFundamentals, selectFundamentalsSymbol } from './fundamentals.js';
+import { loadFundamentals, selectFundamentalsSymbol, toggleFundamentalsCompanyScope } from './fundamentals.js';
 import { loadReportCalendar } from './report-calendar.js';
 
 /* ── Sort Toggle Button（静态节点，只补事件与无障碍标签，图标由 renderSortChips 填充）── */
@@ -67,6 +67,7 @@ refs.pageBackButtons.forEach((button) => {
 refs.quickAddButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'quickAdd'); });
 
 if (refs.fundamentalsSymbolRow) refs.fundamentalsSymbolRow.addEventListener('click', (event) => {
+  if (event.target.closest('[data-fund-scope-toggle]')) { toggleFundamentalsCompanyScope(); return; }
   const chip = event.target.closest('[data-fund-symbol]');
   if (chip) selectFundamentalsSymbol(chip.dataset.fundSymbol);
 });

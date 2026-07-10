@@ -5,6 +5,7 @@ import { state, refs } from './state.js';
 import { safeNumber, escapeHtml, formatDateLabel } from './utils.js';
 import { computeHoldings, inferQuote } from './compute.js';
 import { FUNDAMENTALS_ENDPOINT } from './constants.js';
+import { getNextReportEvent } from './report-calendar.js';
 
 const CACHE_KEY = 'bopup-fundamentals-cache-v1';
 
@@ -13,6 +14,7 @@ let _loading = false;
 let _attempted = false;
 let _loadError = '';
 let _selectedSymbol = '';
+let _showAllCompanies = false;
 
 function readCache() {
   try {
@@ -56,26 +58,31 @@ export function selectFundamentalsSymbol(symbol) {
   renderFundamentalsPage();
 }
 
+export function toggleFundamentalsCompanyScope() {
+  _showAllCompanies = !_showAllCompanies;
+  renderFundamentalsPage();
+}
+
 export function getFundamentalsCompanyCount() {
   return _data ? Object.keys(_data.companies).length : 0;
 }
 
-/* 公司排序：当前持仓按市值降序在前，其余（已清仓/观察）按代码排在后面。 */
-function getOrderedCompanies() {
-  if (!_data) return [];
+/* 公司分组：当前持仓按市值降序在前；观察/已清仓标的默认折叠在「更多」里。 */
+function getGroupedCompanies() {
+  if (!_data) return { holdings: [], others: [] };
   const companies = _data.companies;
-  const ordered = [];
+  const holdings = [];
   const seen = new Set();
   computeHoldings().holdings.forEach((holding) => {
-    if (companies[holding.symbol] && !seen.has(holding.symbol)) {
+    if (safeNumber(holding.quantity, 0) > 0 && companies[holding.symbol] && !seen.has(holding.symbol)) {
       seen.add(holding.symbol);
-      ordered.push(companies[holding.symbol]);
+      holdings.push(companies[holding.symbol]);
     }
   });
-  Object.keys(companies).sort().forEach((symbol) => {
-    if (!seen.has(symbol)) { seen.add(symbol); ordered.push(companies[symbol]); }
-  });
-  return ordered;
+  const others = Object.keys(companies).sort()
+    .filter((symbol) => !seen.has(symbol))
+    .map((symbol) => companies[symbol]);
+  return { holdings, others };
 }
 
 // 展示名优先用行情里的中文名（yfinance 返回的多为英文名）。
@@ -237,27 +244,44 @@ function getEmptyStateMarkup() {
   </div>`;
 }
 
+// 选中公司的下一场财报（有收录才显示）。
+function buildNextReportLine(symbol) {
+  const event = getNextReportEvent(symbol);
+  if (!event) return '';
+  const statusText = event.dateStatus === 'confirmed' ? '已确认' : event.dateStatus === 'scheduled' ? '预约' : '预计';
+  const date = `${Number(event.reportDate.slice(5, 7))}月${Number(event.reportDate.slice(8, 10))}日`;
+  return `<p class="fund-company-report">下场财报 <strong>${date}</strong> · ${escapeHtml(event.reportType)} · ${statusText}</p>`;
+}
+
+function getCompanyChipMarkup(item) {
+  return `<button class="fund-symbol-chip${item.symbol === _selectedSymbol ? ' is-active' : ''}" type="button" data-fund-symbol="${escapeHtml(item.symbol)}" aria-pressed="${item.symbol === _selectedSymbol ? 'true' : 'false'}">${escapeHtml(getCompanyDisplayName(item))}</button>`;
+}
+
 export function renderFundamentalsPage() {
   if (!refs.fundamentalsContent || !refs.fundamentalsSymbolRow) return;
   // 首次进入时懒加载；失败后不自动重试，避免循环。
   if (!_data && !_loading && !_attempted && state.activePage === 'fundamentals') { void loadFundamentals(); return; }
 
-  const companies = getOrderedCompanies();
-  if (!companies.length) {
+  const { holdings, others } = getGroupedCompanies();
+  const allCompanies = holdings.concat(others);
+  if (!allCompanies.length) {
     refs.fundamentalsSymbolRow.innerHTML = '';
     refs.fundamentalsContent.innerHTML = getEmptyStateMarkup();
     if (refs.fundamentalsNote) refs.fundamentalsNote.textContent = '';
     return;
   }
 
-  if (!_selectedSymbol || !companies.some((company) => company.symbol === _selectedSymbol)) {
-    _selectedSymbol = companies[0].symbol;
+  if (!_selectedSymbol || !allCompanies.some((company) => company.symbol === _selectedSymbol)) {
+    _selectedSymbol = (holdings[0] || allCompanies[0]).symbol;
   }
-  const company = companies.find((item) => item.symbol === _selectedSymbol);
+  const company = allCompanies.find((item) => item.symbol === _selectedSymbol);
 
-  refs.fundamentalsSymbolRow.innerHTML = companies.map((item) => `
-    <button class="fund-symbol-chip${item.symbol === _selectedSymbol ? ' is-active' : ''}" type="button" data-fund-symbol="${escapeHtml(item.symbol)}" aria-pressed="${item.symbol === _selectedSymbol ? 'true' : 'false'}">${escapeHtml(getCompanyDisplayName(item))}</button>
-  `).join('');
+  // chips：持仓在前；观察/清仓标的折叠在「更多」里（选中的除外）。
+  const selectedOther = !_showAllCompanies && others.find((item) => item.symbol === _selectedSymbol);
+  const visibleCompanies = _showAllCompanies ? allCompanies : holdings.concat(selectedOther ? [selectedOther] : []);
+  const hiddenCount = allCompanies.length - visibleCompanies.length;
+  refs.fundamentalsSymbolRow.innerHTML = visibleCompanies.map(getCompanyChipMarkup).join('')
+    + (others.length ? `<button class="fund-symbol-chip fund-symbol-chip--more" type="button" data-fund-scope-toggle aria-expanded="${_showAllCompanies ? 'true' : 'false'}">${_showAllCompanies ? '收起' : `更多 +${hiddenCount}`}</button>` : '');
 
   const { rows, allRows, metrics, currentYear } = buildCompanyMetrics(company);
   const summary = buildCompanySummary(company, rows);
@@ -270,11 +294,15 @@ export function renderFundamentalsPage() {
         </div>
       </div>
       ${summary ? `<p class="fund-company-summary">${escapeHtml(summary)}</p>` : ''}
+      ${buildNextReportLine(company.symbol)}
     </section>
     <div class="fund-card-grid">
       ${metrics.map((metric) => buildMetricCard(rows, metric)).join('')}
     </div>
-    ${buildCompanyTable(allRows, metrics, currentYear)}
+    <details class="fund-fold">
+      <summary><span>年度数据明细</span><small>${allRows.length} 年</small></summary>
+      ${buildCompanyTable(allRows, metrics, currentYear)}
+    </details>
   `;
   if (refs.fundamentalsNote) {
     const updated = _data && _data.updatedAt ? formatDateLabel(_data.updatedAt) : '';

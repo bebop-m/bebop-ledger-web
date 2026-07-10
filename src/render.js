@@ -123,9 +123,7 @@ function renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems
   const cur = incomeModel.current;
   const summaries = {
     holdings: `${summary.holdings.length} \u9879${coreItem ? ` \u00b7 ${LABELS.core} ${((coreItem.marketValueCny / totalMv) * 100).toFixed(1)}%` : ''}`,
-    dividends: monthItem
-      ? `${monthItem.label}${monthItem.dueCny > 0 ? `待核对 ${formatDisplayMoney(monthItem.dueCny, 'CNY')}` : `在途 ${formatDisplayMoney(monthItem.upcomingCny, 'CNY')}`}`
-      : '',
+    dividends: monthItem ? `${monthItem.label}在途 ${formatDisplayMoney(monthItem.upcomingCny, 'CNY')}` : '',
     income: cur && cur.capitalReturnAvailable ? `\u5f53\u5e74 ${formatIncomeSignedMoney(cur.capitalReturnCny)}` : '\u5386\u5e74\u8d8b\u52bf \u00b7 \u5e74\u5ea6\u8868',
     fundamentals: getReportHomeSummary() || (getFundamentalsCompanyCount() > 0 ? `${getFundamentalsCompanyCount()} \u5bb6\u516c\u53f8` : '\u80a1\u606f \u00b7 \u5206\u7ea2\u7387 \u00b7 EPS'),
     records: `${cash.count} \u51fa\u5165\u91d1 \u00b7 ${trades.count} \u4ea4\u6613`

@@ -7132,3 +7132,68 @@ html, body { overscroll-behavior-y: contain; }
    viewport 已设 maximum-scale=1；touch-action 再抑制双击放大。
    iOS Safari 浏览器模式出于无障碍会豁免捏合缩放，添加到主屏（PWA）后完全固定。 */
 html, body { touch-action: manipulation; }
+
+/* ── 基本面页重排：折叠面板 / 更多 chip / 下场财报行 ── */
+.fund-fold {
+  border: 1px solid var(--color-hairline);
+  background: #ffffff;
+  padding: 0 14px;
+}
+
+.fund-fold summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 0;
+  cursor: pointer;
+  list-style: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fund-fold summary::-webkit-details-marker { display: none; }
+
+.fund-fold summary span { font-size: 12px; font-weight: 800; color: var(--color-ink); }
+
+.fund-fold summary small { font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.fund-fold summary::after {
+  content: '';
+  margin-left: auto;
+  width: 7px;
+  height: 7px;
+  border-right: 1.8px solid var(--color-text-secondary);
+  border-bottom: 1.8px solid var(--color-text-secondary);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.18s ease;
+}
+
+.fund-fold[open] summary::after { transform: rotate(-135deg) translateY(-1px); }
+
+.fund-fold[open] summary { border-bottom: 1px solid var(--line); }
+
+.fund-fold .fund-table { border: 0; padding: 4px 0; }
+
+.fund-fold .report-event-list { padding: 2px 0; }
+
+.report-calendar-coverage {
+  margin: 0;
+  padding: 8px 0 12px;
+  border-top: 1px solid var(--line);
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.fund-symbol-chip--more {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.fund-company-report {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.fund-company-report strong { color: var(--color-ink); font-variant-numeric: tabular-nums; }
