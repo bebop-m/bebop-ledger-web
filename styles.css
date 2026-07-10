@@ -7127,3 +7127,8 @@ html, body { overscroll-behavior-y: contain; }
 .income-trend-card .income-trend-years { padding: 6px 4px 0; margin: 0; }
 /* 应用主栏始终是窄幅账本版式；图表保持单列，避免外层桌面视口触发双列后挤压标签。 */
 .fund-card-grid { grid-template-columns: minmax(0, 1fr); }
+
+/* ── 禁止手动缩放 ──
+   viewport 已设 maximum-scale=1；touch-action 再抑制双击放大。
+   iOS Safari 浏览器模式出于无障碍会豁免捏合缩放，添加到主屏（PWA）后完全固定。 */
+html, body { touch-action: manipulation; }

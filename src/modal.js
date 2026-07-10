@@ -2,7 +2,7 @@ import { state, refs, saveState, showToast } from './state.js';
 import {
   safeNumber, escapeHtml, normalizeSymbol, sanitizePerShareOverrideInput,
   mergeQuotes, sanitizeCashFlowEntry, sanitizeTradeEntry, formatDateLabel,
-  resolveQuoteCurrency, resolveFxRate
+  resolveQuoteCurrency, resolveFxRate, resolveEffectivePayDate
 } from './utils.js';
 import { LABELS } from './constants.js';
 import { renderSavedStateQuietly, buildDividendMonthDetail, formatDisplayMoney } from './render.js';

@@ -837,12 +837,28 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
       ? roundMoney(manual.dividendCny) : null;
     const manualDividendRate = manual && manual.dividendYieldRate !== null && manual.dividendYieldRate !== undefined
       ? safeNumber(manual.dividendYieldRate, 0) : null;
+    const manualCapitalCny = manual && manual.capitalReturnCny !== null && manual.capitalReturnCny !== undefined
+      ? roundMoney(manual.capitalReturnCny) : null;
+    const manualCapitalRate = manual && manual.capitalReturnRate !== null && manual.capitalReturnRate !== undefined
+      ? safeNumber(manual.capitalReturnRate, 0) : null;
+
+    /* 比率换算基数：优先真实年初净值；缺失时用手填的「金额 + 率」对反推一个基数，
+       只用于金额↔比率互推，不参与净值链推算（避免污染年末净值/资金收益的推导）。 */
+    let rateBaseNetCny = startNetCny;
+    if (rateBaseNetCny === null && manualCapitalCny !== null && manualCapitalRate) {
+      rateBaseNetCny = Math.abs(manualCapitalCny / manualCapitalRate);
+    }
+    if (rateBaseNetCny === null && manualDividend !== null && manualDividendRate) {
+      rateBaseNetCny = Math.abs(manualDividend / manualDividendRate);
+    }
+    if (rateBaseNetCny !== null && rateBaseNetCny <= 0) rateBaseNetCny = null;
+
     let dividendCny;
     let dividendSource;
     if (manualDividend !== null) {
       dividendCny = manualDividend; dividendSource = 'manual';
-    } else if (manualDividendRate !== null && startNetCny !== null) {
-      dividendCny = roundMoney(manualDividendRate * startNetCny); dividendSource = 'derivedFromManualRate';
+    } else if (manualDividendRate !== null && rateBaseNetCny !== null) {
+      dividendCny = roundMoney(manualDividendRate * rateBaseNetCny); dividendSource = 'derivedFromManualRate';
     } else if (entries.length > 0) {
       dividendCny = ledgerDividendCny; dividendSource = 'ledger';
     } else if (filterKey === 'all' && archive && archive.dividendCny !== null) {
@@ -852,20 +868,16 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
     }
     const dividendYieldRate = manualDividendRate !== null
       ? manualDividendRate
-      : (startNetCny !== null
-        ? dividendCny / startNetCny
+      : (rateBaseNetCny !== null
+        ? dividendCny / rateBaseNetCny
         : (archive && archive.dividendYieldRate !== null ? archive.dividendYieldRate : null));
 
-    const manualCapitalCny = manual && manual.capitalReturnCny !== null && manual.capitalReturnCny !== undefined
-      ? roundMoney(manual.capitalReturnCny) : null;
-    const manualCapitalRate = manual && manual.capitalReturnRate !== null && manual.capitalReturnRate !== undefined
-      ? safeNumber(manual.capitalReturnRate, 0) : null;
     let capitalReturnCny = null;
     let capitalReturnSource = 'missing';
     if (manualCapitalCny !== null) {
       capitalReturnCny = manualCapitalCny; capitalReturnSource = 'manual';
-    } else if (manualCapitalRate !== null && startNetCny !== null) {
-      capitalReturnCny = roundMoney(manualCapitalRate * startNetCny); capitalReturnSource = 'derivedFromManualRate';
+    } else if (manualCapitalRate !== null && rateBaseNetCny !== null) {
+      capitalReturnCny = roundMoney(manualCapitalRate * rateBaseNetCny); capitalReturnSource = 'derivedFromManualRate';
     } else if (yearEnd.netCny !== null && startNetCny !== null) {
       capitalReturnCny = roundMoney(yearEnd.netCny - startNetCny - netInflowCny); capitalReturnSource = 'netValueChain';
     } else if (archive && archive.capitalReturnCny !== null) {
@@ -873,8 +885,8 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
     }
     const capitalReturnRate = manualCapitalRate !== null
       ? manualCapitalRate
-      : (capitalReturnCny !== null && startNetCny !== null
-        ? capitalReturnCny / startNetCny
+      : (capitalReturnCny !== null && rateBaseNetCny !== null
+        ? capitalReturnCny / rateBaseNetCny
         : (archive && archive.capitalReturnRate !== null ? archive.capitalReturnRate : null));
     const manualYearEnd = manual && manual.yearEndNetCny !== null && manual.yearEndNetCny !== undefined;
     const manualCapitalDriver = manualCapitalCny !== null || manualCapitalRate !== null;

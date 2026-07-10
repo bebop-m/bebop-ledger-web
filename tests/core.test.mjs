@@ -105,3 +105,14 @@ test('an all-cash year overwrites the current holdings snapshot with an empty li
   assert.equal(entry.totalMarketValueCny, 0);
   assert.deepEqual(entry.holdings, []);
 });
+
+test('dividend yield derives from manual capital pair when prior year-end is missing', () => {
+  // 没有 2024 年末净值：股息率的分母用手填「资金收益 + 收益率」反推的年初净值。
+  applyTestSnapshot({
+    yearlyManual: [{ year: 2025, dividendCny: 7000, capitalReturnCny: 12000, capitalReturnRate: 0.06, yearEndNetCny: 228500 }]
+  });
+  const row = computeIncomeSummary('2026-07-10').rows.find((item) => item.year === 2025);
+  assert.equal(row.dividendYieldRate, 7000 / (12000 / 0.06));
+  assert.equal(row.capitalReturnCny, 12000);
+  assert.equal(row.capitalReturnRate, 0.06);
+});
