@@ -332,15 +332,23 @@ def normalize_dividend_events(value, symbol='', currency=''):
         return []
 
     events = []
-    seen = set()
+    index_by_key = {}
     for item in value:
         event = normalize_dividend_event(item, symbol, currency)
         if not event:
             continue
         key = build_dividend_event_key(event)
-        if key in seen:
+        if key in index_by_key:
+            index = index_by_key[key]
+            existing = events[index]
+            combined = {**existing, **event}
+            if not event.get('payDate') and existing.get('payDate'):
+                combined['payDate'] = existing['payDate']
+            if not event.get('announceDate') and existing.get('announceDate'):
+                combined['announceDate'] = existing['announceDate']
+            events[index] = combined
             continue
-        seen.add(key)
+        index_by_key[key] = len(events)
         events.append(event)
 
     return sorted(events, key=lambda event: event['exDate'])
@@ -393,8 +401,14 @@ def merge_dividend_event_lists(base_events, next_events, symbol='', currency='')
             continue
 
         existing = merged[duplicate_index]
-        if is_announced_dividend_event(existing):
-            merged[duplicate_index] = {**existing, **event}
+        # 同一笔派息始终保留信息更完整的一侧。Yahoo 历史事件通常只有除息日，
+        # Eastmoney / ETNet 公告则可能带真实派付日；不能在除息后把 payDate 覆盖丢失。
+        combined = {**existing, **event}
+        if not event.get('payDate') and existing.get('payDate'):
+            combined['payDate'] = existing['payDate']
+        if not event.get('announceDate') and existing.get('announceDate'):
+            combined['announceDate'] = existing['announceDate']
+        merged[duplicate_index] = combined
 
     return sorted(merged, key=lambda item: item['exDate'])
 
@@ -620,7 +634,7 @@ def fetch_eastmoney_sharebonus_rows(symbol):
 def build_eastmoney_announced_event(symbol, row, today_label):
     amount_per_10 = safe_float((row or {}).get('PRETAX_BONUS_RMB'), 0.0)
     ex_date = normalize_date_string((row or {}).get('EX_DIVIDEND_DATE'))
-    if amount_per_10 <= 0 or not ex_date or ex_date <= today_label:
+    if amount_per_10 <= 0 or not ex_date:
         return None
 
     progress = str((row or {}).get('ASSIGN_PROGRESS') or '').strip()
@@ -642,9 +656,10 @@ def build_eastmoney_announced_event(symbol, row, today_label):
         'amountPerShare': round(amount_per_10 / 10, 6),
         'currency': 'CNY',
         'source': 'eastmoney',
-        'status': 'announced',
         'tentative': '实施' not in progress
     }
+    if ex_date > today_label:
+        event['status'] = 'announced'
     if announce_date:
         event['announceDate'] = announce_date
     return event
@@ -745,7 +760,7 @@ def build_etnet_announced_event(symbol, row, today_label):
     announce_raw, _fiscal_year, action, ex_raw, _book_from, _book_to, pay_raw = row[:7]
     cash_dividend = parse_etnet_cash_dividend(action)
     ex_date = parse_etnet_date(ex_raw)
-    if not cash_dividend or not ex_date or ex_date <= today_label:
+    if not cash_dividend or not ex_date:
         return None
 
     amount_per_share, currency = cash_dividend
@@ -755,9 +770,10 @@ def build_etnet_announced_event(symbol, row, today_label):
         'amountPerShare': amount_per_share,
         'currency': currency,
         'source': 'etnet',
-        'status': 'announced',
         'tentative': False
     }
+    if ex_date > today_label:
+        event['status'] = 'announced'
     announce_date = parse_etnet_date(announce_raw)
     if announce_date:
         event['announceDate'] = announce_date
@@ -814,6 +830,7 @@ def get_previous_future_announced_events(previous_quote, symbol, currency, today
 
 def merge_announced_dividend_snapshots(quotes, previous_quotes, announced_events, fetched_symbols, stale_days):
     today_label = local_today_label()
+    history_cutoff = (datetime.now(LOCAL_TZ) - timedelta(days=365 * 5 + 10)).date().isoformat()
     merged = {}
     previous_quotes = previous_quotes or {}
     announced_events = announced_events or {}
@@ -824,7 +841,8 @@ def merge_announced_dividend_snapshots(quotes, previous_quotes, announced_events
         quote_currency = normalize_currency_code(normalized_quote.get('currency'), infer_market_currency(symbol)[1])
         base_events = [
             event for event in normalized_quote.get('dividends', [])
-            if not (symbol in fetched_symbols and is_announced_dividend_event(event))
+            if normalize_date_string(event.get('exDate')) >= history_cutoff
+            and not (symbol in fetched_symbols and is_announced_dividend_event(event))
         ]
 
         if symbol in fetched_symbols:
@@ -837,7 +855,10 @@ def merge_announced_dividend_snapshots(quotes, previous_quotes, announced_events
                 today_label
             )
 
-        normalized_quote['dividends'] = merge_dividend_event_lists(base_events, next_announced, symbol, quote_currency)
+        normalized_quote['dividends'] = [
+            event for event in merge_dividend_event_lists(base_events, next_announced, symbol, quote_currency)
+            if normalize_date_string(event.get('exDate')) >= history_cutoff
+        ]
         merged[symbol] = normalize_quote_entry(symbol, normalized_quote, stale_days)
 
     return merged

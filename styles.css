@@ -7037,3 +7037,93 @@ html, body { overscroll-behavior-y: contain; }
   transform: none;
   animation: spin 800ms linear infinite;
 }
+
+/* ── 本月股息 / 待核对 ── */
+.dividend-past-toggle {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--color-hairline);
+  background: transparent;
+  padding: 11px 0;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dividend-month-row.is-current {
+  margin: 6px -10px;
+  padding-right: 10px;
+  padding-left: 12px;
+  border-bottom-color: transparent;
+  background: #f5eee8;
+}
+
+.dividend-month-row.is-current::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: #b9835f;
+}
+
+.dividend-month-row.is-current .dmr-label small {
+  display: block;
+  margin-top: 2px;
+  color: #9b6747;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.month-detail-row.is-due .mdr-dot { background: #d28b38; }
+.month-detail-row.is-due .mdr-date { color: #a76720; font-weight: 700; }
+
+/* ── 持仓财报日历 ── */
+#reportCalendarPanel { margin-bottom: 12px; }
+.report-calendar-panel-inner { padding: 14px 16px 8px; }
+.report-calendar-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.report-calendar-head span { font-size: 10px; font-weight: 700; color: var(--color-text-secondary); letter-spacing: 1px; }
+.report-calendar-head h3 { margin: 3px 0 0; font-size: 17px; color: var(--color-ink); }
+.report-calendar-head > small { font-size: 10px; color: var(--muted); white-space: nowrap; }
+.report-event-list { margin-top: 10px; border-top: 1px solid var(--line); }
+.report-event-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  padding: 9px 0;
+  text-align: left;
+  cursor: pointer;
+}
+.report-event-row:last-child { border-bottom: 0; }
+.report-event-row.is-past { opacity: 0.58; }
+.report-event-date { display: flex; flex-direction: column; align-items: center; }
+.report-event-date strong { font-size: 17px; font-variant-numeric: tabular-nums; color: var(--color-ink); }
+.report-event-date small { font-size: 9px; color: var(--muted); }
+.report-event-company { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.report-event-company strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--color-ink); }
+.report-event-company small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; color: var(--muted); }
+.report-event-status { border: 1px solid var(--color-hairline); padding: 2px 5px; font-size: 9px; font-weight: 700; color: var(--color-text-secondary); }
+.report-event-status.is-confirmed { border-color: #9a6648; color: #9a6648; }
+.report-event-status.is-scheduled { border-color: var(--color-ink); color: var(--color-ink); }
+.report-calendar-empty { padding: 14px 0 8px; font-size: 11px; color: var(--muted); }
+
+.modal-field-source { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; }
+.modal-field-warning { margin: 0; color: #a76720; font-size: 11px; font-weight: 700; }
+
+/* ── 收益趋势与基本面图表统一 ── */
+.income-trend-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.income-trend-card .income-trend-svg { display: block; width: 100%; height: auto; overflow: visible; }
+.income-trend-labels text { fill: var(--muted); font-size: 11px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.income-trend-labels text.is-latest { fill: var(--color-ink); font-weight: 800; }
+.income-trend-card .income-trend-years { padding: 6px 4px 0; margin: 0; }
+/* 应用主栏始终是窄幅账本版式；图表保持单列，避免外层桌面视口触发双列后挤压标签。 */
+.fund-card-grid { grid-template-columns: minmax(0, 1fr); }

@@ -8,7 +8,7 @@ import {
   sanitizeHolding, sanitizePerShareOverrideInput, normalizeSymbol,
   sanitizeDividendLedgerEntry, sanitizeDailySnapshotEntry,
   sanitizeCashFlowEntry, sanitizeYearlyManualEntry, sanitizeTradeEntry,
-  sanitizeYearlyHoldingsEntry
+  sanitizeYearlyHoldingsEntry, sanitizeYearlyArchiveEntry
 } from './utils.js';
 
 /* ── Default Quotes (normalized from seed data) ── */
@@ -35,6 +35,7 @@ export const state = {
   cashFlows: [],
   trades: [],
   yearlyManual: [],
+  yearlyArchives: [],
   yearlyHoldings: [],
   lastUpdatedAt: '',
   modal: null,
@@ -90,6 +91,7 @@ export const refs = {
   incomeRecordsList: document.getElementById('incomeRecordsList'),
   fundamentalsNote: document.getElementById('fundamentalsNote'),
   fundamentalsSymbolRow: document.getElementById('fundamentalsSymbolRow'),
+  reportCalendarPanel: document.getElementById('reportCalendarPanel'),
   fundamentalsContent: document.getElementById('fundamentalsContent'),
   dividendMetricGrid: document.getElementById('dividendMetricGrid'),
   dividendMonthGrid: document.getElementById('dividendMonthGrid'),
@@ -208,6 +210,7 @@ export function createDefaultSnapshot() {
     cashFlows: [],
     trades: [],
     yearlyManual: [],
+    yearlyArchives: [],
     yearlyHoldings: [],
     lastUpdatedAt: ''
   };
@@ -251,9 +254,17 @@ export function applySnapshot(snapshot) {
   state.trades = Array.isArray(snapshot && snapshot.trades)
     ? snapshot.trades.map(sanitizeTradeEntry).filter(Boolean)
     : [];
-  state.yearlyManual = Array.isArray(snapshot && snapshot.yearlyManual)
-    ? snapshot.yearlyManual.map(sanitizeYearlyManualEntry).filter(Boolean)
-    : [];
+  const legacyYearly = Array.isArray(snapshot && snapshot.yearlyManual) ? snapshot.yearlyManual : [];
+  const explicitArchives = Array.isArray(snapshot && snapshot.yearlyArchives) ? snapshot.yearlyArchives : [];
+  state.yearlyManual = legacyYearly
+    .filter((item) => !item || item.source !== 'auto')
+    .map(sanitizeYearlyManualEntry)
+    .filter(Boolean);
+  state.yearlyArchives = explicitArchives
+    .concat(legacyYearly.filter((item) => item && item.source === 'auto'))
+    .map(sanitizeYearlyArchiveEntry)
+    .filter(Boolean)
+    .filter((entry, index, rows) => rows.findIndex((item) => item.year === entry.year) === index);
   state.yearlyHoldings = Array.isArray(snapshot && snapshot.yearlyHoldings)
     ? snapshot.yearlyHoldings.map(sanitizeYearlyHoldingsEntry).filter(Boolean)
     : [];
@@ -270,7 +281,7 @@ export function getPersistedSnapshot() {
     liabilityCny: state.liabilityCny, openingCashCny: state.openingCashCny, openingDate: state.openingDate,
     dividendLedger: state.dividendLedger,
     dailySnapshots: state.dailySnapshots, cashFlows: state.cashFlows,
-    trades: state.trades, yearlyManual: state.yearlyManual,
+    trades: state.trades, yearlyManual: state.yearlyManual, yearlyArchives: state.yearlyArchives,
     yearlyHoldings: state.yearlyHoldings,
     lastUpdatedAt: state.lastUpdatedAt
   };
@@ -333,6 +344,9 @@ export function buildPortfolioSnapshot() {
       : [],
     yearlyManual: Array.isArray(persisted.yearlyManual)
       ? persisted.yearlyManual.map(sanitizeYearlyManualEntry).filter(Boolean)
+      : [],
+    yearlyArchives: Array.isArray(persisted.yearlyArchives)
+      ? persisted.yearlyArchives.map(sanitizeYearlyArchiveEntry).filter(Boolean)
       : [],
     yearlyHoldings: Array.isArray(persisted.yearlyHoldings)
       ? persisted.yearlyHoldings.map(sanitizeYearlyHoldingsEntry).filter(Boolean)

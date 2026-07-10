@@ -392,6 +392,7 @@ export function sanitizeDividendLedgerEntry(item, index = 0) {
     symbol: symbol || String(item.symbol || '').trim(),
     exDate,
     payDate: formatDateLabel(item.payDate),
+    receivedDate: formatDateLabel(item.receivedDate),
     amountPerShare,
     currency,
     shares: Math.max(0, safeNumber(item.shares, 0)),
@@ -512,7 +513,6 @@ export function sanitizeYearlyHoldingsEntry(item) {
         };
       }).filter((holding) => holding && holding.shares > 0)
     : [];
-  if (!holdings.length) return null;
   return {
     year,
     date: formatDateLabel(item.date),
@@ -522,19 +522,47 @@ export function sanitizeYearlyHoldingsEntry(item) {
   };
 }
 
+function sanitizeNullableNumber(value, opts = {}) {
+  if (value === null || value === undefined || value === '') return null;
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return null;
+  return opts.nonNegative ? Math.max(0, numeric) : numeric;
+}
+
 export function sanitizeYearlyManualEntry(item) {
   if (!item || typeof item !== 'object') return null;
   const year = Math.floor(safeNumber(item.year, 0));
   if (year <= 0) return null;
   return {
-    ...item,
     year,
-    dividendCny: safeNumber(item.dividendCny, 0),
-    yearEndNetCny: safeNumber(item.yearEndNetCny, 0),
-    netInflowCny: safeNumber(item.netInflowCny, 0),
-    // 可选的直接回填值：null 表示未填，由净值链自动推算。
-    capitalReturnCny: item.capitalReturnCny === null || item.capitalReturnCny === undefined || item.capitalReturnCny === '' ? null : safeNumber(item.capitalReturnCny, 0),
-    capitalReturnRate: item.capitalReturnRate === null || item.capitalReturnRate === undefined || item.capitalReturnRate === '' ? null : safeNumber(item.capitalReturnRate, 0)
+    dividendCny: sanitizeNullableNumber(item.dividendCny, { nonNegative: true }),
+    dividendYieldRate: sanitizeNullableNumber(item.dividendYieldRate, { nonNegative: true }),
+    yearEndNetCny: sanitizeNullableNumber(item.yearEndNetCny, { nonNegative: true }),
+    netInflowCny: sanitizeNullableNumber(item.netInflowCny),
+    capitalReturnCny: sanitizeNullableNumber(item.capitalReturnCny),
+    capitalReturnRate: sanitizeNullableNumber(item.capitalReturnRate),
+    source: 'manual'
+  };
+}
+
+export function sanitizeYearlyArchiveEntry(item) {
+  if (!item || typeof item !== 'object') return null;
+  const year = Math.floor(safeNumber(item.year, 0));
+  if (year <= 0) return null;
+  const archivedNumber = (value, opts = {}) => {
+    const numeric = sanitizeNullableNumber(value, opts);
+    return numeric === 0 ? null : numeric;
+  };
+  return {
+    year,
+    dividendCny: archivedNumber(item.dividendCny, { nonNegative: true }),
+    dividendYieldRate: archivedNumber(item.dividendYieldRate, { nonNegative: true }),
+    yearEndNetCny: archivedNumber(item.yearEndNetCny, { nonNegative: true }),
+    netInflowCny: archivedNumber(item.netInflowCny),
+    capitalReturnCny: archivedNumber(item.capitalReturnCny),
+    capitalReturnRate: archivedNumber(item.capitalReturnRate),
+    archivedAt: typeof item.archivedAt === 'string' ? item.archivedAt : '',
+    source: 'auto'
   };
 }
 

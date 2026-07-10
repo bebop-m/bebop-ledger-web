@@ -183,9 +183,9 @@ def normalize_snapshot(snapshot):
     if not isinstance(holdings, list):
         holdings = result.get("positions") if isinstance(result.get("positions"), list) else []
     result["type"] = "portfolio-snapshot"
-    result["version"] = max(2, int(safe_float(result.get("version"), 2)))
+    result["version"] = max(3, int(safe_float(result.get("version"), 3)))
     result["holdings"] = [h for h in (normalize_holding(item, i) for i, item in enumerate(holdings)) if h]
-    for key in ("dividendLedger", "dailySnapshots", "cashFlows", "yearlyManual", "trades"):
+    for key in ("dividendLedger", "dailySnapshots", "cashFlows", "yearlyManual", "yearlyArchives", "yearlyHoldings", "trades"):
         if not isinstance(result.get(key), list):
             result[key] = []
     return result
@@ -305,7 +305,7 @@ def reconcile_ledger(portfolio, market):
 def settle_portfolio(portfolio, market, today):
     portfolio = normalize_snapshot(portfolio)
     changed = False
-    stats = {"snapshotAdded": False, "ledgerAdded": 0, "ledgerRemoved": 0}
+    stats = {"snapshotAdded": False, "ledgerAdded": 0, "ledgerUpdated": 0, "ledgerRemoved": 0}
 
     if not any(normalize_date(item.get("date")) == today for item in portfolio.get("dailySnapshots", []) if isinstance(item, dict)):
         portfolio["dailySnapshots"].append(build_today_snapshot(portfolio, market, today))
@@ -324,14 +324,33 @@ def settle_portfolio(portfolio, market, today):
             if safe_float(holding.get("shares"), 0.0) > 0:
                 relevant.add(normalize_symbol(holding.get("symbol")))
 
-    existing_ids = {str(entry.get("sourceId") or "") for entry in portfolio.get("dividendLedger", []) if isinstance(entry, dict)}
+    existing_by_id = {
+        str(entry.get("sourceId") or ""): entry
+        for entry in portfolio.get("dividendLedger", []) if isinstance(entry, dict) and entry.get("sourceId")
+    }
+    existing_ids = set(existing_by_id)
     quotes = market.get("quotes") or {}
     now_iso = utc_now_iso()
     for symbol in sorted(relevant):
         quote = quotes.get(symbol) or {}
         for raw_event in quote.get("dividends") or []:
             event = normalize_dividend_event(raw_event, symbol)
-            if not event or event["exDate"] > today or event["sourceId"] in existing_ids:
+            if not event or event["exDate"] > today:
+                continue
+            existing = existing_by_id.get(event["sourceId"])
+            if existing:
+                if existing.get("confidence") == "manual":
+                    continue
+                next_pay = event.get("payDate") or normalize_date(existing.get("payDate"))
+                effective_pay = resolve_effective_pay_date(event["exDate"], next_pay, event["symbol"])
+                next_status = "received" if existing.get("confirmed") is True else ("due" if effective_pay and effective_pay <= today else "pending")
+                if next_pay != normalize_date(existing.get("payDate")) or next_status != existing.get("receiptStatus") or event.get("source") != existing.get("eventSource"):
+                    existing["payDate"] = next_pay
+                    existing["receiptStatus"] = next_status
+                    existing["eventSource"] = event.get("source")
+                    existing["updatedAt"] = now_iso
+                    stats["ledgerUpdated"] += 1
+                    changed = True
                 continue
             context = dividend_context(portfolio, event["symbol"], event["exDate"], event["currency"])
             if not context:
@@ -357,7 +376,8 @@ def settle_portfolio(portfolio, market, today):
                 "grossCny": gross,
                 "netCny": net,
                 "bucket": context["bucket"],
-                "receiptStatus": "received" if effective_pay and effective_pay <= today else "pending",
+                "receiptStatus": "due" if effective_pay and effective_pay <= today else "pending",
+                "eventSource": event.get("source"),
                 "confidence": context["confidence"],
                 "confirmed": False,
                 "note": "",

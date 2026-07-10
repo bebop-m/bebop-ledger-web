@@ -5,6 +5,7 @@ import {
   computeCashFlowRecords, computeTradeSummary, isCashModelActive
 } from './compute.js';
 import { renderFundamentalsPage, getFundamentalsCompanyCount } from './fundamentals.js';
+import { getReportHomeSummary, renderReportCalendarPanel } from './report-calendar.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
   formatTimestamp, normalizeDividendStatus, getDividendStatusLabel,
@@ -122,9 +123,11 @@ function renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems
   const cur = incomeModel.current;
   const summaries = {
     holdings: `${summary.holdings.length} \u9879${coreItem ? ` \u00b7 ${LABELS.core} ${((coreItem.marketValueCny / totalMv) * 100).toFixed(1)}%` : ''}`,
-    dividends: monthItem ? `${monthItem.label}\u5728\u9014 ${formatDisplayMoney(monthItem.upcomingCny, 'CNY')}` : '',
+    dividends: monthItem
+      ? `${monthItem.label}${monthItem.dueCny > 0 ? `待核对 ${formatDisplayMoney(monthItem.dueCny, 'CNY')}` : `在途 ${formatDisplayMoney(monthItem.upcomingCny, 'CNY')}`}`
+      : '',
     income: cur && cur.capitalReturnAvailable ? `\u5f53\u5e74 ${formatIncomeSignedMoney(cur.capitalReturnCny)}` : '\u5386\u5e74\u8d8b\u52bf \u00b7 \u5e74\u5ea6\u8868',
-    fundamentals: getFundamentalsCompanyCount() > 0 ? `${getFundamentalsCompanyCount()} \u5bb6\u516c\u53f8` : '\u80a1\u606f \u00b7 \u5206\u7ea2\u7387 \u00b7 EPS',
+    fundamentals: getReportHomeSummary() || (getFundamentalsCompanyCount() > 0 ? `${getFundamentalsCompanyCount()} \u5bb6\u516c\u53f8` : '\u80a1\u606f \u00b7 \u5206\u7ea2\u7387 \u00b7 EPS'),
     records: `${cash.count} \u51fa\u5165\u91d1 \u00b7 ${trades.count} \u4ea4\u6613`
   };
   refs.homeNavList.querySelectorAll('[data-nav-summary]').forEach((el) => {
@@ -377,15 +380,28 @@ function renderDividendMetricGrid(model) {
 function getDividendMonthStatusText(item) {
   const parts = [];
   if (item.receivedCny > 0) parts.push(`${LABELS.dividendReceivedStatus} ${formatDisplayMoney(item.receivedCny, 'CNY')}`);
+  if (item.dueCny > 0) parts.push(`待核对 ${formatDisplayMoney(item.dueCny, 'CNY')}`);
   if (item.phase !== 'past' && item.upcomingCny > 0) parts.push(`在途 ${formatDisplayMoney(item.upcomingCny, 'CNY')}`);
   if (item.phase === 'past' && item.pendingCny > 0) parts.push(`${LABELS.dividendPending} ${formatDisplayMoney(item.pendingCny, 'CNY')}`);
   return parts.length ? parts.join(' · ') : '—';
 }
 
+let dividendPastExpanded = false;
+
+export function toggleDividendPastMonths() {
+  dividendPastExpanded = !dividendPastExpanded;
+  renderDividendCalendarPage();
+}
+
 function renderDividendMonths(model) {
-  refs.dividendMonthGrid.innerHTML = model.months.map((item) => `
+  const past = model.months.filter((item) => item.phase === 'past');
+  const visible = dividendPastExpanded ? model.months : model.months.filter((item) => item.phase !== 'past');
+  const pastToggle = past.length
+    ? `<button class="dividend-past-toggle" type="button" data-dividend-past-toggle aria-expanded="${dividendPastExpanded ? 'true' : 'false'}">${dividendPastExpanded ? '收起过往月份' : `查看 1–${past.length} 月`}</button>`
+    : '';
+  refs.dividendMonthGrid.innerHTML = pastToggle + visible.map((item) => `
     <button class="dividend-month-row is-${item.phase}${item.totalCny > 0 ? '' : ' is-empty'}" type="button" data-dividend-month="${item.month}" style="--dmr-progress:${getDividendProgressPercent(item.receivedCny, item.totalCny)}%;">
-      <span class="dmr-label">${escapeHtml(item.label)}</span>
+      <span class="dmr-label">${escapeHtml(item.label)}${item.phase === 'current' ? '<small>本月</small>' : ''}</span>
       <span class="dmr-status">${escapeHtml(getDividendMonthStatusText(item))}</span>
       <strong class="dmr-total">${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}</strong>
     </button>
@@ -404,7 +420,9 @@ function getMonthDetailDateShort(entry) {
     const pay = getShortMonthDay(entry.payDate || entry.exDate);
     return `${LABELS.dividendExDateLabel} ${ex} \u00b7 ${LABELS.dividendPayDateActual} ${pay}`;
   }
+  if (entry.receivedDate) return `${getShortMonthDay(entry.receivedDate)}(实收)`;
   const mmdd = getShortMonthDay(entry.payDate || entry.exDate || '');
+  if (entry.status === 'due') return `${mmdd}(待核对)`;
   return entry.payDateEstimated ? `${mmdd}(${LABELS.dividendPayDateEstimated})` : mmdd;
 }
 
@@ -418,6 +436,7 @@ export function buildDividendMonthDetail(month) {
   const summaryParts = [];
   if (item) {
     summaryParts.push(`${LABELS.dividendReceivedStatus} ${formatDisplayMoney(item.receivedCny, 'CNY')}`);
+    if (item.dueCny > 0) summaryParts.push(`待核对 ${formatDisplayMoney(item.dueCny, 'CNY')}`);
     if (item.phase !== 'past') summaryParts.push(`${LABELS.dividendUpcoming} ${formatDisplayMoney(item.upcomingCny, 'CNY')}`);
     else if (item.pendingCny > 0) summaryParts.push(`${LABELS.dividendPending} ${formatDisplayMoney(item.pendingCny, 'CNY')}`);
   }
@@ -427,6 +446,7 @@ export function buildDividendMonthDetail(month) {
         const dotState = entry.isForecast
           ? 'is-forecast'
           : (entry.isAnnounced || entry.status === 'announced') ? 'is-announced'
+            : entry.status === 'due' ? 'is-due'
             : (entry.confirmed ? 'is-confirmed' : 'is-unconfirmed');
         const clickable = !entry.isForecast && !(entry.isAnnounced || entry.status === 'announced') && entry.sourceId;
         const tag = clickable ? 'button' : 'div';
@@ -525,16 +545,16 @@ function getTrendPoint(row, index, total, key, minValue, maxValue) {
   const value = getTrendValue(row, key);
   if (value === null) return null;
   const width = 720;
-  const height = 220;
-  const padX = 28;
-  const padTop = 18;
-  const padBottom = 34;
+  const height = 170;
+  const padX = 34;
+  const padTop = 30;
+  const padBottom = 14;
   const innerWidth = width - padX * 2;
   const innerHeight = height - padTop - padBottom;
   const x = total <= 1 ? width / 2 : padX + (innerWidth * index) / (total - 1);
   const range = maxValue === minValue ? 1 : maxValue - minValue;
   const y = padTop + ((maxValue - value) / range) * innerHeight;
-  return { x: roundSvgNumber(x), y: roundSvgNumber(y) };
+  return { x: roundSvgNumber(x), y: roundSvgNumber(y), value };
 }
 
 function roundSvgNumber(value) {
@@ -548,13 +568,39 @@ function getTrendSeriesMarkup(rows, key, className, minValue, maxValue) {
   if (!points.length) return '';
   const pointText = points.map((point) => `${point.x},${point.y}`).join(' ');
   const circles = points.map((point) => `<circle cx="${point.x}" cy="${point.y}" r="3.4"></circle>`).join('');
+  const labels = points.map((point, index) => `<text x="${point.x}" y="${Math.max(12, point.y - 10)}" text-anchor="middle"${index === points.length - 1 ? ' class="is-latest"' : ''}>${escapeHtml(formatIncomeRate(point.value))}</text>`).join('');
   return `<g class="income-trend-series ${className}">
     <polyline points="${pointText}"></polyline>
     ${circles}
+    <g class="income-trend-labels">${labels}</g>
   </g>`;
 }
 
-// 历年趋势：资金收益率 + 股息收益率两条百分比线，共用同一坐标系。
+function buildIncomeTrendCard(rows, item, currentYear) {
+  const values = rows.map((row) => getTrendValue(row, item.key)).filter((value) => value !== null);
+  if (!values.length) return `<section class="fund-card income-trend-card is-empty"><header class="fund-card-head"><span class="fund-card-label">${item.label}</span></header><p class="fund-card-empty">暂无数据</p></section>`;
+  const minValue = Math.min(0, ...values);
+  const maxValue = Math.max(0, ...values);
+  const zeroPoint = getTrendPoint({ rate: 0 }, 0, 1, 'rate', minValue, maxValue);
+  const available = rows.map((row) => ({ row, value: getTrendValue(row, item.key) })).filter((entry) => entry.value !== null);
+  const latest = available[available.length - 1];
+  const previous = available.length > 1 ? available[available.length - 2] : null;
+  const yoy = previous && previous.value !== 0 ? (latest.value - previous.value) / Math.abs(previous.value) : null;
+  return `<section class="fund-card income-trend-card">
+    <header class="fund-card-head">
+      <span class="fund-card-label">${item.label}</span>
+      <span class="fund-card-latest"><strong>${escapeHtml(formatIncomeRate(latest.value))}</strong><small>${latest.row.year === currentYear ? '至今' : latest.row.year}</small></span>
+      ${yoy === null ? '' : `<span class="fund-card-trend ${yoy > 0 ? 'is-gain' : yoy < 0 ? 'is-loss' : 'is-flat'}">${yoy > 0 ? '+' : ''}${(yoy * 100).toFixed(1)}% <small>同比</small></span>`}
+    </header>
+    <svg class="income-trend-svg" viewBox="0 0 720 170" role="img" aria-label="${item.label}历年走势">
+      <line class="income-trend-zero" x1="28" x2="692" y1="${zeroPoint.y}" y2="${zeroPoint.y}"></line>
+      ${getTrendSeriesMarkup(rows, item.key, item.className, minValue, maxValue)}
+    </svg>
+    <div class="fund-chart-years income-trend-years">${rows.map((row) => `<span>${row.year === currentYear ? `${String(row.year).slice(2)}至今` : String(row.year).slice(2)}</span>`).join('')}</div>
+  </section>`;
+}
+
+// 与公司基本面一致：两项收益率各用一张带点值、最新值和同比的线图。
 function renderIncomeTrend(model) {
   const rows = model.trendRows;
   const series = [
@@ -566,18 +612,7 @@ function renderIncomeTrend(model) {
     refs.incomeTrend.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无趋势数据</p><p class="empty-state-note">有历年净值或历史回填后会展示收益率趋势。</p></div>`;
     return;
   }
-  const minValue = Math.min(0, ...values);
-  const maxValue = Math.max(0, ...values);
-  const zeroPoint = getTrendPoint({ rate: 0 }, 0, 1, 'rate', minValue, maxValue);
-  refs.incomeTrend.innerHTML = `
-    <div class="income-trend-chart">
-      <svg class="income-trend-svg" viewBox="0 0 720 220" role="img" aria-label="历年资金收益率与股息收益率趋势">
-        <line class="income-trend-zero" x1="28" x2="692" y1="${zeroPoint.y}" y2="${zeroPoint.y}"></line>
-        ${series.map((item) => getTrendSeriesMarkup(rows, item.key, item.className, minValue, maxValue)).join('')}
-      </svg>
-      <div class="income-trend-years">${rows.map((row) => `<span>${row.year}</span>`).join('')}</div>
-      <div class="income-trend-legend">${series.map((item) => `<span><i class="${item.className}"></i>${item.label}</span>`).join('')}</div>
-    </div>`;
+  refs.incomeTrend.innerHTML = `<div class="fund-card-grid income-trend-grid">${series.map((item) => buildIncomeTrendCard(rows, item, model.currentYear)).join('')}</div>`;
 }
 
 function getIncomeYearCell(label, value, extraClass = '') {
@@ -875,6 +910,7 @@ function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
   renderIncomeSummaryPage();
   renderIncomeRecords();
   renderDividendCalendarPage();
+  renderReportCalendarPanel();
   renderFundamentalsPage();
   syncRenderedHoldingsView(summary.holdings, { animateReflow: opts.animateHoldingReflow });
 }

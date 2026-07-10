@@ -3,6 +3,7 @@ export const STORAGE_KEY = 'bopup-ledger-web-state';
 export const MARKET_ENDPOINT = './data/market.json';
 export const OVERRIDE_ENDPOINT = './data/override.json';
 export const FUNDAMENTALS_ENDPOINT = './data/fundamentals.json';
+export const REPORT_CALENDAR_ENDPOINT = './data/report_calendar.json';
 export const CONFIG_ENDPOINT = './config.json';
 export const PORTFOLIO_SNAPSHOT_FILENAME = 'portfolio_snapshot.json';
 export const GITHUB_PUBLIC_REPO = 'bebop-m/bebop-ledger-web';
@@ -14,7 +15,7 @@ export const GITHUB_MARKET_WORKFLOW_DISPATCH_API = `https://api.github.com/repos
 export const GITHUB_TOKEN_STORAGE_KEY = 'bebop-ledger-github-token-v2';
 export const TENCENT_REALTIME_ENDPOINT = 'https://qt.gtimg.cn/q=';
 export const TENCENT_BATCH_SIZE = 60;
-export const PORTFOLIO_SNAPSHOT_VERSION = 2;
+export const PORTFOLIO_SNAPSHOT_VERSION = 3;
 export const LEGEND_COLLAPSED_COUNT = 5;
 export const LEGEND_TOGGLE_ANIMATION_MS = 220;
 export const MASK_AMOUNT = '******';
@@ -24,7 +25,7 @@ export const MARKET_DEPLOY_WAIT_TIMEOUT_MS = 90000;
 export const MARKET_DEPLOY_WAIT_INTERVAL_MS = 3000;
 export const VALID_DIVIDEND_SOURCES = new Set(['yfinance', 'yahoo', 'eodhd', 'manual', 'cache']);
 export const VALID_DIVIDEND_STATUSES = new Set(['manual', 'fresh', 'stale', 'missing']);
-export const VALID_RECEIPT_STATUSES = new Set(['received', 'pending']);
+export const VALID_RECEIPT_STATUSES = new Set(['received', 'pending', 'due']);
 export const VALID_DIVIDEND_CONFIDENCES = new Set(['confirmed', 'snapshot', 'carryForward', 'estimated', 'manual']);
 export const PAGE_KEYS = new Set(['home', 'holdings', 'dividends', 'income', 'records', 'fundamentals']);
 /* 旧快照里的页面键 → 新信息架构页面键。 */

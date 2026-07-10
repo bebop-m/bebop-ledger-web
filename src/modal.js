@@ -6,7 +6,7 @@ import {
 } from './utils.js';
 import { LABELS } from './constants.js';
 import { renderSavedStateQuietly, buildDividendMonthDetail, formatDisplayMoney } from './render.js';
-import { inferQuote, isCashModelActive } from './compute.js';
+import { inferQuote, isCashModelActive, computeIncomeSummary } from './compute.js';
 
 let _keydownHandler = null;
 
@@ -177,8 +177,9 @@ function renderModal() {
     const entry = getDividendLedgerEntryBySourceId(state.modalPayload && state.modalPayload.sourceId);
     const quote = entry ? inferQuote(entry.symbol) : {};
     title = '股息到账';
-    note = entry ? `${quote.name || entry.symbol} · ${entry.symbol}` : '未找到这笔股息';
-    fields = entry ? `<label class="modal-field"><span>到账日</span><input id="modalDividendPayDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry.payDate) || formatDateLabel(entry.exDate))}"></label>
+    note = entry ? `${quote.name || entry.symbol} · ${entry.symbol} · 除息 ${formatDateLabel(entry.exDate)}` : '未找到这笔股息';
+    fields = entry ? `<label class="modal-field"><span>官方派付日（可选）</span><input id="modalDividendPayDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry.payDate))}"></label>
+      <label class="modal-field"><span>实际到账日</span><input id="modalDividendReceivedDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry.receivedDate))}"></label>
       <label class="modal-field"><span>实收金额（CNY）</span><input id="modalDividendNetInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(safeNumber(entry.netCny, 0)))}" placeholder="0.00"></label>
       <label class="modal-field"><span>备注</span><input id="modalDividendNoteInput" class="modal-input" type="text" value="${escapeHtml(entry.note || '')}" placeholder="可选"></label>
       <label class="modal-check"><input id="modalDividendConfirmedInput" type="checkbox"${entry.confirmed === true ? ' checked' : ''}><span>标记已到账</span></label>` : '';
@@ -219,13 +220,20 @@ function renderModal() {
       <label class="modal-field"><span>备注</span><input id="modalTradeNoteInput" class="modal-input" type="text" value="${escapeHtml(entry && entry.note || '')}" placeholder="可选"></label>`;
   } else if (state.modal === 'yearlyManual') {
     title = '年度数据';
-    note = '股息与收益默认按已有数据自动得出；此处填写的值优先生效，留空即恢复自动推算';
-    fields = `<input id="modalManualYearInput" class="modal-input" type="number" inputmode="numeric" value="${escapeHtml(getManualModalValue('year') || String(getDefaultManualYear()))}" placeholder="年份">
-      <input id="modalManualDividendInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('dividendCny'))}" placeholder="当年股息收入（CNY）">
-      <input id="modalManualYearEndInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('yearEndNetCny'))}" placeholder="年末净值（CNY）">
-      <input id="modalManualNetInflowInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('netInflowCny'))}" placeholder="当年净注入（CNY，可为负）">
-      <input id="modalManualCapitalInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('capitalReturnCny'))}" placeholder="资金收益（CNY，可为负，可留空）">
-      <input id="modalManualCapitalRateInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('capitalReturnRatePercent'))}" placeholder="资金收益率（%，可为负，可留空）">`;
+    note = '填写项优先；留空即使用账本、快照或其他字段自动推算';
+    const year = Math.floor(safeNumber(state.modalPayload && state.modalPayload.year, getDefaultManualYear()));
+    const row = computeIncomeSummary().rows.find((item) => item.year === year) || null;
+    const autoRow = computeIncomeSummary(new Date(), { ignoreManual: true }).rows.find((item) => item.year === year) || null;
+    const sourceText = (key, formatted) => autoRow && autoRow.fieldSources && autoRow.fieldSources[key] !== 'missing'
+      ? `<small class="modal-field-source">当前自动值 ${escapeHtml(formatted)}</small>` : '';
+    fields = `<label class="modal-field"><span>年份</span><input id="modalManualYearInput" class="modal-input" type="number" inputmode="numeric" value="${escapeHtml(getManualModalValue('year') || String(getDefaultManualYear()))}" placeholder="年份"></label>
+      <label class="modal-field"><span>股息收入（CNY）</span><input id="modalManualDividendInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('dividendCny'))}" placeholder="留空自动">${sourceText('dividendCny', autoRow ? formatDisplayMoney(autoRow.dividendCny, 'CNY') : '')}</label>
+      <label class="modal-field"><span>股息率（%）</span><input id="modalManualDividendRateInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('dividendYieldRatePercent'))}" placeholder="留空自动">${sourceText('dividendYieldRate', autoRow && autoRow.dividendYieldRate !== null ? `${(autoRow.dividendYieldRate * 100).toFixed(2)}%` : '')}</label>
+      <label class="modal-field"><span>资金收益（CNY）</span><input id="modalManualCapitalInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('capitalReturnCny'))}" placeholder="留空自动">${sourceText('capitalReturnCny', autoRow ? formatDisplayMoney(autoRow.capitalReturnCny, 'CNY') : '')}</label>
+      <label class="modal-field"><span>资金收益率（%）</span><input id="modalManualCapitalRateInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('capitalReturnRatePercent'))}" placeholder="留空自动">${sourceText('capitalReturnRate', autoRow && autoRow.capitalReturnRate !== null ? `${(autoRow.capitalReturnRate * 100).toFixed(2)}%` : '')}</label>
+      <label class="modal-field"><span>年末净值（CNY）</span><input id="modalManualYearEndInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('yearEndNetCny'))}" placeholder="留空自动">${sourceText('yearEndNetCny', autoRow ? formatDisplayMoney(autoRow.yearEndNetCny, 'CNY') : '')}</label>
+      <label class="modal-field"><span>当年净注入（CNY）</span><input id="modalManualNetInflowInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('netInflowCny'))}" placeholder="留空自动">${sourceText('netInflowCny', autoRow ? formatDisplayMoney(autoRow.netInflowCny, 'CNY') : '')}</label>
+      ${row && row.manualConflicts && row.manualConflicts.length ? `<p class="modal-field-warning">${escapeHtml(row.manualConflicts.join('；'))}</p>` : ''}`;
   } else if (state.modal === 'add') {
     title = LABELS.addTitle; note = LABELS.addNote;
     fields = `<input id="modalSymbolInput" class="modal-input" type="text" placeholder="${LABELS.symbolPlaceholder}">
@@ -352,6 +360,7 @@ export function toggleDividendConfirm(sourceId) {
     confirmed: confirming,
     receiptStatus: confirming ? 'received' : (entry.receiptStatus || 'pending'),
     confidence: confirming ? 'confirmed' : (entry.confidence === 'confirmed' ? 'snapshot' : entry.confidence),
+    receivedDate: confirming ? (formatDateLabel(entry.receivedDate) || getTodayLabel()) : '',
     updatedAt: new Date().toISOString()
   };
   saveState();
@@ -365,15 +374,21 @@ function saveDividendLedgerEdit() {
   if (index < 0) { showToast('未找到这笔股息', { type: 'error' }); return false; }
   const entry = state.dividendLedger[index];
   const payDate = formatDateLabel(document.getElementById('modalDividendPayDateInput').value);
+  const receivedDateRaw = formatDateLabel(document.getElementById('modalDividendReceivedDateInput').value);
   const netCny = safeNumber(document.getElementById('modalDividendNetInput').value, 0);
-  if (!payDate) { showToast('请输入有效到账日', { type: 'error' }); return false; }
   if (netCny <= 0) { showToast('请输入有效实收金额', { type: 'error' }); return false; }
   const confirmed = document.getElementById('modalDividendConfirmedInput').checked === true;
+  const receivedDate = confirmed ? (receivedDateRaw || getTodayLabel()) : receivedDateRaw;
+  const effectivePay = resolveEffectivePayDate(entry.exDate, payDate, entry.symbol);
+  const receiptStatus = confirmed
+    ? 'received'
+    : ((effectivePay.date || entry.exDate) <= getTodayLabel() ? 'due' : 'pending');
   state.dividendLedger[index] = {
     ...entry,
     payDate,
+    receivedDate,
     netCny,
-    receiptStatus: confirmed ? 'received' : 'pending',
+    receiptStatus,
     confidence: confirmed ? 'confirmed' : 'manual',
     confirmed,
     note: document.getElementById('modalDividendNoteInput').value.trim(),
@@ -463,20 +478,29 @@ export function handleModalSave() {
     const year = Math.floor(safeNumber(document.getElementById('modalManualYearInput').value, 0));
     if (year < 1900 || year > 2200) { showToast('请输入有效年份', { type: 'error' }); return; }
     const previousYear = Math.floor(safeNumber(state.modalPayload && state.modalPayload.year, 0));
+    const nullable = (id, opts = {}) => {
+      const raw = document.getElementById(id).value.trim();
+      if (raw === '') return null;
+      const value = safeNumber(raw, 0);
+      return opts.nonNegative ? Math.max(0, value) : value;
+    };
     const capitalRaw = document.getElementById('modalManualCapitalInput').value.trim();
     const capitalRateRaw = document.getElementById('modalManualCapitalRateInput').value.trim();
     const entry = {
       year,
-      dividendCny: Math.max(0, safeNumber(document.getElementById('modalManualDividendInput').value, 0)),
-      yearEndNetCny: Math.max(0, safeNumber(document.getElementById('modalManualYearEndInput').value, 0)),
-      netInflowCny: safeNumber(document.getElementById('modalManualNetInflowInput').value, 0),
-      // 留空 = null = 由净值链自动推算；填了就以回填值为准（仅历史年份生效）。
+      dividendCny: nullable('modalManualDividendInput', { nonNegative: true }),
+      dividendYieldRate: nullable('modalManualDividendRateInput', { nonNegative: true }) === null ? null : nullable('modalManualDividendRateInput', { nonNegative: true }) / 100,
+      yearEndNetCny: nullable('modalManualYearEndInput', { nonNegative: true }),
+      netInflowCny: nullable('modalManualNetInflowInput'),
       capitalReturnCny: capitalRaw === '' ? null : safeNumber(capitalRaw, 0),
-      capitalReturnRate: capitalRateRaw === '' ? null : safeNumber(capitalRateRaw, 0) / 100
+      capitalReturnRate: capitalRateRaw === '' ? null : safeNumber(capitalRateRaw, 0) / 100,
+      source: 'manual'
     };
+    const hasOverride = ['dividendCny', 'dividendYieldRate', 'yearEndNetCny', 'netInflowCny', 'capitalReturnCny', 'capitalReturnRate']
+      .some((key) => entry[key] !== null && entry[key] !== undefined);
     state.yearlyManual = state.yearlyManual
       .filter((item) => item.year !== year && item.year !== previousYear)
-      .concat(entry)
+      .concat(hasOverride ? entry : [])
       .sort((a, b) => b.year - a.year);
   } else if (state.modal === 'add') {
     const symbol = normalizeSymbol(document.getElementById('modalSymbolInput').value);

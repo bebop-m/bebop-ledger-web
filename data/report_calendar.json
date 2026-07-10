@@ -1,0 +1,225 @@
+{
+  "ok": true,
+  "updatedAt": "2026-07-10T08:39:08.283472Z",
+  "symbolsTotal": 29,
+  "symbolsCovered": 6,
+  "coveredSymbols": [
+    "000333.SZ",
+    "000651.SZ",
+    "00700.HK",
+    "600177.SH",
+    "600519.SH",
+    "601088.SH"
+  ],
+  "events": [
+    {
+      "symbol": "600519.SH",
+      "reportDate": "2025-08-13",
+      "reportType": "中报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-06-30"
+    },
+    {
+      "symbol": "000651.SZ",
+      "reportDate": "2025-08-29",
+      "reportType": "中报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-06-30"
+    },
+    {
+      "symbol": "000333.SZ",
+      "reportDate": "2025-08-30",
+      "reportType": "中报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-06-30"
+    },
+    {
+      "symbol": "600177.SH",
+      "reportDate": "2025-08-30",
+      "reportType": "中报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-06-30"
+    },
+    {
+      "symbol": "601088.SH",
+      "reportDate": "2025-08-30",
+      "reportType": "中报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-06-30"
+    },
+    {
+      "symbol": "601088.SH",
+      "reportDate": "2025-10-25",
+      "reportType": "三季报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-09-30"
+    },
+    {
+      "symbol": "000333.SZ",
+      "reportDate": "2025-10-30",
+      "reportType": "三季报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-09-30"
+    },
+    {
+      "symbol": "600519.SH",
+      "reportDate": "2025-10-30",
+      "reportType": "三季报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-09-30"
+    },
+    {
+      "symbol": "000651.SZ",
+      "reportDate": "2025-10-31",
+      "reportType": "三季报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-09-30"
+    },
+    {
+      "symbol": "600177.SH",
+      "reportDate": "2025-10-31",
+      "reportType": "三季报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-09-30"
+    },
+    {
+      "symbol": "000333.SZ",
+      "reportDate": "2026-03-31",
+      "reportType": "年报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-12-31"
+    },
+    {
+      "symbol": "601088.SH",
+      "reportDate": "2026-03-31",
+      "reportType": "年报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-12-31"
+    },
+    {
+      "symbol": "600519.SH",
+      "reportDate": "2026-04-17",
+      "reportType": "年报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-12-31"
+    },
+    {
+      "symbol": "600519.SH",
+      "reportDate": "2026-04-25",
+      "reportType": "一季报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-03-31"
+    },
+    {
+      "symbol": "601088.SH",
+      "reportDate": "2026-04-25",
+      "reportType": "一季报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-03-31"
+    },
+    {
+      "symbol": "600177.SH",
+      "reportDate": "2026-04-28",
+      "reportType": "年报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-12-31"
+    },
+    {
+      "symbol": "000651.SZ",
+      "reportDate": "2026-04-29",
+      "reportType": "一季报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-03-31"
+    },
+    {
+      "symbol": "000651.SZ",
+      "reportDate": "2026-04-29",
+      "reportType": "年报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2025-12-31"
+    },
+    {
+      "symbol": "000333.SZ",
+      "reportDate": "2026-04-30",
+      "reportType": "一季报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-03-31"
+    },
+    {
+      "symbol": "600177.SH",
+      "reportDate": "2026-04-30",
+      "reportType": "一季报",
+      "dateStatus": "confirmed",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-03-31"
+    },
+    {
+      "symbol": "00700.HK",
+      "reportDate": "2026-08-12",
+      "reportType": "中期业绩",
+      "dateStatus": "confirmed",
+      "source": "hkex",
+      "purpose": "INT RES/DIV",
+      "fiscalPeriod": "6-MTH-ENDED30/06/26"
+    },
+    {
+      "symbol": "600519.SH",
+      "reportDate": "2026-08-15",
+      "reportType": "中报",
+      "dateStatus": "scheduled",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-06-30"
+    },
+    {
+      "symbol": "000651.SZ",
+      "reportDate": "2026-08-27",
+      "reportType": "中报",
+      "dateStatus": "scheduled",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-06-30"
+    },
+    {
+      "symbol": "000333.SZ",
+      "reportDate": "2026-08-29",
+      "reportType": "中报",
+      "dateStatus": "scheduled",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-06-30"
+    },
+    {
+      "symbol": "600177.SH",
+      "reportDate": "2026-08-29",
+      "reportType": "中报",
+      "dateStatus": "scheduled",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-06-30"
+    },
+    {
+      "symbol": "601088.SH",
+      "reportDate": "2026-08-31",
+      "reportType": "中报",
+      "dateStatus": "scheduled",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-06-30"
+    }
+  ]
+}

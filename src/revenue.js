@@ -3,7 +3,7 @@ import { computeHoldings, computeIncomeSummary, inferQuote } from './compute.js'
 import {
   buildDividendSourceId, formatDateLabel, normalizeQuoteDividendEvent,
   parsePercentOverride, resolveEffectivePayDate, resolveFxRate, resolveQuoteCurrency, safeNumber,
-  sanitizeDailySnapshotEntry, sanitizeDividendLedgerEntry, sanitizeYearlyManualEntry,
+  sanitizeDailySnapshotEntry, sanitizeDividendLedgerEntry, sanitizeYearlyArchiveEntry,
   sanitizeYearlyHoldingsEntry
 } from './utils.js';
 
@@ -98,7 +98,7 @@ function buildLedgerEntry(symbol, dividend, today) {
   if (!event || !isDateOnOrBefore(event.exDate, today) || event.amountPerShare <= 0) return null;
 
   const sourceId = buildDividendSourceId(event);
-  if (!sourceId || state.dividendLedger.some((entry) => entry && entry.sourceId === sourceId)) return null;
+  if (!sourceId) return null;
 
   const context = getFrozenDividendContext(event.symbol || symbol, event.exDate, event.currency);
   if (!context || context.shares <= 0) return null;
@@ -109,7 +109,7 @@ function buildLedgerEntry(symbol, dividend, today) {
   const idSuffix = sourceId.replace(/[^A-Z0-9]+/gi, '_').replace(/^_+|_+$/g, '');
   // 以有效到账日判断已到账/在途：真实 payDate 优先，缺失时按市场滞后估算（A股≈当天，港股≈数周）。
   const effectivePay = resolveEffectivePayDate(event.exDate, event.payDate, event.symbol || symbol);
-  const receiptStatus = isDateOnOrBefore(effectivePay.date || event.exDate, today) ? 'received' : 'pending';
+  const receiptStatus = isDateOnOrBefore(effectivePay.date || event.exDate, today) ? 'due' : 'pending';
 
   return sanitizeDividendLedgerEntry({
     id: `div_${idSuffix || Date.now()}`,
@@ -117,6 +117,7 @@ function buildLedgerEntry(symbol, dividend, today) {
     symbol: event.symbol || symbol,
     exDate: event.exDate,
     payDate: event.payDate || '',
+    eventSource: event.source || '',
     amountPerShare: event.amountPerShare,
     currency: event.currency,
     shares: context.shares,
@@ -133,6 +134,38 @@ function buildLedgerEntry(symbol, dividend, today) {
     createdAt: now,
     updatedAt: now
   });
+}
+
+/* 行情后来补出真实派付日时回写同一 sourceId 的自动账本。
+   用户手工字段与实际到账信息保持不动；已确认条目只补原本为空的官方 payDate。 */
+function updateExistingLedgerEntry(symbol, dividend, today) {
+  const event = normalizeQuoteDividendEvent(dividend, symbol);
+  if (!event || !isDateOnOrBefore(event.exDate, today) || event.amountPerShare <= 0) return false;
+  const sourceId = buildDividendSourceId(event);
+  const index = state.dividendLedger.findIndex((entry) => entry && entry.sourceId === sourceId);
+  if (index < 0) return false;
+  const existing = state.dividendLedger[index];
+  const nextPayDate = event.payDate || existing.payDate || '';
+  const isUserOwned = existing.confidence === 'manual';
+  const effectivePay = resolveEffectivePayDate(existing.exDate, nextPayDate, existing.symbol);
+  const nextReceiptStatus = existing.confirmed === true
+    ? 'received'
+    : (isDateOnOrBefore(effectivePay.date || existing.exDate, today) ? 'due' : 'pending');
+  const next = sanitizeDividendLedgerEntry({
+    ...existing,
+    payDate: isUserOwned ? existing.payDate : nextPayDate,
+    eventSource: isUserOwned ? existing.eventSource : (event.source || existing.eventSource || ''),
+    receiptStatus: isUserOwned ? existing.receiptStatus : nextReceiptStatus,
+    updatedAt: existing.updatedAt
+  });
+  if (!next) return false;
+  const changed = next.payDate !== existing.payDate
+    || next.eventSource !== existing.eventSource
+    || next.receiptStatus !== existing.receiptStatus;
+  if (!changed) return false;
+  next.updatedAt = new Date().toISOString();
+  state.dividendLedger[index] = next;
+  return true;
 }
 
 // 对账：清理已不匹配当前行情派息事件的「自动」条目。
@@ -178,39 +211,45 @@ function generateDividendLedgerEntries(today = formatLocalDate()) {
   });
   const removed = reconcileDividendLedger();
   const additions = [];
+  let updated = 0;
   relevantSymbols.forEach((symbol) => {
     const quote = state.quotes[symbol];
     const dividends = Array.isArray(quote && quote.dividends) ? quote.dividends : [];
     dividends.forEach((dividend) => {
+      const event = normalizeQuoteDividendEvent(dividend, symbol);
+      const sourceId = event && buildDividendSourceId(event);
+      if (sourceId && state.dividendLedger.some((entry) => entry && entry.sourceId === sourceId)) {
+        if (updateExistingLedgerEntry(symbol, dividend, today)) updated += 1;
+        return;
+      }
       const entry = buildLedgerEntry(symbol, dividend, today);
       if (!entry) return;
       state.dividendLedger.push(entry);
       additions.push(entry);
     });
   });
-  if (!additions.length && !removed) return 0;
+  if (!additions.length && !removed && !updated) return 0;
   state.dividendLedger = state.dividendLedger
     .map(sanitizeDividendLedgerEntry)
     .filter(Boolean)
     .sort((a, b) => `${a.exDate}|${a.symbol}`.localeCompare(`${b.exDate}|${b.symbol}`));
-  return additions.length + removed;
+  return additions.length + removed + updated;
 }
 
-/* 年度归档：跨年后把已结束年份的股息 / 年末净值 / 净注入 / 资金收益冻结进 yearlyManual。
-   之后即使行情派息被修订、快照或流水丢失，年度明细与历年趋势也不受影响。
-   只在该年还没有回填记录时写入，用户随时可以通过历史回填修改或删除。 */
+/* 年度归档与用户覆盖分开保存：归档只冻结自动口径，用户清空覆盖后仍能回到自动结果。 */
 function archiveCompletedYears(today) {
   const currentYear = Math.floor(safeNumber(String(today).slice(0, 4), 0));
   if (!currentYear) return false;
-  const archivedYears = new Set(state.yearlyManual.map((entry) => entry.year));
+  const archivedYears = new Set(state.yearlyArchives.map((entry) => entry.year));
   const additions = [];
-  computeIncomeSummary(today, { filterKey: 'all' }).trendRows.forEach((row) => {
+  computeIncomeSummary(today, { filterKey: 'all', ignoreManual: true }).trendRows.forEach((row) => {
     if (row.year >= currentYear || archivedYears.has(row.year)) return;
     const hasData = row.dividendCny > 0 || safeNumber(row.yearEndNetCny, 0) > 0 || row.netInflowCny !== 0;
     if (!hasData) return;
-    additions.push(sanitizeYearlyManualEntry({
+    additions.push(sanitizeYearlyArchiveEntry({
       year: row.year,
       dividendCny: row.dividendCny,
+      dividendYieldRate: row.dividendYieldRate,
       yearEndNetCny: safeNumber(row.yearEndNetCny, 0),
       netInflowCny: row.netInflowCny,
       capitalReturnCny: row.capitalReturnCny,
@@ -219,8 +258,9 @@ function archiveCompletedYears(today) {
       archivedAt: new Date().toISOString()
     }));
   });
-  if (!additions.length) return false;
-  state.yearlyManual = state.yearlyManual.concat(additions).sort((a, b) => b.year - a.year);
+  const validAdditions = additions.filter(Boolean);
+  if (!validAdditions.length) return false;
+  state.yearlyArchives = state.yearlyArchives.concat(validAdditions).sort((a, b) => b.year - a.year);
   return true;
 }
 

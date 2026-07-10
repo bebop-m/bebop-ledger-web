@@ -11,7 +11,7 @@ import {
   applyLegendExpandState, applyHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
-  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset
+  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, toggleDividendPastMonths
 } from './render.js';
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
@@ -21,6 +21,7 @@ import {
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
 import { loadFundamentals, selectFundamentalsSymbol } from './fundamentals.js';
+import { loadReportCalendar } from './report-calendar.js';
 
 /* ── Sort Toggle Button（静态节点，只补事件与无障碍标签，图标由 renderSortChips 填充）── */
 mutable.sortToggleButton = document.getElementById('sortToggleButton');
@@ -69,6 +70,10 @@ if (refs.fundamentalsSymbolRow) refs.fundamentalsSymbolRow.addEventListener('cli
   const chip = event.target.closest('[data-fund-symbol]');
   if (chip) selectFundamentalsSymbol(chip.dataset.fundSymbol);
 });
+if (refs.reportCalendarPanel) refs.reportCalendarPanel.addEventListener('click', (event) => {
+  const row = event.target.closest('[data-report-symbol]');
+  if (row) selectFundamentalsSymbol(row.dataset.reportSymbol);
+});
 
 refs.dividendFilterGroup.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-dividend-filter]');
@@ -80,6 +85,7 @@ refs.dividendFilterGroup.addEventListener('click', (event) => {
 });
 
 refs.dividendMonthGrid.addEventListener('click', (event) => {
+  if (event.target.closest('[data-dividend-past-toggle]')) { toggleDividendPastMonths(); return; }
   const btn = event.target.closest('[data-dividend-month]');
   if (!btn) return;
   const month = Math.floor(safeNumber(btn.dataset.dividendMonth, 0));
@@ -102,6 +108,7 @@ refs.incomeYearList.addEventListener('click', (event) => {
   openModal('yearlyManual', {
     year,
     dividendCny: existing ? existing.dividendCny : '',
+    dividendYieldRatePercent: existing && existing.dividendYieldRate !== null && existing.dividendYieldRate !== undefined ? Math.round(existing.dividendYieldRate * 10000) / 100 : '',
     yearEndNetCny: existing ? existing.yearEndNetCny : '',
     netInflowCny: existing ? existing.netInflowCny : '',
     capitalReturnCny: existing && existing.capitalReturnCny !== null && existing.capitalReturnCny !== undefined ? existing.capitalReturnCny : '',
@@ -291,7 +298,8 @@ async function boot() {
   try { applySnapshot(createDefaultSnapshot()); restoreState(); renderApp(); }
   catch (error) { console.error('boot render failed, resetting to defaults:', error); applySnapshot(createDefaultSnapshot()); saveState(); renderApp(); }
   await cleanupLegacyCaches();
-  void loadFundamentals();
+  void Promise.all([loadFundamentals(), loadReportCalendar()])
+    .then(() => renderApp({ animateLegend: false, animateBucketDetail: false, animateHoldings: false }));
   await refreshMarketData({ silent: true });
 }
 

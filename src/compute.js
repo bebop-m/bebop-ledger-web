@@ -53,7 +53,7 @@ export function computeCashBalance() {
   state.dividendLedger.forEach((entry) => {
     const received = entry && (entry.confirmed === true || entry.confidence === 'manual');
     if (!received) return;
-    const payDate = getLedgerEffectivePayDate(entry).date || (entry && entry.exDate);
+    const payDate = getLedgerCalendarDate(entry).date || (entry && entry.exDate);
     if (isOnOrAfterOpening(payDate)) cash += getLedgerNetCny(entry);
   });
   return roundMoney(cash);
@@ -211,10 +211,16 @@ function getLedgerEffectivePayDate(entry) {
   return resolveEffectivePayDate(entry && entry.exDate, entry && entry.payDate, entry && entry.symbol);
 }
 
+function getLedgerCalendarDate(entry) {
+  const receivedDate = formatDateLabel(entry && entry.receivedDate);
+  if (receivedDate) return { date: receivedDate, source: 'received', estimated: false };
+  return getLedgerEffectivePayDate(entry);
+}
+
 function buildLedgerDividendEntry(entry, year, todayLabel) {
   const exParts = getDateParts(entry && entry.exDate);
   if (!exParts) return null;
-  const effectivePay = getLedgerEffectivePayDate(entry);
+  const effectivePay = getLedgerCalendarDate(entry);
   const payParts = getDateParts(effectivePay.date) || exParts;
   if (payParts.year !== year) return null;
   const quote = inferQuote(entry.symbol);
@@ -230,6 +236,8 @@ function buildLedgerDividendEntry(entry, year, todayLabel) {
     name: quote.name || entry.symbol,
     exDate: exParts.label,
     payDate: payParts.label,
+    officialPayDate: formatDateLabel(entry.payDate),
+    receivedDate: formatDateLabel(entry.receivedDate),
     payDateEstimated: effectivePay.estimated,
     month: payParts.month,
     amountPerShare: safeNumber(entry.amountPerShare, 0),
@@ -238,7 +246,7 @@ function buildLedgerDividendEntry(entry, year, todayLabel) {
     sharesSource: entry.sharesSource || 'manual',
     netCny,
     bucket: entry.bucket === 'income' ? 'income' : 'core',
-    status: isReceived ? 'received' : 'pending',
+    status: isReceived ? 'received' : (isDue ? 'due' : 'pending'),
     receiptStatus: isReceived ? 'received' : (isDue ? 'due' : 'pending'),
     confidence: entry.confidence || (isReceived ? 'confirmed' : 'estimated'),
     confirmed: entry.confirmed === true,
@@ -406,6 +414,7 @@ function buildDividendMonthItems(entries, currentMonth) {
     label: `${index + 1}\u6708`,
     receivedCny: 0,
     pendingCny: 0,
+    dueCny: 0,
     announcedCny: 0,
     forecastCny: 0,
     totalCny: 0
@@ -415,6 +424,7 @@ function buildDividendMonthItems(entries, currentMonth) {
     if (!item) return;
     if (entry.status === 'received') item.receivedCny += entry.netCny;
     else if (entry.status === 'pending') item.pendingCny += entry.netCny;
+    else if (entry.status === 'due') item.dueCny += entry.netCny;
     else if (entry.status === 'announced') item.announcedCny += entry.netCny;
     else item.forecastCny += entry.netCny;
     item.totalCny += entry.netCny;
@@ -423,6 +433,7 @@ function buildDividendMonthItems(entries, currentMonth) {
     ...item,
     receivedCny: roundMoney(item.receivedCny),
     pendingCny: roundMoney(item.pendingCny),
+    dueCny: roundMoney(item.dueCny),
     announcedCny: roundMoney(item.announcedCny),
     forecastCny: roundMoney(item.forecastCny),
     upcomingCny: roundMoney(item.pendingCny + item.announcedCny + item.forecastCny),
@@ -436,7 +447,7 @@ function dividendEntryPriority(entry) {
   if (entry.confirmed === true) return 5;
   if (entry.status === 'received') return 4;
   if (entry.status === 'announced' || entry.isAnnounced) return 3;
-  if (entry.status === 'pending') return 2;
+  if (entry.status === 'pending' || entry.status === 'due') return 2;
   return 1;
 }
 
@@ -474,6 +485,9 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
   const pendingCny = entries
     .filter((entry) => entry.status === 'pending')
     .reduce((sum, entry) => sum + entry.netCny, 0);
+  const dueCny = entries
+    .filter((entry) => entry.status === 'due')
+    .reduce((sum, entry) => sum + entry.netCny, 0);
   const announcedCny = entries
     .filter((entry) => entry.status === 'announced')
     .reduce((sum, entry) => sum + entry.netCny, 0);
@@ -482,11 +496,11 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
     .reduce((sum, entry) => sum + entry.netCny, 0);
   // 即将到账 = 在途待到账(pending) + 已公告未除息(announced) + 节奏预估(forecast)。
   const upcomingCny = pendingCny + announcedCny + forecastCny;
-  const projectedCny = receivedCny + upcomingCny;
+  const projectedCny = receivedCny + dueCny + upcomingCny;
   // 同比：今年「预计全年」对比上一年实际到账总额（同口径筛选）。
   const lastYear = year - 1;
   const lastYearTotalCny = roundMoney(state.dividendLedger.reduce((sum, entry) => {
-    const payYear = getIncomeYear(getLedgerEffectivePayDate(entry).date || (entry && entry.exDate));
+    const payYear = getIncomeYear(getLedgerCalendarDate(entry).date || (entry && entry.exDate));
     if (payYear !== lastYear) return sum;
     if (!matchesDividendFilter({ bucket: entry.bucket === 'income' ? 'income' : 'core' }, filterKey)) return sum;
     return sum + getLedgerNetCny(entry);
@@ -501,6 +515,7 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
     metrics: {
       receivedCny: roundMoney(receivedCny),
       pendingCny: roundMoney(pendingCny),
+      dueCny: roundMoney(dueCny),
       announcedCny: roundMoney(announcedCny),
       forecastCny: roundMoney(forecastCny),
       upcomingCny: roundMoney(upcomingCny),
@@ -528,10 +543,14 @@ function getManualByYear() {
   return new Map(state.yearlyManual.map((entry) => [entry.year, entry]));
 }
 
+function getArchiveByYear() {
+  return new Map(state.yearlyArchives.map((entry) => [entry.year, entry]));
+}
+
 function getDividendEntriesByYear() {
   const map = new Map();
   state.dividendLedger.forEach((entry) => {
-    const year = getIncomeYear(getLedgerEffectivePayDate(entry).date || (entry && entry.exDate));
+    const year = getIncomeYear(getLedgerCalendarDate(entry).date || (entry && entry.exDate));
     if (!year) return;
     if (!map.has(year)) map.set(year, []);
     map.get(year).push({
@@ -714,7 +733,11 @@ function getNetInflowByYear() {
   return map;
 }
 
-function getYearEndNetCny(year, snapshotsByYear, manualByYear, currentYear) {
+function getYearEndNetCny(year, snapshotsByYear, manualByYear, archiveByYear, currentYear) {
+  const manual = manualByYear.get(year);
+  if (manual && manual.yearEndNetCny !== null && manual.yearEndNetCny !== undefined) {
+    return { date: '', netCny: roundMoney(manual.yearEndNetCny), source: 'manual' };
+  }
   // 现金模式下，当年优先用实时净值（含现金），避免被定时脚本写入的「仅股票」当年快照盖掉、把现金漏掉。
   if (year === currentYear && isCashModelActive()) {
     const summary = computeHoldings();
@@ -726,9 +749,10 @@ function getYearEndNetCny(year, snapshotsByYear, manualByYear, currentYear) {
   const snapshot = snapshotsByYear.get(year);
   if (snapshot) return snapshot;
 
-  const manual = manualByYear.get(year);
-  const manualValue = safeNumber(manual && manual.yearEndNetCny, 0);
-  if (manualValue > 0) return { date: '', netCny: roundMoney(manualValue), source: 'manual' };
+  const archived = archiveByYear.get(year);
+  if (archived && archived.yearEndNetCny !== null && archived.yearEndNetCny !== undefined) {
+    return { date: '', netCny: roundMoney(archived.yearEndNetCny), source: 'archive' };
+  }
 
   if (year === currentYear) {
     const summary = computeHoldings();
@@ -769,7 +793,8 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
   const currentYear = todayParts ? todayParts.year : new Date().getFullYear();
   // filterKey 可被覆盖：年度归档等后台口径必须用 'all'，不能跟随日历页当前筛选。
   const filterKey = DIVIDEND_FILTER_KEYS.has(options.filterKey) ? options.filterKey : getDividendFilterKey();
-  const manualByYear = getManualByYear();
+  const manualByYear = options.ignoreManual === true ? new Map() : getManualByYear();
+  const archiveByYear = getArchiveByYear();
   const dividendEntriesByYear = getDividendEntriesByYear();
   const snapshotsByYear = getSnapshotsByYear();
   const netInflowByYear = getNetInflowByYear();
@@ -779,59 +804,104 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
   snapshotsByYear.forEach((_snapshot, year) => years.add(year));
   netInflowByYear.forEach((_flow, year) => years.add(year));
   manualByYear.forEach((_manual, year) => years.add(year));
+  archiveByYear.forEach((_archive, year) => years.add(year));
 
   const rowMap = new Map();
   Array.from(years).sort((a, b) => a - b).forEach((year) => {
     const manual = manualByYear.get(year) || null;
+    const archive = archiveByYear.get(year) || null;
     const entries = dividendEntriesByYear.get(year) || [];
     const filteredEntries = entries.filter((entry) => matchesDividendFilter(entry, filterKey));
-    const manualDividend = safeNumber(manual && manual.dividendCny, 0);
-    const shouldUseManualDividend = Boolean(filterKey === 'all' && entries.length === 0 && manual);
-    const dividendCny = roundMoney(shouldUseManualDividend
-      ? manualDividend
-      : filteredEntries.reduce((sum, entry) => sum + safeNumber(entry.netCny, 0), 0));
+    const ledgerDividendCny = roundMoney(filteredEntries.reduce((sum, entry) => sum + safeNumber(entry.netCny, 0), 0));
     const coreDividendCny = roundMoney(entries
       .filter((entry) => entry.bucket === 'core')
       .reduce((sum, entry) => sum + safeNumber(entry.netCny, 0), 0));
     const flow = netInflowByYear.get(year);
-    const netInflowCny = roundMoney(flow && flow.count > 0
-      ? flow.value
-      : safeNumber(manual && manual.netInflowCny, 0));
-    const yearEnd = getYearEndNetCny(year, snapshotsByYear, manualByYear, currentYear);
-    const yearStart = getYearEndNetCny(year - 1, snapshotsByYear, manualByYear, currentYear);
-    const hasCapitalReturn = yearEnd.netCny !== null && yearStart.netCny !== null;
-    // 历史年份允许直接回填资金收益/收益率（回填值优先）；当年始终按净值链实时推算。
+    const manualNetInflow = manual && manual.netInflowCny !== null && manual.netInflowCny !== undefined
+      ? safeNumber(manual.netInflowCny, 0) : null;
+    const netInflowCny = roundMoney(manualNetInflow !== null
+      ? manualNetInflow
+      : (flow && flow.count > 0
+        ? flow.value
+        : (archive && archive.netInflowCny !== null ? archive.netInflowCny : 0)));
+    const netInflowSource = manualNetInflow !== null ? 'manual' : (flow && flow.count > 0 ? 'records' : (archive ? 'archive' : 'default'));
+
+    let yearEnd = getYearEndNetCny(year, snapshotsByYear, manualByYear, archiveByYear, currentYear);
+    const previousRow = rowMap.get(year - 1);
+    const yearStart = previousRow && previousRow.yearEndNetCny !== null
+      ? { date: previousRow.yearEndDate, netCny: previousRow.yearEndNetCny, source: 'previousYear' }
+      : getYearEndNetCny(year - 1, snapshotsByYear, manualByYear, archiveByYear, currentYear);
+    const startNetCny = yearStart.netCny !== null && yearStart.netCny > 0 ? yearStart.netCny : null;
+
+    const manualDividend = manual && manual.dividendCny !== null && manual.dividendCny !== undefined
+      ? roundMoney(manual.dividendCny) : null;
+    const manualDividendRate = manual && manual.dividendYieldRate !== null && manual.dividendYieldRate !== undefined
+      ? safeNumber(manual.dividendYieldRate, 0) : null;
+    let dividendCny;
+    let dividendSource;
+    if (manualDividend !== null) {
+      dividendCny = manualDividend; dividendSource = 'manual';
+    } else if (manualDividendRate !== null && startNetCny !== null) {
+      dividendCny = roundMoney(manualDividendRate * startNetCny); dividendSource = 'derivedFromManualRate';
+    } else if (entries.length > 0) {
+      dividendCny = ledgerDividendCny; dividendSource = 'ledger';
+    } else if (filterKey === 'all' && archive && archive.dividendCny !== null) {
+      dividendCny = roundMoney(archive.dividendCny); dividendSource = 'archive';
+    } else {
+      dividendCny = ledgerDividendCny; dividendSource = 'missing';
+    }
+    const dividendYieldRate = manualDividendRate !== null
+      ? manualDividendRate
+      : (startNetCny !== null
+        ? dividendCny / startNetCny
+        : (archive && archive.dividendYieldRate !== null ? archive.dividendYieldRate : null));
+
     const manualCapitalCny = manual && manual.capitalReturnCny !== null && manual.capitalReturnCny !== undefined
       ? roundMoney(manual.capitalReturnCny) : null;
     const manualCapitalRate = manual && manual.capitalReturnRate !== null && manual.capitalReturnRate !== undefined
       ? safeNumber(manual.capitalReturnRate, 0) : null;
-    const derivedCapitalCny = hasCapitalReturn
-      ? roundMoney(yearEnd.netCny - yearStart.netCny - netInflowCny)
-      : null;
-    const preferManual = year < currentYear;
-    const capitalReturnCny = preferManual && manualCapitalCny !== null
-      ? manualCapitalCny
-      : (derivedCapitalCny !== null ? derivedCapitalCny : manualCapitalCny);
-    // 收益率 = 当年资金收益 / 年初净值（扣除净注入后的真实回报率）。
-    const derivedCapitalRate = capitalReturnCny !== null && yearStart.netCny > 0
-      ? capitalReturnCny / yearStart.netCny
-      : null;
-    const capitalReturnRate = preferManual && manualCapitalRate !== null
-      ? manualCapitalRate
-      : (derivedCapitalRate !== null ? derivedCapitalRate : manualCapitalRate);
-    // 股息收益率分母：优先年初净值；缺失时用回填的资金收益额/率反推年初净值。
-    let dividendRateBaseCny = yearStart.netCny !== null && yearStart.netCny > 0 ? yearStart.netCny : null;
-    if (dividendRateBaseCny === null && manualCapitalCny !== null && manualCapitalRate) {
-      dividendRateBaseCny = Math.abs(manualCapitalCny / manualCapitalRate);
+    let capitalReturnCny = null;
+    let capitalReturnSource = 'missing';
+    if (manualCapitalCny !== null) {
+      capitalReturnCny = manualCapitalCny; capitalReturnSource = 'manual';
+    } else if (manualCapitalRate !== null && startNetCny !== null) {
+      capitalReturnCny = roundMoney(manualCapitalRate * startNetCny); capitalReturnSource = 'derivedFromManualRate';
+    } else if (yearEnd.netCny !== null && startNetCny !== null) {
+      capitalReturnCny = roundMoney(yearEnd.netCny - startNetCny - netInflowCny); capitalReturnSource = 'netValueChain';
+    } else if (archive && archive.capitalReturnCny !== null) {
+      capitalReturnCny = roundMoney(archive.capitalReturnCny); capitalReturnSource = 'archive';
     }
-    const dividendYieldRate = dividendRateBaseCny ? dividendCny / dividendRateBaseCny : null;
+    const capitalReturnRate = manualCapitalRate !== null
+      ? manualCapitalRate
+      : (capitalReturnCny !== null && startNetCny !== null
+        ? capitalReturnCny / startNetCny
+        : (archive && archive.capitalReturnRate !== null ? archive.capitalReturnRate : null));
+    const manualYearEnd = manual && manual.yearEndNetCny !== null && manual.yearEndNetCny !== undefined;
+    const manualCapitalDriver = manualCapitalCny !== null || manualCapitalRate !== null;
+    if (!manualYearEnd && startNetCny !== null && capitalReturnCny !== null
+      && (yearEnd.netCny === null || manualCapitalDriver)) {
+      yearEnd = {
+        date: '',
+        netCny: roundMoney(startNetCny + netInflowCny + capitalReturnCny),
+        source: 'derived'
+      };
+    }
+    const manualConflicts = [];
+    if (manualDividend !== null && manualDividendRate !== null && startNetCny !== null
+      && Math.abs(manualDividend - manualDividendRate * startNetCny) > Math.max(1, Math.abs(manualDividend) * 0.01)) {
+      manualConflicts.push('股息与股息率不一致');
+    }
+    if (manualCapitalCny !== null && manualCapitalRate !== null && startNetCny !== null
+      && Math.abs(manualCapitalCny - manualCapitalRate * startNetCny) > Math.max(1, Math.abs(manualCapitalCny) * 0.01)) {
+      manualConflicts.push('资金收益与收益率不一致');
+    }
     const totalReferenceCny = capitalReturnCny === null ? null : roundMoney(dividendCny + capitalReturnCny);
 
     rowMap.set(year, {
       year,
       filterKey,
       dividendCny,
-      dividendSource: shouldUseManualDividend ? 'manual' : 'ledger',
+      dividendSource,
       hasManualBackfill: Boolean(manual),
       coreDividendCny,
       capitalReturnCny,
@@ -843,6 +913,15 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
       yearEndSource: yearEnd.source,
       yearEndDate: yearEnd.date,
       yearStartNetCny: yearStart.netCny,
+      fieldSources: {
+        dividendCny: dividendSource,
+        dividendYieldRate: manualDividendRate !== null ? 'manual' : (dividendYieldRate !== null ? 'derived' : 'missing'),
+        capitalReturnCny: capitalReturnSource,
+        capitalReturnRate: manualCapitalRate !== null ? 'manual' : (capitalReturnRate !== null ? 'derived' : 'missing'),
+        netInflowCny: netInflowSource,
+        yearEndNetCny: yearEnd.source
+      },
+      manualConflicts,
       capitalReturnAvailable: capitalReturnCny !== null,
       dividendYoy: null,
       capitalReturnYoy: null,
