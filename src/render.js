@@ -4,6 +4,7 @@ import {
   computeDividendCalendar, computeIncomeSummary,
   computeCashFlowRecords, computeTradeSummary, isCashModelActive
 } from './compute.js';
+import { renderFundamentalsPage, getFundamentalsCompanyCount } from './fundamentals.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
   formatTimestamp, normalizeDividendStatus, getDividendStatusLabel,
@@ -123,6 +124,7 @@ function renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems
     holdings: `${summary.holdings.length} \u9879${coreItem ? ` \u00b7 ${LABELS.core} ${((coreItem.marketValueCny / totalMv) * 100).toFixed(1)}%` : ''}`,
     dividends: monthItem ? `${monthItem.label}\u5728\u9014 ${formatDisplayMoney(monthItem.upcomingCny, 'CNY')}` : '',
     income: cur && cur.capitalReturnAvailable ? `\u5f53\u5e74 ${formatIncomeSignedMoney(cur.capitalReturnCny)}` : '\u5386\u5e74\u8d8b\u52bf \u00b7 \u5e74\u5ea6\u8868',
+    fundamentals: getFundamentalsCompanyCount() > 0 ? `${getFundamentalsCompanyCount()} \u5bb6\u516c\u53f8` : '\u80a1\u606f \u00b7 \u5206\u7ea2\u7387 \u00b7 EPS',
     records: `${cash.count} \u51fa\u5165\u91d1 \u00b7 ${trades.count} \u4ea4\u6613`
   };
   refs.homeNavList.querySelectorAll('[data-nav-summary]').forEach((el) => {
@@ -312,7 +314,7 @@ export function renderPrivacyButton() {
 
 /* ── Page Chrome ── */
 function getActivePage() {
-  return ['home', 'holdings', 'dividends', 'income', 'records'].includes(state.activePage) ? state.activePage : 'home';
+  return ['home', 'holdings', 'dividends', 'income', 'records', 'fundamentals'].includes(state.activePage) ? state.activePage : 'home';
 }
 
 export function renderPageChrome() {
@@ -582,8 +584,17 @@ function getIncomeYearCell(label, value, extraClass = '') {
   return `<div class="income-year-cell${extraClass ? ` ${extraClass}` : ''}" data-label="${escapeHtml(label)}">${escapeHtml(value)}</div>`;
 }
 
+// 年份格：该年有持仓快照时可点，弹出当年持仓明细。
+function getIncomeYearTitleCell(row) {
+  const hasSnapshot = state.yearlyHoldings.some((entry) => entry && entry.year === row.year);
+  if (!hasSnapshot) return getIncomeYearCell('年份', String(row.year), 'is-year');
+  return `<div class="income-year-cell is-year" data-label="年份">
+    <button class="income-year-link" type="button" data-year-holdings="${row.year}" title="查看 ${row.year} 年持仓" aria-label="查看 ${row.year} 年持仓">${row.year}</button>
+  </div>`;
+}
+
 function getIncomeYearActionCell(row) {
-  const label = row.hasManualBackfill ? '修改历史回填' : '填写历史回填';
+  const label = row.hasManualBackfill ? '修正年度数据' : '填写年度数据';
   return `<div class="income-year-action-cell" data-label="操作">
     <button class="income-year-action-button${row.hasManualBackfill ? ' is-filled' : ''}" type="button" data-income-manual-year="${row.year}" aria-label="${label} ${row.year}" title="${label}">
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -601,7 +612,7 @@ function renderIncomeYearList(model) {
   }
   const rows = model.rows.map((row) => {
     return `<div class="income-year-row" role="row">
-      ${getIncomeYearCell('年份', String(row.year), 'is-year')}
+      ${getIncomeYearTitleCell(row)}
       ${getIncomeYearCell('股息', formatIncomeMoney(row.dividendCny), 'income-amount')}
       ${getIncomeYearCell('股息率', formatIncomeRate(row.dividendYieldRate), 'is-compare')}
       ${getIncomeYearCell('资金收益', formatIncomeSignedMoney(row.capitalReturnCny), `income-amount ${getReturnTone(row.capitalReturnCny)}`)}
@@ -864,6 +875,7 @@ function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
   renderIncomeSummaryPage();
   renderIncomeRecords();
   renderDividendCalendarPage();
+  renderFundamentalsPage();
   syncRenderedHoldingsView(summary.holdings, { animateReflow: opts.animateHoldingReflow });
 }
 
@@ -884,6 +896,7 @@ export function renderApp(opts = {}) {
   renderIncomeSummaryPage();
   renderIncomeRecords();
   renderDividendCalendarPage();
+  renderFundamentalsPage();
   if (renderHoldingsList) renderHoldingsView(summary.holdings, { animate: animateHoldings });
   else syncRenderedHoldingsView(summary.holdings, { animateReflow: false });
 }

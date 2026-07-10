@@ -5,7 +5,7 @@ import {
   resolveQuoteCurrency, resolveFxRate
 } from './utils.js';
 import { LABELS } from './constants.js';
-import { renderSavedStateQuietly, buildDividendMonthDetail } from './render.js';
+import { renderSavedStateQuietly, buildDividendMonthDetail, formatDisplayMoney } from './render.js';
 import { inferQuote, isCashModelActive } from './compute.js';
 
 let _keydownHandler = null;
@@ -145,6 +145,7 @@ export function updateTradeQuoteInfo() {
 function renderModal() {
   if (!state.modal) { refs.modalRoot.innerHTML = ''; return; }
   if (state.modal === 'monthDetail') { renderMonthDetailModal(); return; }
+  if (state.modal === 'yearHoldings') { renderYearHoldingsModal(); return; }
   let title = '', note = '', fields = '';
   if (state.modal === 'quickAdd') {
     title = '记一笔';
@@ -217,8 +218,8 @@ function renderModal() {
       ])}
       <label class="modal-field"><span>备注</span><input id="modalTradeNoteInput" class="modal-input" type="text" value="${escapeHtml(entry && entry.note || '')}" placeholder="可选"></label>`;
   } else if (state.modal === 'yearlyManual') {
-    title = '历史回填';
-    note = '补齐历史年度的股息与收益；资金收益 / 收益率留空时按前后年净值自动推算';
+    title = '年度数据';
+    note = '股息与收益默认按已有数据自动得出；此处填写的值优先生效，留空即恢复自动推算';
     fields = `<input id="modalManualYearInput" class="modal-input" type="number" inputmode="numeric" value="${escapeHtml(getManualModalValue('year') || String(getDefaultManualYear()))}" placeholder="年份">
       <input id="modalManualDividendInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('dividendCny'))}" placeholder="当年股息收入（CNY）">
       <input id="modalManualYearEndInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(getManualModalValue('yearEndNetCny'))}" placeholder="年末净值（CNY）">
@@ -261,6 +262,80 @@ function renderMonthDetailModal() {
       <div class="month-detail-list">${detail.body}</div>
       <div class="modal-actions">
         <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">${LABELS.cancel === '取消' ? '关闭' : LABELS.cancel}</button>
+      </div>
+    </section>`;
+}
+
+function formatSnapshotShares(value) {
+  return safeNumber(value, 0).toLocaleString('en-US', { maximumFractionDigits: 6 });
+}
+
+// 与上一份快照（最近的更早年份）逐只对比：新增 / 清仓 / 加减仓。
+function buildYearHoldingsDiff(entry, previous) {
+  const previousBySymbol = new Map((previous ? previous.holdings : []).map((item) => [item.symbol, item]));
+  const rows = entry.holdings.map((item) => {
+    const before = previousBySymbol.get(item.symbol);
+    previousBySymbol.delete(item.symbol);
+    if (!previous) return { ...item, change: '' };
+    if (!before) return { ...item, change: '新增' };
+    const delta = safeNumber(item.shares, 0) - safeNumber(before.shares, 0);
+    if (Math.abs(delta) < 0.000001) return { ...item, change: '' };
+    return { ...item, change: `${delta > 0 ? '+' : '−'}${formatSnapshotShares(Math.abs(delta))}` };
+  });
+  const removed = Array.from(previousBySymbol.values());
+  return { rows, removed };
+}
+
+// 年度持仓快照弹窗：该年逐只持仓 + 权重，附与上一份快照的增减仓对比。
+function renderYearHoldingsModal() {
+  const year = Math.floor(safeNumber(state.modalPayload && state.modalPayload.year, 0));
+  const entry = state.yearlyHoldings.find((item) => item && item.year === year) || null;
+  if (!entry) {
+    refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+      <section class="modal-sheet modal-sheet--detail" role="dialog" aria-modal="true">
+        <h3 class="modal-title">${year} 年持仓</h3>
+        <div class="month-detail-empty">该年暂无持仓快照</div>
+        <div class="modal-actions"><button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button></div>
+      </section>`;
+    return;
+  }
+  const previous = state.yearlyHoldings
+    .filter((item) => item && item.year < year)
+    .sort((a, b) => b.year - a.year)[0] || null;
+  const diff = buildYearHoldingsDiff(entry, previous);
+  const total = entry.holdings.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0) || 1;
+  const isCurrentYear = year === new Date().getFullYear();
+  const noteParts = [`截至 ${entry.date || `${year}-12-31`}`];
+  if (isCurrentYear) noteParts.push('当年快照随行情结算持续更新，跨年后自动冻结');
+  if (entry.source === 'backfill') noteParts.push('由历史日快照补出，市值按当前价估算');
+  if (previous) noteParts.push(`增减仓对比 ${previous.year} 年`);
+  const rowsHtml = diff.rows
+    .slice()
+    .sort((a, b) => safeNumber(b.marketValueCny, 0) - safeNumber(a.marketValueCny, 0))
+    .map((item) => `<div class="year-holdings-row">
+      <span class="yh-name"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.symbol)} · ${item.bucket === 'income' ? LABELS.income : LABELS.core}</small></span>
+      <span class="yh-shares"><strong>${escapeHtml(formatSnapshotShares(item.shares))}</strong>${item.change ? `<small class="yh-change${item.change === '新增' ? ' is-new' : ''}">${escapeHtml(item.change)}</small>` : '<small>&nbsp;</small>'}</span>
+      <span class="yh-value"><strong>${escapeHtml(formatDisplayMoney(item.marketValueCny, 'CNY'))}</strong><small>${((safeNumber(item.marketValueCny, 0) / total) * 100).toFixed(1)}%</small></span>
+    </div>`).join('');
+  const removedHtml = diff.removed.length
+    ? `<div class="year-holdings-removed">
+        <span class="yh-removed-label">已清仓（${previous.year} 年持有）</span>
+        ${diff.removed.map((item) => `<span class="yh-removed-item">${escapeHtml(item.name)} · ${escapeHtml(formatSnapshotShares(item.shares))}</span>`).join('')}
+      </div>`
+    : '';
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet modal-sheet--detail" role="dialog" aria-modal="true">
+      <header class="month-detail-head">
+        <div class="month-detail-title">
+          <h3>${year} 年持仓 · ${entry.holdings.length} 项</h3>
+          <strong>${escapeHtml(formatDisplayMoney(entry.totalMarketValueCny, 'CNY'))}</strong>
+        </div>
+        <p class="month-detail-summary">${escapeHtml(noteParts.join(' · '))}</p>
+      </header>
+      <div class="month-detail-list year-holdings-list">${rowsHtml}</div>
+      ${removedHtml}
+      <div class="modal-actions">
+        <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button>
       </div>
     </section>`;
 }
@@ -360,7 +435,7 @@ function saveTradeEdit() {
 }
 
 export function handleModalSave() {
-  if (state.modal === 'monthDetail') { closeModal(); return; }
+  if (state.modal === 'monthDetail' || state.modal === 'yearHoldings') { closeModal(); return; }
   if (state.modal === 'quickAdd') return;
   if (state.modal === 'quantity') {
     const v = Math.max(0, safeNumber(document.getElementById('modalQuantityInput').value, 0));

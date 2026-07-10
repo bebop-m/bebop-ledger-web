@@ -1,0 +1,2172 @@
+{
+  "ok": true,
+  "provider": "yfinance",
+  "updatedAt": "2026-07-10T03:30:29.862123Z",
+  "companies": {
+    "00700.HK": {
+      "symbol": "00700.HK",
+      "name": "TENCENT",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 0.36,
+          "lastExDate": "2015-05-15"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.47,
+          "lastExDate": "2016-05-20"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 0.61,
+          "lastExDate": "2017-05-19"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.88,
+          "lastExDate": "2018-05-18"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 1.0,
+          "lastExDate": "2019-05-17"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 1.2,
+          "lastExDate": "2020-05-15"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 1.6,
+          "lastExDate": "2021-05-24"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 1.6,
+          "lastExDate": "2022-05-20",
+          "eps": 19.757,
+          "netIncome": 188243000000.0,
+          "dividendsPaid": 12952000000.0,
+          "payoutRatio": 0.0688,
+          "debtRatio": 0.5039
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 2.4,
+          "lastExDate": "2023-05-19",
+          "eps": 12.186,
+          "netIncome": 115216000000.0,
+          "dividendsPaid": 20983000000.0,
+          "payoutRatio": 0.1821,
+          "debtRatio": 0.4461
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 3.4,
+          "lastExDate": "2024-05-17",
+          "eps": 20.938,
+          "netIncome": 194073000000.0,
+          "dividendsPaid": 28859000000.0,
+          "payoutRatio": 0.1487,
+          "debtRatio": 0.4083
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 4.5,
+          "lastExDate": "2025-05-16",
+          "eps": 24.749,
+          "netIncome": 224842000000.0,
+          "dividendsPaid": 37535000000.0,
+          "payoutRatio": 0.1669,
+          "debtRatio": 0.3913
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 5.3,
+          "lastExDate": "2026-05-15"
+        }
+      ]
+    },
+    "600519.SH": {
+      "symbol": "600519.SH",
+      "name": "KWEICHOW MOUTAI",
+      "currency": "CNY",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 3.976364,
+          "lastExDate": "2015-07-17"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 6.171,
+          "lastExDate": "2016-07-01"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 6.787,
+          "lastExDate": "2017-07-07"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 10.999,
+          "lastExDate": "2018-06-15"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 14.539,
+          "lastExDate": "2019-06-28"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 17.025,
+          "lastExDate": "2020-06-24"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 19.293,
+          "lastExDate": "2021-06-25"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 43.585,
+          "lastExDate": "2022-12-27",
+          "eps": 49.93,
+          "netIncome": 62717467870.12,
+          "dividendsPaid": 54751381113.01,
+          "payoutRatio": 0.873,
+          "debtRatio": 0.1947
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 45.017,
+          "lastExDate": "2023-12-20",
+          "eps": 59.49,
+          "netIncome": 74734071550.75,
+          "dividendsPaid": 56550256362.6,
+          "payoutRatio": 0.7567,
+          "debtRatio": 0.1798
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 54.758,
+          "lastExDate": "2024-12-20",
+          "eps": 68.64,
+          "netIncome": 86228146421.62,
+          "dividendsPaid": 68786879132.4,
+          "payoutRatio": 0.7977,
+          "debtRatio": 0.1904
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 51.63,
+          "lastExDate": "2025-12-19",
+          "eps": 65.66,
+          "netIncome": 82320067101.68,
+          "dividendsPaid": 64671799277.95,
+          "payoutRatio": 0.7856,
+          "debtRatio": 0.1642
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 28.02423,
+          "lastExDate": "2026-06-26"
+        }
+      ]
+    },
+    "000651.SZ": {
+      "symbol": "000651.SZ",
+      "name": "GREE",
+      "currency": "CNY",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2014,
+          "dividendPerShare": 0.75,
+          "lastExDate": "2014-06-06"
+        },
+        {
+          "year": 2015,
+          "dividendPerShare": 1.5,
+          "lastExDate": "2015-07-03"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 1.5,
+          "lastExDate": "2016-07-07"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 1.8,
+          "lastExDate": "2017-07-05"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 2.1,
+          "lastExDate": "2019-08-06"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 2.2,
+          "lastExDate": "2020-11-12"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 3.0,
+          "lastExDate": "2021-08-23"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 3.0,
+          "lastExDate": "2022-08-05",
+          "eps": 4.43,
+          "netIncome": 24506623782.46,
+          "dividendsPaid": 18420103441.58,
+          "payoutRatio": 0.7516,
+          "debtRatio": 0.7131
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 2.0,
+          "lastExDate": "2023-08-09",
+          "eps": 5.22,
+          "netIncome": 29017387604.18,
+          "dividendsPaid": 13700157213.53,
+          "payoutRatio": 0.4721,
+          "debtRatio": 0.6722
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 2.38,
+          "lastExDate": "2024-08-28",
+          "eps": 5.83,
+          "netIncome": 32184570372.28,
+          "dividendsPaid": 15097674514.47,
+          "payoutRatio": 0.4691,
+          "debtRatio": 0.6155
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 3.0,
+          "lastExDate": "2025-08-29",
+          "eps": 5.2,
+          "netIncome": 29003103411.66,
+          "dividendsPaid": 18125956113.86,
+          "payoutRatio": 0.625,
+          "debtRatio": 0.6173
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 1.0,
+          "lastExDate": "2026-01-23"
+        }
+      ]
+    },
+    "00883.HK": {
+      "symbol": "00883.HK",
+      "name": "CNOOC",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 0.57,
+          "lastExDate": "2015-09-10"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.37,
+          "lastExDate": "2016-09-08"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 0.43,
+          "lastExDate": "2017-09-07"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.6,
+          "lastExDate": "2018-09-06"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.73,
+          "lastExDate": "2019-09-12"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.65,
+          "lastExDate": "2020-09-03"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.55,
+          "lastExDate": "2021-09-02"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 1.88,
+          "lastExDate": "2022-09-06",
+          "eps": 3.03,
+          "netIncome": 141700000000.0,
+          "dividendsPaid": 77378000000.0,
+          "payoutRatio": 0.5461,
+          "debtRatio": 0.3559
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 1.34,
+          "lastExDate": "2023-09-07",
+          "eps": 2.6,
+          "netIncome": 123843000000.0,
+          "dividendsPaid": 58249000000.0,
+          "payoutRatio": 0.4703,
+          "debtRatio": 0.3358
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 1.4,
+          "lastExDate": "2024-09-12",
+          "eps": 2.9,
+          "netIncome": 137936000000.0,
+          "dividendsPaid": 60869000000.0,
+          "payoutRatio": 0.4413,
+          "debtRatio": 0.2905
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 1.39,
+          "lastExDate": "2025-09-11",
+          "eps": 2.57,
+          "netIncome": 122082000000.0,
+          "dividendsPaid": 60432000000.0,
+          "payoutRatio": 0.495,
+          "debtRatio": 0.2671
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.55,
+          "lastExDate": "2026-06-11"
+        }
+      ]
+    },
+    "06049.HK": {
+      "symbol": "06049.HK",
+      "name": "POLY PPT SER",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2020,
+          "dividendPerShare": 0.32812,
+          "lastExDate": "2020-06-26"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.51977,
+          "lastExDate": "2021-06-01",
+          "eps": 2.01
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.3586,
+          "lastExDate": "2022-07-04",
+          "eps": 2.01,
+          "netIncome": 1112933000.0,
+          "dividendsPaid": 168767000.0,
+          "payoutRatio": 0.1516,
+          "debtRatio": 0.4016
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.56795,
+          "lastExDate": "2023-06-08",
+          "eps": 2.51,
+          "netIncome": 1380140000.0,
+          "dividendsPaid": 278327000.0,
+          "payoutRatio": 0.2017,
+          "debtRatio": 0.4033
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 1.09574,
+          "lastExDate": "2024-05-31",
+          "eps": 2.68,
+          "netIncome": 1473850000.0,
+          "dividendsPaid": 552227000.0,
+          "payoutRatio": 0.3747,
+          "debtRatio": 0.4118
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 1.45332,
+          "lastExDate": "2025-06-10",
+          "netIncome": 1549450000.0,
+          "dividendsPaid": 737040000.0,
+          "payoutRatio": 0.4757,
+          "debtRatio": 0.4117
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 1.60706,
+          "lastExDate": "2026-06-02"
+        }
+      ]
+    },
+    "000333.SZ": {
+      "symbol": "000333.SZ",
+      "name": "MIDEA GROUP",
+      "currency": "CNY",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 0.666667,
+          "lastExDate": "2015-04-30"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.8,
+          "lastExDate": "2016-05-06"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 1.0,
+          "lastExDate": "2017-05-10"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 1.2,
+          "lastExDate": "2018-05-04"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 1.303962,
+          "lastExDate": "2019-05-30"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 1.6,
+          "lastExDate": "2020-06-02"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 1.600584,
+          "lastExDate": "2021-06-02"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 1.700894,
+          "lastExDate": "2022-06-02",
+          "eps": 4.34,
+          "netIncome": 29553507000.0,
+          "dividendsPaid": 13460821000.0,
+          "payoutRatio": 0.4555,
+          "debtRatio": 0.6405
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 2.5,
+          "lastExDate": "2023-06-01",
+          "eps": 4.93,
+          "netIncome": 33719935000.0,
+          "dividendsPaid": 19310512000.0,
+          "payoutRatio": 0.5727,
+          "debtRatio": 0.6414
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 3.0,
+          "lastExDate": "2024-05-15",
+          "eps": 5.44,
+          "netIncome": 38537237000.0,
+          "dividendsPaid": 22412079000.0,
+          "payoutRatio": 0.5816,
+          "debtRatio": 0.6233
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 4.0,
+          "lastExDate": "2025-11-18",
+          "eps": 5.8,
+          "netIncome": 43945411000.0,
+          "dividendsPaid": 32530749000.0,
+          "payoutRatio": 0.7403,
+          "debtRatio": 0.6117
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 3.8,
+          "lastExDate": "2026-06-29"
+        }
+      ]
+    },
+    "02669.HK": {
+      "symbol": "02669.HK",
+      "name": "CHINA OVS PPT",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2016,
+          "dividendPerShare": 0.023,
+          "lastExDate": "2016-09-07"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 0.026,
+          "lastExDate": "2017-08-21"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.035,
+          "lastExDate": "2018-09-17"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.042,
+          "lastExDate": "2019-09-16"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.05,
+          "lastExDate": "2020-09-15"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.072,
+          "lastExDate": "2021-09-10"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.1,
+          "lastExDate": "2022-09-26",
+          "eps": 0.3327,
+          "netIncome": 1093633000.0,
+          "dividendsPaid": 282370000.0,
+          "payoutRatio": 0.2582,
+          "debtRatio": 0.6381
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.135,
+          "lastExDate": "2023-09-14",
+          "eps": 0.4084,
+          "netIncome": 1342503000.0,
+          "dividendsPaid": 407854000.0,
+          "payoutRatio": 0.3038,
+          "debtRatio": 0.6063
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.17,
+          "lastExDate": "2024-09-27",
+          "eps": 0.46,
+          "netIncome": 1514296000.0,
+          "dividendsPaid": 510569000.0,
+          "payoutRatio": 0.3372,
+          "debtRatio": 0.5704
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.195,
+          "lastExDate": "2025-09-19",
+          "eps": 0.4162,
+          "netIncome": 1366779000.0,
+          "dividendsPaid": 586420000.0,
+          "payoutRatio": 0.4291,
+          "debtRatio": 0.5424
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.1,
+          "lastExDate": "2026-06-23"
+        }
+      ]
+    },
+    "PDD": {
+      "symbol": "PDD",
+      "name": "PDD Holdings Inc.",
+      "currency": "USD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2022,
+          "eps": 24.96,
+          "netIncome": 31538062000.0,
+          "debtRatio": 0.5033
+        },
+        {
+          "year": 2023,
+          "eps": 44.32,
+          "netIncome": 60026544000.0,
+          "debtRatio": 0.4621
+        },
+        {
+          "year": 2024,
+          "eps": 81.24,
+          "netIncome": 112434512000.0,
+          "debtRatio": 0.3796
+        },
+        {
+          "year": 2025,
+          "eps": 71.08,
+          "netIncome": 97842539000.0,
+          "debtRatio": 0.3439
+        }
+      ]
+    },
+    "01571.HK": {
+      "symbol": "01571.HK",
+      "name": "XIN POINT HOLD",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2017,
+          "dividendPerShare": 0.0589,
+          "lastExDate": "2017-09-14"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.1551,
+          "lastExDate": "2018-09-13"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.148,
+          "lastExDate": "2019-09-27"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.1381,
+          "lastExDate": "2020-09-29"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.184,
+          "lastExDate": "2021-09-30",
+          "eps": 0.21
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.0802,
+          "lastExDate": "2022-09-29",
+          "eps": 0.43,
+          "netIncome": 431296000.0,
+          "dividendsPaid": 69802000.0,
+          "payoutRatio": 0.1618,
+          "debtRatio": 0.2637
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.24,
+          "lastExDate": "2023-09-28",
+          "eps": 0.61,
+          "netIncome": 607394000.0,
+          "dividendsPaid": 213859000.0,
+          "payoutRatio": 0.3521,
+          "debtRatio": 0.2159
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.45,
+          "lastExDate": "2024-09-26",
+          "eps": 0.56,
+          "netIncome": 563454000.0,
+          "dividendsPaid": 416237000.0,
+          "payoutRatio": 0.7387,
+          "debtRatio": 0.1996
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.5,
+          "lastExDate": "2025-09-25",
+          "netIncome": 529340000.0,
+          "dividendsPaid": 462381000.0,
+          "payoutRatio": 0.8735,
+          "debtRatio": 0.1748
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.3,
+          "lastExDate": "2026-06-18"
+        }
+      ]
+    },
+    "00270.HK": {
+      "symbol": "00270.HK",
+      "name": "GUANGDONG INV",
+      "currency": "HKD",
+      "statementCurrency": "HKD",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 0.3,
+          "lastExDate": "2015-09-24"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.36,
+          "lastExDate": "2016-10-07"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 0.445,
+          "lastExDate": "2017-10-10"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.5,
+          "lastExDate": "2018-10-08"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.548,
+          "lastExDate": "2019-10-03"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.5814,
+          "lastExDate": "2020-09-30"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.5947,
+          "lastExDate": "2021-10-08",
+          "eps": 0.7184,
+          "payoutRatio": 0.8278
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.6125,
+          "lastExDate": "2022-10-07",
+          "eps": 0.7286,
+          "netIncome": 4763503000.0,
+          "dividendsPaid": 4004415000.0,
+          "payoutRatio": 0.8406,
+          "debtRatio": 0.5618
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.6133,
+          "lastExDate": "2023-10-06",
+          "eps": 0.4775,
+          "netIncome": 3122069000.0,
+          "dividendsPaid": 4009646000.0,
+          "payoutRatio": 1.2843,
+          "debtRatio": 0.5854
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.363,
+          "lastExDate": "2024-10-09",
+          "eps": 0.4806,
+          "netIncome": 3142138000.0,
+          "dividendsPaid": 2373229000.0,
+          "payoutRatio": 0.7553,
+          "debtRatio": 0.582
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.3393,
+          "lastExDate": "2025-10-08",
+          "netIncome": 4656261000.0,
+          "dividendsPaid": 2218283000.0,
+          "payoutRatio": 0.4764,
+          "debtRatio": 0.4286
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.1963,
+          "lastExDate": "2026-07-02"
+        }
+      ]
+    },
+    "09618.HK": {
+      "symbol": "09618.HK",
+      "name": "JD-SW",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2022,
+          "dividendPerShare": 4.937121,
+          "lastExDate": "2022-05-19",
+          "eps": 3.32,
+          "netIncome": 10380000000.0,
+          "dividendsPaid": 13087000000.0,
+          "payoutRatio": 1.2608,
+          "debtRatio": 0.5395
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 2.429377,
+          "lastExDate": "2023-04-04",
+          "eps": 7.69,
+          "netIncome": 24167000000.0,
+          "dividendsPaid": 6741000000.0,
+          "payoutRatio": 0.2789,
+          "debtRatio": 0.5288
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 2.977946,
+          "lastExDate": "2024-04-03",
+          "eps": 13.83,
+          "netIncome": 41359000000.0,
+          "dividendsPaid": 8263000000.0,
+          "payoutRatio": 0.1998,
+          "debtRatio": 0.5513
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 3.91835,
+          "lastExDate": "2025-04-07",
+          "eps": 6.89,
+          "netIncome": 19631000000.0,
+          "dividendsPaid": 10379000000.0,
+          "payoutRatio": 0.5287,
+          "debtRatio": 0.5774
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 3.91835,
+          "lastExDate": "2026-04-08"
+        }
+      ]
+    },
+    "00728.HK": {
+      "symbol": "00728.HK",
+      "name": "CHINA TELECOM",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 0.095,
+          "lastExDate": "2015-06-01"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.095,
+          "lastExDate": "2016-05-30"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 0.105,
+          "lastExDate": "2017-05-26"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.115,
+          "lastExDate": "2018-05-31"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.125,
+          "lastExDate": "2019-06-03"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.125,
+          "lastExDate": "2020-06-01"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.125,
+          "lastExDate": "2021-05-11"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.336734,
+          "lastExDate": "2022-08-31",
+          "eps": 0.3,
+          "netIncome": 27593000000.0,
+          "dividendsPaid": 26537000000.0,
+          "payoutRatio": 0.9617,
+          "debtRatio": 0.4597
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.241589,
+          "lastExDate": "2023-08-23",
+          "eps": 0.33,
+          "netIncome": 30446000000.0,
+          "dividendsPaid": 20059000000.0,
+          "payoutRatio": 0.6588,
+          "debtRatio": 0.465
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.281103,
+          "lastExDate": "2024-09-03",
+          "eps": 0.36,
+          "netIncome": 33012000000.0,
+          "dividendsPaid": 23527000000.0,
+          "payoutRatio": 0.7127,
+          "debtRatio": 0.4732
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.299901,
+          "lastExDate": "2025-08-27",
+          "eps": 0.36,
+          "netIncome": 33185000000.0,
+          "dividendsPaid": 25064000000.0,
+          "payoutRatio": 0.7553,
+          "debtRatio": 0.4622
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.10391,
+          "lastExDate": "2026-06-02"
+        }
+      ]
+    },
+    "02333.HK": {
+      "symbol": "02333.HK",
+      "name": "GWMOTOR",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 0.642503,
+          "lastExDate": "2015-09-30"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.22577,
+          "lastExDate": "2016-05-23"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 0.39447,
+          "lastExDate": "2017-05-17"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.21007,
+          "lastExDate": "2018-05-17"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.331398,
+          "lastExDate": "2019-05-23"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.27442,
+          "lastExDate": "2020-06-22"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.69939,
+          "lastExDate": "2021-10-05"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.08501,
+          "lastExDate": "2022-05-10",
+          "eps": 0.91,
+          "netIncome": 8266041808.18,
+          "dividendsPaid": 1225838059.39,
+          "payoutRatio": 0.1483,
+          "debtRatio": 0.6482
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.32854,
+          "lastExDate": "2023-06-29",
+          "eps": 0.82,
+          "netIncome": 7021559679.84,
+          "dividendsPaid": 3538486818.6,
+          "payoutRatio": 0.5039,
+          "debtRatio": 0.6596
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.33011,
+          "lastExDate": "2024-05-28",
+          "eps": 1.49,
+          "netIncome": 12659777358.87,
+          "dividendsPaid": 3346970288.23,
+          "payoutRatio": 0.2644,
+          "debtRatio": 0.6372
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.49233,
+          "lastExDate": "2025-07-08",
+          "eps": 1.16,
+          "netIncome": 9865280190.16,
+          "dividendsPaid": 4378732756.88,
+          "payoutRatio": 0.4439,
+          "debtRatio": 0.6099
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.40224,
+          "lastExDate": "2026-07-02"
+        }
+      ]
+    },
+    "600177.SH": {
+      "symbol": "600177.SH",
+      "name": "YOUNGOR FASHION CO LTD",
+      "currency": "CNY",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 0.255102,
+          "lastExDate": "2015-06-10"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.408163,
+          "lastExDate": "2016-06-08"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 0.255102,
+          "lastExDate": "2017-06-05"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.285714,
+          "lastExDate": "2018-06-07"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.357143,
+          "lastExDate": "2019-06-05"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.2,
+          "lastExDate": "2020-06-05"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.5,
+          "lastExDate": "2021-06-18"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.5,
+          "lastExDate": "2022-06-08",
+          "eps": 1.11,
+          "netIncome": 5072774235.8,
+          "dividendsPaid": 3113174472.77,
+          "payoutRatio": 0.6137,
+          "debtRatio": 0.5101
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.5,
+          "lastExDate": "2023-06-14",
+          "eps": 0.75,
+          "netIncome": 3433926376.96,
+          "dividendsPaid": 3103354644.83,
+          "payoutRatio": 0.9037,
+          "debtRatio": 0.5097
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.7,
+          "lastExDate": "2024-12-04",
+          "eps": 0.6,
+          "netIncome": 2767465580.96,
+          "dividendsPaid": 3854794551.58,
+          "payoutRatio": 1.3929,
+          "debtRatio": 0.4195
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.46,
+          "lastExDate": "2025-12-04",
+          "eps": 0.53,
+          "netIncome": 2447339231.76,
+          "dividendsPaid": 2650865932.75,
+          "payoutRatio": 1.0832,
+          "debtRatio": 0.3993
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.28,
+          "lastExDate": "2026-06-05"
+        }
+      ]
+    },
+    "03900.HK": {
+      "symbol": "03900.HK",
+      "name": "GREENTOWN CHINA",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2012,
+          "dividendPerShare": 0.11557,
+          "lastExDate": "2012-02-27"
+        },
+        {
+          "year": 2013,
+          "dividendPerShare": 0.57785,
+          "lastExDate": "2013-06-25"
+        },
+        {
+          "year": 2014,
+          "dividendPerShare": 0.54066,
+          "lastExDate": "2014-07-02"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 0.138684,
+          "lastExDate": "2017-06-20"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.235,
+          "lastExDate": "2018-06-20"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.26,
+          "lastExDate": "2019-06-19"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.3281,
+          "lastExDate": "2020-06-17"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.404495,
+          "lastExDate": "2021-06-23"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.537,
+          "lastExDate": "2022-06-22",
+          "eps": 1.03,
+          "netIncome": 2756100000.0,
+          "dividendsPaid": 1154944000.0,
+          "payoutRatio": 0.4191,
+          "debtRatio": 0.7918
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.548,
+          "lastExDate": "2023-06-20",
+          "eps": 1.22,
+          "netIncome": 3117684000.0,
+          "dividendsPaid": 1265999000.0,
+          "payoutRatio": 0.4061,
+          "debtRatio": 0.7873
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.472,
+          "lastExDate": "2024-06-19",
+          "eps": 0.63,
+          "netIncome": 1596426000.0,
+          "dividendsPaid": 1088759000.0,
+          "payoutRatio": 0.682,
+          "debtRatio": 0.7765
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.328,
+          "lastExDate": "2025-06-25",
+          "eps": 0.03,
+          "netIncome": 70989000.0,
+          "dividendsPaid": 761880000.0,
+          "payoutRatio": 10.7324,
+          "debtRatio": 0.765
+        }
+      ]
+    },
+    "01995.HK": {
+      "symbol": "01995.HK",
+      "name": "ES SERVICES",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2019,
+          "dividendPerShare": 0.0231,
+          "lastExDate": "2019-05-30"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.0479,
+          "lastExDate": "2020-06-15"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.0838,
+          "lastExDate": "2021-06-04",
+          "eps": 0.3663,
+          "netIncome": 617014000.0,
+          "dividendsPaid": 166435000.0,
+          "payoutRatio": 0.2697,
+          "debtRatio": 0.3543
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.2039,
+          "lastExDate": "2022-09-06",
+          "eps": 0.2742,
+          "netIncome": 480111000.0,
+          "dividendsPaid": 414760000.0,
+          "payoutRatio": 0.8639,
+          "debtRatio": 0.3992
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.0492,
+          "lastExDate": "2023-11-22",
+          "eps": 0.2484,
+          "netIncome": 434472000.0,
+          "dividendsPaid": 199982000.0,
+          "payoutRatio": 0.4603,
+          "debtRatio": 0.4095
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.2089,
+          "lastExDate": "2024-09-10",
+          "eps": 0.2758,
+          "netIncome": 477996000.0,
+          "dividendsPaid": 402306000.0,
+          "payoutRatio": 0.8417,
+          "debtRatio": 0.4156
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.1617,
+          "lastExDate": "2025-09-02"
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.1029,
+          "lastExDate": "2026-05-15"
+        }
+      ]
+    },
+    "03316.HK": {
+      "symbol": "03316.HK",
+      "name": "BINJIANG SER",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2019,
+          "dividendPerShare": 0.1,
+          "lastExDate": "2019-06-03"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.319,
+          "lastExDate": "2020-06-03"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.943,
+          "lastExDate": "2021-10-05",
+          "eps": 1.16
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.473,
+          "lastExDate": "2022-06-06",
+          "eps": 1.49,
+          "netIncome": 411995000.0,
+          "dividendsPaid": 111059000.0,
+          "payoutRatio": 0.2696,
+          "debtRatio": 0.5704
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 1.001,
+          "lastExDate": "2023-06-20",
+          "eps": 1.78,
+          "netIncome": 492545000.0,
+          "dividendsPaid": 259208000.0,
+          "payoutRatio": 0.5263,
+          "debtRatio": 0.6198
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 2.004,
+          "lastExDate": "2024-10-02",
+          "eps": 1.98,
+          "netIncome": 546529000.0,
+          "dividendsPaid": 504833000.0,
+          "payoutRatio": 0.9237,
+          "debtRatio": 0.6262
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 1.702,
+          "lastExDate": "2025-09-03",
+          "netIncome": 595508000.0,
+          "dividendsPaid": 430146000.0,
+          "payoutRatio": 0.7223,
+          "debtRatio": 0.6444
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.978,
+          "lastExDate": "2026-07-06"
+        }
+      ]
+    },
+    "00816.HK": {
+      "symbol": "00816.HK",
+      "name": "JINMAO SERVICES",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2022,
+          "eps": 0.38,
+          "netIncome": 336002000.0,
+          "dividendsPaid": 99853000.0,
+          "payoutRatio": 0.2972,
+          "debtRatio": 0.5471
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.17,
+          "lastExDate": "2023-06-12",
+          "eps": 0.37,
+          "netIncome": 337315000.0,
+          "dividendsPaid": 159249000.0,
+          "payoutRatio": 0.4721,
+          "debtRatio": 0.5661
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.254,
+          "lastExDate": "2024-09-09",
+          "eps": 0.41,
+          "netIncome": 382088000.0,
+          "dividendsPaid": 208781000.0,
+          "payoutRatio": 0.5464,
+          "debtRatio": 0.6134
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.249,
+          "lastExDate": "2025-09-08",
+          "eps": 0.34,
+          "netIncome": 310389000.0,
+          "dividendsPaid": 205481000.0,
+          "payoutRatio": 0.662,
+          "debtRatio": 0.6513
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.083,
+          "lastExDate": "2026-06-25"
+        }
+      ]
+    },
+    "513530.SH": {
+      "symbol": "513530.SH",
+      "name": "HUATAI-PINEBRIDGE FUND MANAGEME",
+      "currency": "CNY",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2025,
+          "dividendPerShare": 0.09,
+          "lastExDate": "2025-12-15"
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.06,
+          "lastExDate": "2026-06-15"
+        }
+      ]
+    },
+    "00823.HK": {
+      "symbol": "00823.HK",
+      "name": "LINK REIT",
+      "currency": "HKD",
+      "statementCurrency": "HKD",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 1.868488,
+          "lastExDate": "2015-11-24"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 2.127669,
+          "lastExDate": "2016-11-22"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 2.314449,
+          "lastExDate": "2017-11-21"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 2.516002,
+          "lastExDate": "2018-11-27"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 2.740683,
+          "lastExDate": "2019-11-27"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 2.792675,
+          "lastExDate": "2020-11-19"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 2.992478,
+          "lastExDate": "2021-11-22"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 2.930865,
+          "lastExDate": "2022-11-21"
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 2.4888,
+          "lastExDate": "2023-11-20",
+          "eps": 7.09,
+          "netIncome": 15451000000.0,
+          "dividendsPaid": 5050000000.0,
+          "payoutRatio": 0.3268,
+          "debtRatio": 0.2943
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 2.6746,
+          "lastExDate": "2024-11-18",
+          "eps": -0.77,
+          "netIncome": -1983000000.0,
+          "dividendsPaid": 5401000000.0,
+          "debtRatio": 0.2928
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 2.6433,
+          "lastExDate": "2025-12-02",
+          "eps": -3.45,
+          "netIncome": -8863000000.0,
+          "dividendsPaid": 5348000000.0,
+          "debtRatio": 0.287
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 1.2673,
+          "lastExDate": "2026-06-11",
+          "eps": -2.86,
+          "netIncome": -7397000000.0,
+          "dividendsPaid": 6220000000.0,
+          "debtRatio": 0.3188
+        }
+      ]
+    },
+    "02156.HK": {
+      "symbol": "02156.HK",
+      "name": "C&D PROPERTY",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2021,
+          "eps": 0.13
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.06,
+          "lastExDate": "2022-05-24",
+          "eps": 0.19,
+          "netIncome": 247212000.0,
+          "dividendsPaid": 68565000.0,
+          "payoutRatio": 0.2774,
+          "debtRatio": 0.6151
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.1,
+          "lastExDate": "2023-06-01",
+          "eps": 0.35,
+          "netIncome": 467347000.0,
+          "dividendsPaid": 123712000.0,
+          "payoutRatio": 0.2647,
+          "debtRatio": 0.5184
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.26,
+          "lastExDate": "2024-05-28",
+          "eps": 0.24,
+          "netIncome": 323477000.0,
+          "dividendsPaid": 333371000.0,
+          "payoutRatio": 1.0306,
+          "debtRatio": 0.5327
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.15,
+          "lastExDate": "2025-05-27",
+          "netIncome": 358909000.0,
+          "dividendsPaid": 194045000.0,
+          "payoutRatio": 0.5407,
+          "debtRatio": 0.5496
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.2,
+          "lastExDate": "2026-05-29"
+        }
+      ]
+    },
+    "601088.SH": {
+      "symbol": "601088.SH",
+      "name": "CHINA SHENHUA ENERGY COMPANY LT",
+      "currency": "CNY",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2014,
+          "dividendPerShare": 0.91,
+          "lastExDate": "2014-07-14"
+        },
+        {
+          "year": 2015,
+          "dividendPerShare": 0.74,
+          "lastExDate": "2015-06-15"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.32,
+          "lastExDate": "2016-07-04"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 2.97,
+          "lastExDate": "2017-07-10"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.91,
+          "lastExDate": "2018-07-09"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.88,
+          "lastExDate": "2019-07-08"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 1.26,
+          "lastExDate": "2020-06-15"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 1.81,
+          "lastExDate": "2021-07-12"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 2.54,
+          "lastExDate": "2022-07-11",
+          "eps": 3.505,
+          "netIncome": 69648000000.0,
+          "dividendsPaid": 53391000000.0,
+          "payoutRatio": 0.7666,
+          "debtRatio": 0.2614
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 2.55,
+          "lastExDate": "2023-07-05",
+          "eps": 3.004,
+          "netIncome": 59694000000.0,
+          "dividendsPaid": 53119000000.0,
+          "payoutRatio": 0.8899,
+          "debtRatio": 0.2408
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 2.26,
+          "lastExDate": "2024-07-08",
+          "eps": 2.809,
+          "netIncome": 55805000000.0,
+          "dividendsPaid": 47171000000.0,
+          "payoutRatio": 0.8453,
+          "debtRatio": 0.2565
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 3.24,
+          "lastExDate": "2025-11-10",
+          "eps": 2.66,
+          "netIncome": 52849000000.0,
+          "dividendsPaid": 66616000000.0,
+          "payoutRatio": 1.2605,
+          "debtRatio": 0.2331
+        }
+      ]
+    },
+    "00941.HK": {
+      "symbol": "00941.HK",
+      "name": "CHINA MOBILE",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 2.905,
+          "lastExDate": "2015-09-07"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 2.685,
+          "lastExDate": "2016-09-01"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 6.066,
+          "lastExDate": "2017-08-31"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 3.408,
+          "lastExDate": "2018-08-30"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 2.918,
+          "lastExDate": "2019-08-29"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 3.253,
+          "lastExDate": "2020-08-27"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 3.39,
+          "lastExDate": "2021-08-25",
+          "eps": 5.67
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 4.63,
+          "lastExDate": "2022-09-06",
+          "eps": 5.88,
+          "netIncome": 125459000000.0,
+          "dividendsPaid": 86837000000.0,
+          "payoutRatio": 0.6922,
+          "debtRatio": 0.3276
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 4.64,
+          "lastExDate": "2023-09-04",
+          "eps": 6.16,
+          "netIncome": 131766000000.0,
+          "dividendsPaid": 91088000000.0,
+          "payoutRatio": 0.6913,
+          "debtRatio": 0.3245
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 5.0,
+          "lastExDate": "2024-09-02",
+          "eps": 6.45,
+          "netIncome": 138373000000.0,
+          "dividendsPaid": 97458000000.0,
+          "payoutRatio": 0.7043,
+          "debtRatio": 0.3375
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 5.24,
+          "lastExDate": "2025-09-01",
+          "netIncome": 137095000000.0,
+          "dividendsPaid": 103410000000.0,
+          "payoutRatio": 0.7543,
+          "debtRatio": 0.3267
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 2.52,
+          "lastExDate": "2026-06-05"
+        }
+      ]
+    },
+    "01088.HK": {
+      "symbol": "01088.HK",
+      "name": "CHINA SHENHUA",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 0.93811,
+          "lastExDate": "2015-06-04"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.369824,
+          "lastExDate": "2016-06-23"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 3.402296,
+          "lastExDate": "2017-06-29"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 1.127745,
+          "lastExDate": "2018-06-28"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 1.030155,
+          "lastExDate": "2019-06-27"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 1.378707,
+          "lastExDate": "2020-06-04"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 2.157279,
+          "lastExDate": "2021-06-30"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 3.125,
+          "lastExDate": "2022-06-29",
+          "eps": 3.505,
+          "netIncome": 69648000000.0,
+          "dividendsPaid": 53391000000.0,
+          "payoutRatio": 0.7666,
+          "debtRatio": 0.2614
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 2.909,
+          "lastExDate": "2023-06-21",
+          "eps": 3.004,
+          "netIncome": 59694000000.0,
+          "dividendsPaid": 53119000000.0,
+          "payoutRatio": 0.8899,
+          "debtRatio": 0.2408
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 2.491,
+          "lastExDate": "2024-06-27",
+          "eps": 2.809,
+          "netIncome": 55805000000.0,
+          "dividendsPaid": 47171000000.0,
+          "payoutRatio": 0.8453,
+          "debtRatio": 0.2565
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 3.5226,
+          "lastExDate": "2025-10-30",
+          "eps": 2.66,
+          "netIncome": 52849000000.0,
+          "dividendsPaid": 66616000000.0,
+          "payoutRatio": 1.2605,
+          "debtRatio": 0.2331
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 1.185,
+          "lastExDate": "2026-07-02"
+        }
+      ]
+    },
+    "01836.HK": {
+      "symbol": "01836.HK",
+      "name": "STELLA HOLDINGS",
+      "currency": "HKD",
+      "statementCurrency": "USD",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 0.85,
+          "lastExDate": "2015-09-30"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.85,
+          "lastExDate": "2016-09-29"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 0.7,
+          "lastExDate": "2017-09-14"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.6,
+          "lastExDate": "2018-09-13"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.4,
+          "lastExDate": "2019-09-19"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.45,
+          "lastExDate": "2020-05-21"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.21,
+          "lastExDate": "2021-09-13",
+          "eps": 0.1133
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.98,
+          "lastExDate": "2022-09-09",
+          "eps": 0.149,
+          "netIncome": 118033000.0,
+          "dividendsPaid": 99130000.0,
+          "payoutRatio": 0.8398,
+          "debtRatio": 0.1925
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.87,
+          "lastExDate": "2023-09-06",
+          "eps": 0.178,
+          "netIncome": 141072000.0,
+          "dividendsPaid": 88074000.0,
+          "payoutRatio": 0.6243,
+          "debtRatio": 0.2149
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 1.26,
+          "lastExDate": "2024-09-04",
+          "eps": 0.2113,
+          "netIncome": 171049000.0,
+          "dividendsPaid": 131582000.0,
+          "payoutRatio": 0.7693,
+          "debtRatio": 0.2149
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 1.58,
+          "lastExDate": "2025-09-03",
+          "netIncome": 137987000.0,
+          "dividendsPaid": 169183000.0,
+          "payoutRatio": 1.2261,
+          "debtRatio": 0.2289
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.93,
+          "lastExDate": "2026-05-19"
+        }
+      ]
+    },
+    "01023.HK": {
+      "symbol": "01023.HK",
+      "name": "SITOY GROUP",
+      "currency": "HKD",
+      "statementCurrency": "HKD",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 0.23,
+          "lastExDate": "2015-11-20"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.38,
+          "lastExDate": "2016-11-18"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 0.12,
+          "lastExDate": "2017-11-17"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.12,
+          "lastExDate": "2018-11-16"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.08,
+          "lastExDate": "2019-11-15"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.05,
+          "lastExDate": "2020-11-20"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.03,
+          "lastExDate": "2021-11-26"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 0.08,
+          "lastExDate": "2022-11-25",
+          "eps": 0.116,
+          "netIncome": 111647000.0,
+          "dividendsPaid": 28881000.0,
+          "payoutRatio": 0.2587,
+          "debtRatio": 0.2033
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 0.11,
+          "lastExDate": "2023-11-24",
+          "eps": 0.2105,
+          "netIncome": 202796000.0,
+          "dividendsPaid": 96270000.0,
+          "payoutRatio": 0.4747,
+          "debtRatio": 0.1679
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.06,
+          "lastExDate": "2024-11-22",
+          "eps": 0.1058,
+          "netIncome": 101888000.0,
+          "dividendsPaid": 86816000.0,
+          "payoutRatio": 0.8521,
+          "debtRatio": 0.146
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.06,
+          "lastExDate": "2025-11-21"
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.02,
+          "lastExDate": "2026-03-26"
+        }
+      ]
+    },
+    "00926.HK": {
+      "symbol": "00926.HK",
+      "name": "BESUNYEN",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2011,
+          "dividendPerShare": 0.811764,
+          "lastExDate": "2011-09-05"
+        },
+        {
+          "year": 2014,
+          "dividendPerShare": 0.338235,
+          "lastExDate": "2014-08-22"
+        },
+        {
+          "year": 2015,
+          "dividendPerShare": 0.879411,
+          "lastExDate": "2015-08-24"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 2.705882,
+          "lastExDate": "2016-05-11"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 2.976471,
+          "lastExDate": "2019-10-14"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 1.014706,
+          "lastExDate": "2021-05-28",
+          "eps": -2.4691,
+          "dividendsPaid": 49384000.0
+        },
+        {
+          "year": 2022,
+          "eps": -1.76,
+          "netIncome": -99089000.0,
+          "debtRatio": 0.3153
+        },
+        {
+          "year": 2023,
+          "eps": -2.45,
+          "netIncome": -299243000.0,
+          "debtRatio": 0.2142
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.9,
+          "lastExDate": "2024-09-05",
+          "eps": 0.12,
+          "netIncome": 14804000.0,
+          "dividendsPaid": 99624000.0,
+          "payoutRatio": 6.7295,
+          "debtRatio": 0.1522
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 0.25,
+          "lastExDate": "2025-08-27",
+          "netIncome": 20443000.0,
+          "dividendsPaid": 27862000.0,
+          "payoutRatio": 1.3629,
+          "debtRatio": 0.1687
+        }
+      ]
+    },
+    "09926.HK": {
+      "symbol": "09926.HK",
+      "name": "AKESO",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2021,
+          "eps": -1.32
+        },
+        {
+          "year": 2022,
+          "eps": -1.42,
+          "netIncome": -1168393000.0,
+          "debtRatio": 0.5364
+        },
+        {
+          "year": 2023,
+          "eps": 2.42,
+          "netIncome": 2028300000.0,
+          "debtRatio": 0.5078
+        },
+        {
+          "year": 2024,
+          "eps": -0.6,
+          "netIncome": -514515000.0,
+          "debtRatio": 0.4705
+        },
+        {
+          "year": 2025,
+          "netIncome": -1113025000.0,
+          "debtRatio": 0.4409
+        }
+      ]
+    },
+    "00777.HK": {
+      "symbol": "00777.HK",
+      "name": "NETDRAGON",
+      "currency": "HKD",
+      "statementCurrency": "CNY",
+      "years": [
+        {
+          "year": 2015,
+          "dividendPerShare": 0.3,
+          "lastExDate": "2015-09-11"
+        },
+        {
+          "year": 2016,
+          "dividendPerShare": 0.2,
+          "lastExDate": "2016-09-13"
+        },
+        {
+          "year": 2017,
+          "dividendPerShare": 0.2,
+          "lastExDate": "2017-09-18"
+        },
+        {
+          "year": 2018,
+          "dividendPerShare": 0.2,
+          "lastExDate": "2018-09-11"
+        },
+        {
+          "year": 2019,
+          "dividendPerShare": 0.3,
+          "lastExDate": "2019-09-10"
+        },
+        {
+          "year": 2020,
+          "dividendPerShare": 0.5,
+          "lastExDate": "2020-09-09"
+        },
+        {
+          "year": 2021,
+          "dividendPerShare": 0.65,
+          "lastExDate": "2021-09-08"
+        },
+        {
+          "year": 2022,
+          "dividendPerShare": 2.73,
+          "lastExDate": "2022-09-09",
+          "eps": 1.5415,
+          "netIncome": 834000000.0,
+          "dividendsPaid": 1225000000.0,
+          "payoutRatio": 1.4688,
+          "debtRatio": 0.4018
+        },
+        {
+          "year": 2023,
+          "dividendPerShare": 1.8,
+          "lastExDate": "2023-09-12",
+          "eps": 1.03,
+          "netIncome": 550000000.0,
+          "dividendsPaid": 877000000.0,
+          "payoutRatio": 1.5945,
+          "debtRatio": 0.4053
+        },
+        {
+          "year": 2024,
+          "dividendPerShare": 0.8,
+          "lastExDate": "2024-09-11",
+          "eps": 0.586,
+          "netIncome": 311000000.0,
+          "dividendsPaid": 453000000.0,
+          "payoutRatio": 1.4566,
+          "debtRatio": 0.4377
+        },
+        {
+          "year": 2025,
+          "dividendPerShare": 1.0,
+          "lastExDate": "2025-09-10",
+          "eps": 0.2858,
+          "netIncome": 151000000.0,
+          "dividendsPaid": 487000000.0,
+          "payoutRatio": 3.2252,
+          "debtRatio": 0.4576
+        },
+        {
+          "year": 2026,
+          "dividendPerShare": 0.5,
+          "lastExDate": "2026-06-04"
+        }
+      ]
+    }
+  }
+}

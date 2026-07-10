@@ -6774,3 +6774,266 @@ body[data-active-page="home"] .page-stack {
     gap: 12px 16px;
   }
 }
+
+/* ── 年度持仓快照 ── */
+/* 收益页只剩「期初现金」一个动作按钮；现金模式下该按钮也隐藏，整条动作栏收起 */
+.income-actions-bar { grid-template-columns: 1fr; }
+#incomeSummaryPage.is-cash-active .income-actions-bar { display: none; }
+
+.income-year-link {
+  border: 0;
+  padding: 0 2px 1px 0;
+  margin: 0;
+  background: none;
+  font: inherit;
+  font-weight: 800;
+  color: var(--color-ink);
+  cursor: pointer;
+  border-bottom: 1px dotted var(--color-text-secondary);
+}
+
+.income-year-link:hover,
+.income-year-link:focus-visible { color: var(--accent); border-bottom-color: var(--accent); outline: none; }
+
+.year-holdings-list { display: grid; gap: 0; }
+
+.year-holdings-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(96px, auto);
+  align-items: center;
+  gap: 12px;
+  padding: 9px 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.year-holdings-row:last-child { border-bottom: none; }
+
+.year-holdings-row span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.year-holdings-row .yh-shares,
+.year-holdings-row .yh-value { align-items: flex-end; text-align: right; }
+
+.year-holdings-row strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.year-holdings-row small {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.year-holdings-row .yh-change { color: var(--color-ink); font-weight: 700; }
+.year-holdings-row .yh-change.is-new { color: var(--accent); }
+
+.year-holdings-removed {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.yh-removed-label { font-weight: 700; color: var(--color-text-secondary); }
+.yh-removed-item { font-variant-numeric: tabular-nums; }
+
+/* ── 公司基本面页 ── */
+.fundamentals-symbol-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 2px 10px;
+  margin: 0 -2px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.fundamentals-symbol-row::-webkit-scrollbar { display: none; }
+
+.fund-symbol-chip {
+  flex: 0 0 auto;
+  border: 1px solid var(--color-hairline);
+  border-radius: 0;
+  background: transparent;
+  padding: 6px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fund-symbol-chip.is-active {
+  border-color: var(--color-ink);
+  color: var(--color-ink);
+}
+
+.fundamentals-content { display: grid; gap: 12px; }
+
+.fund-head-panel { padding: 14px 16px; }
+
+.fund-company-name { margin: 0; font-size: 18px; font-weight: 800; color: var(--color-ink); }
+
+.fund-company-code { margin: 4px 0 0; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.fund-company-summary {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.fund-card-grid { display: grid; gap: 12px; }
+
+.fund-card {
+  border: 1px solid var(--color-hairline);
+  padding: 12px 14px 10px;
+  background: #ffffff;
+}
+
+.fund-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.fund-card-label { font-size: 12px; font-weight: 800; color: var(--color-ink); }
+
+.fund-card-label small { font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+
+.fund-card-latest { margin-left: auto; display: flex; align-items: baseline; gap: 5px; }
+
+.fund-card-latest strong { font-size: 15px; font-weight: 800; color: var(--color-ink); font-variant-numeric: tabular-nums; }
+
+.fund-card-latest small { font-size: 10px; color: var(--muted); }
+
+.fund-card-trend { font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.fund-card-trend small { font-size: 10px; font-weight: 600; color: var(--muted); }
+
+.fund-card-trend.is-gain { color: var(--color-primary); }
+.fund-card-trend.is-loss { color: var(--color-loss); }
+.fund-card-trend.is-flat { color: var(--muted); }
+
+.fund-card-empty { margin: 14px 0; font-size: 12px; color: var(--muted); text-align: center; }
+
+.fund-chart-svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+.fund-chart-zero {
+  stroke: #e1e7ef;
+  stroke-width: 1.2;
+  stroke-dasharray: 5 6;
+}
+
+.fund-chart-series polyline {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.fund-chart-series circle {
+  fill: #ffffff;
+  stroke: var(--color-ink);
+  stroke-width: 2.2;
+}
+
+.fund-chart-labels text {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.fund-chart-labels text.is-latest { fill: var(--color-ink); font-weight: 800; }
+
+.fund-chart-years {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 4px 0;
+  font-size: 10px;
+  color: var(--color-text-hint);
+  font-variant-numeric: tabular-nums;
+}
+
+.fund-table {
+  border: 1px solid var(--color-hairline);
+  background: #ffffff;
+  padding: 4px 14px;
+}
+
+.fund-table-row {
+  display: grid;
+  grid-template-columns: minmax(52px, 0.7fr) repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.fund-table-row > div { text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.fund-table-row > div:first-child { text-align: left; }
+
+.fund-table-row:last-child { border-bottom: none; }
+
+.fund-table-head { font-size: 10.5px; font-weight: 600; color: var(--color-text-secondary); }
+
+.fund-table-row .is-year { font-weight: 800; }
+
+.fund-table-row .is-year small { font-size: 9px; font-weight: 600; color: var(--muted); margin-left: 3px; }
+
+@media (min-width: 720px) {
+  .fund-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── 首页下拉刷新 ── */
+/* 阻止浏览器原生下拉刷新/回弹与手势冲突 */
+html, body { overscroll-behavior-y: contain; }
+
+.home-pull-indicator {
+  height: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  transition: height 0.26s var(--ease-soft, ease);
+}
+
+.home-pull-indicator.is-dragging { transition: none; }
+
+.home-pull-indicator svg {
+  width: 20px;
+  height: 20px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  opacity: var(--pull-progress, 0);
+  transform: rotate(calc(var(--pull-progress, 0) * 270deg));
+}
+
+.home-pull-indicator.is-armed svg { color: var(--color-ink); }
+
+.home-pull-indicator.is-refreshing svg {
+  transform: none;
+  animation: spin 800ms linear infinite;
+}

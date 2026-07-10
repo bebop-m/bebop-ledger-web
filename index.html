@@ -15,6 +15,26 @@
     <div class="app-shell">
       <main class="app-pages">
         <div id="homePage" class="page-view page-stack" data-page-view="home">
+          <div id="homePullIndicator" class="home-pull-indicator" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M18.6 8.4A7.6 7.6 0 1 0 19 15.7"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></path>
+              <path
+                d="M15.2 5.8H20v4.8"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></path>
+            </svg>
+          </div>
           <header class="home-top">
             <span class="home-brand">BEBOP</span>
             <div class="home-top-actions">
@@ -74,6 +94,10 @@
             <button class="home-nav-item" type="button" data-page-nav="income">
               <span class="home-nav-title">收益明细</span>
               <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="income"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+            </button>
+            <button class="home-nav-item" type="button" data-page-nav="fundamentals">
+              <span class="home-nav-title">公司基本面</span>
+              <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="fundamentals"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
             </button>
             <button class="home-nav-item" type="button" data-page-nav="records">
               <span class="home-nav-title">资金与交易</span>
@@ -215,10 +239,6 @@
           <section class="panel">
             <div id="incomeOverviewGrid" class="income-overview-grid"></div>
             <div class="income-actions-bar">
-              <button id="incomeManualButton" class="income-manual-button" type="button" aria-label="历史回填">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.2v13.6M5.2 12h13.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path></svg>
-                <span>历史回填</span>
-              </button>
               <button id="incomeOpeningCashButton" class="income-manual-button" type="button" aria-label="期初现金">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v10H4zM4 8l3-3h10l3 3M15 13h2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                 <span>期初现金</span>
@@ -243,6 +263,21 @@
             </header>
             <div id="incomeYearList" class="income-year-list"></div>
           </section>
+        </div>
+
+        <div id="fundamentalsPage" class="page-view page-stack" data-page-view="fundamentals" hidden>
+          <header class="top-bar">
+            <button class="back-button" type="button" data-page-back aria-label="返回首页">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+            <div class="top-bar-heading">
+              <h2 class="top-bar-title">公司基本面</h2>
+              <p id="fundamentalsNote" class="panel-note"></p>
+            </div>
+          </header>
+
+          <div id="fundamentalsSymbolRow" class="fundamentals-symbol-row" aria-label="选择公司"></div>
+          <div id="fundamentalsContent" class="fundamentals-content"></div>
         </div>
 
         <div id="recordsPage" class="page-view page-stack" data-page-view="records" hidden>

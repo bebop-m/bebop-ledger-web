@@ -7,7 +7,8 @@ import {
   safeNumber, clone, escapeHtml, normalizeSeedQuoteMap, mergeQuotes,
   sanitizeHolding, sanitizePerShareOverrideInput, normalizeSymbol,
   sanitizeDividendLedgerEntry, sanitizeDailySnapshotEntry,
-  sanitizeCashFlowEntry, sanitizeYearlyManualEntry, sanitizeTradeEntry
+  sanitizeCashFlowEntry, sanitizeYearlyManualEntry, sanitizeTradeEntry,
+  sanitizeYearlyHoldingsEntry
 } from './utils.js';
 
 /* ── Default Quotes (normalized from seed data) ── */
@@ -34,6 +35,7 @@ export const state = {
   cashFlows: [],
   trades: [],
   yearlyManual: [],
+  yearlyHoldings: [],
   lastUpdatedAt: '',
   modal: null,
   modalPayload: null,
@@ -86,6 +88,9 @@ export const refs = {
   incomeTrend: document.getElementById('incomeTrend'),
   incomeYearList: document.getElementById('incomeYearList'),
   incomeRecordsList: document.getElementById('incomeRecordsList'),
+  fundamentalsNote: document.getElementById('fundamentalsNote'),
+  fundamentalsSymbolRow: document.getElementById('fundamentalsSymbolRow'),
+  fundamentalsContent: document.getElementById('fundamentalsContent'),
   dividendMetricGrid: document.getElementById('dividendMetricGrid'),
   dividendMonthGrid: document.getElementById('dividendMonthGrid'),
   exportButton: document.getElementById('exportButton'),
@@ -96,6 +101,7 @@ export const refs = {
   bucketTrack: document.getElementById('bucketTrack'),
   marketTimestamp: document.getElementById('marketTimestamp'),
   refreshButton: document.getElementById('refreshButton'),
+  homePullIndicator: document.getElementById('homePullIndicator'),
   addButton: document.getElementById('addButton'),
   stockList: document.getElementById('stockList'),
   modalRoot: document.getElementById('modalRoot'),
@@ -202,6 +208,7 @@ export function createDefaultSnapshot() {
     cashFlows: [],
     trades: [],
     yearlyManual: [],
+    yearlyHoldings: [],
     lastUpdatedAt: ''
   };
 }
@@ -247,6 +254,9 @@ export function applySnapshot(snapshot) {
   state.yearlyManual = Array.isArray(snapshot && snapshot.yearlyManual)
     ? snapshot.yearlyManual.map(sanitizeYearlyManualEntry).filter(Boolean)
     : [];
+  state.yearlyHoldings = Array.isArray(snapshot && snapshot.yearlyHoldings)
+    ? snapshot.yearlyHoldings.map(sanitizeYearlyHoldingsEntry).filter(Boolean)
+    : [];
   state.lastUpdatedAt = typeof (snapshot && snapshot.lastUpdatedAt) === 'string' ? snapshot.lastUpdatedAt : '';
 }
 
@@ -261,6 +271,7 @@ export function getPersistedSnapshot() {
     dividendLedger: state.dividendLedger,
     dailySnapshots: state.dailySnapshots, cashFlows: state.cashFlows,
     trades: state.trades, yearlyManual: state.yearlyManual,
+    yearlyHoldings: state.yearlyHoldings,
     lastUpdatedAt: state.lastUpdatedAt
   };
 }
@@ -322,6 +333,9 @@ export function buildPortfolioSnapshot() {
       : [],
     yearlyManual: Array.isArray(persisted.yearlyManual)
       ? persisted.yearlyManual.map(sanitizeYearlyManualEntry).filter(Boolean)
+      : [],
+    yearlyHoldings: Array.isArray(persisted.yearlyHoldings)
+      ? persisted.yearlyHoldings.map(sanitizeYearlyHoldingsEntry).filter(Boolean)
       : [],
     nextId: Math.max(holdings.reduce((max, item) => Math.max(max, item.localId), 0) + 1, Math.floor(safeNumber(persisted.nextId, 1))),
     showAmounts: persisted.showAmounts !== false,

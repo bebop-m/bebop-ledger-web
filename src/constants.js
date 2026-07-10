@@ -2,6 +2,7 @@
 export const STORAGE_KEY = 'bopup-ledger-web-state';
 export const MARKET_ENDPOINT = './data/market.json';
 export const OVERRIDE_ENDPOINT = './data/override.json';
+export const FUNDAMENTALS_ENDPOINT = './data/fundamentals.json';
 export const CONFIG_ENDPOINT = './config.json';
 export const PORTFOLIO_SNAPSHOT_FILENAME = 'portfolio_snapshot.json';
 export const GITHUB_PUBLIC_REPO = 'bebop-m/bebop-ledger-web';
@@ -25,7 +26,7 @@ export const VALID_DIVIDEND_SOURCES = new Set(['yfinance', 'yahoo', 'eodhd', 'ma
 export const VALID_DIVIDEND_STATUSES = new Set(['manual', 'fresh', 'stale', 'missing']);
 export const VALID_RECEIPT_STATUSES = new Set(['received', 'pending']);
 export const VALID_DIVIDEND_CONFIDENCES = new Set(['confirmed', 'snapshot', 'carryForward', 'estimated', 'manual']);
-export const PAGE_KEYS = new Set(['home', 'holdings', 'dividends', 'income', 'records']);
+export const PAGE_KEYS = new Set(['home', 'holdings', 'dividends', 'income', 'records', 'fundamentals']);
 /* 旧快照里的页面键 → 新信息架构页面键。 */
 export const LEGACY_PAGE_MAP = { assets: 'home' };
 /* 收益汇总的展示起始年：年度明细与历年趋势只展示该年及以后（更早年份仍参与净值链推算）。 */

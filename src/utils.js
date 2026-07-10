@@ -490,6 +490,38 @@ export function sanitizeTradeEntry(item, index = 0) {
   };
 }
 
+/* 年度持仓快照：每年一条，记录该年（年末或最近结算日）的逐只持仓。
+   当年条目随结算持续覆盖，跨年后自然冻结为年末状态；backfill 条目由历史日快照补出（价格按当前价估算）。 */
+export function sanitizeYearlyHoldingsEntry(item) {
+  if (!item || typeof item !== 'object') return null;
+  const year = Math.floor(safeNumber(item.year, 0));
+  if (year <= 0) return null;
+  const holdings = Array.isArray(item.holdings)
+    ? item.holdings.map((holding) => {
+        if (!holding || typeof holding !== 'object') return null;
+        const symbol = normalizeSymbol(holding.symbol);
+        if (!symbol) return null;
+        return {
+          symbol,
+          name: typeof holding.name === 'string' && holding.name.trim() ? holding.name.trim() : symbol,
+          shares: Math.max(0, safeNumber(holding.shares, 0)),
+          bucket: holding.bucket === 'income' ? 'income' : 'core',
+          currency: String(holding.currency || '').trim().toUpperCase() || resolveQuoteCurrency({}, symbol),
+          price: Math.max(0, safeNumber(holding.price, 0)),
+          marketValueCny: Math.max(0, safeNumber(holding.marketValueCny, 0))
+        };
+      }).filter((holding) => holding && holding.shares > 0)
+    : [];
+  if (!holdings.length) return null;
+  return {
+    year,
+    date: formatDateLabel(item.date),
+    totalMarketValueCny: Math.max(0, safeNumber(item.totalMarketValueCny, 0)),
+    source: item.source === 'backfill' ? 'backfill' : 'auto',
+    holdings
+  };
+}
+
 export function sanitizeYearlyManualEntry(item) {
   if (!item || typeof item !== 'object') return null;
   const year = Math.floor(safeNumber(item.year, 0));

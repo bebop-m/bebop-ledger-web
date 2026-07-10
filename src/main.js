@@ -20,6 +20,7 @@ import {
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
+import { loadFundamentals, selectFundamentalsSymbol } from './fundamentals.js';
 
 /* ── Sort Toggle Button（静态节点，只补事件与无障碍标签，图标由 renderSortChips 填充）── */
 mutable.sortToggleButton = document.getElementById('sortToggleButton');
@@ -48,7 +49,7 @@ refs.legendToggle.addEventListener('click', () => { const t = refs.legendToggle.
 refs.refreshButton.addEventListener('click', () => { refreshMarketData({ silent: false }); });
 // 现金模式下，首页「+」直接开一笔买入交易（替代旧的新增持仓）；未启用时仍是新增持仓。
 refs.addButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'add'); });
-refs.incomeManualButton.addEventListener('click', () => { openModal('yearlyManual'); });
+if (refs.incomeManualButton) refs.incomeManualButton.addEventListener('click', () => { openModal('yearlyManual'); });
 if (refs.incomeCashFlowButton) refs.incomeCashFlowButton.addEventListener('click', () => { openModal('cashFlow'); });
 if (refs.incomeOpeningCashButton) refs.incomeOpeningCashButton.addEventListener('click', () => { openModal('openingCash'); });
 
@@ -63,6 +64,11 @@ refs.pageBackButtons.forEach((button) => {
 
 // 首页主行动：现金模式直接记一笔交易，否则先选择记录类型。
 refs.quickAddButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'quickAdd'); });
+
+if (refs.fundamentalsSymbolRow) refs.fundamentalsSymbolRow.addEventListener('click', (event) => {
+  const chip = event.target.closest('[data-fund-symbol]');
+  if (chip) selectFundamentalsSymbol(chip.dataset.fundSymbol);
+});
 
 refs.dividendFilterGroup.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-dividend-filter]');
@@ -82,6 +88,12 @@ refs.dividendMonthGrid.addEventListener('click', (event) => {
 });
 
 refs.incomeYearList.addEventListener('click', (event) => {
+  const yearHoldingsButton = event.target.closest('[data-year-holdings]');
+  if (yearHoldingsButton) {
+    const year = Math.floor(safeNumber(yearHoldingsButton.dataset.yearHoldings, 0));
+    if (year) openModal('yearHoldings', { year });
+    return;
+  }
   const btn = event.target.closest('[data-income-manual-year]');
   if (!btn) return;
   const year = Math.floor(safeNumber(btn.dataset.incomeManualYear, 0));
@@ -168,6 +180,63 @@ refs.stockList.addEventListener('click', (event) => {
   if (action === 'edit-dividend') { openModal('dividend', { localId, name: computed ? computed.name : holding.symbol, currency: computed ? computed.currency : 'HKD', value: holding.dividendPerShareTtmOverride }); }
 });
 
+/* ── 首页下拉刷新 ──
+   顶部下拉超过阈值松手即刷新；指示器随拉动渐显并旋转，刷新中持续转圈。
+   仅首页、页面在顶部、无弹窗、非刷新中时接管手势，其余情况不干扰原生滚动。 */
+const PULL_TRIGGER_PX = 56;
+const PULL_MAX_PX = 88;
+const PULL_HOLD_PX = 44;
+const PULL_RESISTANCE = 0.45;
+let activeHomePull = null;
+
+function setHomePullDistance(distance, opts = {}) {
+  const el = refs.homePullIndicator;
+  if (!el) return;
+  el.classList.toggle('is-dragging', opts.dragging === true);
+  el.classList.toggle('is-armed', distance >= PULL_TRIGGER_PX);
+  el.style.height = `${Math.max(0, distance)}px`;
+  el.style.setProperty('--pull-progress', Math.min(1, distance / PULL_TRIGGER_PX).toFixed(3));
+}
+
+document.addEventListener('touchstart', (event) => {
+  if (state.activePage !== 'home' || state.modal || state.syncing) return;
+  if (window.scrollY > 0 || event.touches.length !== 1) return;
+  activeHomePull = { startY: event.touches[0].clientY, distance: 0, pulling: false };
+}, { passive: true });
+
+document.addEventListener('touchmove', (event) => {
+  if (!activeHomePull) return;
+  const dy = event.touches[0].clientY - activeHomePull.startY;
+  if (!activeHomePull.pulling) {
+    if (dy < -8 || window.scrollY > 0) { activeHomePull = null; return; }
+    if (dy < 8) return;
+    activeHomePull.pulling = true;
+  }
+  if (event.cancelable) event.preventDefault();
+  activeHomePull.distance = Math.min(PULL_MAX_PX, Math.max(0, dy) * PULL_RESISTANCE);
+  setHomePullDistance(activeHomePull.distance, { dragging: true });
+}, { passive: false });
+
+async function settleHomePull() {
+  if (!activeHomePull) return;
+  const triggered = activeHomePull.pulling && activeHomePull.distance >= PULL_TRIGGER_PX;
+  const wasPulling = activeHomePull.pulling;
+  activeHomePull = null;
+  if (!wasPulling) return;
+  if (!triggered) { setHomePullDistance(0); return; }
+  const el = refs.homePullIndicator;
+  if (el) el.classList.add('is-refreshing');
+  setHomePullDistance(PULL_HOLD_PX);
+  try { await refreshMarketData({ silent: false }); }
+  finally {
+    if (el) el.classList.remove('is-refreshing');
+    setHomePullDistance(0);
+  }
+}
+
+document.addEventListener('touchend', () => { void settleHomePull(); }, { passive: true });
+document.addEventListener('touchcancel', () => { void settleHomePull(); }, { passive: true });
+
 /* ── Touch / Swipe ── */
 refs.stockList.addEventListener('touchstart', (event) => {
   if (!isHoldingSwipeEnabled() || event.touches.length !== 1) return;
@@ -222,6 +291,7 @@ async function boot() {
   try { applySnapshot(createDefaultSnapshot()); restoreState(); renderApp(); }
   catch (error) { console.error('boot render failed, resetting to defaults:', error); applySnapshot(createDefaultSnapshot()); saveState(); renderApp(); }
   await cleanupLegacyCaches();
+  void loadFundamentals();
   await refreshMarketData({ silent: true });
 }
 
