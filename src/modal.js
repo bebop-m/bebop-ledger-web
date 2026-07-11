@@ -7,6 +7,7 @@ import {
 import { LABELS } from './constants.js';
 import { renderSavedStateQuietly, buildDividendMonthDetail, formatDisplayMoney } from './render.js';
 import { inferQuote, isCashModelActive, computeIncomeSummary } from './compute.js';
+import { getFundamentalsPickerModel } from './fundamentals.js';
 
 let _keydownHandler = null;
 
@@ -146,6 +147,7 @@ function renderModal() {
   if (!state.modal) { refs.modalRoot.innerHTML = ''; return; }
   if (state.modal === 'monthDetail') { renderMonthDetailModal(); return; }
   if (state.modal === 'yearHoldings') { renderYearHoldingsModal(); return; }
+  if (state.modal === 'fundPicker') { renderFundPickerModal(); return; }
   let title = '', note = '', fields = '';
   if (state.modal === 'quickAdd') {
     title = '记一笔';
@@ -270,6 +272,34 @@ function renderMonthDetailModal() {
       <div class="month-detail-list">${detail.body}</div>
       <div class="modal-actions">
         <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">${LABELS.cancel === '取消' ? '关闭' : LABELS.cancel}</button>
+      </div>
+    </section>`;
+}
+
+// 基本面页的公司选择：半屏列表，持仓在前（附市值），观察/已清仓排在后。
+function renderFundPickerModal() {
+  const model = getFundamentalsPickerModel();
+  const rowHtml = (item) => `<button class="fund-picker-row${item.selected ? ' is-active' : ''}" type="button" data-modal-action="pick-fund-symbol" data-symbol="${escapeHtml(item.symbol)}" aria-pressed="${item.selected ? 'true' : 'false'}">
+      <span class="fp-name"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.symbol)}</small></span>
+      <span class="fp-side">${item.marketValueCny > 0 ? `<strong>${escapeHtml(formatDisplayMoney(item.marketValueCny, 'CNY'))}</strong>` : '<strong>—</strong>'}<small>${item.selected ? '当前' : '&nbsp;'}</small></span>
+    </button>`;
+  const holdingsHtml = model.holdings.length
+    ? `<p class="fund-picker-group">持仓 · 按市值</p>${model.holdings.map(rowHtml).join('')}`
+    : '';
+  const othersHtml = model.others.length
+    ? `<p class="fund-picker-group">观察 / 已清仓</p>${model.others.map(rowHtml).join('')}`
+    : '';
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet modal-sheet--detail" role="dialog" aria-modal="true">
+      <header class="month-detail-head">
+        <div class="month-detail-title">
+          <h3>选择公司</h3>
+          <strong>${model.holdings.length + model.others.length} 家</strong>
+        </div>
+      </header>
+      <div class="month-detail-list fund-picker-list">${holdingsHtml}${othersHtml}</div>
+      <div class="modal-actions">
+        <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button>
       </div>
     </section>`;
 }
@@ -450,7 +480,7 @@ function saveTradeEdit() {
 }
 
 export function handleModalSave() {
-  if (state.modal === 'monthDetail' || state.modal === 'yearHoldings') { closeModal(); return; }
+  if (state.modal === 'monthDetail' || state.modal === 'yearHoldings' || state.modal === 'fundPicker') { closeModal(); return; }
   if (state.modal === 'quickAdd') return;
   if (state.modal === 'quantity') {
     const v = Math.max(0, safeNumber(document.getElementById('modalQuantityInput').value, 0));

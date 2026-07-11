@@ -90,7 +90,6 @@ export const refs = {
   incomeYearList: document.getElementById('incomeYearList'),
   incomeRecordsList: document.getElementById('incomeRecordsList'),
   fundamentalsNote: document.getElementById('fundamentalsNote'),
-  fundamentalsSymbolRow: document.getElementById('fundamentalsSymbolRow'),
   reportCalendarPanel: document.getElementById('reportCalendarPanel'),
   fundamentalsContent: document.getElementById('fundamentalsContent'),
   dividendMetricGrid: document.getElementById('dividendMetricGrid'),

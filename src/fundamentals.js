@@ -14,7 +14,6 @@ let _loading = false;
 let _attempted = false;
 let _loadError = '';
 let _selectedSymbol = '';
-let _showAllCompanies = false;
 
 function readCache() {
   try {
@@ -58,9 +57,18 @@ export function selectFundamentalsSymbol(symbol) {
   renderFundamentalsPage();
 }
 
-export function toggleFundamentalsCompanyScope() {
-  _showAllCompanies = !_showAllCompanies;
-  renderFundamentalsPage();
+/* 公司选择弹窗的数据：持仓按市值降序在前（附市值），观察/已清仓排在后。 */
+export function getFundamentalsPickerModel() {
+  const { holdings, others } = getGroupedCompanies();
+  const valueBySymbol = new Map(computeHoldings().holdings
+    .map((holding) => [holding.symbol, safeNumber(holding.marketValueCny, 0)]));
+  const toItem = (company) => ({
+    symbol: company.symbol,
+    name: getCompanyDisplayName(company),
+    marketValueCny: valueBySymbol.get(company.symbol) || 0,
+    selected: company.symbol === _selectedSymbol
+  });
+  return { holdings: holdings.map(toItem), others: others.map(toItem) };
 }
 
 export function getFundamentalsCompanyCount() {
@@ -253,19 +261,14 @@ function buildNextReportLine(symbol) {
   return `<p class="fund-company-report">下场财报 <strong>${date}</strong> · ${escapeHtml(event.reportType)} · ${statusText}</p>`;
 }
 
-function getCompanyChipMarkup(item) {
-  return `<button class="fund-symbol-chip${item.symbol === _selectedSymbol ? ' is-active' : ''}" type="button" data-fund-symbol="${escapeHtml(item.symbol)}" aria-pressed="${item.symbol === _selectedSymbol ? 'true' : 'false'}">${escapeHtml(getCompanyDisplayName(item))}</button>`;
-}
-
 export function renderFundamentalsPage() {
-  if (!refs.fundamentalsContent || !refs.fundamentalsSymbolRow) return;
+  if (!refs.fundamentalsContent) return;
   // 首次进入时懒加载；失败后不自动重试，避免循环。
   if (!_data && !_loading && !_attempted && state.activePage === 'fundamentals') { void loadFundamentals(); return; }
 
   const { holdings, others } = getGroupedCompanies();
   const allCompanies = holdings.concat(others);
   if (!allCompanies.length) {
-    refs.fundamentalsSymbolRow.innerHTML = '';
     refs.fundamentalsContent.innerHTML = getEmptyStateMarkup();
     if (refs.fundamentalsNote) refs.fundamentalsNote.textContent = '';
     return;
@@ -276,20 +279,17 @@ export function renderFundamentalsPage() {
   }
   const company = allCompanies.find((item) => item.symbol === _selectedSymbol);
 
-  // chips：持仓在前；观察/清仓标的折叠在「更多」里（选中的除外）。
-  const selectedOther = !_showAllCompanies && others.find((item) => item.symbol === _selectedSymbol);
-  const visibleCompanies = _showAllCompanies ? allCompanies : holdings.concat(selectedOther ? [selectedOther] : []);
-  const hiddenCount = allCompanies.length - visibleCompanies.length;
-  refs.fundamentalsSymbolRow.innerHTML = visibleCompanies.map(getCompanyChipMarkup).join('')
-    + (others.length ? `<button class="fund-symbol-chip fund-symbol-chip--more" type="button" data-fund-scope-toggle aria-expanded="${_showAllCompanies ? 'true' : 'false'}">${_showAllCompanies ? '收起' : `更多 +${hiddenCount}`}</button>` : '');
-
   const { rows, allRows, metrics, currentYear } = buildCompanyMetrics(company);
   const summary = buildCompanySummary(company, rows);
   refs.fundamentalsContent.innerHTML = `
     <section class="panel fund-head-panel">
       <div class="fund-company-head">
         <div>
-          <h3 class="fund-company-name">${escapeHtml(getCompanyDisplayName(company))}</h3>
+          <button class="fund-company-trigger" type="button" data-fund-picker-open aria-haspopup="dialog" aria-label="切换公司">
+            <h3 class="fund-company-name">${escapeHtml(getCompanyDisplayName(company))}</h3>
+            <svg class="fund-company-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5 12 15l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            ${allCompanies.length > 1 ? `<span class="fund-company-count">${allCompanies.length} 家</span>` : ''}
+          </button>
           <p class="fund-company-code">${escapeHtml(company.symbol)} · 股息按 ${escapeHtml(company.currency)}/股 · 财报币种 ${escapeHtml(company.statementCurrency || company.currency)}</p>
         </div>
       </div>

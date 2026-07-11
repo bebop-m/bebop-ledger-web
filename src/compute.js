@@ -851,6 +851,13 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
     if (rateBaseNetCny === null && manualDividend !== null && manualDividendRate) {
       rateBaseNetCny = Math.abs(manualDividend / manualDividendRate);
     }
+    /* 年初净值也缺（常见于最早回填的一年）：有年末净值时按
+       年末 = 年初 + 净注入 + 年初×收益率 反解年初；没填收益率就退化为 年末 − 净注入 的近似。 */
+    if (rateBaseNetCny === null && yearEnd.netCny !== null) {
+      rateBaseNetCny = manualCapitalRate !== null && manualCapitalRate > -1
+        ? (yearEnd.netCny - netInflowCny) / (1 + manualCapitalRate)
+        : yearEnd.netCny - netInflowCny;
+    }
     if (rateBaseNetCny !== null && rateBaseNetCny <= 0) rateBaseNetCny = null;
 
     let dividendCny;

@@ -20,7 +20,7 @@ import {
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
-import { loadFundamentals, selectFundamentalsSymbol, toggleFundamentalsCompanyScope } from './fundamentals.js';
+import { loadFundamentals, selectFundamentalsSymbol } from './fundamentals.js';
 import { loadReportCalendar } from './report-calendar.js';
 
 /* ── Sort Toggle Button（静态节点，只补事件与无障碍标签，图标由 renderSortChips 填充）── */
@@ -66,14 +66,16 @@ refs.pageBackButtons.forEach((button) => {
 // 首页主行动：现金模式直接记一笔交易，否则先选择记录类型。
 refs.quickAddButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'quickAdd'); });
 
-if (refs.fundamentalsSymbolRow) refs.fundamentalsSymbolRow.addEventListener('click', (event) => {
-  if (event.target.closest('[data-fund-scope-toggle]')) { toggleFundamentalsCompanyScope(); return; }
-  const chip = event.target.closest('[data-fund-symbol]');
-  if (chip) selectFundamentalsSymbol(chip.dataset.fundSymbol);
+if (refs.fundamentalsContent) refs.fundamentalsContent.addEventListener('click', (event) => {
+  if (event.target.closest('[data-fund-picker-open]')) openModal('fundPicker');
 });
+// 页尾日历点公司：切到该公司并滚回页顶，让上方的切换结果可见。
 if (refs.reportCalendarPanel) refs.reportCalendarPanel.addEventListener('click', (event) => {
   const row = event.target.closest('[data-report-symbol]');
-  if (row) selectFundamentalsSymbol(row.dataset.reportSymbol);
+  if (row) {
+    selectFundamentalsSymbol(row.dataset.reportSymbol);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 });
 
 refs.dividendFilterGroup.addEventListener('click', (event) => {
@@ -281,6 +283,7 @@ refs.modalRoot.addEventListener('click', (event) => {
   const a = event.target.closest('[data-modal-action]'); if (!a) return;
   const t = a.dataset.modalAction;
   if (t === 'confirm-dividend') { toggleDividendConfirm(a.dataset.sourceId); return; }
+  if (t === 'pick-fund-symbol') { selectFundamentalsSymbol(a.dataset.symbol); closeModal(); return; }
   if (t === 'edit-dividend-ledger') { openModal('dividendLedger', { sourceId: a.dataset.sourceId }); return; }
   if (t === 'open-trade') { openModal('trade'); return; }
   if (t === 'open-cash-flow') { openModal('cashFlow'); return; }
