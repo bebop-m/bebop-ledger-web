@@ -9,7 +9,11 @@ For every symbol in the portfolio/watchlist universe, pulls from yfinance:
   - Stockholders Equity (ROE) and Ordinary Shares Number (share-count trend)
   - Cash Dividends Paid from annual cash-flow statements (payout ratio vs net income)
   - Repurchase / Issuance Of Capital Stock (net buyback) and Free Cash Flow
-    (dividend coverage) from annual cash-flow statements
+    (dividend coverage) from annual cash-flow statements; A-share statements on
+    Yahoo lack these rows entirely, so when a company has no buyback/issuance
+    rows at all, net buyback falls back to the share-count route:
+    (prior-year shares - current shares) * yearly average price (cancellation
+    registers with a lag, but the economics match the user's formula)
   - sector / industry labels (with a Chinese sector mapping)
   - yearly average close price in trading currency (split-adjusted, matching the
     split-adjusted dividend series) for historical dividend-yield percentile
@@ -368,8 +372,17 @@ def build_company(symbol):
 
         # Net buyback > 0 means real shareholder return; < 0 means dilution.
         net_buyback = None
+        net_buyback_source = ''
         if buyback is not None or issuance is not None:
             net_buyback = abs(buyback or 0.0) - abs(issuance or 0.0)
+        elif not buyback_row and not issuance_row and (not statement_currency or statement_currency == trade_currency):
+            # Share-count fallback (A-shares): needs both years' share counts and
+            # a same-currency price so the value lands in statement currency.
+            prev_shares = safe_float(shares_row.get(year - 1), None)
+            if (shares is not None and shares > 0 and prev_shares is not None and prev_shares > 0
+                    and avg_price is not None and avg_price > 0):
+                net_buyback = (prev_shares - shares) * avg_price
+                net_buyback_source = 'shareCount'
 
         row = {'year': year}
         if dps > 0:
@@ -396,6 +409,8 @@ def build_company(symbol):
             row['sharesOutstanding'] = round(shares, 0)
         if net_buyback is not None:
             row['netBuyback'] = round(net_buyback, 2)
+            if net_buyback_source:
+                row['netBuybackSource'] = net_buyback_source
         if fcf is not None:
             row['fcf'] = round(fcf, 2)
         if fcf is not None and dividends_paid is not None and abs(dividends_paid) > 0:

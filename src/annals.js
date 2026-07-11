@@ -67,10 +67,6 @@ function getYearEndRates(year, currentYear) {
   return year >= currentYear ? state.rates : null;
 }
 
-function regularDps(row) {
-  return Math.max(0, safeNumber(row.dividendPerShare, 0) - safeNumber(row.specialDividendPerShare, 0));
-}
-
 function getCompanyYearRow(company, year) {
   return (Array.isArray(company.years) ? company.years : [])
     .find((row) => row && row.year === year) || null;
@@ -154,46 +150,6 @@ function getYearTrades(year) {
     }));
 }
 
-/* 纪律事件：当年持有过的公司里，该年常规股息削减；年末打工仓仓位超限。 */
-function getYearDisciplineEvents(year, currentYear) {
-  const config = state.discipline;
-  if (!config) return [];
-  const events = [];
-  const held = new Map();
-  [getYearlyHoldingsEntry(year - 1), getYearlyHoldingsEntry(year)].forEach((entry) => {
-    if (!entry) return;
-    entry.holdings.forEach((item) => { if (item && item.symbol) held.set(item.symbol, item.name || item.symbol); });
-  });
-  held.forEach((name, symbol) => {
-    if (config.exceptions.includes(symbol)) return;
-    const company = getCompanyFundamentals(symbol);
-    if (!company) return;
-    const thisRow = getCompanyYearRow(company, year);
-    const prevRow = getCompanyYearRow(company, year - 1);
-    if (!thisRow || !prevRow) return;
-    if (year >= currentYear) return; // 当年未完，削减判断交给实时纪律警报
-    const dpsNow = regularDps(thisRow);
-    const dpsPrev = regularDps(prevRow);
-    if (dpsPrev > 0 && dpsNow < dpsPrev * (1 - config.dividendCutThreshold)) {
-      events.push({ name, text: `常规股息同比削减 ${(((dpsPrev - dpsNow) / dpsPrev) * 100).toFixed(1)}%` });
-    }
-  });
-  const endEntry = getYearlyHoldingsEntry(year);
-  if (endEntry) {
-    const total = endEntry.holdings.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0);
-    if (total > 0) {
-      endEntry.holdings.forEach((item) => {
-        if (item.bucket !== 'income' || config.exceptions.includes(item.symbol)) return;
-        const weight = safeNumber(item.marketValueCny, 0) / total;
-        if (weight > config.incomeHardMax) {
-          events.push({ name: item.name || item.symbol, text: `年末仓位 ${(weight * 100).toFixed(1)}%，超打工仓硬上限` });
-        }
-      });
-    }
-  }
-  return events;
-}
-
 export function computeYearAnnals(year) {
   const summary = computeIncomeSummary(new Date(), { filterKey: 'all' });
   const row = summary.trendRows.find((item) => item.year === year) || null;
@@ -235,7 +191,6 @@ export function computeYearAnnals(year) {
     xirr,
     xirrScope,
     attribution: computeAttribution(row, year, currentYear),
-    trades: getYearTrades(year),
-    disciplineEvents: getYearDisciplineEvents(year, currentYear)
+    trades: getYearTrades(year)
   };
 }

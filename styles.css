@@ -7042,17 +7042,6 @@ body[data-active-page="home"] .page-stack {
 .annals-trade-name { color: var(--color-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .annals-trade-value { color: var(--color-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-.annals-event-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 5px 0;
-  font-size: 12.5px;
-}
-
-.annals-event-name { flex-shrink: 0; font-weight: 600; color: var(--color-ink); }
-.annals-event-text { color: var(--color-text-secondary); }
-
 /* 盈亏语义色（A股习惯：涨红跌绿），限年鉴弹窗内 */
 .annals-body .is-gain { color: var(--color-primary); }
 .annals-body .is-loss { color: var(--color-loss); }

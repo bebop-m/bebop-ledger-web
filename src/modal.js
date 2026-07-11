@@ -445,19 +445,7 @@ function buildAnnalsTrades(annals) {
   </div>`;
 }
 
-function buildAnnalsDiscipline(annals) {
-  if (!annals.disciplineEvents.length) return '';
-  const rows = annals.disciplineEvents.map((event) => `<div class="annals-event-row">
-    <span class="annals-event-name">${escapeHtml(event.name)}</span>
-    <span class="annals-event-text">${escapeHtml(event.text)}</span>
-  </div>`).join('');
-  return `<div class="annals-block">
-    <p class="annals-block-title">纪律事件<span class="annals-block-count">${annals.disciplineEvents.length}</span></p>
-    ${rows}
-  </div>`;
-}
-
-/* 年度年鉴弹窗：数字 → 归因 → 交易 → 纪律事件，全部只读、全自动。 */
+/* 年度年鉴弹窗：数字 → 归因 → 交易，全部只读、全自动。 */
 function renderYearAnnalsModal() {
   const year = Math.floor(safeNumber(state.modalPayload && state.modalPayload.year, 0));
   const annals = year ? computeYearAnnals(year) : null;
@@ -493,7 +481,6 @@ function renderYearAnnalsModal() {
         <div class="annals-metric-grid">${metrics}</div>
         ${buildAnnalsAttribution(annals)}
         ${buildAnnalsTrades(annals)}
-        ${buildAnnalsDiscipline(annals)}
       </div>
       <div class="modal-actions">
         <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button>

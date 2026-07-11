@@ -1,7 +1,7 @@
 {
   "ok": true,
   "provider": "yfinance",
-  "updatedAt": "2026-07-11T13:05:04.441268Z",
+  "updatedAt": "2026-07-11T23:15:17.538729Z",
   "companies": {
     "00700.HK": {
       "symbol": "00700.HK",
@@ -201,6 +201,8 @@
           "debtRatio": 0.1798,
           "roe": 0.3465,
           "sharesOutstanding": 1256197800.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 63973491832.3,
           "fcfDividendCoverage": 1.1313
         },
@@ -216,6 +218,8 @@
           "debtRatio": 0.1904,
           "roe": 0.3699,
           "sharesOutstanding": 1256197800.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 87784980114.87,
           "fcfDividendCoverage": 1.2762
         },
@@ -231,6 +235,8 @@
           "debtRatio": 0.1642,
           "roe": 0.3365,
           "sharesOutstanding": 1252270215.0,
+          "netBuyback": 5797414741.98,
+          "netBuybackSource": "shareCount",
           "fcf": 58394610072.94,
           "fcfDividendCoverage": 0.9029
         },
@@ -320,6 +326,8 @@
           "debtRatio": 0.6722,
           "roe": 0.2484,
           "sharesOutstanding": 5631405741.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 50972692051.25,
           "fcfDividendCoverage": 3.7206
         },
@@ -335,6 +343,8 @@
           "debtRatio": 0.6155,
           "roe": 0.2342,
           "sharesOutstanding": 5601405741.0,
+          "netBuyback": 1214898000.0,
+          "netBuybackSource": "shareCount",
           "fcf": 26069463229.44,
           "fcfDividendCoverage": 1.7267
         },
@@ -350,6 +360,8 @@
           "debtRatio": 0.6173,
           "roe": 0.1987,
           "sharesOutstanding": 5601405741.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 44665803685.92,
           "fcfDividendCoverage": 2.4642
         },
@@ -657,6 +669,8 @@
           "debtRatio": 0.6414,
           "roe": 0.207,
           "sharesOutstanding": 7025769025.0,
+          "netBuyback": -1556876173.62,
+          "netBuybackSource": "shareCount",
           "fcf": 51588560000.0,
           "fcfDividendCoverage": 2.6715
         },
@@ -672,6 +686,8 @@
           "debtRatio": 0.6233,
           "roe": 0.1778,
           "sharesOutstanding": 7655955883.0,
+          "netBuyback": -41706081355.87,
+          "netBuybackSource": "shareCount",
           "fcf": 52671936000.0,
           "fcfDividendCoverage": 2.3502
         },
@@ -687,6 +703,8 @@
           "debtRatio": 0.6117,
           "roe": 0.1969,
           "sharesOutstanding": 7597145346.0,
+          "netBuyback": 4384925400.83,
+          "netBuybackSource": "shareCount",
           "fcf": 42204041000.0,
           "fcfDividendCoverage": 1.2974
         },
@@ -1055,6 +1073,8 @@
           "debtRatio": 0.5854,
           "roe": 0.0747,
           "sharesOutstanding": 6537821440.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 9610715000.0,
           "fcfDividendCoverage": 2.3969
         },
@@ -1070,6 +1090,8 @@
           "debtRatio": 0.582,
           "roe": 0.0754,
           "sharesOutstanding": 6537821440.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 9671022000.0,
           "fcfDividendCoverage": 4.075
         },
@@ -1084,6 +1106,8 @@
           "debtRatio": 0.4286,
           "roe": 0.1085,
           "sharesOutstanding": 6537821440.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 7077957000.0,
           "fcfDividendCoverage": 3.1907
         },
@@ -1498,6 +1522,8 @@
           "debtRatio": 0.5097,
           "roe": 0.0876,
           "sharesOutstanding": 4628802973.0,
+          "netBuyback": 671860.0,
+          "netBuybackSource": "shareCount",
           "fcf": 4981232553.57,
           "fcfDividendCoverage": 1.6051
         },
@@ -1513,6 +1539,8 @@
           "debtRatio": 0.4195,
           "roe": 0.0672,
           "sharesOutstanding": 4623441902.0,
+          "netBuyback": 39812385.46,
+          "netBuybackSource": "shareCount",
           "fcf": 407782344.81,
           "fcfDividendCoverage": 0.1058
         },
@@ -1528,6 +1556,8 @@
           "debtRatio": 0.3993,
           "roe": 0.0578,
           "sharesOutstanding": 4623441902.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 866768451.53,
           "fcfDividendCoverage": 0.327
         },
@@ -2243,6 +2273,8 @@
           "debtRatio": 0.2408,
           "roe": 0.1461,
           "sharesOutstanding": 19868519955.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 52603000000.0,
           "fcfDividendCoverage": 0.9903
         },
@@ -2258,6 +2290,8 @@
           "debtRatio": 0.2565,
           "roe": 0.133,
           "sharesOutstanding": 19868519955.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 53378000000.0,
           "fcfDividendCoverage": 1.1316
         },
@@ -2273,6 +2307,8 @@
           "debtRatio": 0.2331,
           "roe": 0.1292,
           "sharesOutstanding": 19868519955.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 26661000000.0,
           "fcfDividendCoverage": 0.4002
         }

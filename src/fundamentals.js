@@ -326,12 +326,20 @@ function buildMetricCard(rows, metric) {
     </section>`;
   }
   let trendHtml = '';
-  if (previous && Number(previous.value) !== 0) {
-    const delta = (Number(latest.value) - Number(previous.value)) / Math.abs(Number(previous.value));
-    const up = delta > 0;
-    // 负债率上升不是好事，用中性色；其余指标涨=红、跌=绿（A 股习惯）。
-    const toneClass = metric.neutralTrend ? 'is-flat' : (up ? 'is-gain' : (delta < 0 ? 'is-loss' : 'is-flat'));
-    trendHtml = `<span class="fund-card-trend ${toneClass}">${up ? '+' : ''}${(delta * 100).toFixed(1)}% <small>同比</small></span>`;
+  if (previous) {
+    // 百分比类指标看百分点差（pp）；金额类看相对变化。
+    const isPercent = metric.kind === 'percent';
+    const delta = isPercent
+      ? Number(latest.value) - Number(previous.value)
+      : (Number(previous.value) !== 0
+        ? (Number(latest.value) - Number(previous.value)) / Math.abs(Number(previous.value))
+        : null);
+    if (delta !== null && Number.isFinite(delta)) {
+      const up = delta > 0;
+      // 负债率上升不是好事，用中性色；其余指标涨=红、跌=绿（A 股习惯）。
+      const toneClass = metric.neutralTrend ? 'is-flat' : (up ? 'is-gain' : (delta < 0 ? 'is-loss' : 'is-flat'));
+      trendHtml = `<span class="fund-card-trend ${toneClass}">${up ? '+' : ''}${(delta * 100).toFixed(1)}${isPercent ? 'pp' : '%'} <small>同比</small></span>`;
+    }
   }
   const chart = buildMetricChartSvg(rows, metric);
   return `<section class="fund-card">
@@ -345,19 +353,37 @@ function buildMetricCard(rows, metric) {
   </section>`;
 }
 
+/* 派生指标：股息率 = 当年常规派息 ÷ 当年均价（同币种，剔除股价单点噪声）；
+   EPS增速 = 同比。当前年派息只是「至今」，股息率会误导，置空。 */
+function enrichYearRows(allRows, currentYear) {
+  const byYear = new Map(allRows.map((row) => [row.year, row]));
+  return allRows.map((row) => {
+    const regular = Math.max(0, safeNumber(row.dividendPerShare, 0) - safeNumber(row.specialDividendPerShare, 0));
+    const avgPrice = safeNumber(row.avgPrice, 0);
+    const previous = byYear.get(row.year - 1);
+    const epsNow = Number(row.eps);
+    const epsPrev = previous ? Number(previous.eps) : NaN;
+    return {
+      ...row,
+      dividendYield: row.year < currentYear && regular > 0 && avgPrice > 0 ? regular / avgPrice : null,
+      epsGrowth: Number.isFinite(epsNow) && Number.isFinite(epsPrev) && epsPrev > 0 ? epsNow / epsPrev - 1 : null
+    };
+  });
+}
+
 function buildCompanyMetrics(company) {
   const currentYear = new Date().getFullYear();
-  const allRows = (Array.isArray(company.years) ? company.years : [])
+  const allRows = enrichYearRows((Array.isArray(company.years) ? company.years : [])
     .filter((row) => row && safeNumber(row.year, 0) > 0)
     .slice()
-    .sort((a, b) => a.year - b.year);
+    .sort((a, b) => a.year - b.year), currentYear);
   // 当前年份的股息只是「至今」累计，进线图会误导趋势判断，只在表格里展示。
   const rows = allRows.filter((row) => row.year < currentYear);
   const metrics = [
-    { key: 'dividendPerShare', label: '每股股息', unit: company.currency, kind: 'money' },
+    { key: 'dividendYield', label: '股息率', unit: '常规派息 / 当年均价', kind: 'percent' },
     { key: 'payoutRatio', label: '分红率', unit: '股息 / 当期净利', kind: 'percent' },
     { key: 'debtRatio', label: '负债率', unit: '总负债 / 总资产', kind: 'percent', neutralTrend: true },
-    { key: 'eps', label: 'EPS', unit: company.statementCurrency || company.currency, kind: 'money' }
+    { key: 'epsGrowth', label: 'EPS增速', unit: '同比', kind: 'percent' }
   ];
   return { rows, allRows, metrics, currentYear };
 }
