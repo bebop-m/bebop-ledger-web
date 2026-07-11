@@ -5383,6 +5383,51 @@ body[data-active-page="home"] .page-stack {
   background: transparent;
 }
 
+/* ── 持仓结构：组合预期长期回报行 ── */
+.return-bar {
+  margin-top: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.return-bar-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 18px;
+  row-gap: 2px;
+}
+
+.return-bar-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.return-bar-item small {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.return-bar-item strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.return-bar-item--lead strong {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.return-bar-note {
+  margin: 5px 0 0;
+  font-size: 11px;
+  color: var(--color-text-hint);
+}
+
 .bucket-summary-v2 {
   gap: 14px;
 }
@@ -6901,6 +6946,80 @@ body[data-active-page="home"] .page-stack {
   font-size: 12.5px;
   font-weight: 600;
   color: var(--color-ink);
+}
+
+/* ── 预期长期回报：公司级公式行（股息＋净回购＋EPS增速≈结论） ── */
+.fund-formula {
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.fund-formula-label {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+
+.fund-formula-line {
+  margin: 6px 0 0;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  row-gap: 2px;
+}
+
+.fund-formula-part {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.fund-formula-part small {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.fund-formula-part strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.fund-formula-op {
+  font-size: 12px;
+  color: var(--color-text-hint);
+}
+
+/* ≈ 与结论值永远一起换行，等式断行点保持可读 */
+.fund-formula-result {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.fund-formula-total {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.fund-formula-total.is-empty {
+  color: var(--color-text-hint);
+  font-weight: 500;
+}
+
+.fund-formula-note {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--color-text-hint);
 }
 
 .fund-card-grid { display: grid; gap: 0; }

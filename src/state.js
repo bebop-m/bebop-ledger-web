@@ -100,6 +100,7 @@ export const refs = {
   companyLegend: document.getElementById('companyLegend'),
   legendToggle: document.getElementById('legendToggle'),
   bucketTrack: document.getElementById('bucketTrack'),
+  holdingsReturnBar: document.getElementById('holdingsReturnBar'),
   marketTimestamp: document.getElementById('marketTimestamp'),
   refreshButton: document.getElementById('refreshButton'),
   homePullIndicator: document.getElementById('homePullIndicator'),

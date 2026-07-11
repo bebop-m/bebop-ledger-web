@@ -4,7 +4,7 @@ import {
   computeDividendCalendar, computeIncomeSummary,
   computeCashFlowRecords, computeTradeSummary, isCashModelActive
 } from './compute.js';
-import { renderFundamentalsPage, getFundamentalsCompanyCount } from './fundamentals.js';
+import { renderFundamentalsPage, getFundamentalsCompanyCount, getPortfolioReturnSummary } from './fundamentals.js';
 import { getReportHomeSummary, renderReportCalendarPanel } from './report-calendar.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
@@ -278,6 +278,28 @@ export function patchBucketsView(segments, holdings, summary) {
   if (!dc) dc = createElementFromHtml(getBucketDetailMarkup(v.activeItem, { animateDetail: false }));
   if (!dc || !syncBucketDetail(dc, v.activeItem)) { renderBucketsView(segments, holdings, summary, { animateDetail: false }); return; }
   root.appendChild(dc);
+}
+
+/* ── 组合预期长期回报：持仓结构面板顶部的一行等式结论 ── */
+export function renderReturnBar() {
+  if (!refs.holdingsReturnBar) return;
+  const summary = getPortfolioReturnSummary();
+  if (!summary || summary.all === null) {
+    refs.holdingsReturnBar.hidden = true;
+    refs.holdingsReturnBar.innerHTML = '';
+    return;
+  }
+  const pct = (value) => (value === null ? '—' : `${(value * 100).toFixed(1)}%`);
+  const coverage = Math.round(summary.coverage * 100);
+  const coverageNote = coverage < 100 ? ` · 覆盖 ${coverage}% 市值` : '';
+  refs.holdingsReturnBar.hidden = false;
+  refs.holdingsReturnBar.innerHTML = `
+    <div class="return-bar-row">
+      <span class="return-bar-item return-bar-item--lead"><small>预期长期回报</small><strong>${pct(summary.all)}</strong></span>
+      <span class="return-bar-item"><small>${LABELS.core}</small><strong>${pct(summary.core)}</strong></span>
+      <span class="return-bar-item"><small>${LABELS.income}</small><strong>${pct(summary.income)}</strong></span>
+    </div>
+    <p class="return-bar-note">股息 + 净回购 + EPS增速 · 市值加权${coverageNote}</p>`;
 }
 
 /* ── Sort Chips ── */
@@ -904,6 +926,7 @@ export function animateHoldingRemoval(wrapper, onComplete) {
 function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
   renderHomePage(summary); patchLegendView(cs);
   patchBucketsView(bs, summary.holdings, summary);
+  renderReturnBar();
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
   renderIncomeRecords();
@@ -926,6 +949,7 @@ export function renderApp(opts = {}) {
   if (incremental) { renderDashboardIncrementally(summary, cs, bs, { animateHoldingReflow }); return; }
   renderHomePage(summary); renderLegendView(cs, { animate: animateLegend });
   renderBucketsView(bs, summary.holdings, summary, { animateDetail: animateBucketDetail });
+  renderReturnBar();
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
   renderIncomeRecords();
