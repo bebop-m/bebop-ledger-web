@@ -75,6 +75,11 @@ export function getFundamentalsCompanyCount() {
   return _data ? Object.keys(_data.companies).length : 0;
 }
 
+/* 只读访问单家公司的基本面原始数据（纪律检查等跨页功能使用）。 */
+export function getCompanyFundamentals(symbol) {
+  return (_data && _data.companies && _data.companies[symbol]) || null;
+}
+
 /* 公司分组：当前持仓按市值降序在前；观察/已清仓标的默认折叠在「更多」里。 */
 function getGroupedCompanies() {
   if (!_data) return { holdings: [], others: [] };
@@ -201,6 +206,36 @@ export function getCompanyReturnModel(symbol) {
     epsSpan,
     shareholderReturn,
     expectedReturn: epsCagr === null ? null : shareholderReturn + epsCagr
+  };
+}
+
+/* ── 股息率历史分位：打工仓估值回归信号 ──
+   历年股息率 = 当年常规派息 ÷ 当年均价（同为交易币种、同为拆股修正口径）；
+   当前股息率与历史序列比较，分位越高 = 现价越便宜。至少 5 个完整年度才计算。 */
+export function getDividendYieldPercentile(symbol) {
+  const company = _data && _data.companies ? _data.companies[symbol] : null;
+  if (!company || !Array.isArray(company.years)) return null;
+  const currentYear = new Date().getFullYear();
+  const series = company.years
+    .filter((row) => row && row.year < currentYear
+      && safeNumber(row.dividendPerShare, 0) > 0 && safeNumber(row.avgPrice, 0) > 0)
+    .map((row) => Math.max(0, safeNumber(row.dividendPerShare, 0) - safeNumber(row.specialDividendPerShare, 0))
+      / safeNumber(row.avgPrice, 0))
+    .filter((value) => value > 0);
+  if (series.length < 5) return null;
+  const model = getCompanyReturnModel(symbol);
+  if (!model || !(model.dividendYield > 0)) return null;
+  const current = model.dividendYield;
+  const below = series.filter((value) => value < current).length;
+  const sorted = series.slice().sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  const median = sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+  return {
+    symbol,
+    currentYield: current,
+    percentile: below / series.length,
+    medianYield: median,
+    years: series.length
   };
 }
 
@@ -335,6 +370,8 @@ function buildCompanySummary(company, rows) {
   if (payout) parts.push(`最新分红率 ${formatMetricValue(payout.value, 'percent')}`);
   const { latest: debt } = getLatestPair(rows, 'debtRatio');
   if (debt) parts.push(`负债率 ${formatMetricValue(debt.value, 'percent')}`);
+  const yieldRank = getDividendYieldPercentile(company.symbol);
+  if (yieldRank) parts.push(`现价股息率高于过去 ${yieldRank.years} 年中 ${Math.round(yieldRank.percentile * 100)}% 的年份`);
   return parts.join(' · ');
 }
 

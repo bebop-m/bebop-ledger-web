@@ -11,6 +11,7 @@
     "dividendCutThreshold": 0.1,
     "fcfCoverageMin": 1.0,
     "dilutionMax": 0.01,
+    "yieldPercentileFloor": 0.5,
     "exceptions": []
   },
   "staleDays": 7,

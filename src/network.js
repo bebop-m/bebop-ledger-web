@@ -60,6 +60,7 @@ function normalizeDisciplineConfig(raw) {
     dividendCutThreshold: ratio(raw.dividendCutThreshold, 0.1),
     fcfCoverageMin: Math.max(0, safeNumber(raw.fcfCoverageMin, 1)),
     dilutionMax: ratio(raw.dilutionMax, 0.01),
+    yieldPercentileFloor: ratio(raw.yieldPercentileFloor, 0.5),
     exceptions: Array.isArray(raw.exceptions)
       ? raw.exceptions.map((symbol) => normalizeSymbol(symbol)).filter(Boolean)
       : []

@@ -5,7 +5,7 @@
 import { state } from './state.js';
 import { safeNumber } from './utils.js';
 import { computeHoldings } from './compute.js';
-import { getCompanyFundamentals, getCompanyReturnModel } from './fundamentals.js';
+import { getCompanyFundamentals, getCompanyReturnModel, getDividendYieldPercentile } from './fundamentals.js';
 
 function formatPct(value) {
   return `${(value * 100).toFixed(1)}%`;
@@ -83,6 +83,14 @@ export function getDisciplineAlerts() {
     const model = getCompanyReturnModel(symbol);
     if (model && model.buybackYield !== null && model.buybackYield < -config.dilutionMax) {
       alerts.push({ severity: 'soft', symbol, name, text: `净增发约 ${formatPct(Math.abs(model.buybackYield))} 市值（${model.buybackYear} 财年），正在稀释股东` });
+    }
+
+    // 估值回归信号（打工仓）：现价股息率跌破历史中位，回归可能已到位。
+    if (isIncome) {
+      const yieldRank = getDividendYieldPercentile(symbol);
+      if (yieldRank && yieldRank.percentile < config.yieldPercentileFloor) {
+        alerts.push({ severity: 'soft', symbol, name, text: `股息率 ${formatPct(yieldRank.currentYield)}，低于 ${yieldRank.years} 年中位 ${formatPct(yieldRank.medianYield)}，估值回归或已到位` });
+      }
     }
   });
 
