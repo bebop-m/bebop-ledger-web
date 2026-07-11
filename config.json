@@ -4,16 +4,6 @@
     "600519.SH"
   ],
   "dividendChangeThreshold": 0.3,
-  "discipline": {
-    "incomeTargetMax": 0.05,
-    "incomeHardMax": 0.1,
-    "debtRatioMax": 0.65,
-    "dividendCutThreshold": 0.1,
-    "fcfCoverageMin": 1.0,
-    "dilutionMax": 0.01,
-    "yieldPercentileFloor": 0.5,
-    "exceptions": []
-  },
   "staleDays": 7,
   "forceVerifyMonths": [
     3,

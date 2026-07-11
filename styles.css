@@ -5383,61 +5383,6 @@ body[data-active-page="home"] .page-stack {
   background: transparent;
 }
 
-/* ── 投资纪律警报：无违规时不渲染，红色只用于计数与硬违规 ── */
-.discipline-panel {
-  margin: 4px 0 18px;
-}
-
-.discipline-title {
-  margin: 0;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  color: var(--color-text-secondary);
-}
-
-.discipline-count {
-  margin-left: 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-primary);
-  font-variant-numeric: tabular-nums;
-}
-
-.discipline-list {
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.discipline-item {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  padding: 8px 0;
-  border-top: 1px solid var(--line);
-  font-size: 12.5px;
-  line-height: 1.5;
-}
-
-.discipline-item:last-child {
-  border-bottom: 1px solid var(--line);
-}
-
-.discipline-name {
-  flex-shrink: 0;
-  font-weight: 600;
-  color: var(--color-ink);
-}
-
-.discipline-item.is-hard .discipline-name {
-  color: var(--color-primary);
-}
-
-.discipline-text {
-  color: var(--color-text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
 /* ── 持仓结构：组合预期长期回报行 ── */
 .return-bar {
   margin-top: 14px;
@@ -7196,6 +7141,25 @@ body[data-active-page="home"] .page-stack {
 .fund-card-label { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
 
 .fund-card-label small { font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+
+/* 主指标旁的附属读数：如每股股息卡里的股息率、EPS增速卡里的 EPS 数额 */
+.fund-card-companion {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: -6px 0 12px;
+  font-size: 12px;
+}
+
+.fund-card-companion span { color: var(--color-text-secondary); }
+.fund-card-companion span small { font-size: 10px; color: var(--color-text-hint); margin-left: 4px; }
+.fund-card-companion strong {
+  font-weight: 600;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+.fund-card-companion strong small { font-size: 10px; font-weight: 500; color: var(--color-text-hint); margin-left: 3px; }
 
 .fund-card-latest { margin-left: auto; display: flex; align-items: baseline; gap: 5px; }
 

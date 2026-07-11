@@ -5,7 +5,6 @@ import {
   computeCashFlowRecords, computeTradeSummary, isCashModelActive
 } from './compute.js';
 import { renderFundamentalsPage, getFundamentalsCompanyCount, getPortfolioReturnSummary } from './fundamentals.js';
-import { getDisciplineAlerts } from './discipline.js';
 import { getReportHomeSummary, renderReportCalendarPanel } from './report-calendar.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
@@ -301,26 +300,6 @@ export function renderReturnBar() {
       <span class="return-bar-item"><small>${LABELS.income}</small><strong>${pct(summary.income)}</strong></span>
     </div>
     <p class="return-bar-note">股息 + 净回购 + EPS增速 · 市值加权${coverageNote}</p>`;
-}
-
-/* ── 投资纪律警报：安静原则，无违规时整个区域不出现 ── */
-export function renderDisciplinePanel() {
-  if (!refs.disciplinePanel) return;
-  const alerts = getDisciplineAlerts();
-  if (!alerts.length) {
-    refs.disciplinePanel.hidden = true;
-    refs.disciplinePanel.innerHTML = '';
-    return;
-  }
-  refs.disciplinePanel.hidden = false;
-  refs.disciplinePanel.innerHTML = `
-    <p class="discipline-title">需要处理<span class="discipline-count">${alerts.length}</span></p>
-    <ul class="discipline-list">
-      ${alerts.map((alert) => `<li class="discipline-item${alert.severity === 'hard' ? ' is-hard' : ''}">
-        <span class="discipline-name">${escapeHtml(alert.name)}</span>
-        <span class="discipline-text">${escapeHtml(alert.text)}</span>
-      </li>`).join('')}
-    </ul>`;
 }
 
 /* ── Sort Chips ── */
@@ -953,7 +932,7 @@ export function animateHoldingRemoval(wrapper, onComplete) {
 function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
   renderHomePage(summary); patchLegendView(cs);
   patchBucketsView(bs, summary.holdings, summary);
-  renderReturnBar(); renderDisciplinePanel();
+  renderReturnBar();
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
   renderIncomeRecords();
@@ -976,7 +955,7 @@ export function renderApp(opts = {}) {
   if (incremental) { renderDashboardIncrementally(summary, cs, bs, { animateHoldingReflow }); return; }
   renderHomePage(summary); renderLegendView(cs, { animate: animateLegend });
   renderBucketsView(bs, summary.holdings, summary, { animateDetail: animateBucketDetail });
-  renderReturnBar(); renderDisciplinePanel();
+  renderReturnBar();
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
   renderIncomeRecords();

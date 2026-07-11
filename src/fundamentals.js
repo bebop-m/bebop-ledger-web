@@ -326,7 +326,7 @@ function buildMetricCard(rows, metric) {
     </section>`;
   }
   let trendHtml = '';
-  if (previous) {
+  if (previous && !metric.noTrend) {
     // 百分比类指标看百分点差（pp）；金额类看相对变化。
     const isPercent = metric.kind === 'percent';
     const delta = isPercent
@@ -341,6 +341,16 @@ function buildMetricCard(rows, metric) {
       trendHtml = `<span class="fund-card-trend ${toneClass}">${up ? '+' : ''}${(delta * 100).toFixed(1)}${isPercent ? 'pp' : '%'} <small>同比</small></span>`;
     }
   }
+  let companionHtml = '';
+  if (metric.companion) {
+    const { latest: companionLatest } = getLatestPair(rows, metric.companion.key);
+    if (companionLatest) {
+      companionHtml = `<div class="fund-card-companion">
+        <span>${escapeHtml(metric.companion.label)}${metric.companion.hint ? ` <small>${escapeHtml(metric.companion.hint)}</small>` : ''}</span>
+        <strong>${escapeHtml(formatMetricValue(companionLatest.value, metric.companion.kind))}${companionLatest.year !== latest.year ? ` <small>${companionLatest.year}</small>` : ''}</strong>
+      </div>`;
+    }
+  }
   const chart = buildMetricChartSvg(rows, metric);
   return `<section class="fund-card">
     <header class="fund-card-head">
@@ -348,6 +358,7 @@ function buildMetricCard(rows, metric) {
       <span class="fund-card-latest"><strong>${escapeHtml(formatMetricValue(latest.value, metric.kind))}</strong><small>${latest.year}</small></span>
       ${trendHtml}
     </header>
+    ${companionHtml}
     ${chart || '<p class="fund-card-empty">数据点不足，暂不画线</p>'}
     <div class="fund-chart-years">${rows.map((row) => `<span>${String(row.year).slice(2)}</span>`).join('')}</div>
   </section>`;
@@ -379,11 +390,15 @@ function buildCompanyMetrics(company) {
     .sort((a, b) => a.year - b.year), currentYear);
   // 当前年份的股息只是「至今」累计，进线图会误导趋势判断，只在表格里展示。
   const rows = allRows.filter((row) => row.year < currentYear);
+  // companion：主指标之外的同框架附属读数（如每股股息旁边的股息率）。
   const metrics = [
-    { key: 'dividendYield', label: '股息率', unit: '常规派息 / 当年均价', kind: 'percent' },
+    { key: 'dividendPerShare', label: '每股股息', unit: company.currency, kind: 'money',
+      companion: { key: 'dividendYield', label: '股息率', hint: '常规派息 ÷ 当年均价', kind: 'percent' } },
     { key: 'payoutRatio', label: '分红率', unit: '股息 / 当期净利', kind: 'percent' },
     { key: 'debtRatio', label: '负债率', unit: '总负债 / 总资产', kind: 'percent', neutralTrend: true },
-    { key: 'epsGrowth', label: 'EPS增速', unit: '同比', kind: 'percent' }
+    // 增速本身就是同比，再叠一个「同比的同比」没有意义，关掉趋势角标。
+    { key: 'epsGrowth', label: 'EPS增速', unit: '同比', kind: 'percent', noTrend: true,
+      companion: { key: 'eps', label: 'EPS', hint: company.statementCurrency || company.currency, kind: 'money' } }
   ];
   return { rows, allRows, metrics, currentYear };
 }

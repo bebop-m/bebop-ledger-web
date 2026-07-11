@@ -43,28 +43,6 @@ export function applyDividendOverridePayload(payload) {
 export function applyClientConfigPayload(payload) {
   if (!payload || typeof payload !== 'object') return;
   setStaleDays(normalizeStaleDays(payload.staleDays, DEFAULT_STALE_DAYS));
-  state.discipline = normalizeDisciplineConfig(payload.discipline);
-}
-
-/* 纪律规则：config.json 一次性配置，前端只读。缺失或非法时返回 null（不做任何检查）。 */
-function normalizeDisciplineConfig(raw) {
-  if (!raw || typeof raw !== 'object') return null;
-  const ratio = (value, fallback) => {
-    const parsed = safeNumber(value, fallback);
-    return parsed > 0 && parsed <= 1 ? parsed : fallback;
-  };
-  return {
-    incomeTargetMax: ratio(raw.incomeTargetMax, 0.05),
-    incomeHardMax: ratio(raw.incomeHardMax, 0.1),
-    debtRatioMax: ratio(raw.debtRatioMax, 0.65),
-    dividendCutThreshold: ratio(raw.dividendCutThreshold, 0.1),
-    fcfCoverageMin: Math.max(0, safeNumber(raw.fcfCoverageMin, 1)),
-    dilutionMax: ratio(raw.dilutionMax, 0.01),
-    yieldPercentileFloor: ratio(raw.yieldPercentileFloor, 0.5),
-    exceptions: Array.isArray(raw.exceptions)
-      ? raw.exceptions.map((symbol) => normalizeSymbol(symbol)).filter(Boolean)
-      : []
-  };
 }
 
 export async function loadClientConfigSnapshot() {
