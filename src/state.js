@@ -43,7 +43,8 @@ export const state = {
   syncing: false,
   cloudSyncing: false,
   activeBucketKey: null,
-  sortMenuOpen: false
+  sortMenuOpen: false,
+  discipline: null
 };
 
 /* ── Shared mutable state across modules ── */
@@ -101,6 +102,7 @@ export const refs = {
   legendToggle: document.getElementById('legendToggle'),
   bucketTrack: document.getElementById('bucketTrack'),
   holdingsReturnBar: document.getElementById('holdingsReturnBar'),
+  disciplinePanel: document.getElementById('disciplinePanel'),
   marketTimestamp: document.getElementById('marketTimestamp'),
   refreshButton: document.getElementById('refreshButton'),
   homePullIndicator: document.getElementById('homePullIndicator'),

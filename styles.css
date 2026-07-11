@@ -5383,6 +5383,61 @@ body[data-active-page="home"] .page-stack {
   background: transparent;
 }
 
+/* ── 投资纪律警报：无违规时不渲染，红色只用于计数与硬违规 ── */
+.discipline-panel {
+  margin: 4px 0 18px;
+}
+
+.discipline-title {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+
+.discipline-count {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.discipline-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.discipline-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.discipline-item:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.discipline-name {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.discipline-item.is-hard .discipline-name {
+  color: var(--color-primary);
+}
+
+.discipline-text {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── 持仓结构：组合预期长期回报行 ── */
 .return-bar {
   margin-top: 14px;
