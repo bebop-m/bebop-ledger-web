@@ -6850,9 +6850,16 @@ body[data-active-page="home"] .page-stack {
 .yh-removed-item { font-variant-numeric: tabular-nums; }
 
 /* ── 公司基本面页 ── */
-.fundamentals-content { display: grid; gap: 12px; }
+.fundamentals-content { display: grid; gap: 0; }
 
-.fund-head-panel { padding: 14px 16px; }
+.fund-head-panel {
+  margin: 0;
+  padding: 18px 0 22px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
 
 /* 公司名即切换入口：点开半屏选择列表 */
 .fund-company-trigger {
@@ -6872,16 +6879,18 @@ body[data-active-page="home"] .page-stack {
 
 .fund-company-count {
   font-size: 10.5px;
-  font-weight: 700;
+  font-weight: 560;
   color: var(--muted);
-  border: 1px solid var(--color-hairline);
-  padding: 1px 5px;
-  margin-top: 2px;
+  border: 0;
+  padding: 0;
+  margin-top: 1px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.fund-company-name { margin: 0; font-size: 18px; font-weight: 800; color: var(--color-ink); }
+.fund-company-count::before { content: "\00b7 "; }
+
+.fund-company-name { margin: 0; font-size: 19px; font-weight: 700; color: var(--color-ink-strong); }
 
 .fund-company-code { margin: 4px 0 0; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
@@ -6890,32 +6899,35 @@ body[data-active-page="home"] .page-stack {
   padding-top: 10px;
   border-top: 1px solid var(--line);
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--color-ink);
 }
 
-.fund-card-grid { display: grid; gap: 12px; }
+.fund-card-grid { display: grid; gap: 0; }
 
 .fund-card {
-  border: 1px solid var(--color-hairline);
-  padding: 12px 14px 10px;
-  background: #ffffff;
+  border: 0;
+  border-top: 1px solid var(--color-hairline);
+  border-radius: 0;
+  padding: 20px 0 18px;
+  background: transparent;
+  box-shadow: none;
 }
 
 .fund-card-head {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
-.fund-card-label { font-size: 12px; font-weight: 800; color: var(--color-ink); }
+.fund-card-label { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
 
 .fund-card-label small { font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 4px; }
 
 .fund-card-latest { margin-left: auto; display: flex; align-items: baseline; gap: 5px; }
 
-.fund-card-latest strong { font-size: 15px; font-weight: 800; color: var(--color-ink); font-variant-numeric: tabular-nums; }
+.fund-card-latest strong { font-size: 16px; font-weight: 700; color: var(--color-ink-strong); font-variant-numeric: tabular-nums; }
 
 .fund-card-latest small { font-size: 10px; color: var(--muted); }
 
@@ -6932,23 +6944,23 @@ body[data-active-page="home"] .page-stack {
 .fund-chart-svg { display: block; width: 100%; height: auto; overflow: visible; }
 
 .fund-chart-zero {
-  stroke: #e1e7ef;
-  stroke-width: 1.2;
-  stroke-dasharray: 5 6;
+  stroke: var(--color-hairline);
+  stroke-width: 1;
+  stroke-dasharray: 3 7;
 }
 
 .fund-chart-series polyline {
   fill: none;
   stroke: var(--color-ink);
-  stroke-width: 2.4;
+  stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 .fund-chart-series circle {
-  fill: #ffffff;
+  fill: var(--color-bg);
   stroke: var(--color-ink);
-  stroke-width: 2.2;
+  stroke-width: 1.6;
 }
 
 .fund-chart-labels text {
@@ -6970,9 +6982,9 @@ body[data-active-page="home"] .page-stack {
 }
 
 .fund-table {
-  border: 1px solid var(--color-hairline);
-  background: #ffffff;
-  padding: 4px 14px;
+  border: 0;
+  background: transparent;
+  padding: 4px 0;
 }
 
 .fund-table-row {
@@ -7117,7 +7129,8 @@ html, body { overscroll-behavior-y: contain; }
 .modal-field-warning { margin: 0; color: #a76720; font-size: 11px; font-weight: 700; }
 
 /* ── 收益趋势与基本面图表统一 ── */
-.income-trend-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.income-trend-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; }
+.income-trend-card { padding: 18px 0 20px; }
 .income-trend-card .income-trend-svg { display: block; width: 100%; height: auto; overflow: visible; }
 .income-trend-labels text { fill: var(--muted); font-size: 11px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .income-trend-labels text.is-latest { fill: var(--color-ink); font-weight: 800; }
@@ -7132,9 +7145,12 @@ html, body { touch-action: manipulation; }
 
 /* ── 基本面页重排：折叠面板 / 更多 chip / 下场财报行 ── */
 .fund-fold {
-  border: 1px solid var(--color-hairline);
-  background: #ffffff;
-  padding: 0 14px;
+  border: 0;
+  border-top: 1px solid var(--color-hairline);
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
 }
 
 .fund-fold summary {
@@ -7149,7 +7165,7 @@ html, body { touch-action: manipulation; }
 
 .fund-fold summary::-webkit-details-marker { display: none; }
 
-.fund-fold summary span { font-size: 12px; font-weight: 800; color: var(--color-ink); }
+.fund-fold summary span { font-size: 12px; font-weight: 650; color: var(--color-ink); }
 
 .fund-fold summary small { font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
