@@ -672,6 +672,12 @@ function getIncomeYearTitleCell(row) {
 function getIncomeYearActionCell(row) {
   const label = row.hasManualBackfill ? '修正年度数据' : '填写年度数据';
   return `<div class="income-year-action-cell" data-label="操作">
+    <button class="income-year-action-button" type="button" data-year-annals="${row.year}" aria-label="查看 ${row.year} 年鉴" title="查看 ${row.year} 年鉴">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 4.5h9.5A2.5 2.5 0 0 1 18 7v12.5H8A2 2 0 0 1 6 17.5V4.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>
+        <path d="M6 17.5A2 2 0 0 1 8 15.5h10M9.5 8.5h5M9.5 11.5h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+      </svg>
+    </button>
     <button class="income-year-action-button${row.hasManualBackfill ? ' is-filled' : ''}" type="button" data-income-manual-year="${row.year}" aria-label="${label} ${row.year}" title="${label}">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M5 19h4.2L18.4 9.8a2 2 0 0 0 0-2.8L17 5.6a2 2 0 0 0-2.8 0L5 14.8V19Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>

@@ -103,6 +103,12 @@ refs.incomeYearList.addEventListener('click', (event) => {
     if (year) openModal('yearHoldings', { year });
     return;
   }
+  const annalsButton = event.target.closest('[data-year-annals]');
+  if (annalsButton) {
+    const year = Math.floor(safeNumber(annalsButton.dataset.yearAnnals, 0));
+    if (year) openModal('yearAnnals', { year });
+    return;
+  }
   const btn = event.target.closest('[data-income-manual-year]');
   if (!btn) return;
   const year = Math.floor(safeNumber(btn.dataset.incomeManualYear, 0));

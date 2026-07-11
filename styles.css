@@ -6949,6 +6949,115 @@ body[data-active-page="home"] .page-stack {
 .yh-removed-label { font-weight: 700; color: var(--color-text-secondary); }
 .yh-removed-item { font-variant-numeric: tabular-nums; }
 
+/* ── 年度年鉴弹窗 ── */
+.annals-body { display: grid; gap: 0; }
+
+.annals-live {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.08em;
+}
+
+.annals-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.annals-metric { display: grid; gap: 2px; min-width: 0; }
+.annals-metric small { font-size: 10.5px; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.annals-metric strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.annals-block { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.annals-block:last-child { border-bottom: 0; }
+
+.annals-block-title {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+
+.annals-block-count {
+  margin-left: 6px;
+  font-weight: 600;
+  color: var(--color-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.annals-attr-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 12.5px;
+}
+
+.annals-attr-row span { color: var(--color-text-secondary); }
+.annals-attr-row strong { font-weight: 600; color: var(--color-ink); font-variant-numeric: tabular-nums; }
+
+.annals-attr-sub {
+  display: grid;
+  gap: 2px;
+  padding: 4px 0 2px;
+  font-size: 11px;
+  color: var(--color-text-hint);
+}
+
+.annals-attr-sub strong { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.annals-note {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--color-text-hint);
+}
+
+.annals-empty { margin: 0; font-size: 12.5px; color: var(--color-text-secondary); }
+
+.annals-trade-row {
+  display: grid;
+  grid-template-columns: 44px 34px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: baseline;
+  padding: 5px 0;
+  font-size: 12.5px;
+}
+
+.annals-trade-date { color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+.annals-trade-side { font-size: 11px; font-weight: 600; }
+.annals-trade-side.is-core { color: var(--color-ink); }
+.annals-trade-side.is-income { color: var(--color-text-secondary); }
+.annals-trade-name { color: var(--color-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.annals-trade-value { color: var(--color-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.annals-event-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 0;
+  font-size: 12.5px;
+}
+
+.annals-event-name { flex-shrink: 0; font-weight: 600; color: var(--color-ink); }
+.annals-event-text { color: var(--color-text-secondary); }
+
+/* 盈亏语义色（A股习惯：涨红跌绿），限年鉴弹窗内 */
+.annals-body .is-gain { color: var(--color-primary); }
+.annals-body .is-loss { color: var(--color-loss); }
+.annals-body .is-flat { color: var(--color-ink); }
+
 /* ── 公司基本面页 ── */
 .fundamentals-content { display: grid; gap: 0; }
 
