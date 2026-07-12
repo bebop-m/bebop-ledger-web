@@ -12,7 +12,7 @@ const stateModule = await import('../src/state.js');
 const computeModule = await import('../src/compute.js');
 const revenueModule = await import('../src/revenue.js');
 const { state, applySnapshot, invalidateComputeCache } = stateModule;
-const { computeDividendCalendar, computeIncomeSummary } = computeModule;
+const { computeCashBalance, computeDividendCalendar, computeIncomeSummary } = computeModule;
 const { settleRevenueData } = revenueModule;
 
 function applyTestSnapshot(overrides = {}) {
@@ -92,6 +92,42 @@ test('late official pay date patches automatic ledger and due remains in project
   state.quotes['TEST.HK'].dividends[0].payDate = '2026-07-12';
   settleRevenueData(new Date(2026, 6, 10));
   assert.equal(state.dividendLedger[0].payDate, '2026-07-09');
+});
+
+test('manual dividend edits do not become cash until explicitly confirmed', () => {
+  applyTestSnapshot({
+    openingDate: '2026-01-01',
+    openingCashCny: 1000,
+    dividendLedger: [{
+      id: 'div_manual',
+      sourceId: 'TEST.HK|2026-06-02|1',
+      symbol: 'TEST.HK',
+      exDate: '2026-06-02',
+      payDate: '2026-07-08',
+      receivedDate: '',
+      amountPerShare: 1,
+      currency: 'HKD',
+      shares: 10,
+      fxRate: 1,
+      taxRate: 0,
+      grossCny: 10,
+      netCny: 10,
+      bucket: 'core',
+      receiptStatus: 'due',
+      confidence: 'manual',
+      confirmed: false
+    }]
+  });
+
+  assert.equal(computeCashBalance(), 1000);
+  let item = computeDividendCalendar('2026-07-10').allDetails.find((entry) => entry.id === 'div_manual');
+  assert.equal(item.status, 'due');
+
+  state.dividendLedger[0].confirmed = true;
+  state.dividendLedger[0].receivedDate = '2026-07-08';
+  assert.equal(computeCashBalance(), 1010);
+  item = computeDividendCalendar('2026-07-10').allDetails.find((entry) => entry.id === 'div_manual');
+  assert.equal(item.status, 'received');
 });
 
 test('an all-cash year overwrites the current holdings snapshot with an empty list', () => {

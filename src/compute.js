@@ -51,7 +51,7 @@ export function computeCashBalance() {
     cash += trade.side === 'sell' ? (value - fee) : -(value + fee);
   });
   state.dividendLedger.forEach((entry) => {
-    const received = entry && (entry.confirmed === true || entry.confidence === 'manual');
+    const received = entry && entry.confirmed === true;
     if (!received) return;
     const payDate = getLedgerCalendarDate(entry).date || (entry && entry.exDate);
     if (isOnOrAfterOpening(payDate)) cash += getLedgerNetCny(entry);
@@ -224,9 +224,9 @@ function buildLedgerDividendEntry(entry, year, todayLabel) {
   const payParts = getDateParts(effectivePay.date) || exParts;
   if (payParts.year !== year) return null;
   const quote = inferQuote(entry.symbol);
-  // 「已到账」只认用户明确处理过的条目：标记已到账(confirmed) 或 修改过实收金额(confidence==='manual')。
-  // 仅仅预计到账日已过、但用户没确认也没改金额的，不算已到账，归为待确认(due)。
-  const isReceived = entry.confirmed === true || entry.confidence === 'manual';
+  // 「已到账」只认用户明确勾选确认的条目。手工修改金额或日期并不代表已经到账。
+  // 预计到账日已过但尚未确认的，归为待确认(due)。
+  const isReceived = entry.confirmed === true;
   const isDue = !isReceived && payParts.label <= todayLabel;
   const netCny = getLedgerNetCny(entry);
   return {
