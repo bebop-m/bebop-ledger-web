@@ -120,12 +120,16 @@ test('manual dividend edits do not become cash until explicitly confirmed', () =
   });
 
   assert.equal(computeCashBalance(), 1000);
+  let income = computeIncomeSummary('2026-07-10').rows.find((row) => row.year === 2026);
+  assert.equal(income.dividendCny, 0);
   let item = computeDividendCalendar('2026-07-10').allDetails.find((entry) => entry.id === 'div_manual');
   assert.equal(item.status, 'due');
 
   state.dividendLedger[0].confirmed = true;
   state.dividendLedger[0].receivedDate = '2026-07-08';
   assert.equal(computeCashBalance(), 1010);
+  income = computeIncomeSummary('2026-07-10').rows.find((row) => row.year === 2026);
+  assert.equal(income.dividendCny, 10);
   item = computeDividendCalendar('2026-07-10').allDetails.find((entry) => entry.id === 'div_manual');
   assert.equal(item.status, 'received');
 });

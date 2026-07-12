@@ -5,6 +5,7 @@ import {
   computeCashFlowRecords, computeTradeSummary, isCashModelActive
 } from './compute.js';
 import { renderFundamentalsPage, getFundamentalsCompanyCount, getPortfolioReturnSummary } from './fundamentals.js';
+import { getPortfolioDiagnostics } from './diagnostics.js';
 import { getReportHomeSummary, renderReportCalendarPanel } from './report-calendar.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
@@ -280,7 +281,7 @@ export function patchBucketsView(segments, holdings, summary) {
   root.appendChild(dc);
 }
 
-/* ── 组合预期长期回报：持仓结构面板顶部的一行等式结论 ── */
+/* ── 组合历史经营回报参考：持仓结构面板顶部的一行结论 ── */
 export function renderReturnBar() {
   if (!refs.holdingsReturnBar) return;
   const summary = getPortfolioReturnSummary();
@@ -295,11 +296,20 @@ export function renderReturnBar() {
   refs.holdingsReturnBar.hidden = false;
   refs.holdingsReturnBar.innerHTML = `
     <div class="return-bar-row">
-      <span class="return-bar-item return-bar-item--lead"><small>预期长期回报</small><strong>${pct(summary.all)}</strong></span>
+      <span class="return-bar-item return-bar-item--lead"><small>经营回报参考</small><strong>${pct(summary.all)}</strong></span>
       <span class="return-bar-item"><small>${LABELS.core}</small><strong>${pct(summary.core)}</strong></span>
       <span class="return-bar-item"><small>${LABELS.income}</small><strong>${pct(summary.income)}</strong></span>
     </div>
-    <p class="return-bar-note">股息 + 净回购 + EPS增速 · 市值加权${coverageNote}</p>`;
+    <p class="return-bar-note">历史经营口径 · 排除低置信度 · 市值加权${coverageNote}</p>`;
+}
+
+export function renderDiagnosticsButton() {
+  if (!refs.diagnosticsButton) return;
+  const model = getPortfolioDiagnostics();
+  const count = model.actionableCount;
+  refs.diagnosticsButton.innerHTML = `诊断${count > 0 ? ` <strong>${count}</strong>` : ''}`;
+  refs.diagnosticsButton.classList.toggle('has-issues', count > 0);
+  refs.diagnosticsButton.setAttribute('aria-label', count > 0 ? `持仓诊断，${count} 项需要关注` : '持仓诊断，无需处理');
 }
 
 /* ── Sort Chips ── */
@@ -933,6 +943,7 @@ function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
   renderHomePage(summary); patchLegendView(cs);
   patchBucketsView(bs, summary.holdings, summary);
   renderReturnBar();
+  renderDiagnosticsButton();
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
   renderIncomeRecords();
@@ -956,6 +967,7 @@ export function renderApp(opts = {}) {
   renderHomePage(summary); renderLegendView(cs, { animate: animateLegend });
   renderBucketsView(bs, summary.holdings, summary, { animateDetail: animateBucketDetail });
   renderReturnBar();
+  renderDiagnosticsButton();
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
   renderIncomeRecords();

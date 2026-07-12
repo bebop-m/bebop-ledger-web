@@ -1,8 +1,8 @@
 /* ── 公司基本面：历年每股股息 / 分红率 / 负债率 / EPS ──
-   数据来自 data/fundamentals.json（scripts/update_fundamentals.py 每周抓取年报口径数据）。
+   数据来自 data/fundamentals.json（scripts/update_fundamentals.py 每日复核年报口径数据）。
    本模块自持 DOM 容器，懒加载 + localStorage 离线缓存。 */
 import { state, refs } from './state.js';
-import { safeNumber, escapeHtml, formatDateLabel, resolveFxRate } from './utils.js';
+import { safeNumber, escapeHtml, formatDateLabel } from './utils.js';
 import { computeHoldings, inferQuote } from './compute.js';
 import { FUNDAMENTALS_ENDPOINT } from './constants.js';
 import { getNextReportEvent } from './report-calendar.js';
@@ -39,7 +39,11 @@ export async function loadFundamentals(opts = {}) {
     if (!payload || payload.ok === false || !payload.companies || typeof payload.companies !== 'object') {
       throw new Error('invalid fundamentals payload');
     }
-    _data = { updatedAt: typeof payload.updatedAt === 'string' ? payload.updatedAt : '', companies: payload.companies };
+    _data = {
+      updatedAt: typeof payload.updatedAt === 'string' ? payload.updatedAt : '',
+      provider: typeof payload.provider === 'string' ? payload.provider : '',
+      companies: payload.companies
+    };
     writeCache(_data);
   } catch (error) {
     console.warn('fundamentals load failed', error);
@@ -73,6 +77,15 @@ export function getFundamentalsPickerModel() {
 
 export function getFundamentalsCompanyCount() {
   return _data ? Object.keys(_data.companies).length : 0;
+}
+
+export function getFundamentalsMeta() {
+  return {
+    updatedAt: _data && typeof _data.updatedAt === 'string' ? _data.updatedAt : '',
+    provider: _data && typeof _data.provider === 'string' ? _data.provider : '',
+    loading: _loading,
+    error: _loadError
+  };
 }
 
 /* 只读访问单家公司的基本面原始数据（纪律检查等跨页功能使用）。 */
@@ -130,11 +143,46 @@ function getGrowthStreak(rows, key) {
   return streak;
 }
 
-/* ── 预期长期回报模型：股息率 + 净回购率 + EPS 增速 ──
-   用户的投资公式：长期收益 = 股东回报%（股息+回购）+ EPS增速%。
-   股息率用最近完整年度的常规派息（剔除特别股息）÷ 现价，交易币种同口径；
-   净回购率用最近财年净回购 ÷ 当前市值（各自折 CNY 再相除）；
-   EPS 增速用最近至多 5 个完整年度的年化复合增速，两端必须为正。 */
+function getCagrModel(rows, key) {
+  const available = rows.filter((row) => isFiniteValue(row[key]) && Number(row[key]) > 0).slice(-6);
+  if (available.length < 3) return null;
+  const latest = available[available.length - 1];
+  const candidates = available.filter((row) => latest.year - row.year >= 2 && latest.year - row.year <= 5);
+  if (!candidates.length) return null;
+  const first = candidates[0];
+  const span = latest.year - first.year;
+  const cagr = Math.pow(Number(latest[key]) / Number(first[key]), 1 / span) - 1;
+  const previous = available[available.length - 2];
+  const latestChange = previous && Number(previous[key]) > 0 ? Number(latest[key]) / Number(previous[key]) - 1 : null;
+  return { cagr, span, firstYear: first.year, lastYear: latest.year, latestChange };
+}
+
+function getShareCountModel(rows) {
+  const model = getCagrModel(rows, 'sharesOutstanding');
+  if (!model) return null;
+  // 极端跳变通常是拆股或口径变化，不能当成真实回购/稀释。
+  if (!Number.isFinite(model.cagr) || Math.abs(model.cagr) > 0.5) return null;
+  return { ...model, netBuybackYield: -model.cagr };
+}
+
+function getModelConfidence(growth) {
+  if (!growth) return { level: 'low', reason: '增长历史不足三个完整年度' };
+  if (growth.span >= 5 && (growth.latestChange === null || growth.latestChange >= 0)) {
+    return { level: 'high', reason: '覆盖至少五年，最近一年未反转' };
+  }
+  if (growth.span >= 3 && (growth.latestChange === null || growth.latestChange > -0.10)) {
+    return { level: 'medium', reason: growth.latestChange < 0 ? '最近一年小幅回落' : '覆盖三个以上完整年度' };
+  }
+  if (growth.latestChange !== null && growth.latestChange <= -0.10) {
+    return { level: 'low', reason: `最近一年同比下降 ${Math.abs(growth.latestChange * 100).toFixed(1)}%` };
+  }
+  return { level: 'low', reason: '历史周期不足五年' };
+}
+
+/* ── 历史经营回报参考 ──
+   首选「股息率 + 净利润增长 + 实际股本减少率」，避免 EPS 已含回购影响后再加回购的重复计算。
+   净利润或股本缺失时退回「股息率 + EPS 增速」，此时不再单独加回购。
+   这是基于历史事实的自动参考，不包装成未来预测。 */
 export function getCompanyReturnModel(symbol) {
   const company = _data && _data.companies ? _data.companies[symbol] : null;
   if (!company || !Array.isArray(company.years)) return null;
@@ -163,49 +211,33 @@ export function getCompanyReturnModel(symbol) {
     }
   }
 
-  let buybackYield = null;
-  let buybackYear = null;
-  const buybackRows = rows.filter((row) => isFiniteValue(row.netBuyback));
-  const shareRows = rows.filter((row) => safeNumber(row.sharesOutstanding, 0) > 0);
-  if (buybackRows.length && shareRows.length) {
-    const buybackRow = buybackRows[buybackRows.length - 1];
-    const shares = safeNumber(shareRows[shareRows.length - 1].sharesOutstanding, 0);
-    const marketCapCny = shares * price * resolveFxRate(company.currency, state.rates);
-    const netBuybackCny = Number(buybackRow.netBuyback)
-      * resolveFxRate(company.statementCurrency || company.currency, state.rates);
-    if (marketCapCny > 0) {
-      buybackYield = netBuybackCny / marketCapCny;
-      buybackYear = buybackRow.year;
-    }
-  }
-  // 有财报但现金流表里没有回购/增发项 = 这家公司不回购，按 0 计入。
-  if (buybackYield === null) buybackYield = 0;
-
-  let epsCagr = null;
-  let epsSpan = 0;
-  const epsRows = rows.filter((row) => isFiniteValue(row.eps)).slice(-5);
-  if (epsRows.length >= 3) {
-    const first = Number(epsRows[0].eps);
-    const last = Number(epsRows[epsRows.length - 1].eps);
-    const span = epsRows[epsRows.length - 1].year - epsRows[0].year;
-    if (first > 0 && last > 0 && span >= 2) {
-      epsCagr = Math.pow(last / first, 1 / span) - 1;
-      epsSpan = span;
-    }
-  }
-
-  const shareholderReturn = dividendYield + buybackYield;
+  const profitGrowth = getCagrModel(rows, 'netIncome');
+  const epsGrowth = getCagrModel(rows, 'eps');
+  const shareModel = getShareCountModel(rows);
+  const canUseProfitBridge = Boolean(profitGrowth && shareModel);
+  const mode = canUseProfitBridge ? 'profitBridge' : 'epsDirect';
+  const growth = canUseProfitBridge ? profitGrowth : epsGrowth;
+  const netBuybackYield = canUseProfitBridge ? shareModel.netBuybackYield : null;
+  const confidence = getModelConfidence(growth);
+  const historicalReturn = growth
+    ? dividendYield + growth.cagr + (netBuybackYield === null ? 0 : netBuybackYield)
+    : null;
   return {
     symbol,
     dividendYield,
     dividendYear,
     specialExcluded,
-    buybackYield,
-    buybackYear,
-    epsCagr,
-    epsSpan,
-    shareholderReturn,
-    expectedReturn: epsCagr === null ? null : shareholderReturn + epsCagr
+    mode,
+    growthRate: growth ? growth.cagr : null,
+    growthSpan: growth ? growth.span : 0,
+    latestGrowth: growth ? growth.latestChange : null,
+    netBuybackYield,
+    buybackSpan: shareModel ? shareModel.span : 0,
+    confidence: confidence.level,
+    confidenceReason: confidence.reason,
+    historicalReturn,
+    // 兼容组合汇总调用；语义已经从「预期」改为历史经营回报参考。
+    expectedReturn: historicalReturn
   };
 }
 
@@ -239,7 +271,7 @@ export function getDividendYieldPercentile(symbol) {
   };
 }
 
-/* 组合加权预期长期回报：按可计算持仓的市值加权，coverage 标注覆盖比例。 */
+/* 组合加权历史经营回报：只纳入中/高置信度公司，coverage 标注覆盖比例。 */
 export function getPortfolioReturnSummary() {
   const groups = {
     all: { value: 0, covered: 0, weighted: 0 },
@@ -253,10 +285,11 @@ export function getPortfolioReturnSummary() {
     groups.all.value += value;
     groups[bucket].value += value;
     const model = getCompanyReturnModel(holding.symbol);
-    if (!model || model.expectedReturn === null) return;
+    // 低置信度历史增长不进入组合结论，避免短周期高增速支配整体结果。
+    if (!model || model.historicalReturn === null || model.confidence === 'low') return;
     [groups.all, groups[bucket]].forEach((group) => {
       group.covered += value;
-      group.weighted += model.expectedReturn * value;
+      group.weighted += model.historicalReturn * value;
     });
   });
   const rate = (group) => (group.covered > 0 ? group.weighted / group.covered : null);
@@ -432,7 +465,7 @@ function formatSignedPercent(value) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-/* 公式结论行：股息 + 净回购 + EPS增速 ≈ 预期长期回报，排版成一行等式。 */
+/* 公式结论行：自动选择净利润桥或 EPS 直接法，避免重复计算回购。 */
 function buildFormulaBlock(company) {
   const model = getCompanyReturnModel(company.symbol);
   if (!model) return '';
@@ -442,20 +475,30 @@ function buildFormulaBlock(company) {
   } else {
     notes.push('近两年无派息，股息按 0 计');
   }
-  if (model.buybackYear) notes.push(`净回购按 ${model.buybackYear} 财年 ÷ 当前市值`);
-  notes.push(model.epsCagr === null ? 'EPS 增速暂不可算（年数不足或两端为负）' : `EPS ${model.epsSpan} 年年化`);
+  if (model.mode === 'profitBridge') {
+    notes.push(`净利润 ${model.growthSpan} 年年化`);
+    notes.push(`净回购按总股本 ${model.buybackSpan} 年变化`);
+  } else {
+    notes.push(model.growthRate === null ? 'EPS 增速暂不可算' : `EPS ${model.growthSpan} 年年化，已包含回购影响`);
+  }
+  const confidenceLabel = model.confidence === 'high' ? '高' : model.confidence === 'medium' ? '中' : '低';
+  notes.push(`置信度 ${confidenceLabel}：${model.confidenceReason}`);
+  notes.push('历史参考，不是未来预测');
   const part = (label, value) => `<span class="fund-formula-part"><small>${label}</small><strong>${value === null ? '—' : formatSignedPercent(value)}</strong></span>`;
+  const bridge = model.mode === 'profitBridge'
+    ? `${part('净利润增速', model.growthRate)}
+      <span class="fund-formula-op">＋</span>
+      ${part('净回购', model.netBuybackYield)}`
+    : part('EPS增速', model.growthRate);
   return `<div class="fund-formula">
-    <p class="fund-formula-label">预期长期回报</p>
+    <p class="fund-formula-label">历史经营回报参考</p>
     <p class="fund-formula-line">
       ${part('股息', model.dividendYield)}
       <span class="fund-formula-op">＋</span>
-      ${part('净回购', model.buybackYield)}
-      <span class="fund-formula-op">＋</span>
-      ${part('EPS增速', model.epsCagr)}
+      ${bridge}
       <span class="fund-formula-result">
         <span class="fund-formula-op">≈</span>
-        <span class="fund-formula-total${model.expectedReturn === null ? ' is-empty' : ''}">${model.expectedReturn === null ? '—' : formatSignedPercent(model.expectedReturn)}</span>
+        <span class="fund-formula-total${model.historicalReturn === null ? ' is-empty' : ''}">${model.historicalReturn === null ? '—' : formatSignedPercent(model.historicalReturn)}</span>
       </span>
     </p>
     <p class="fund-formula-note">${escapeHtml(notes.join(' · '))}</p>

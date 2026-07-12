@@ -550,6 +550,8 @@ function getArchiveByYear() {
 function getDividendEntriesByYear() {
   const map = new Map();
   state.dividendLedger.forEach((entry) => {
+    // 年度「股息收入」只认明确确认到账的现金；应到账/在途仍留在股息日历预测口径。
+    if (!entry || entry.confirmed !== true) return;
     const year = getIncomeYear(getLedgerCalendarDate(entry).date || (entry && entry.exDate));
     if (!year) return;
     if (!map.has(year)) map.set(year, []);

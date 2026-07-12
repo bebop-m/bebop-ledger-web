@@ -9,6 +9,7 @@ import { renderSavedStateQuietly, buildDividendMonthDetail, formatDisplayMoney }
 import { inferQuote, isCashModelActive, computeIncomeSummary } from './compute.js';
 import { getFundamentalsPickerModel } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
+import { getPortfolioDiagnostics } from './diagnostics.js';
 
 let _keydownHandler = null;
 
@@ -149,6 +150,7 @@ function renderModal() {
   if (state.modal === 'monthDetail') { renderMonthDetailModal(); return; }
   if (state.modal === 'yearHoldings') { renderYearHoldingsModal(); return; }
   if (state.modal === 'yearAnnals') { renderYearAnnalsModal(); return; }
+  if (state.modal === 'diagnostics') { renderDiagnosticsModal(); return; }
   if (state.modal === 'fundPicker') { renderFundPickerModal(); return; }
   let title = '', note = '', fields = '';
   if (state.modal === 'quickAdd') {
@@ -275,6 +277,42 @@ function renderMonthDetailModal() {
       <div class="modal-actions">
         <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">${LABELS.cancel === '取消' ? '关闭' : LABELS.cancel}</button>
       </div>
+    </section>`;
+}
+
+function renderDiagnosticsModal() {
+  const model = getPortfolioDiagnostics();
+  const group = (title, items, className) => {
+    if (!items.length) return '';
+    return `<section class="diagnostics-group">
+      <h4>${escapeHtml(title)}<span>${items.length}</span></h4>
+      <div class="diagnostics-list">${items.map((item) => `<article class="diagnostics-item ${className}">
+        <div class="diagnostics-item-head"><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.title)}</span></div>
+        <p>${escapeHtml(item.evidence)}</p>
+        <small>${escapeHtml(item.source)}</small>
+      </article>`).join('')}</div>
+    </section>`;
+  };
+  let body = '';
+  if (!model.ready) {
+    body = '<div class="diagnostics-empty"><strong>正在读取自动基本面</strong><p>数据完成加载后会自动生成诊断。</p></div>';
+  } else if (!model.items.length) {
+    body = '<div class="diagnostics-empty is-clear"><strong>没有发现需要处理的问题</strong><p>仓位、股息和公司基本面均未触发当前规则。</p></div>';
+  } else {
+    body = [
+      group('严重', model.critical, 'is-critical'),
+      group('关注', model.attention, 'is-attention'),
+      group('数据质量', model.data, 'is-data')
+    ].join('');
+  }
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet modal-sheet--detail diagnostics-sheet" role="dialog" aria-modal="true" aria-labelledby="diagnosticsTitle">
+      <header class="diagnostics-head">
+        <div><h3 id="diagnosticsTitle">持仓诊断</h3><p>只列异常 · 全部自动计算</p></div>
+        <div class="diagnostics-head-side"><strong>${model.actionableCount}</strong><button type="button" data-modal-action="cancel" aria-label="关闭持仓诊断">×</button></div>
+      </header>
+      <div class="diagnostics-body">${body}</div>
+      <div class="modal-actions"><button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button></div>
     </section>`;
 }
 
@@ -431,7 +469,7 @@ function buildAnnalsAttribution(annals) {
 
 function buildAnnalsTrades(annals) {
   if (!annals.trades.length) {
-    return `<div class="annals-block"><p class="annals-block-title">当年交易</p><p class="annals-empty">无交易记录，持有不动。</p></div>`;
+    return `<div class="annals-block"><p class="annals-block-title">当年交易</p><p class="annals-empty">暂无交易记录，无法判断年内调仓情况。</p></div>`;
   }
   const rows = annals.trades.map((trade) => `<div class="annals-trade-row">
     <span class="annals-trade-date">${escapeHtml(trade.date.slice(5))}</span>
@@ -590,7 +628,7 @@ function saveTradeEdit() {
 }
 
 export function handleModalSave() {
-  if (state.modal === 'monthDetail' || state.modal === 'yearHoldings' || state.modal === 'yearAnnals' || state.modal === 'fundPicker') { closeModal(); return; }
+  if (state.modal === 'monthDetail' || state.modal === 'yearHoldings' || state.modal === 'yearAnnals' || state.modal === 'diagnostics' || state.modal === 'fundPicker') { closeModal(); return; }
   if (state.modal === 'quickAdd') return;
   if (state.modal === 'quantity') {
     const v = Math.max(0, safeNumber(document.getElementById('modalQuantityInput').value, 0));

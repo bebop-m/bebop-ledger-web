@@ -3,8 +3,8 @@ name: Update Fundamentals Data
 on:
   workflow_dispatch:
   schedule:
-    # 基本面数据（年报口径）变化慢，每周一早上抓一次即可（UTC；CST = UTC+8）。
-    - cron: '30 0 * * 1'
+    # 每日复核一次：新财报、股本和派息更新后，诊断最迟次日刷新（UTC；CST = UTC+8）。
+    - cron: '30 0 * * *'
 
 permissions:
   contents: write

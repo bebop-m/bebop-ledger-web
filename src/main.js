@@ -48,6 +48,7 @@ refs.importButton.addEventListener('click', () => refs.importFileInput.click());
 refs.importFileInput.addEventListener('change', handleImportFile);
 refs.legendToggle.addEventListener('click', () => { const t = refs.legendToggle.getBoundingClientRect().top; state.legendExpanded = !state.legendExpanded; saveState(); applyLegendExpandState({ preserveScroll: true, toggleTop: t }); });
 refs.refreshButton.addEventListener('click', () => { refreshMarketData({ silent: false }); });
+if (refs.diagnosticsButton) refs.diagnosticsButton.addEventListener('click', () => { openModal('diagnostics'); });
 // 现金模式下，首页「+」直接开一笔买入交易（替代旧的新增持仓）；未启用时仍是新增持仓。
 refs.addButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'add'); });
 if (refs.incomeManualButton) refs.incomeManualButton.addEventListener('click', () => { openModal('yearlyManual'); });
