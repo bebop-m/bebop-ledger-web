@@ -76,6 +76,8 @@ export const refs = {
   homeHero: document.getElementById('homeHero'),
   homeFocusCard: document.getElementById('homeFocusCard'),
   homeNavList: document.getElementById('homeNavList'),
+  v3Dock: document.getElementById('v3Dock'),
+  v3MoreMenu: document.getElementById('v3MoreMenu'),
   pageBackButtons: Array.from(document.querySelectorAll('[data-page-back]')),
   quickAddButton: document.getElementById('quickAddButton'),
   dividendCalendarYear: document.getElementById('dividendCalendarYear'),
