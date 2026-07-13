@@ -120,11 +120,6 @@
             <div class="icon-actions">
               <button id="diagnosticsButton" class="diagnostics-button" type="button" aria-label="持仓诊断">诊断</button>
               <button id="sortToggleButton" class="circle-button sort-toggle-button" type="button" aria-label="排序" aria-expanded="false"></button>
-              <div class="sort-group">
-                <button class="sort-chip" type="button" data-sort-field="marketValueCny"></button>
-                <button class="sort-chip" type="button" data-sort-field="effectiveYield"></button>
-                <button class="sort-chip" type="button" data-sort-field="netAnnualDividendCny"></button>
-              </div>
               <button
                 id="refreshButton"
                 class="circle-button"
@@ -167,9 +162,14 @@
                 </svg>
               </button>
             </div>
+            <div class="sort-group">
+              <button class="sort-chip" type="button" data-sort-field="marketValueCny"></button>
+              <button class="sort-chip" type="button" data-sort-field="effectiveYield"></button>
+              <button class="sort-chip" type="button" data-sort-field="netAnnualDividendCny"></button>
+            </div>
           </header>
 
-          <section class="panel">
+          <section class="panel holdings-structure-panel">
             <header class="panel-bar">
               <div>
                 <h2 class="panel-title">持仓结构</h2>
@@ -206,7 +206,7 @@
             </div>
           </header>
 
-          <section class="panel">
+          <section class="panel dividend-overview-panel">
             <header class="panel-bar panel-bar--spread">
               <div id="dividendFilterGroup" class="segmented-control" aria-label="股息日历筛选">
                 <button class="segment-button" type="button" data-dividend-filter="all">全部</button>
@@ -217,7 +217,7 @@
             <div id="dividendMetricGrid" class="dividend-metric-grid"></div>
           </section>
 
-          <section class="panel">
+          <section class="panel dividend-months-panel">
             <header class="panel-bar">
               <div>
                 <h2 class="panel-title">按月分布</h2>
@@ -238,7 +238,7 @@
             </div>
           </header>
 
-          <section class="panel">
+          <section class="panel income-overview-panel">
             <div id="incomeOverviewGrid" class="income-overview-grid"></div>
             <div class="income-actions-bar">
               <button id="incomeOpeningCashButton" class="income-manual-button" type="button" aria-label="期初现金">
@@ -248,7 +248,7 @@
             </div>
           </section>
 
-          <section class="panel">
+          <section class="panel income-trend-panel">
             <header class="panel-bar">
               <div>
                 <h2 class="panel-title">历年趋势</h2>
@@ -257,7 +257,7 @@
             <div id="incomeTrend" class="income-trend"></div>
           </section>
 
-          <section class="panel">
+          <section class="panel income-years-panel">
             <header class="panel-bar">
               <div>
                 <h2 class="panel-title">年度明细</h2>
@@ -297,7 +297,7 @@
             </div>
           </header>
 
-          <section class="panel">
+          <section class="panel records-ledger-panel">
             <div id="incomeRecordsList" class="income-records"></div>
           </section>
         </div>

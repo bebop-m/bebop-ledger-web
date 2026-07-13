@@ -435,7 +435,7 @@ function getDividendProgressPercent(value, total) {
   return (ratio * 100).toFixed(1);
 }
 
-// 三栏排版式指标：竖发丝线分隔，无卡片框。
+// 股息页先给全年预计一个明确结论，再把已到账/待到账作为进度口径下沉。
 function getDividendMetricColumn(label, value, sub = '', tone = '') {
   return `<div class="dm-col">
     <span class="dm-label">${escapeHtml(label)}</span>
@@ -446,13 +446,20 @@ function getDividendMetricColumn(label, value, sub = '', tone = '') {
 
 function renderDividendMetricGrid(model) {
   const m = model.metrics;
-  refs.dividendMetricGrid.innerHTML = [
-    getDividendMetricColumn(LABELS.dividendReceived, m.receivedCny, getDividendPercentSub(m.receivedCny, m.projectedCny, 'received'), 'received'),
-    '<div class="dm-divider" aria-hidden="true"></div>',
-    getDividendMetricColumn(LABELS.dividendUpcoming, m.upcomingCny, getDividendPercentSub(m.upcomingCny, m.projectedCny, 'upcoming'), 'upcoming'),
-    '<div class="dm-divider" aria-hidden="true"></div>',
-    getDividendMetricColumn(LABELS.dividendProjected, m.projectedCny, formatYoyBadge(m.projectedYoy), 'projected')
-  ].join('');
+  const receivedProgress = getDividendProgressPercent(m.receivedCny, m.projectedCny);
+  refs.dividendMetricGrid.innerHTML = `
+    <div class="dividend-ledger-hero">
+      <span class="dm-label">${escapeHtml(LABELS.dividendProjected)}</span>
+      <strong class="dm-value is-projected">${escapeHtml(formatDisplayMoney(m.projectedCny, 'CNY'))}</strong>
+      <span class="dm-sub">${formatYoyBadge(m.projectedYoy)}</span>
+      <div class="dividend-ledger-rule" aria-label="全年股息到账进度 ${receivedProgress}%">
+        <i style="width:${receivedProgress}%"></i><span>${receivedProgress}% RECEIVED</span>
+      </div>
+    </div>
+    <div class="dividend-ledger-split">
+      ${getDividendMetricColumn(LABELS.dividendReceived, m.receivedCny, getDividendPercentSub(m.receivedCny, m.projectedCny, 'received'), 'received')}
+      ${getDividendMetricColumn(LABELS.dividendUpcoming, m.upcomingCny, getDividendPercentSub(m.upcomingCny, m.projectedCny, 'upcoming'), 'upcoming')}
+    </div>`;
 }
 
 // 月份状态摘要：只列非零项，空月显示破折号，压低视觉噪音。
@@ -586,7 +593,8 @@ function formatIncomeRate(value) {
   return `${sign}${formatPercent(Math.abs(numeric))}`;
 }
 
-// 主窗口：今年至今的绝对资金收益 + 收益率，附年初净值 / 当前净值 / 今年净注入口径。
+// 主窗口只显示一个结论（当年资金收益）和一个比较值（收益率）。
+// 年初净值、净注入和现金余额属于计算口径，折叠下沉，避免首屏同时争夺注意力。
 function renderIncomeOverview(model) {
   const row = model.current;
   if (!row || !row.capitalReturnAvailable) {
@@ -602,16 +610,22 @@ function renderIncomeOverview(model) {
   refs.incomeOverviewGrid.innerHTML = `
     <article class="income-hero">
       <div class="income-hero-head">
-        <span class="income-hero-label">当年收益</span>
-        <span class="income-hero-rate income-amount ${rateTone}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</span>
+        <span class="income-hero-label">${model.currentYear} · 当年资金收益</span>
+        <span class="income-hero-period">YEAR TO DATE</span>
       </div>
       <strong class="income-hero-value income-amount ${valueTone}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</strong>
-      <div class="income-hero-context">
-        <span><small>年初净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearStartNetCny))}</strong></span>
+      <div class="income-hero-result">
+        <span><small>收益率</small><strong class="${rateTone}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</strong></span>
         <span><small>当前净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</strong></span>
-        <span><small>今年净注入</small><strong class="income-amount">${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</strong></span>
-        ${cashCell}
       </div>
+      <details class="income-basis">
+        <summary>查看计算口径</summary>
+        <div class="income-hero-context">
+          <span><small>年初净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearStartNetCny))}</strong></span>
+          <span><small>今年净注入</small><strong class="income-amount">${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</strong></span>
+          ${cashCell}
+        </div>
+      </details>
     </article>`;
 }
 
