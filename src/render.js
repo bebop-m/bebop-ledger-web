@@ -357,16 +357,6 @@ export function renderPageChrome() {
   });
   // CSS 钩子：记一笔胶囊只在首页出现，子页样式也按此区分。
   document.body.dataset.activePage = activePage;
-  if (refs.v3Dock) {
-    refs.v3Dock.querySelectorAll('[data-page-nav]').forEach((button) => {
-      const active = button.dataset.pageNav === activePage;
-      button.classList.toggle('is-active', active);
-      if (active) button.setAttribute('aria-current', 'page');
-      else button.removeAttribute('aria-current');
-    });
-    const moreButton = refs.v3Dock.querySelector('[data-v3-action="more"]');
-    if (moreButton) moreButton.classList.toggle('is-active', ['income', 'fundamentals', 'records'].includes(activePage));
-  }
 }
 
 /* ── Dividend Calendar ── */

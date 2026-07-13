@@ -60,30 +60,6 @@ refs.homeNavList.addEventListener('click', (event) => {
   if (btn) navigateTo(btn.dataset.pageNav);
 });
 
-if (refs.v3Dock) refs.v3Dock.addEventListener('click', (event) => {
-  const navButton = event.target.closest('[data-page-nav]');
-  if (navButton) { navigateTo(navButton.dataset.pageNav); return; }
-  const actionButton = event.target.closest('[data-v3-action]');
-  if (!actionButton) return;
-  if (actionButton.dataset.v3Action === 'quick-add') {
-    if (refs.v3MoreMenu) refs.v3MoreMenu.hidden = true;
-    openModal(isCashModelActive() ? 'trade' : 'quickAdd');
-    return;
-  }
-  if (actionButton.dataset.v3Action === 'more' && refs.v3MoreMenu) {
-    const opening = refs.v3MoreMenu.hidden;
-    refs.v3MoreMenu.hidden = !opening;
-    actionButton.setAttribute('aria-expanded', opening ? 'true' : 'false');
-  }
-});
-
-if (refs.v3MoreMenu) refs.v3MoreMenu.addEventListener('click', (event) => {
-  const button = event.target.closest('[data-page-nav]');
-  if (!button) return;
-  refs.v3MoreMenu.hidden = true;
-  navigateTo(button.dataset.pageNav);
-});
-
 refs.pageBackButtons.forEach((button) => {
   button.addEventListener('click', () => navigateTo('home'));
 });
@@ -172,11 +148,6 @@ refs.sortChips.forEach((chip) => {
 document.addEventListener('click', (event) => {
   if (state.sortMenuOpen && !event.target.closest('.sort-group') && !event.target.closest('.sort-toggle-button')) { state.sortMenuOpen = false; renderSortChips(); }
   if (mutable.activeDividendTooltipButton && event.target.closest('.dividend-status-button--value') !== mutable.activeDividendTooltipButton) closeActiveDividendTooltip(true);
-  if (refs.v3MoreMenu && !refs.v3MoreMenu.hidden && !event.target.closest('#v3MoreMenu') && !event.target.closest('[data-v3-action="more"]')) {
-    refs.v3MoreMenu.hidden = true;
-    const moreButton = refs.v3Dock && refs.v3Dock.querySelector('[data-v3-action="more"]');
-    if (moreButton) moreButton.setAttribute('aria-expanded', 'false');
-  }
 });
 
 refs.bucketTrack.addEventListener('click', (event) => {
