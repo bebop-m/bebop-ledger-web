@@ -7643,3 +7643,430 @@ html, body { touch-action: manipulation; }
 }
 
 .fund-company-report strong { color: var(--color-ink); font-variant-numeric: tabular-nums; }
+
+/* ============================================================
+   Swiss Ledger home — mineral paper, ink numerals, iris cashflow.
+   Scope deliberately stays on the home page for this first pass.
+   ============================================================ */
+
+body[data-active-page="home"] {
+  --home-paper: #efefe9;
+  --home-surface: #fafaf6;
+  --home-ink: #181916;
+  --home-muted: #73766f;
+  --home-soft: #a4a69f;
+  --home-line: rgba(24, 25, 22, 0.16);
+  --home-line-strong: rgba(24, 25, 22, 0.74);
+  --home-iris: #6958e8;
+  --home-iris-dark: #44379b;
+  --home-iris-soft: #e5e1ff;
+  padding: max(16px, env(safe-area-inset-top)) 20px calc(32px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 82% -8%, rgba(255, 255, 255, 0.72), transparent 30%),
+    var(--home-paper);
+  color: var(--home-ink);
+}
+
+body[data-active-page="home"] .app-shell {
+  width: min(100%, 390px);
+}
+
+body[data-active-page="home"] .home-top {
+  min-height: 52px;
+  padding: 12px 0 15px;
+  border-bottom: 1.5px solid var(--home-ink);
+}
+
+body[data-active-page="home"] .home-brand {
+  color: var(--home-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+  font-size: 20px;
+  font-weight: 760;
+  line-height: 1;
+  letter-spacing: -0.055em;
+  text-transform: lowercase;
+}
+
+body[data-active-page="home"] .home-brand small {
+  margin-left: 5px;
+  color: var(--home-ink);
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", monospace;
+  font-size: 8px;
+  font-weight: 720;
+  letter-spacing: 0.12em;
+  vertical-align: 5px;
+}
+
+body[data-active-page="home"] .home-top-actions {
+  gap: 12px;
+}
+
+body[data-active-page="home"] .summary-action-button {
+  color: var(--home-ink);
+}
+
+body[data-active-page="home"] .summary-action-button:active {
+  transform: scale(0.94);
+  color: var(--home-iris);
+}
+
+body[data-active-page="home"] .summary-action-button:focus-visible,
+body[data-active-page="home"] .home-month:focus-visible,
+body[data-active-page="home"] .home-nav-item:focus-visible,
+body[data-active-page="home"] .quick-add-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(105, 88, 232, 0.2);
+}
+
+body[data-active-page="home"] .home-hero {
+  padding: 18px 0 17px;
+}
+
+body[data-active-page="home"] .home-hero-label-row {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+body[data-active-page="home"] .home-hero .ghost-minus {
+  width: 22px;
+  height: 22px;
+  margin-left: auto;
+  border: 1px solid var(--home-line);
+  border-radius: 50%;
+  color: var(--home-muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+body[data-active-page="home"] .home-hero .ghost-minus:active {
+  border-color: var(--home-iris);
+  background: var(--home-iris-soft);
+  color: var(--home-iris-dark);
+  transform: scale(0.94);
+}
+
+body[data-active-page="home"] .home-hero-label,
+body[data-active-page="home"] .section-label {
+  color: var(--home-muted);
+  font-size: 9px;
+  font-weight: 720;
+  letter-spacing: 0.14em;
+}
+
+body[data-active-page="home"] .home-hero-value {
+  color: var(--home-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+  font-size: 39px;
+  font-weight: 690;
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+body[data-active-page="home"] .home-hero-pnl {
+  margin-top: 7px;
+  font-size: 12px;
+  font-weight: 610;
+}
+
+body[data-active-page="home"] .home-hero-fx {
+  margin-top: 5px;
+  color: var(--home-muted);
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", monospace;
+  font-size: 9px;
+  font-weight: 560;
+}
+
+body[data-active-page="home"] .home-metrics {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--home-line-strong);
+}
+
+body[data-active-page="home"] .home-ledger-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+body[data-active-page="home"] .home-ledger-label {
+  color: var(--home-muted);
+  font-size: 9px;
+  font-weight: 730;
+  line-height: 1.2;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+body[data-active-page="home"] .home-ledger-period {
+  color: var(--home-muted);
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", monospace;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-active-page="home"] .home-cashflow {
+  padding: 17px 0 13px;
+}
+
+body[data-active-page="home"] .home-cashflow-value {
+  display: block;
+  margin-top: 11px;
+  color: var(--home-iris);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+body[data-active-page="home"] .home-cashflow-rule {
+  position: relative;
+  height: 16px;
+  margin-top: 13px;
+  border-top: 2px solid var(--home-iris);
+}
+
+body[data-active-page="home"] .home-cashflow-rule i {
+  position: absolute;
+  top: -5px;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--home-iris);
+  border-radius: 50%;
+  background: var(--home-paper);
+}
+
+body[data-active-page="home"] .home-cashflow-rule span {
+  position: absolute;
+  top: 5px;
+  right: 0;
+  color: var(--home-iris-dark);
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", monospace;
+  font-size: 8px;
+  font-weight: 730;
+  letter-spacing: 0.1em;
+}
+
+body[data-active-page="home"] .home-ledger-note {
+  margin: 3px 0 0;
+  color: var(--home-muted);
+  font-size: 10px;
+  font-weight: 540;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-active-page="home"] .home-next-arrival {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 18px;
+  min-height: 82px;
+  padding: 14px 0 13px;
+  border-top: 1px solid var(--home-line-strong);
+}
+
+body[data-active-page="home"] .home-next-date {
+  display: block;
+  margin-top: 10px;
+  color: var(--home-ink);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+body[data-active-page="home"] .home-next-date b {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 26px;
+  font-weight: 690;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+body[data-active-page="home"] .home-next-date small {
+  margin-left: 3px;
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", monospace;
+  font-size: 9px;
+  font-weight: 720;
+  letter-spacing: 0.08em;
+}
+
+body[data-active-page="home"] .home-next-arrival > p {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  margin: 0 0 1px;
+  color: var(--home-muted);
+  font-size: 10px;
+  line-height: 1.3;
+  text-align: right;
+}
+
+body[data-active-page="home"] .home-next-arrival > p strong {
+  color: var(--home-ink);
+  font-size: 13px;
+  font-weight: 660;
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-active-page="home"] .home-month-ledger {
+  padding: 14px 0 11px;
+  border-top: 1px solid var(--home-line-strong);
+}
+
+body[data-active-page="home"] .home-month-track {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin-top: 10px;
+  border-bottom: 1px solid var(--home-line-strong);
+}
+
+body[data-active-page="home"] .home-month {
+  position: relative;
+  min-width: 0;
+  height: 42px;
+  padding: 9px 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--home-soft);
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", monospace;
+  font-size: 10px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+body[data-active-page="home"] .home-month::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 4px;
+  background: var(--home-line);
+}
+
+body[data-active-page="home"] .home-month.is-current {
+  color: var(--home-ink);
+  font-weight: 760;
+}
+
+body[data-active-page="home"] .home-month.is-current::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  width: 17px;
+  height: 2px;
+  transform: translateX(-50%);
+  background: var(--home-iris);
+}
+
+body[data-active-page="home"] .home-month:active {
+  color: var(--home-iris-dark);
+  background: var(--home-iris-soft);
+  transform: scale(0.96);
+}
+
+body[data-active-page="home"] .home-annual-dividend {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  min-height: 64px;
+  padding: 12px 0 13px;
+  border-bottom: 1px solid var(--home-line-strong);
+}
+
+body[data-active-page="home"] .home-annual-dividend p {
+  margin: 6px 0 0;
+  color: var(--home-muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+body[data-active-page="home"] .home-annual-dividend > strong {
+  color: var(--home-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+  font-size: 24px;
+  font-weight: 680;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+body[data-active-page="home"] .section-label {
+  margin: 15px 0 2px;
+}
+
+body[data-active-page="home"] .home-nav-item {
+  min-height: 52px;
+  padding: 12px 0 11px;
+  border-bottom-color: var(--home-line);
+}
+
+body[data-active-page="home"] .home-nav-item:active {
+  background: var(--home-iris-soft);
+  transform: scale(0.99);
+}
+
+body[data-active-page="home"] .home-nav-title {
+  color: var(--home-ink);
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+body[data-active-page="home"] .home-nav-side {
+  color: var(--home-muted);
+  font-size: 10px;
+  font-weight: 560;
+}
+
+body[data-active-page="home"] .home-nav-side svg {
+  width: 13px;
+  height: 13px;
+  color: var(--home-ink);
+  stroke-width: 1.7;
+}
+
+body[data-active-page="home"] .quick-add-button {
+  min-height: 48px;
+  margin-top: 18px;
+  border: 1px solid var(--home-ink);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--home-ink);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+}
+
+body[data-active-page="home"] .quick-add-button:active {
+  background: var(--home-iris-soft);
+  color: var(--home-iris-dark);
+  transform: scale(0.985);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-active-page="home"] .home-month,
+  body[data-active-page="home"] .home-nav-item,
+  body[data-active-page="home"] .quick-add-button,
+  body[data-active-page="home"] .summary-action-button {
+    transition: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  body[data-active-page="home"] {
+    --home-line: rgba(24, 25, 22, 0.35);
+    --home-line-strong: var(--home-ink);
+  }
+}

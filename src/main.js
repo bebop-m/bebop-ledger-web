@@ -60,6 +60,13 @@ refs.homeNavList.addEventListener('click', (event) => {
   if (btn) navigateTo(btn.dataset.pageNav);
 });
 
+refs.homeFocusCard.addEventListener('click', (event) => {
+  const btn = event.target.closest('[data-home-dividend-month]');
+  if (!btn) return;
+  const month = Math.floor(safeNumber(btn.dataset.homeDividendMonth, 0));
+  if (month >= 1 && month <= 12) openModal('monthDetail', { month });
+});
+
 refs.pageBackButtons.forEach((button) => {
   button.addEventListener('click', () => navigateTo('home'));
 });

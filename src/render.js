@@ -76,7 +76,7 @@ function renderHomeHero(summary) {
   const pnlArrow = pnl > 0 ? '\u25b2' : pnl < 0 ? '\u25bc' : '';
   refs.homeHero.innerHTML = `
     <div class="home-hero-label-row">
-      <span class="home-hero-label">总资产</span>
+      <span class="home-hero-label">TOTAL WEALTH \u00b7 \u603b\u8d44\u4ea7</span>
       <button class="ghost-minus" type="button" data-summary-action="liability" aria-label="${LABELS.liability}">-</button>
     </div>
     <strong class="home-hero-value">${escapeHtml(formatDisplayMoney(summary.netMarketValueCny, 'CNY'))}</strong>
@@ -84,36 +84,85 @@ function renderHomeHero(summary) {
     <span class="home-hero-fx">USD/CNY ${safeNumber(state.rates.USD, 0).toFixed(2)} \u00b7 HKD/CNY ${safeNumber(state.rates.HKD, 0).toFixed(4)}</span>`;
 }
 
-// \u9996\u9875\u53cc\u6307\u6807\uff1a\u4e24\u683c\u5171\u7528\u540c\u4e00 4 \u884c\u7f51\u683c\u9aa8\u67b6\uff08\u6807\u7b7e/\u6570\u5b57/\u8fdb\u5ea6/\u526f\u884c\uff09\uff0c\u4fdd\u8bc1\u5de6\u53f3\u57fa\u7ebf\u4e25\u683c\u5e73\u884c\u3002
+const HOME_MONTH_CODES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+function getHomeMonthWindow(months, currentMonth) {
+  const start = Math.min(Math.max(currentMonth - 2, 1), 7);
+  return months.slice(start - 1, start + 5);
+}
+
+function getNextHomeDividend(calendarModel) {
+  return calendarModel.allDetails
+    .filter((entry) => {
+      const date = entry.payDate || entry.exDate || '';
+      return entry.status !== 'received' && entry.status !== 'due' && date >= calendarModel.today;
+    })
+    .sort((a, b) => `${a.payDate || a.exDate}|${a.symbol}`.localeCompare(`${b.payDate || b.exDate}|${b.symbol}`))[0] || null;
+}
+
+function getHomeDividendDateParts(entry) {
+  if (!entry) return { day: '\u2014', month: '' };
+  const value = entry.payDate || entry.exDate || '';
+  const parts = value.split('-');
+  const month = Math.max(1, Math.min(12, Number(parts[1]) || entry.month || 1));
+  return {
+    day: parts[2] ? String(Number(parts[2])).padStart(2, '0') : '\u2014',
+    month: HOME_MONTH_CODES[month - 1]
+  };
+}
+
+// \u9996\u9875\u73b0\u91d1\u6536\u5165\u8f74\uff1a\u5f53\u6708\u80a1\u606f -> \u4e0b\u6b21\u5230\u8d26 -> \u6708\u4efd\u8f74 -> \u5168\u5e74\u9884\u8ba1\u3002
 function renderHomeMetrics(calendarModel, incomeModel) {
   const m = calendarModel.metrics;
-  const received = safeNumber(m.receivedCny, 0);
-  const projected = safeNumber(m.projectedCny, 0);
-  const ratio = projected > 0 ? Math.min(1, Math.max(0, received / projected)) : 0;
-  const cur = incomeModel.current;
-  const hasCapital = Boolean(cur && cur.capitalReturnAvailable);
-  const capitalCell = hasCapital
-    ? `<div class="home-metric">
-        <span class="hm-label">\u4eca\u5e74\u8d44\u91d1\u6536\u76ca</span>
-        <strong class="hm-value income-amount ${getReturnTone(cur.capitalReturnCny)}">${escapeHtml(formatIncomeSignedMoney(cur.capitalReturnCny))}</strong>
-        <span class="hm-bar is-blank"></span>
-        <span class="hm-sub">\u6536\u76ca\u7387 <strong class="${getReturnTone(cur.capitalReturnRate)}">${escapeHtml(formatIncomeRate(cur.capitalReturnRate))}</strong></span>
-      </div>`
-    : `<div class="home-metric">
-        <span class="hm-label">\u4eca\u5e74\u8d44\u91d1\u6536\u76ca</span>
-        <strong class="hm-value is-empty">\u5f85\u56de\u586b</strong>
-        <span class="hm-bar is-blank"></span>
-        <span class="hm-sub">\u7f3a ${incomeModel.currentYear - 1} \u5e74\u672b\u51c0\u503c</span>
-      </div>`;
+  const currentMonth = calendarModel.months[calendarModel.currentMonth - 1] || null;
+  const currentTotal = safeNumber(currentMonth && currentMonth.totalCny, 0);
+  const currentReceived = safeNumber(currentMonth && currentMonth.receivedCny, 0);
+  const currentWaiting = safeNumber(currentMonth && currentMonth.dueCny, 0) + safeNumber(currentMonth && currentMonth.upcomingCny, 0);
+  const annualReceived = safeNumber(m.receivedCny, 0);
+  const annualProjected = safeNumber(m.projectedCny, 0);
+  const annualRatio = annualProjected > 0 ? Math.min(1, Math.max(0, annualReceived / annualProjected)) : 0;
+  const nextDividend = getNextHomeDividend(calendarModel);
+  const nextDate = getHomeDividendDateParts(nextDividend);
+  const monthWindow = getHomeMonthWindow(calendarModel.months, calendarModel.currentMonth);
+  const monthButtons = monthWindow.map((item) => `
+    <button class="home-month${item.month === calendarModel.currentMonth ? ' is-current' : ''}" type="button" data-home-dividend-month="${item.month}" aria-label="${item.month}\u6708\u80a1\u606f ${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}">
+      <span>${String(item.month).padStart(2, '0')}</span>
+    </button>`).join('');
+
   refs.homeFocusCard.innerHTML = `
-    ${capitalCell}
-    <div class="home-metric-divider" aria-hidden="true"></div>
-    <div class="home-metric home-metric--dividend">
-      <span class="hm-label">\u80a1\u606f \u00b7 \u5df2\u5230\u8d26 ${Math.round(ratio * 100)}%</span>
-      <strong class="hm-value">${escapeHtml(formatDisplayMoney(received, 'CNY'))}</strong>
-      <span class="hm-bar"><i style="width:${(ratio * 100).toFixed(1)}%"></i></span>
-      <span class="hm-sub">\u9884\u8ba1\u5168\u5e74 ${escapeHtml(formatDisplayMoney(projected, 'CNY'))}</span>
-    </div>`;
+    <section class="home-cashflow" aria-label="\u672c\u6708\u80a1\u606f\u73b0\u91d1\u6d41">
+      <div class="home-ledger-head">
+        <span class="home-ledger-label">CASH FLOW \u00b7 \u672c\u6708\u80a1\u606f</span>
+        <span class="home-ledger-period">${calendarModel.year} / ${String(calendarModel.currentMonth).padStart(2, '0')}</span>
+      </div>
+      <strong class="home-cashflow-value">${escapeHtml(formatDisplayMoney(currentTotal, 'CNY'))}</strong>
+      <div class="home-cashflow-rule"><i aria-hidden="true"></i><span>${HOME_MONTH_CODES[calendarModel.currentMonth - 1]}</span></div>
+      <p class="home-ledger-note">\u5df2\u5230\u8d26 ${escapeHtml(formatDisplayMoney(currentReceived, 'CNY'))} \u00b7 \u5f85\u5230\u8d26 ${escapeHtml(formatDisplayMoney(currentWaiting, 'CNY'))}</p>
+    </section>
+
+    <section class="home-next-arrival" aria-label="\u4e0b\u6b21\u5230\u8d26">
+      <div>
+        <span class="home-ledger-label">NEXT ARRIVAL \u00b7 \u4e0b\u6b21\u5230\u8d26</span>
+        <strong class="home-next-date"><b>${nextDate.day}</b> <small>${nextDate.month}</small></strong>
+      </div>
+      <p>${nextDividend ? `${escapeHtml(nextDividend.name || nextDividend.symbol)}<strong>${escapeHtml(formatDisplayMoney(nextDividend.netCny, 'CNY'))}</strong>` : '<span>\u6682\u65e0\u5f85\u5230\u8d26\u80a1\u606f</span>'}</p>
+    </section>
+
+    <section class="home-month-ledger" aria-label="\u80a1\u606f\u6708\u4efd">
+      <div class="home-ledger-head">
+        <span class="home-ledger-label">INCOME CALENDAR \u00b7 \u80a1\u606f\u6708\u4efd</span>
+        <span class="home-ledger-period">${calendarModel.year}</span>
+      </div>
+      <div class="home-month-track">${monthButtons}</div>
+    </section>
+
+    <section class="home-annual-dividend" aria-label="\u5168\u5e74\u9884\u8ba1\u80a1\u606f">
+      <div>
+        <span class="home-ledger-label">ANNUAL INCOME \u00b7 \u5168\u5e74\u9884\u8ba1</span>
+        <p>\u5df2\u5230\u8d26 ${Math.round(annualRatio * 100)}%</p>
+      </div>
+      <strong>${escapeHtml(formatDisplayMoney(annualProjected, 'CNY'))}</strong>
+    </section>`;
 }
 
 function renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems, totalMv) {
