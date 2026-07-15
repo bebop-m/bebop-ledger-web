@@ -22,6 +22,7 @@ export const state = {
   nextId: 1,
   showAmounts: true,
   activePage: 'home',
+  activeAnnualYear: new Date().getFullYear(),
   dividendCalendarBucket: 'all',
   activeDividendMonth: null,
   sortField: 'marketValueCny',
@@ -101,6 +102,10 @@ export const refs = {
   legendToggle: document.getElementById('legendToggle'),
   bucketTrack: document.getElementById('bucketTrack'),
   holdingsReturnBar: document.getElementById('holdingsReturnBar'),
+  holdingsStats: document.getElementById('holdingsStats'),
+  annualYearRail: document.getElementById('annualYearRail'),
+  annualReviewContent: document.getElementById('annualReviewContent'),
+  annualBackButton: document.querySelector('[data-annual-back]'),
   diagnosticsButton: document.getElementById('diagnosticsButton'),
   marketTimestamp: document.getElementById('marketTimestamp'),
   refreshButton: document.getElementById('refreshButton'),
@@ -198,6 +203,7 @@ export function createDefaultSnapshot() {
     nextId: DEFAULT_HOLDINGS.length + 1,
     showAmounts: true,
     activePage: 'home',
+    activeAnnualYear: new Date().getFullYear(),
     dividendCalendarBucket: 'all',
     activeDividendMonth: null,
     sortField: 'marketValueCny',
@@ -234,6 +240,8 @@ export function applySnapshot(snapshot) {
   const rawPage = snapshot && snapshot.activePage;
   const mappedPage = LEGACY_PAGE_MAP[rawPage] || rawPage;
   state.activePage = PAGE_KEYS.has(mappedPage) ? mappedPage : 'home';
+  const activeAnnualYear = Math.floor(safeNumber(snapshot && snapshot.activeAnnualYear, new Date().getFullYear()));
+  state.activeAnnualYear = activeAnnualYear >= 2000 && activeAnnualYear <= 2200 ? activeAnnualYear : new Date().getFullYear();
   state.dividendCalendarBucket = DIVIDEND_FILTER_KEYS.has(snapshot && snapshot.dividendCalendarBucket) ? snapshot.dividendCalendarBucket : 'all';
   const activeDividendMonth = Math.floor(safeNumber(snapshot && snapshot.activeDividendMonth, 0));
   state.activeDividendMonth = activeDividendMonth >= 1 && activeDividendMonth <= 12 ? activeDividendMonth : null;
@@ -276,7 +284,7 @@ export function getPersistedSnapshot() {
   return {
     type: 'portfolio-snapshot', version: PORTFOLIO_SNAPSHOT_VERSION,
     holdings: state.holdings, quotes: state.quotes, rates: state.rates,
-    nextId: state.nextId, showAmounts: state.showAmounts, activePage: state.activePage,
+    nextId: state.nextId, showAmounts: state.showAmounts, activePage: state.activePage, activeAnnualYear: state.activeAnnualYear,
     dividendCalendarBucket: state.dividendCalendarBucket, activeDividendMonth: state.activeDividendMonth, sortField: state.sortField,
     sortDirection: state.sortDirection, legendExpanded: state.legendExpanded,
     liabilityCny: state.liabilityCny, openingCashCny: state.openingCashCny, openingDate: state.openingDate,

@@ -172,9 +172,11 @@
           <section class="panel holdings-structure-panel">
             <header class="panel-bar">
               <div>
+                <p class="ledger-kicker">01 · PORTFOLIO STRUCTURE</p>
                 <h2 class="panel-title">持仓结构</h2>
               </div>
             </header>
+            <div id="holdingsStats" class="holdings-stats" aria-label="持仓摘要"></div>
             <div id="holdingsReturnBar" class="return-bar" hidden></div>
             <div class="chart-shell">
               <div id="bucketTrack" class="bucket-track"></div>
@@ -220,6 +222,7 @@
           <section class="panel dividend-months-panel">
             <header class="panel-bar">
               <div>
+                <p class="ledger-kicker">02 · MONTHLY LEDGER</p>
                 <h2 class="panel-title">按月分布</h2>
                 <p class="panel-note">点按某月查看明细。</p>
               </div>
@@ -251,6 +254,7 @@
           <section class="panel income-trend-panel">
             <header class="panel-bar">
               <div>
+                <p class="ledger-kicker">02 · RETURN HISTORY</p>
                 <h2 class="panel-title">历年趋势</h2>
               </div>
             </header>
@@ -260,11 +264,26 @@
           <section class="panel income-years-panel">
             <header class="panel-bar">
               <div>
+                <p class="ledger-kicker">03 · ANNUAL INDEX</p>
                 <h2 class="panel-title">年度明细</h2>
               </div>
             </header>
             <div id="incomeYearList" class="income-year-list"></div>
           </section>
+        </div>
+
+        <div id="annualReviewPage" class="page-view page-stack" data-page-view="annual" hidden>
+          <header class="top-bar">
+            <button class="back-button" type="button" data-annual-back aria-label="返回收益明细">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+            <div class="top-bar-heading">
+              <h2 class="top-bar-title">年度回顾</h2>
+              <p class="panel-note">资金、收益与交易的年度切片</p>
+            </div>
+          </header>
+          <nav id="annualYearRail" class="annual-year-rail" aria-label="选择年度"></nav>
+          <div id="annualReviewContent" class="annual-review-content"></div>
         </div>
 
         <div id="fundamentalsPage" class="page-view page-stack" data-page-view="fundamentals" hidden>

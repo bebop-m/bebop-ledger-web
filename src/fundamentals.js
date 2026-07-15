@@ -541,14 +541,16 @@ export function renderFundamentalsPage() {
     _selectedSymbol = (holdings[0] || allCompanies[0]).symbol;
   }
   const company = allCompanies.find((item) => item.symbol === _selectedSymbol);
+  const companyRail = allCompanies.map((item) => `<button type="button" data-fund-symbol="${escapeHtml(item.symbol)}" class="${item.symbol === _selectedSymbol ? 'is-active' : ''}" aria-pressed="${item.symbol === _selectedSymbol}">${escapeHtml(getCompanyDisplayName(item))}</button>`).join('');
 
   const { rows, allRows, metrics, currentYear } = buildCompanyMetrics(company);
   const summary = buildCompanySummary(company, rows);
   refs.fundamentalsContent.innerHTML = `
+    <nav class="fund-company-rail" aria-label="选择公司">${companyRail}</nav>
     <section class="panel fund-head-panel">
       <div class="fund-company-head">
         <div>
-          <button class="fund-company-trigger" type="button" data-fund-picker-open aria-haspopup="dialog" aria-label="切换公司">
+          <button class="fund-company-trigger" type="button" data-fund-picker-open aria-haspopup="dialog" aria-label="打开完整公司列表">
             <h3 class="fund-company-name">${escapeHtml(getCompanyDisplayName(company))}</h3>
             <svg class="fund-company-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5 12 15l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             ${allCompanies.length > 1 ? `<span class="fund-company-count">${allCompanies.length} 家</span>` : ''}

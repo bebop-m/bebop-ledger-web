@@ -70,11 +70,26 @@ refs.homeFocusCard.addEventListener('click', (event) => {
 refs.pageBackButtons.forEach((button) => {
   button.addEventListener('click', () => navigateTo('home'));
 });
+if (refs.annualBackButton) refs.annualBackButton.addEventListener('click', () => navigateTo('income'));
+if (refs.annualYearRail) refs.annualYearRail.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-annual-year]');
+  if (!button) return;
+  const year = Math.floor(safeNumber(button.dataset.annualYear, 0));
+  if (!year || year === state.activeAnnualYear) return;
+  state.activeAnnualYear = year;
+  saveState();
+  renderApp({ incremental: true, animateHoldingReflow: false });
+});
 
 // 首页主行动：现金模式直接记一笔交易，否则先选择记录类型。
 refs.quickAddButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'quickAdd'); });
 
 if (refs.fundamentalsContent) refs.fundamentalsContent.addEventListener('click', (event) => {
+  const companyButton = event.target.closest('[data-fund-symbol]');
+  if (companyButton) {
+    selectFundamentalsSymbol(companyButton.dataset.fundSymbol);
+    return;
+  }
   if (event.target.closest('[data-fund-picker-open]')) openModal('fundPicker');
 });
 // 页尾日历点公司：切到该公司并滚回页顶，让上方的切换结果可见。
@@ -114,7 +129,11 @@ refs.incomeYearList.addEventListener('click', (event) => {
   const annalsButton = event.target.closest('[data-year-annals]');
   if (annalsButton) {
     const year = Math.floor(safeNumber(annalsButton.dataset.yearAnnals, 0));
-    if (year) openModal('yearAnnals', { year });
+    if (year) {
+      state.activeAnnualYear = year;
+      saveState();
+      navigateTo('annual');
+    }
     return;
   }
   const btn = event.target.closest('[data-income-manual-year]');
