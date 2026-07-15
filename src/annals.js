@@ -133,21 +133,55 @@ function computeAttribution(row, year, currentYear) {
 }
 
 function getYearTrades(year) {
-  const prefix = String(year);
-  return state.trades
-    .filter((trade) => trade && formatDateLabel(trade.date).startsWith(prefix))
-    .sort((a, b) => formatDateLabel(a.date).localeCompare(formatDateLabel(b.date)))
-    .map((trade) => ({
-      id: trade.id,
-      date: formatDateLabel(trade.date),
-      side: trade.side === 'sell' ? 'sell' : 'buy',
-      symbol: trade.symbol,
-      name: inferQuote(trade.symbol).name || trade.symbol,
-      shares: safeNumber(trade.shares, 0),
-      price: safeNumber(trade.price, 0),
-      currency: trade.currency || 'CNY',
-      valueCny: safeNumber(trade.shares, 0) * safeNumber(trade.price, 0) * Math.max(safeNumber(trade.fxRate, 1), 0)
-    }));
+  const positions = new Map();
+  const rows = state.trades
+    .filter(Boolean)
+    .slice()
+    .sort((a, b) => `${formatDateLabel(a.date)}|${a.id || ''}`.localeCompare(`${formatDateLabel(b.date)}|${b.id || ''}`))
+    .map((trade) => {
+      const shares = Math.max(0, safeNumber(trade.shares, 0));
+      const valueCny = shares * safeNumber(trade.price, 0) * Math.max(safeNumber(trade.fxRate, 1), 0);
+      const feeCny = Math.max(0, safeNumber(trade.feeCny, 0));
+      const position = positions.get(trade.symbol) || { shares: 0, costCny: 0 };
+      let realizedPnlCny = 0;
+      if (trade.side === 'sell') {
+        const averageCost = position.shares > 0 ? position.costCny / position.shares : 0;
+        const costOut = averageCost * shares;
+        realizedPnlCny = valueCny - feeCny - costOut;
+        position.shares = Math.max(0, position.shares - shares);
+        position.costCny = Math.max(0, position.costCny - costOut);
+      } else {
+        position.shares += shares;
+        position.costCny += valueCny + feeCny;
+      }
+      positions.set(trade.symbol, position);
+      return {
+        id: trade.id,
+        date: formatDateLabel(trade.date),
+        side: trade.side === 'sell' ? 'sell' : 'buy',
+        symbol: trade.symbol,
+        name: inferQuote(trade.symbol).name || trade.symbol,
+        shares,
+        price: safeNumber(trade.price, 0),
+        currency: trade.currency || 'CNY',
+        valueCny,
+        cashImpactCny: trade.side === 'sell' ? valueCny - feeCny : -(valueCny + feeCny),
+        realizedPnlCny
+      };
+    });
+  return rows.filter((trade) => trade.date.startsWith(String(year)));
+}
+
+function getYearDividendMonths(year) {
+  const months = Array.from({ length: 12 }, () => 0);
+  state.dividendLedger.forEach((entry) => {
+    if (!entry || entry.confirmed !== true) return;
+    const date = formatDateLabel(entry.receivedDate || entry.payDate || entry.exDate);
+    if (!date.startsWith(String(year))) return;
+    const month = Number(date.slice(5, 7));
+    if (month >= 1 && month <= 12) months[month - 1] += safeNumber(entry.netCny, 0);
+  });
+  return months;
 }
 
 export function computeYearAnnals(year) {
@@ -184,6 +218,7 @@ export function computeYearAnnals(year) {
     xirr = computeXirr(flows);
   }
 
+  const trades = getYearTrades(year);
   return {
     year,
     isCurrentYear: year === currentYear,
@@ -191,6 +226,8 @@ export function computeYearAnnals(year) {
     xirr,
     xirrScope,
     attribution: computeAttribution(row, year, currentYear),
-    trades: getYearTrades(year)
+    dividendMonths: getYearDividendMonths(year),
+    trades,
+    realizedPnlCny: trades.reduce((sum, trade) => sum + safeNumber(trade.realizedPnlCny, 0), 0)
   };
 }

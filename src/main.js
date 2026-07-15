@@ -62,19 +62,32 @@ refs.homeNavList.addEventListener('click', (event) => {
 
 refs.homeFocusCard.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-home-dividend-month]');
-  if (!btn) return;
-  const month = Math.floor(safeNumber(btn.dataset.homeDividendMonth, 0));
-  if (month >= 1 && month <= 12) openModal('monthDetail', { month });
+  if (btn) {
+    const month = Math.floor(safeNumber(btn.dataset.homeDividendMonth, 0));
+    if (month >= 1 && month <= 12) {
+      state.activeDividendMonth = month;
+      saveState();
+      navigateTo('dividends');
+    }
+    return;
+  }
+  const pageButton = event.target.closest('[data-page-nav]');
+  if (pageButton) navigateTo(pageButton.dataset.pageNav);
 });
 
 refs.pageBackButtons.forEach((button) => {
-  button.addEventListener('click', () => navigateTo('home'));
+  button.addEventListener('click', () => navigateTo(state.activePage === 'annual' ? 'income' : 'home'));
 });
 
 // 首页主行动：现金模式直接记一笔交易，否则先选择记录类型。
 refs.quickAddButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'quickAdd'); });
 
 if (refs.fundamentalsContent) refs.fundamentalsContent.addEventListener('click', (event) => {
+  const symbolButton = event.target.closest('[data-fund-symbol]');
+  if (symbolButton) {
+    selectFundamentalsSymbol(symbolButton.dataset.fundSymbol);
+    return;
+  }
   if (event.target.closest('[data-fund-picker-open]')) openModal('fundPicker');
 });
 // 页尾日历点公司：切到该公司并滚回页顶，让上方的切换结果可见。
@@ -101,10 +114,39 @@ refs.dividendMonthGrid.addEventListener('click', (event) => {
   if (!btn) return;
   const month = Math.floor(safeNumber(btn.dataset.dividendMonth, 0));
   if (month < 1 || month > 12) return;
-  openModal('monthDetail', { month });
+  state.activeDividendMonth = month;
+  saveState();
+  renderApp({ incremental: true, animateHoldingReflow: false });
 });
 
+if (refs.dividendMonthDetailView) refs.dividendMonthDetailView.addEventListener('click', (event) => {
+  if (event.target.closest('[data-dividend-detail-back]')) {
+    state.activeDividendMonth = null;
+    saveState();
+    renderApp({ incremental: true, animateHoldingReflow: false });
+    return;
+  }
+  const entry = event.target.closest('[data-modal-action="edit-dividend-ledger"]');
+  if (entry) openModal('dividendLedger', { sourceId: entry.dataset.sourceId });
+});
+
+if (refs.holdingsSortLabel) refs.holdingsSortLabel.addEventListener('click', () => {
+  state.sortMenuOpen = !state.sortMenuOpen;
+  renderSortChips();
+});
+
+if (refs.marketTimestamp) refs.marketTimestamp.addEventListener('click', () => openModal('holdingsMenu'));
+
 refs.incomeYearList.addEventListener('click', (event) => {
+  const annualTarget = event.target.closest('[data-annual-year]');
+  if (annualTarget && !event.target.closest('[data-year-holdings], [data-income-manual-year]')) {
+    const year = Math.floor(safeNumber(annualTarget.dataset.annualYear, 0));
+    if (year) {
+      state.activeAnnualYear = year;
+      navigateTo('annual');
+    }
+    return;
+  }
   const yearHoldingsButton = event.target.closest('[data-year-holdings]');
   if (yearHoldingsButton) {
     const year = Math.floor(safeNumber(yearHoldingsButton.dataset.yearHoldings, 0));
@@ -132,6 +174,16 @@ refs.incomeYearList.addEventListener('click', (event) => {
     capitalReturnRatePercent: existing && existing.capitalReturnRate !== null && existing.capitalReturnRate !== undefined ? Math.round(existing.capitalReturnRate * 10000) / 100 : '',
     existing: Boolean(existing)
   });
+});
+
+if (refs.annualReviewContent) refs.annualReviewContent.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-annual-select]');
+  if (!button) return;
+  const year = Math.floor(safeNumber(button.dataset.annualSelect, 0));
+  if (!year || year === state.activeAnnualYear) return;
+  state.activeAnnualYear = year;
+  saveState();
+  renderApp({ incremental: true, animateHoldingReflow: false });
 });
 
 if (refs.incomeRecordsList) refs.incomeRecordsList.addEventListener('click', (event) => {
@@ -301,6 +353,9 @@ refs.modalRoot.addEventListener('click', (event) => {
   if (t === 'edit-dividend-ledger') { openModal('dividendLedger', { sourceId: a.dataset.sourceId }); return; }
   if (t === 'open-trade') { openModal('trade'); return; }
   if (t === 'open-cash-flow') { openModal('cashFlow'); return; }
+  if (t === 'holding-diagnostics') { closeModal(); refs.diagnosticsButton.click(); return; }
+  if (t === 'holding-refresh') { closeModal(); refs.refreshButton.click(); return; }
+  if (t === 'holding-add') { closeModal(); refs.addButton.click(); return; }
   if (t === 'close' || t === 'cancel') { closeModal(); return; }
   if (t === 'delete-yearly-manual') { handleModalDelete(); return; }
   if (t === 'delete-record') { handleModalDelete(); return; }

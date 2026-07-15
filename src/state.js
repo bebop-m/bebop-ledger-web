@@ -24,6 +24,7 @@ export const state = {
   activePage: 'home',
   dividendCalendarBucket: 'all',
   activeDividendMonth: null,
+  activeAnnualYear: new Date().getFullYear(),
   sortField: 'marketValueCny',
   sortDirection: 'desc',
   legendExpanded: false,
@@ -88,12 +89,15 @@ export const refs = {
   incomeOverviewGrid: document.getElementById('incomeOverviewGrid'),
   incomeTrend: document.getElementById('incomeTrend'),
   incomeYearList: document.getElementById('incomeYearList'),
+  annualReviewContent: document.getElementById('annualReviewContent'),
   incomeRecordsList: document.getElementById('incomeRecordsList'),
   fundamentalsNote: document.getElementById('fundamentalsNote'),
   reportCalendarPanel: document.getElementById('reportCalendarPanel'),
   fundamentalsContent: document.getElementById('fundamentalsContent'),
   dividendMetricGrid: document.getElementById('dividendMetricGrid'),
   dividendMonthGrid: document.getElementById('dividendMonthGrid'),
+  dividendCalendarListView: document.getElementById('dividendCalendarListView'),
+  dividendMonthDetailView: document.getElementById('dividendMonthDetailView'),
   exportButton: document.getElementById('exportButton'),
   importButton: document.getElementById('importButton'),
   importFileInput: document.getElementById('importFileInput'),
@@ -111,7 +115,8 @@ export const refs = {
   confirmRoot: document.getElementById('confirmRoot'),
   toastContainer: document.getElementById('toastContainer'),
   sortGroup: document.querySelector('.sort-group'),
-  sortChips: Array.from(document.querySelectorAll('.sort-chip'))
+  sortChips: Array.from(document.querySelectorAll('.sort-chip')),
+  holdingsSortLabel: document.getElementById('holdingsSortLabel')
 };
 
 /* ── Toast & Confirm ── */
@@ -200,6 +205,7 @@ export function createDefaultSnapshot() {
     activePage: 'home',
     dividendCalendarBucket: 'all',
     activeDividendMonth: null,
+    activeAnnualYear: new Date().getFullYear(),
     sortField: 'marketValueCny',
     sortDirection: 'desc',
     legendExpanded: false,
@@ -237,6 +243,8 @@ export function applySnapshot(snapshot) {
   state.dividendCalendarBucket = DIVIDEND_FILTER_KEYS.has(snapshot && snapshot.dividendCalendarBucket) ? snapshot.dividendCalendarBucket : 'all';
   const activeDividendMonth = Math.floor(safeNumber(snapshot && snapshot.activeDividendMonth, 0));
   state.activeDividendMonth = activeDividendMonth >= 1 && activeDividendMonth <= 12 ? activeDividendMonth : null;
+  const activeAnnualYear = Math.floor(safeNumber(snapshot && snapshot.activeAnnualYear, new Date().getFullYear()));
+  state.activeAnnualYear = activeAnnualYear >= 1900 && activeAnnualYear <= 2200 ? activeAnnualYear : new Date().getFullYear();
   state.sortField = snapshot && ['effectiveYield', 'netAnnualDividendCny'].includes(snapshot.sortField) ? snapshot.sortField : 'marketValueCny';
   state.sortDirection = snapshot && snapshot.sortDirection === 'asc' ? 'asc' : 'desc';
   state.legendExpanded = Boolean(snapshot && snapshot.legendExpanded);
@@ -277,7 +285,8 @@ export function getPersistedSnapshot() {
     type: 'portfolio-snapshot', version: PORTFOLIO_SNAPSHOT_VERSION,
     holdings: state.holdings, quotes: state.quotes, rates: state.rates,
     nextId: state.nextId, showAmounts: state.showAmounts, activePage: state.activePage,
-    dividendCalendarBucket: state.dividendCalendarBucket, activeDividendMonth: state.activeDividendMonth, sortField: state.sortField,
+    dividendCalendarBucket: state.dividendCalendarBucket, activeDividendMonth: state.activeDividendMonth,
+    activeAnnualYear: state.activeAnnualYear, sortField: state.sortField,
     sortDirection: state.sortDirection, legendExpanded: state.legendExpanded,
     liabilityCny: state.liabilityCny, openingCashCny: state.openingCashCny, openingDate: state.openingDate,
     dividendLedger: state.dividendLedger,

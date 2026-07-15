@@ -7,13 +7,6 @@
       "runtimeArgs": ["run", "dev"],
       "port": 5173,
       "autoPort": false
-    },
-    {
-      "name": "compare",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["C:/Users/86181/AppData/Local/Temp/claude/D--Projects-bebop-ledger-web/76b6a071-cd18-4748-9a62-e7105f008cea/scratchpad/compare-proxy.js"],
-      "port": 5299,
-      "autoPort": false
     }
   ]
 }

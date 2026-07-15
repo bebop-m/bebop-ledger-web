@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Pocket Blocks</title><link rel="stylesheet" href="./shared.css"><style>
+  :root{--butter:#ffed98;--violet:#6d59f3;--tomato:#ff6b61;--aqua:#48cdbf;--indigo:#3d3a78;--coal:#27272d;--paper:#f7f5ef}
+  body{background:var(--paper);color:var(--coal)}.blocks{background:var(--paper);padding:0 14px 106px}.status-bar{margin:0 -14px}.top{padding:9px 4px 16px;display:flex;align-items:center;justify-content:space-between}.brand{font-size:20px;font-weight:950;letter-spacing:-.055em}.brand i{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--tomato);transform:rotate(9deg);margin-left:3px}.sync{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:800}.sync::before{content:"";width:9px;height:9px;border-radius:50%;background:#2fb178;box-shadow:0 0 0 4px rgba(47,177,120,.13)}
+  .workspace{display:grid;grid-template-columns:1fr 1fr;gap:9px}.block{position:relative;border:0;text-align:left;border-radius:23px;padding:15px;box-shadow:0 5px 0 rgba(61,58,120,.17),inset 0 1px 0 rgba(255,255,255,.38);transition:transform 140ms ease,box-shadow 140ms ease;touch-action:none}.block:active,.block.dragging{transform:translateY(4px) scale(.985);box-shadow:0 1px 0 rgba(61,58,120,.13),inset 0 1px 0 rgba(255,255,255,.3)}.block-label{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.13em}.block-kicker{display:block;margin-top:4px;font-size:10px;font-weight:700;opacity:.62}.asset{grid-column:1/-1;min-height:150px;background:var(--butter);overflow:hidden}.asset::after{content:"";position:absolute;width:130px;height:130px;border-radius:38px;background:var(--tomato);right:-49px;bottom:-49px;transform:rotate(18deg)}.asset h1{position:relative;z-index:2;margin:17px 0 5px;font-size:44px;line-height:.95;letter-spacing:-.06em;font-variant-numeric:tabular-nums}.asset-change{position:relative;z-index:2;display:inline-flex;padding:6px 9px;border:2px solid var(--indigo);border-radius:10px;font-size:11px;font-weight:900}.asset-symbol{position:absolute;z-index:3;right:16px;top:16px;width:43px;height:43px;border-radius:15px;background:var(--indigo);color:var(--butter);display:grid;place-items:center;font-size:22px;font-weight:900;transform:rotate(5deg)}
+  .flow{min-height:145px;background:var(--violet);color:white}.flow strong{display:block;margin-top:14px;font-size:26px;letter-spacing:-.04em}.flow-meter{display:flex;align-items:end;gap:5px;height:39px;margin-top:9px}.flow-meter i{flex:1;background:var(--butter);border-radius:5px 5px 2px 2px}.flow-meter i:nth-child(1){height:18%}.flow-meter i:nth-child(2){height:50%}.flow-meter i:nth-child(3){height:32%}.flow-meter i:nth-child(4){height:86%}.flow-meter i:nth-child(5){height:58%}.flow-meter i:nth-child(6){height:100%}
+  .next{min-height:145px;background:var(--aqua)}.next-date{margin-top:10px;font-size:38px;line-height:.88;font-weight:950;letter-spacing:-.06em}.next-date small{font-size:13px;letter-spacing:0}.next-company{display:block;margin-top:9px;font-size:12px;font-weight:850}.next-money{display:block;font-size:10px;margin-top:2px}
+  .holdings{grid-column:1/-1;background:var(--indigo);color:white;min-height:105px}.holdings-head{display:flex;justify-content:space-between;align-items:start}.holdings-head strong{font-size:15px}.holdings-head span{color:var(--butter);font-size:10px}.bubble-row{display:flex;margin-top:13px;align-items:center}.bubble{width:34px;height:34px;margin-left:-5px;border-radius:11px;border:2px solid var(--indigo);display:grid;place-items:center;color:var(--coal);font-size:8px;font-weight:950}.bubble:first-child{margin-left:0;background:var(--butter)}.bubble:nth-child(2){background:var(--tomato)}.bubble:nth-child(3){background:var(--aqua)}.bubble:nth-child(4){background:#aa9bff}.bubble:nth-child(5){background:#f5f4ef}.bubble-more{margin-left:8px;font-size:10px;color:#c8c5e8}.share{grid-column:1/-1;min-height:70px;background:var(--tomato);display:flex;align-items:center;justify-content:space-between}.share-copy .block-label{display:block;margin-bottom:4px}.share-copy strong{display:block;font-size:16px;line-height:1.05}.share-copy small{display:block;margin-top:4px;font-size:9px}.share-arrow{width:38px;height:38px;border-radius:13px;background:var(--indigo);color:white;display:grid;place-items:center;font-size:17px}
+  .dock{position:fixed;z-index:20;left:14px;right:14px;bottom:13px;height:68px;border:3px solid var(--coal);border-radius:23px;background:var(--paper);display:grid;grid-template-columns:1fr 1fr 62px 1fr;align-items:center;box-shadow:0 6px 0 var(--coal)}.dock button{height:100%;border:0;background:transparent;font-size:9px;font-weight:850}.dock button b{display:block;font-size:18px;margin-bottom:2px}.add{width:53px!important;height:53px!important;border-radius:17px!important;background:var(--violet)!important;color:white;font-size:25px!important;transform:rotate(4deg)}.home-indicator{color:var(--coal);bottom:3px}
+  .hint{padding:10px 4px 3px;font-size:9px;color:#77766f;display:flex;justify-content:space-between}.hint strong{color:var(--violet)}
+</style></head><body><main class="concept-screen blocks">
+<div class="status-bar"><span>9:41</span><i class="status-island"></i><span class="status-icons"><b class="signal"><i></i><i></i><i></i><i></i></b><b class="wifi"></b><b class="battery"><i></i></b></span></div>
+<header class="top"><span class="brand">bebop<i></i></span><span class="sync">刚刚同步</span></header>
+<div class="workspace" id="workspace">
+  <button class="block asset"><span class="block-label">Total wealth</span><span class="block-kicker">你的全部资产</span><span class="asset-symbol">↗</span><h1>¥252,975</h1><span class="asset-change">今日 +0.44%</span></button>
+  <button class="block flow"><span class="block-label">Cash flow</span><span class="block-kicker">今年预计</span><strong>¥7,619</strong><span class="flow-meter"><i></i><i></i><i></i><i></i><i></i><i></i></span></button>
+  <button class="block next"><span class="block-label">Next arrival</span><span class="block-kicker">贵州茅台</span><span class="next-date">15<small> AUG</small></span><span class="next-company">下一笔现金</span><span class="next-money">+ ¥413.91</span></button>
+  <button class="block holdings"><span class="holdings-head"><strong>我的 21 项持仓</strong><span>核心仓 63.4% ↗</span></span><span class="bubble-row"><i class="bubble">茅台</i><i class="bubble">腾讯</i><i class="bubble">移动</i><i class="bubble">电力</i><i class="bubble">HSI</i><i class="bubble-more">+16</i></span></button>
+  <button class="block share"><span class="share-copy"><span class="block-label">Needs attention</span><strong>2 项数据待确认</strong><small>不会影响当前资产计算</small></span><span class="share-arrow">→</span></button>
+</div>
+<div class="hint"><span><strong>长按</strong>积木可以重新排列</span><span>今天 · 7月12日</span></div>
+<nav class="dock"><button><b>⌂</b>首页</button><button><b>≈</b>现金流</button><button class="add">＋</button><button><b>▦</b>资料库</button></nav><i class="home-indicator"></i>
+</main><script>
+const blocks=[...document.querySelectorAll('.block')];
+blocks.forEach(block=>{
+  let sx=0,sy=0,moved=false;
+  block.addEventListener('pointerdown',e=>{
+    sx=e.clientX;sy=e.clientY;moved=false;
+    block.classList.add('dragging');
+    block.setPointerCapture(e.pointerId);
+  });
+  block.addEventListener('pointermove',e=>{
+    if(!block.hasPointerCapture(e.pointerId))return;
+    const dx=e.clientX-sx,dy=e.clientY-sy;
+    if(Math.hypot(dx,dy)>8)moved=true;
+    block.style.zIndex='12';
+    block.style.transform=`translate3d(${dx}px,${dy}px,0) scale(.985)`;
+  });
+  block.addEventListener('pointerup',e=>{
+    block.releasePointerCapture(e.pointerId);
+    block.style.pointerEvents='none';
+    const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.block');
+    block.style.pointerEvents='';
+    if(moved&&target&&target!==block){
+      const parent=block.parentNode;
+      const blockNext=block.nextSibling===target?block: block.nextSibling;
+      parent.insertBefore(block,target);
+      if(blockNext)parent.insertBefore(target,blockNext);
+    }
+    block.style.transform='';block.style.zIndex='';block.classList.remove('dragging');
+  });
+  block.addEventListener('pointercancel',()=>{block.style.transform='';block.style.zIndex='';block.classList.remove('dragging')});
+});
+</script></body></html>

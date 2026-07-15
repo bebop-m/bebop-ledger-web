@@ -81,7 +81,7 @@
           <section id="homeHero" class="home-hero" aria-label="总资产"></section>
           <section id="homeFocusCard" class="home-metrics" aria-label="今年关键指标"></section>
 
-          <p class="section-label">LEDGER INDEX · 账本目录</p>
+          <p class="section-label"><b>05</b> LEDGER INDEX · 账本目录</p>
           <nav id="homeNavList" class="home-nav-list" aria-label="主导航">
             <button class="home-nav-item" type="button" data-page-nav="holdings">
               <span class="home-nav-title">持仓</span>
@@ -109,15 +109,15 @@
         </div>
 
         <div id="holdingsPage" class="page-view page-stack" data-page-view="holdings" hidden>
-          <header class="top-bar panel-bar--list">
+          <header class="top-bar panel-bar--list ledger-page-head">
             <button class="back-button" type="button" data-page-back aria-label="返回首页">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </button>
             <div class="top-bar-heading">
               <h2 class="top-bar-title">持仓</h2>
-              <p id="marketTimestamp" class="panel-note"></p>
+              <button id="marketTimestamp" class="panel-note holdings-menu-button" type="button" aria-label="打开持仓操作"></button>
             </div>
-            <div class="icon-actions">
+            <div class="icon-actions holdings-primary-actions">
               <button id="diagnosticsButton" class="diagnostics-button" type="button" aria-label="持仓诊断">诊断</button>
               <button id="sortToggleButton" class="circle-button sort-toggle-button" type="button" aria-label="排序" aria-expanded="false"></button>
               <button
@@ -169,34 +169,23 @@
             </div>
           </header>
 
-          <section class="panel holdings-structure-panel">
-            <header class="panel-bar">
-              <div>
-                <h2 class="panel-title">持仓结构</h2>
-              </div>
-            </header>
+          <section class="panel holdings-structure-panel ledger-holdings-overview">
+            <div id="bucketTrack" class="bucket-track"></div>
             <div id="holdingsReturnBar" class="return-bar" hidden></div>
-            <div class="chart-shell">
-              <div id="bucketTrack" class="bucket-track"></div>
-              <div class="chart-layout">
-                <div class="legend-wrap">
-                  <div id="companyLegend" class="legend-list"></div>
-                  <button
-                    id="legendToggle"
-                    class="text-button legend-toggle"
-                    type="button"
-                    hidden
-                  ></button>
-                </div>
-              </div>
-            </div>
           </section>
 
+          <div class="ledger-section-head holdings-list-head">
+            <span>HOLDINGS · 逐股</span>
+            <button id="holdingsSortLabel" class="ledger-inline-action" type="button">按市值 ↓</button>
+          </div>
+          <div id="companyLegend" class="legend-list" hidden></div>
           <div id="stockList" class="stock-list"></div>
+          <button id="legendToggle" class="text-button legend-toggle" type="button" hidden></button>
         </div>
 
         <div id="dividendCalendarPage" class="page-view page-stack" data-page-view="dividends" hidden>
-          <header class="top-bar">
+          <div id="dividendCalendarListView">
+          <header class="top-bar ledger-page-head">
             <button class="back-button" type="button" data-page-back aria-label="返回首页">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </button>
@@ -207,15 +196,14 @@
           </header>
 
           <section class="panel dividend-overview-panel">
-            <header class="panel-bar panel-bar--spread">
-              <div id="dividendFilterGroup" class="segmented-control" aria-label="股息日历筛选">
-                <button class="segment-button" type="button" data-dividend-filter="all">全部</button>
-                <button class="segment-button" type="button" data-dividend-filter="core">核心仓</button>
-                <button class="segment-button" type="button" data-dividend-filter="income">打工仓</button>
-              </div>
-            </header>
             <div id="dividendMetricGrid" class="dividend-metric-grid"></div>
           </section>
+
+          <div id="dividendFilterGroup" class="segmented-control" aria-label="股息日历筛选">
+            <button class="segment-button" type="button" data-dividend-filter="all">全部</button>
+            <button class="segment-button" type="button" data-dividend-filter="core">核心仓</button>
+            <button class="segment-button" type="button" data-dividend-filter="income">打工仓</button>
+          </div>
 
           <section class="panel dividend-months-panel">
             <header class="panel-bar">
@@ -226,10 +214,12 @@
             </header>
             <div id="dividendMonthGrid" class="dividend-month-grid"></div>
           </section>
+          </div>
+          <div id="dividendMonthDetailView" hidden></div>
         </div>
 
         <div id="incomeSummaryPage" class="page-view page-stack" data-page-view="income" hidden>
-          <header class="top-bar">
+          <header class="top-bar ledger-page-head">
             <button class="back-button" type="button" data-page-back aria-label="返回首页">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </button>
@@ -268,7 +258,7 @@
         </div>
 
         <div id="fundamentalsPage" class="page-view page-stack" data-page-view="fundamentals" hidden>
-          <header class="top-bar">
+          <header class="top-bar ledger-page-head">
             <button class="back-button" type="button" data-page-back aria-label="返回首页">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </button>
@@ -283,7 +273,7 @@
         </div>
 
         <div id="recordsPage" class="page-view page-stack" data-page-view="records" hidden>
-          <header class="top-bar">
+          <header class="top-bar ledger-page-head">
             <button class="back-button" type="button" data-page-back aria-label="返回首页">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </button>
@@ -300,6 +290,16 @@
           <section class="panel records-ledger-panel">
             <div id="incomeRecordsList" class="income-records"></div>
           </section>
+        </div>
+
+        <div id="annualReviewPage" class="page-view page-stack" data-page-view="annual" hidden>
+          <header class="top-bar ledger-page-head">
+            <button class="back-button" type="button" data-page-back aria-label="返回收益明细">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+            <div class="top-bar-heading"><h2 class="top-bar-title">年度回顾</h2></div>
+          </header>
+          <div id="annualReviewContent" class="annual-review-content"></div>
         </div>
       </main>
     </div>

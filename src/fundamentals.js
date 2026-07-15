@@ -484,25 +484,40 @@ function buildFormulaBlock(company) {
   const confidenceLabel = model.confidence === 'high' ? '高' : model.confidence === 'medium' ? '中' : '低';
   notes.push(`置信度 ${confidenceLabel}：${model.confidenceReason}`);
   notes.push('历史参考，不是未来预测');
-  const part = (label, value) => `<span class="fund-formula-part"><small>${label}</small><strong>${value === null ? '—' : formatSignedPercent(value)}</strong></span>`;
-  const bridge = model.mode === 'profitBridge'
-    ? `${part('净利润增速', model.growthRate)}
-      <span class="fund-formula-op">＋</span>
-      ${part('净回购', model.netBuybackYield)}`
-    : part('EPS增速', model.growthRate);
-  return `<div class="fund-formula">
-    <p class="fund-formula-label">历史经营回报参考</p>
-    <p class="fund-formula-line">
-      ${part('股息', model.dividendYield)}
-      <span class="fund-formula-op">＋</span>
-      ${bridge}
-      <span class="fund-formula-result">
-        <span class="fund-formula-op">≈</span>
-        <span class="fund-formula-total${model.historicalReturn === null ? ' is-empty' : ''}">${model.historicalReturn === null ? '—' : formatSignedPercent(model.historicalReturn)}</span>
-      </span>
-    </p>
-    <p class="fund-formula-note">${escapeHtml(notes.join(' · '))}</p>
+  const parts = [
+    { label: '股息率', value: model.dividendYield, tone: 'iris' },
+    { label: model.mode === 'profitBridge' ? '净利润增长' : 'EPS 增长', value: model.growthRate, tone: 'iris-soft' }
+  ];
+  if (model.mode === 'profitBridge') parts.push({ label: '净回购', value: model.netBuybackYield, tone: 'ink' });
+  const denominator = parts.reduce((sum, item) => sum + Math.abs(safeNumber(item.value, 0)), 0) || 1;
+  return `<div class="fund-formula ledger-fund-focus">
+    <span class="ledger-eyebrow">HISTORICAL RETURN · 历史经营回报</span>
+    <strong class="fund-formula-total${model.historicalReturn === null ? ' is-empty' : ''}">${model.historicalReturn === null ? '—' : `≈ ${formatSignedPercent(model.historicalReturn)}`}</strong>
+    <p class="fund-formula-note">股息 + 增长${model.mode === 'profitBridge' ? ' + 净回购' : ''} · 历史参考，并非未来预测</p>
+    <div class="fund-return-stack">${parts.map((item) => `<i class="is-${item.tone}" style="width:${(Math.abs(safeNumber(item.value, 0)) / denominator * 100).toFixed(2)}%"></i>`).join('')}</div>
+    <div class="fund-return-rows">${parts.map((item) => `<div><span><i class="is-${item.tone}"></i>${item.label}</span><strong>${item.value === null ? '—' : formatSignedPercent(item.value)}</strong></div>`).join('')}</div>
+    <p class="fund-method-note">${escapeHtml(notes.join(' · '))}</p>
   </div>`;
+}
+
+function buildFundChipRail(companies, selectedSymbol) {
+  return `<div class="fund-chip-rail" role="tablist" aria-label="选择公司">${companies.map((company) => `<button type="button" role="tab" data-fund-symbol="${escapeHtml(company.symbol)}" aria-selected="${company.symbol === selectedSymbol}" class="${company.symbol === selectedSymbol ? 'is-active' : ''}">${escapeHtml(getCompanyDisplayName(company))}</button>`).join('')}</div>`;
+}
+
+function buildEpsLedger(company, rows) {
+  const visible = rows.filter((row) => row.eps !== null && row.eps !== undefined).slice(-6);
+  if (!visible.length) return '';
+  const max = Math.max(1, ...visible.map((row) => Math.abs(safeNumber(row.eps, 0))));
+  const latest = visible[visible.length - 1];
+  return `<section class="fund-eps-section">
+    <p class="ledger-eyebrow">EARNINGS · 每股收益</p>
+    <div class="fund-eps-bars">${visible.map((row, index) => `<span><b>${escapeHtml(formatMetricValue(row.eps, 'money'))}</b><i style="height:${Math.max(4, Math.abs(safeNumber(row.eps, 0)) / max * 72).toFixed(1)}px" class="${index === visible.length - 1 ? 'is-current' : ''}"></i><small>${row.year}</small></span>`).join('')}</div>
+    <div class="fund-eps-stats">
+      <div><span>最新分红率</span><strong>${escapeHtml(formatMetricValue(latest.payoutRatio, 'percent'))}</strong></div>
+      <div><span>最新负债率</span><strong>${escapeHtml(formatMetricValue(latest.debtRatio, 'percent'))}</strong></div>
+      <div><span>财报币种</span><strong>${escapeHtml(company.statementCurrency || company.currency)}</strong></div>
+    </div>
+  </section>`;
 }
 
 function getEmptyStateMarkup() {
@@ -545,14 +560,13 @@ export function renderFundamentalsPage() {
   const { rows, allRows, metrics, currentYear } = buildCompanyMetrics(company);
   const summary = buildCompanySummary(company, rows);
   refs.fundamentalsContent.innerHTML = `
+    ${buildFundChipRail(allCompanies, company.symbol)}
     <section class="panel fund-head-panel">
       <div class="fund-company-head">
         <div>
-          <button class="fund-company-trigger" type="button" data-fund-picker-open aria-haspopup="dialog" aria-label="切换公司">
+          <div class="fund-company-trigger">
             <h3 class="fund-company-name">${escapeHtml(getCompanyDisplayName(company))}</h3>
-            <svg class="fund-company-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5 12 15l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-            ${allCompanies.length > 1 ? `<span class="fund-company-count">${allCompanies.length} 家</span>` : ''}
-          </button>
+          </div>
           <p class="fund-company-code">${escapeHtml(company.symbol)} · 股息按 ${escapeHtml(company.currency)}/股 · 财报币种 ${escapeHtml(company.statementCurrency || company.currency)}</p>
         </div>
       </div>
@@ -560,9 +574,7 @@ export function renderFundamentalsPage() {
       ${summary ? `<p class="fund-company-summary">${escapeHtml(summary)}</p>` : ''}
       ${buildNextReportLine(company.symbol)}
     </section>
-    <div class="fund-card-grid">
-      ${metrics.map((metric) => buildMetricCard(rows, metric)).join('')}
-    </div>
+    ${buildEpsLedger(company, rows)}
     <details class="fund-fold">
       <summary><span>年度数据明细</span><small>${allRows.length} 年</small></summary>
       ${buildCompanyTable(allRows, metrics, currentYear)}

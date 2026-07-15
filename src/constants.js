@@ -27,7 +27,7 @@ export const VALID_DIVIDEND_SOURCES = new Set(['yfinance', 'yahoo', 'eodhd', 'ma
 export const VALID_DIVIDEND_STATUSES = new Set(['manual', 'fresh', 'stale', 'missing']);
 export const VALID_RECEIPT_STATUSES = new Set(['received', 'pending', 'due']);
 export const VALID_DIVIDEND_CONFIDENCES = new Set(['confirmed', 'snapshot', 'carryForward', 'estimated', 'manual']);
-export const PAGE_KEYS = new Set(['home', 'holdings', 'dividends', 'income', 'records', 'fundamentals']);
+export const PAGE_KEYS = new Set(['home', 'holdings', 'dividends', 'income', 'records', 'fundamentals', 'annual']);
 /* 旧快照里的页面键 → 新信息架构页面键。 */
 export const LEGACY_PAGE_MAP = { assets: 'home' };
 /* 收益汇总的展示起始年：年度明细与历年趋势只展示该年及以后（更早年份仍参与净值链推算）。 */

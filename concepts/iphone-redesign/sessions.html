@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Bebop Sessions</title>
+  <link rel="stylesheet" href="./shared.css">
+  <style>
+    :root { --violet:#6157ff; --lemon:#f4ef68; --coral:#ff6b63; --mist:#f0efff; --grape:#241d4f; --lav:#c8c3ff; }
+    body { background: var(--mist); color: var(--grape); }
+    .sessions { background: var(--mist); padding-bottom: 108px; }
+    .sessions::before { content:""; position:absolute; width:230px; height:230px; right:-110px; top:68px; border:42px solid var(--lemon); border-radius:50%; opacity:.82; }
+    .top { position:relative; z-index:2; padding:13px 22px 0; display:flex; justify-content:space-between; align-items:center; }
+    .wordmark { font-size:13px; font-weight:900; letter-spacing:.35em; }
+    .live { display:flex; align-items:center; gap:7px; font-size:11px; font-weight:750; text-transform:uppercase; letter-spacing:.08em; }
+    .live::before { content:""; width:8px; height:8px; border-radius:50%; background:var(--coral); box-shadow:0 0 0 5px color-mix(in srgb,var(--coral) 18%,transparent); }
+    .hero { position:relative; z-index:1; padding:32px 22px 18px; }
+    .eyebrow { margin:0 0 6px; font-size:12px; font-weight:750; letter-spacing:.12em; text-transform:uppercase; opacity:.7; }
+    .hero h1 { margin:0; font-size:47px; line-height:.96; letter-spacing:-.055em; font-weight:850; font-variant-numeric:tabular-nums; }
+    .hero-change { margin:12px 0 0; display:flex; align-items:center; gap:9px; font-size:14px; font-weight:800; color:#d74342; }
+    .hero-change i { width:19px; height:4px; background:currentColor; border-radius:4px; transform:rotate(-12deg); }
+    .session-card { margin:0 14px; border-radius:28px; padding:17px 18px 14px; background:var(--grape); color:white; box-shadow:0 15px 40px rgba(36,29,79,.18); position:relative; overflow:hidden; }
+    .session-card::after { content:""; position:absolute; width:110px; height:110px; border-radius:50%; background:var(--violet); right:-40px; top:-46px; }
+    .session-head { position:relative; z-index:2; display:flex; justify-content:space-between; align-items:flex-start; }
+    .session-head span { font-size:11px; text-transform:uppercase; letter-spacing:.16em; color:var(--lav); font-weight:800; }
+    .session-head strong { font-size:13px; color:var(--lemon); }
+    .session-title { margin:4px 0 14px; font-size:23px; line-height:1.1; letter-spacing:-.035em; }
+    .score { position:relative; height:78px; touch-action:none; cursor:ew-resize; }
+    .score-lines { position:absolute; inset:8px 0 23px; display:grid; grid-template-rows:repeat(4,1fr); }
+    .score-lines i { border-top:1px solid rgba(255,255,255,.18); }
+    .beat { position:absolute; bottom:23px; width:7px; border-radius:5px 5px 1px 1px; background:var(--lemon); transform:translateX(-50%); }
+    .beat::after { content:""; position:absolute; width:13px; height:13px; border-radius:50%; background:inherit; top:-5px; left:-3px; }
+    .beat:nth-of-type(1){left:8%;height:20px}.beat:nth-of-type(2){left:24%;height:35px}.beat:nth-of-type(3){left:39%;height:25px}.beat:nth-of-type(4){left:58%;height:54px}.beat:nth-of-type(5){left:76%;height:30px}.beat:nth-of-type(6){left:92%;height:43px}
+    .playhead { position:absolute; left:58%; top:0; bottom:12px; width:2px; background:var(--coral); box-shadow:0 0 0 4px rgba(255,107,99,.16); }
+    .playhead::before { content:"NOW"; position:absolute; top:-3px; left:6px; color:var(--coral); font-size:9px; font-weight:900; letter-spacing:.08em; }
+    .score-labels { position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:space-between; font-size:9px; color:var(--lav); font-weight:700; }
+    .cash-callout { display:flex; margin-top:9px; align-items:center; justify-content:space-between; padding-top:10px; border-top:1px solid rgba(255,255,255,.17); }
+    .cash-callout span { font-size:11px; color:var(--lav); }
+    .cash-callout strong { font-size:18px; color:var(--lemon); font-variant-numeric:tabular-nums; }
+    .section { padding:18px 22px 0; }
+    .section-head { display:flex; align-items:end; justify-content:space-between; margin-bottom:13px; }
+    .section-head h2 { margin:0; font-size:19px; letter-spacing:-.03em; }
+    .section-head button { border:0; background:transparent; color:var(--violet); font-size:12px; font-weight:800; }
+    .tracks { display:grid; gap:8px; }
+    .track { border:0; width:100%; display:grid; grid-template-columns:38px 1fr auto; align-items:center; gap:10px; padding:9px 11px; border-radius:17px; text-align:left; background:rgba(255,255,255,.72); box-shadow:inset 0 0 0 1px rgba(97,87,255,.08); transition:transform 120ms ease; }
+    .track:active { transform:scale(.975); }
+    .track-no { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; color:white; background:var(--violet); font-size:11px; font-weight:900; }
+    .track:nth-child(2) .track-no { background:var(--coral); }
+    .track:nth-child(3) .track-no { background:#2b9f89; }
+    .track-copy strong { display:block; font-size:15px; }
+    .track-copy small { display:block; color:#77709f; margin-top:3px; font-size:10px; }
+    .track-value { text-align:right; font-variant-numeric:tabular-nums; }
+    .track-value strong { display:block; font-size:14px; }
+    .track-value small { color:#d74342; font-size:10px; font-weight:800; }
+    .bottom-tabs { position:fixed; z-index:20; left:12px; right:12px; bottom:14px; height:72px; display:grid; grid-template-columns:repeat(4,1fr); align-items:center; padding:7px; border-radius:25px; background:rgba(36,29,79,.92); color:#bdb8ec; backdrop-filter:blur(18px) saturate(1.2); box-shadow:0 14px 30px rgba(36,29,79,.22); }
+    .bottom-tabs button { border:0; background:transparent; display:grid; place-items:center; gap:3px; font-size:9px; font-weight:700; }
+    .bottom-tabs button.active { color:var(--lemon); }
+    .tab-dot { width:22px; height:22px; border-radius:50%; border:2px solid currentColor; position:relative; }
+    .active .tab-dot::after { content:""; position:absolute; inset:5px; background:currentColor; border-radius:50%; }
+    .home-indicator { color:white; bottom:4px; }
+  </style>
+</head>
+<body>
+<main class="concept-screen sessions">
+  <div class="status-bar"><span>9:41</span><i class="status-island"></i><span class="status-icons"><b class="signal"><i></i><i></i><i></i><i></i></b><b class="wifi"></b><b class="battery"><i></i></b></span></div>
+  <header class="top"><span class="wordmark">BEBOP</span><span class="live">portfolio live</span></header>
+  <section class="hero"><p class="eyebrow">Today’s session · 12 Jul</p><h1>¥252,975</h1><p class="hero-change"><i></i>+¥1,119 <span>+0.44%</span></p></section>
+  <section class="session-card">
+    <div class="session-head"><div><span>Cash flow score</span><h2 class="session-title">今年的现金节拍</h2></div><strong>07 / 12</strong></div>
+    <div class="score" id="score"><div class="score-lines"><i></i><i></i><i></i><i></i></div><i class="beat"></i><i class="beat"></i><i class="beat"></i><i class="beat"></i><i class="beat"></i><i class="beat"></i><i class="playhead" id="playhead"></i><div class="score-labels"><span>JAN</span><span>APR</span><span>JUL</span><span>OCT</span><span>DEC</span></div></div>
+    <div class="cash-callout"><span>下一拍 · 8月15日<br>贵州茅台</span><strong>+¥413.91</strong></div>
+  </section>
+  <section class="section"><div class="section-head"><h2>核心音轨</h2><button>查看 21 项 →</button></div><div class="tracks">
+    <button class="track"><span class="track-no">01</span><span class="track-copy"><strong>贵州茅台</strong><small>CORE · 28.7%</small></span><span class="track-value"><strong>¥1,635.00</strong><small>+0.68%</small></span></button>
+    <button class="track"><span class="track-no">02</span><span class="track-copy"><strong>腾讯控股</strong><small>CORE · 21.4%</small></span><span class="track-value"><strong>HK$368.20</strong><small>−0.27%</small></span></button>
+    <button class="track"><span class="track-no">03</span><span class="track-copy"><strong>中国移动</strong><small>INCOME · 8.5%</small></span><span class="track-value"><strong>HK$71.40</strong><small>+0.14%</small></span></button>
+  </div></section>
+  <nav class="bottom-tabs"><button class="active"><i class="tab-dot"></i><span>Session</span></button><button><i class="tab-dot"></i><span>Tracks</span></button><button><i class="tab-dot"></i><span>Flow</span></button><button><i class="tab-dot"></i><span>Archive</span></button></nav>
+  <i class="home-indicator"></i>
+</main>
+<script>
+  const score=document.querySelector('#score'),head=document.querySelector('#playhead');
+  const move=e=>{const r=score.getBoundingClientRect();const x=Math.max(0,Math.min(r.width,e.clientX-r.left));head.style.left=`${x/r.width*100}%`};
+  score.addEventListener('pointerdown',e=>{score.setPointerCapture(e.pointerId);move(e)});score.addEventListener('pointermove',e=>{if(score.hasPointerCapture(e.pointerId))move(e)});
+</script>
+</body></html>

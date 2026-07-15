@@ -160,6 +160,14 @@ function renderModal() {
       <button class="quick-add-option" type="button" data-modal-action="open-trade"><strong>交易</strong><span>买入 / 卖出一笔股票</span></button>
       <button class="quick-add-option" type="button" data-modal-action="open-cash-flow"><strong>出入金</strong><span>真实的资金转入 / 转出</span></button>
     </div>`;
+  } else if (state.modal === 'holdingsMenu') {
+    title = '持仓操作';
+    note = `${state.holdings.length} 项持仓`;
+    fields = `<div class="quick-add-options holdings-menu-options">
+      <button class="quick-add-option" type="button" data-modal-action="holding-add"><strong>新增持仓</strong><span>添加证券或记录一笔买入</span></button>
+      <button class="quick-add-option" type="button" data-modal-action="holding-refresh"><strong>刷新行情</strong><span>更新价格、汇率与股息数据</span></button>
+      <button class="quick-add-option" type="button" data-modal-action="holding-diagnostics"><strong>持仓诊断</strong><span>查看仓位、股息与数据异常</span></button>
+    </div>`;
   } else if (state.modal === 'quantity') {
     title = LABELS.quantityTitle; note = state.modalPayload.name || '';
     fields = `<input id="modalQuantityInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.quantityPlaceholder}">`;
@@ -183,7 +191,7 @@ function renderModal() {
     const entry = getDividendLedgerEntryBySourceId(state.modalPayload && state.modalPayload.sourceId);
     const quote = entry ? inferQuote(entry.symbol) : {};
     title = '股息到账';
-    note = entry ? `${quote.name || entry.symbol} · ${entry.symbol} · 除息 ${formatDateLabel(entry.exDate)}` : '未找到这笔股息';
+    note = entry ? `${quote.name || entry.symbol}` : '未找到这笔股息';
     fields = entry ? `<label class="modal-field"><span>官方派付日（可选）</span><input id="modalDividendPayDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry.payDate))}"></label>
       <label class="modal-field"><span>实际到账日</span><input id="modalDividendReceivedDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry.receivedDate))}"></label>
       <label class="modal-field"><span>实收金额（CNY）</span><input id="modalDividendNetInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(safeNumber(entry.netCny, 0)))}" placeholder="0.00"></label>
@@ -249,15 +257,16 @@ function renderModal() {
         <button class="modal-bucket-button is-income" type="button" data-bucket-option="income" aria-pressed="false">${LABELS.income}</button>
       </div><input id="modalBucketInput" type="hidden" value="core">`;
   }
+  const isReceipt = state.modal === 'dividendLedger';
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-    <section class="modal-sheet" role="dialog" aria-modal="true"><h3 class="modal-title">${title}</h3>
-    ${note ? `<p class="modal-note">${escapeHtml(note)}</p>` : ''}${fields}
+    <section class="modal-sheet${isReceipt ? ' dividend-receipt-sheet' : ''}" role="dialog" aria-modal="true">${isReceipt ? '<div class="sheet-handle" aria-hidden="true"></div>' : ''}
+    <div class="modal-title-row"><h3 class="modal-title">${title}</h3>${note ? `<p class="modal-note">${escapeHtml(note)}</p>` : ''}</div>${fields}
     <div class="modal-actions">
     ${state.modal === 'yearlyManual' && state.modalPayload.existing ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-yearly-manual">删除</button>' : ''}
     ${state.modal === 'cashFlow' && state.modalPayload && state.modalPayload.id ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-record">删除</button>' : ''}
     ${state.modal === 'trade' && state.modalPayload && state.modalPayload.id ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-record">删除</button>' : ''}
     <button class="modal-button modal-button--secondary" type="button" data-modal-action="cancel">${LABELS.cancel}</button>
-    ${state.modal === 'quickAdd' ? '' : `<button class="modal-button modal-button--primary" type="button" data-modal-action="save">${LABELS.save}</button>`}</div></section>`;
+    ${state.modal === 'quickAdd' || state.modal === 'holdingsMenu' ? '' : `<button class="modal-button modal-button--primary" type="button" data-modal-action="save">${LABELS.save}</button>`}</div></section>`;
 }
 
 function renderMonthDetailModal() {
@@ -628,7 +637,7 @@ function saveTradeEdit() {
 }
 
 export function handleModalSave() {
-  if (state.modal === 'monthDetail' || state.modal === 'yearHoldings' || state.modal === 'yearAnnals' || state.modal === 'diagnostics' || state.modal === 'fundPicker') { closeModal(); return; }
+  if (state.modal === 'monthDetail' || state.modal === 'yearHoldings' || state.modal === 'yearAnnals' || state.modal === 'diagnostics' || state.modal === 'fundPicker' || state.modal === 'holdingsMenu') { closeModal(); return; }
   if (state.modal === 'quickAdd') return;
   if (state.modal === 'quantity') {
     const v = Math.max(0, safeNumber(document.getElementById('modalQuantityInput').value, 0));
