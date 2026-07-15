@@ -1,324 +1,418 @@
-# 波普账本 Bebop Ledger
+# Bebop Ledger · 波普账本
 
-一个面向移动端的纯静态股息账本。前端负责持仓管理、收益计算和展示；行情、股息和汇率通过 GitHub Actions 生成 `data/market.json`；页面本身托管在 GitHub Pages。
+> 一款为 iPhone 设计的个人投资账本：把持仓、股息现金流、年度收益、交易成本与公司基本面放进同一套可核对的数字系统。
 
-## 当前架构
+[打开当前线上版本](https://bebop-m.github.io/bebop-ledger-web/)
+
+Bebop Ledger 不是行情交易终端，也不替代券商对账单。它更像一本持续结算的私人总账：公开数据负责补齐价格、汇率、派息与财报，用户记录负责回答“我实际持有多少、收到多少、投入多少、最终赚了多少”。
+
+当前版本是纯静态移动 Web App，优先适配 iPhone、安全区和单手触控。所有计算在浏览器内完成；个人数据默认保存在当前浏览器，也可以通过用户自己的 GitHub 私有仓库跨设备同步。
+
+## 先理解两套数字
+
+产品刻意把“预测”与“已实现”分开。看懂这条边界，就不会误读首页、股息日历和收益页之间的数字差异。
+
+| 层级 | 回答的问题 | 纳入范围 | 出现位置 |
+| --- | --- | --- | --- |
+| 预测层 | 今年大概会收到多少？ | 已到账、待核对、在途、已公告、节奏预估 | 首页、股息日历 |
+| 已实现层 | 真实收到和赚到多少？ | 只认明确确认到账的股息，以及净值、出入金和交易记录 | 收益明细、现金余额、年度归档 |
+
+因此：一笔股息即使预计派付日已经过去，只要尚未勾选“标记已到账”，它仍是“待核对”，不会进入现金余额或年度股息收入。
+
+## 页面与信息架构
+
+### 首页
+
+首页是账本总览，不承担复杂编辑：
+
+- 净财富、当日股票盈亏与 USD/HKD 兑人民币汇率
+- 本月股息、已到账与待到账拆分
+- 下一笔预计到账股息
+- 以当前月份为中心的六个月股息轴；点按月份直接查看明细
+- 全年预计股息及已到账进度
+- 持仓、股息日历、收益明细、公司基本面、资金与交易五个入口
+- 隐私遮罩、云同步、负债入口与“记一笔”主行动
+
+### 持仓
+
+- 核心仓 / 打工仓结构及占比
+- 逐公司持仓权重，默认只展示前五项，可展开全部
+- 按持仓市值、当前股息率或税后年化股息排序；再次选择同一字段可切换方向
+- 每只证券展示现价、持仓市值、有效数量、税后年化股息、当前股息率和股息数据状态
+- 点按数量、年化股息或股息率区域，分别进入数量/交易、税率、每股 TTM 股息编辑
+- “诊断”只列需要处理的问题，不生成容易误导的综合分数
+
+现金余额模式启用后，持仓数量不再直接修改，只能通过买入/卖出交易改变。当前版本没有开放持仓左滑删除。
+
+### 股息日历
+
+- 可查看全部、核心仓或打工仓
+- 先展示“预计全年”，再展示已到账与即将到账
+- 月份按有效到账日归类，而不是简单按除息月归类
+- 默认收起已经过去的月份，当前月和未来月份优先
+- 点按月份可查看逐笔公司、日期、金额与状态
+- 可编辑官方派付日、实际到账日、实收金额和备注，并明确确认是否到账
+
+### 收益明细
+
+- 首屏只突出当年资金收益、收益率和当前净值
+- 年初净值、净注入和现金余额下沉在“查看计算口径”中
+- 分别绘制历年资金收益率与股息收益率
+- 年度表展示股息、股息率、资金收益、收益率和年末净值
+- 点按年份查看当年持仓；点按年鉴查看 XIRR、收益归因和交易复盘
+- 自动数据不足时可按年度手动回填；手填字段优先，留空继续使用自动口径
+
+收益明细从 2025 年开始展示。更早数据仍可作为年初净值、同比和归因的计算基础，但不会挤占当前界面。
+
+### 公司基本面
+
+- 在当前持仓和已覆盖公司之间切换
+- 每股股息、分红率、负债率、EPS 增速及历年折线
+- 年度明细表与当年“至今”数据
+- 历史经营回报参考、数据置信度和计算说明
+- 当前股息率在历史区间中的分位
+- 下一场财报，以及未来 90 天持仓财报日历
+
+### 资金与交易
+
+- 净注入、已实现盈亏、持仓成本和成本股息率
+- 入金 / 出金流水
+- 买入 / 卖出流水及其现金影响
+- 按证券汇总剩余股数、移动平均成本、浮动盈亏和 Yield on Cost
+- 点按任一流水可编辑或删除
+
+## 核心统计口径
+
+除特别注明外，所有跨币种结果统一换算为 CNY。
+
+### 资产与当日盈亏
 
 ```text
-公开仓库（bebop-ledger-web）
-  - 网页代码：index.html / styles.css / src/*.js（ES modules）
-  - 公共数据：data/market.json / data/watchlist.json / data/override.json
-  - GitHub Pages 静态部署（直接 serve 源码，无构建步骤）
-
-私有仓库（bebop-ledger-private）
-  - 个人真实数据：data/portfolio.json
-  - 当前持仓、股息账本、每日快照、出入金、历史回填
-
-浏览器本地（localStorage）
-  - 当前设备上的运行态持仓和收益账本容器
-  - UI 状态
-  - GitHub Personal Access Token
+持仓市值 = 当前价格 × 有效股数 × 当前汇率
+股票总市值 = Σ 持仓市值
+净财富（首页“总资产”）= 股票总市值 + 现金余额 − 负债
+当日盈亏 = Σ[(当前价格 − 昨收) × 有效股数 × 当前汇率]
 ```
 
-## 前端模块结构
+- 当日盈亏百分比以股票总市值为分母，不含现金与负债。
+- 单只证券的持仓权重及核心仓 / 打工仓占比，也以股票总市值为分母。
+- 没有有效昨收时，不展示当日盈亏结论。
 
-前端代码使用 ES modules 拆分为 9 个文件，由 `index.html` 中的 `<script type="module" src="./src/main.js">` 入口加载。模块依赖自底向上，无循环依赖：
+### 持仓股息
 
 ```text
-src/
-  constants.js   ← 纯数据：常量、标签、颜色、默认持仓模板
-  utils.js       ← 纯函数：格式化、股息计算、symbol 标准化、quote 合并
-  state.js       ← 应用状态、DOM refs、快照持久化、toast / confirm
-  compute.js     ← computeHoldings（带 generation 缓存）、公司/仓位分段
-  render.js      ← 全部 DOM 渲染 / 增量 patch / 手势 / 动画
-  modal.js       ← 弹窗渲染、Escape/Enter 键盘处理、保存逻辑
-  network.js     ← 行情拉取、腾讯 JSONP、config 加载
-  sync.js        ← GitHub 云同步、导入导出
-  main.js        ← 入口：UI 初始化、事件绑定、boot()
+当前股息率 = 有效每股 TTM 股息 ÷ 当前价格
+税前预估年化股息 = 有效每股 TTM 股息 × 有效股数 × 当前汇率
+税后预估年化股息 = 税前预估年化股息 × (1 − 手动税率)
 ```
 
-依赖方向：
+- 每股 TTM 股息的手动覆盖优先于公共行情数据。
+- 当前股息率是税前每股口径；页面展示的“年化股息”是税后金额。
+- 仓位汇总中的平均股息率为“税后年化股息 ÷ 该仓股票市值”，与单股税前股息率并非完全同口径。
+- 未设置税率时按 0% 处理，不会自动推断市场税率。
+
+### 股息状态与全年预计
+
+| 状态 | 判断方式 | 是否进入“预计全年” | 是否进入现金 / 年度收入 |
+| --- | --- | --- | --- |
+| 已到账 `received` | 用户明确勾选确认 | 是 | 是 |
+| 待核对 `due` | 有效到账日已过，但未确认 | 是 | 否 |
+| 在途 `pending` | 已除息，到账日在未来 | 是 | 否 |
+| 已公告 `announced` | 已公告、尚未除息 | 是 | 否 |
+| 节奏预估 `forecast` | 依据最近约 13 个月派息节奏投影 | 是 | 否 |
 
 ```text
-constants  →  utils  →  state  →  compute  →  render
-                                               ↑
-                                    modal / network / sync
-                                               ↓
-                                             main（入口）
+即将到账 = 在途 + 已公告 + 节奏预估
+预计全年 = 已到账 + 待核对 + 即将到账
 ```
 
-GitHub Pages 原生支持 ES modules，部署时直接复制 `src/` 目录，无需构建。本地开发可选用 Vite：
+归月时优先使用实际到账日，其次是官方派付日；两者都缺失时使用市场估算：A 股 0 天、港股 30 天、美股 14 天。估算只是界面排序和预测依据，不会自动把股息标记为已到账。
 
-```bash
-npm install
-npm run dev       # http://localhost:5173
-npm run build     # 产出 dist/（可选）
-```
+已除息事件优先取除息日当天或之前最近一份日快照冻结股数、税率和汇率；没有快照时才退回当前持仓。未来公告与节奏预估使用当前有效股数。相同“证券 + 除息日”的记录会按“确认到账 → 已到账 → 已公告 → 在途/待核对 → 预估”去重。
 
-## 数据流
+“预计全年同比”当前以去年账本中按有效到账日归年的总额为基准；这个基准不会再次要求 `confirmed = true`，因此它可能与收益页的“去年实际股息”不同。
+
+### 现金余额模式
+
+填写期初现金和启用日期后，现金模式生效：
 
 ```text
-Update Market Data
-  -> Python 脚本抓取价格、股息、汇率
-  -> 写入公开仓库 data/market.json
+有效股数 = 期初持仓股数 + 启用日之后买入股数 − 启用日之后卖出股数
 
-Deploy Pages
-  -> 白名单复制：src/、assets/ 和 data/ 下三个公开文件部署到 GitHub Pages
-  -> update-market-data push market.json 到 main 后自动触发（唯一路径，不重复）
-
-前端页面
-  -> 优先读取站点上的 data/market.json
-  -> 合并 data/override.json 的手动股息覆盖
-  -> 再用腾讯实时价格覆盖 price / previousClose
-  -> 所有持仓计算都在前端完成（computeHoldings 带 generation 缓存，同一数据周期内不重复计算）
+现金余额 = 期初现金
+         + 入金 − 出金
+         + 卖出成交额 − 卖出费用
+         − 买入成交额 − 买入费用
+         + 已确认到账股息
 ```
 
-## 当前功能
+只有启用日当天及之后的记录参与推算；更早的持仓和现金应已经包含在期初值中。现金可以为负，用于表示融资或透支。
 
-### 持仓与收益
+未启用现金模式时，现金余额恒为 0，持仓数量可直接编辑；启用后，“记一笔”和持仓页新增按钮都优先进入交易录入。
 
-- 展示总市值、预估年化股息、汇率、负债和净资产
-- 展示日内盈亏金额和百分比（基于腾讯 previousClose）
-- 支持核心仓 / 打工仓分组，点击可展开仓位明细
-- 支持按市值、预估股息率、预估年化股息排序（折叠式排序菜单）
-- 展示每只股票的价格、市值、数量、预估年化股息、预估股息率和占比
-- 支持数量、税率、每股 TTM 股息手动覆盖
-- 隐私模式：点击后 DOM 文本替换为 ****，F12 也看不到真实金额
+### 年度收益
 
-### 弹窗交互
+```text
+年度净注入 = 当年入金 − 当年出金
+资金收益 = 年末净值 − 年初净值 − 年度净注入
+资金收益率 = 资金收益 ÷ 计算基数
+股息收益率 = 已确认到账股息 ÷ 计算基数
+收益参考合计 = 资金收益 + 已确认到账股息
+```
 
-- 所有编辑弹窗支持 Escape 关闭、Enter 保存
-- 弹窗打开时自动聚焦输入框
-- 删除确认弹窗支持 Escape 取消
+计算基数优先使用上一年年末净值。缺失时可由手填的“金额 + 收益率”反推；再缺失时会结合年末净值、净注入和手填收益率估算。这个反推基数只用于金额与比率互算，不会污染真实净值链。
 
-### 同步
+年末净值依次取：手动值 → 当前年现金模式实时净值 → 当年最后一份日快照 → 已冻结年度归档 → 当前年实时净值。完整年份会自动归档；自动归档与用户手填分开保存，删除手填值后仍能回到自动结果。
 
-- 当前 UI 默认只暴露一个"云同步"入口
-- 第一次在新设备点击云同步时，需要输入一次 GitHub Personal Access Token
-- Token 保存在浏览器 `localStorage`
-- 如果本地还是模板态，云同步会先尝试从私有仓库恢复真实持仓
-- 如果本地已经是真实持仓，云同步会上传到私有仓库 `data/portfolio.json`
-- 如果真实持仓里出现了新的股票代码，云同步会自动把它追加进公开仓库 `data/watchlist.json`
-- 追加成功后会自动触发 `Update Market Data`
-- 云按钮会在后台持续工作并显示旋转动画；页面本身不锁死，可以继续使用
+年度股息只统计明确确认到账的记录，并按实际到账日或有效派付日归年。未确认的“待核对”不会提前进入年度收入。
 
-### 行情与股息
+### 年鉴、XIRR 与收益归因
 
-- 价格：腾讯实时行情优先用于前端覆盖
-- 股息：由后台脚本写入 `dividendPerShareTtm`
-- 股息来源状态：`yfinance` / `cache` / `manual`
-- Tooltip 会显示股息来源、更新时间、最近除息日，以及抓取错误（如果有）
+年度年鉴不新增数据，只重新组织已有净值、出入金、交易、持仓快照和基本面：
 
-## UI 与颜色逻辑
+- XIRR 使用年初净值、逐笔出入金和年末净值计算资金加权年化收益。
+- 没有逐笔出入金但存在年度净注入时，按 7 月 1 日的一笔现金流近似。
+- 未启用现金模式时，股息不在净值内，XIRR 会把股息作为分配现金加入；当前年使用实际结算日，历史年按年中近似。
+- 资金收益先近似拆为汇率与本币价格；价格部分再用年初持仓和 EPS 变化近似拆为 EPS 增长与估值变动。
+- 归因依赖相邻年度持仓、年界汇率、年末价格和正 EPS；覆盖不足时会明确显示未覆盖比例，不应当作会计级精确归因。
 
-当前界面采用极简财务表格语言：优先使用文字、数字、发丝线和进度线表达结构，避免卡片背景、圆角框、徽章式色块和大面积装饰色。
+### 交易成本
 
-- 墨色用于主资产数字和结构结果，例如总资产、持仓市值、当前股价、持股占比、预计全年股息和每月合计金额。
-- 灰色用于辅助信息和未完成状态，例如股票代码、标签文字、在途/即将到账股息、说明文字和进度轨道。
-- 金棕色 `#b9835f` 用于股息现金流和已完成进度，例如已到账股息金额、年化股息金额、首页/股息日历/持仓结构里的进度填充。
-- 红绿仅用于涨跌语义，例如日内盈亏和同比涨跌；不要把红绿用于普通分类或静态状态。
-- 持仓结构和股息日历采用“无框指标 + 发丝线分隔”：筛选、仓位比例、持仓占比都保留点击能力，但视觉上不出现按钮框或背景框。
+- 买入成本 = 成交额 + 买入费用。
+- 卖出采用移动平均成本法；已实现盈亏 = 卖出所得 − 卖出费用 − 对应平均成本。
+- 浮动盈亏 = 当前市值 − 剩余成本。
+- Yield on Cost = 当前税后 TTM 年化股息 ÷ 剩余成本。
+- 交易币种按证券代码识别，新增记录时价格可由当前行情预填；汇率保存为该笔记录自身的值。
 
-## 公开数据与私有数据的边界
+### 基本面与诊断
 
-### 公开仓库中的数据
+基本面页面只把完整财年放入趋势线；当前年度的“至今”数据只进入表格，避免把不完整年份当作全年比较。
 
-- `data/market.json`
-- `data/watchlist.json`
-- `data/override.json`
+```text
+历史经营回报参考
+= 最近完整年度常规股息率
++ 净利润 CAGR
++ 净回购率
+```
 
-这些文件会进入 GitHub Pages，任何访问站点的人都可以读取。
+当净利润或股本数据不足时，退回“常规股息率 + EPS CAGR”，此时不再重复加回购。增长观察窗口需要至少三个有效年度，最长使用最近六个数据点；特别股息会从持续派息能力中剔除。这个结果是历史经营事实的压缩表达，不是未来收益预测。
 
-### 私有仓库中的数据
+持仓诊断目前关注：
 
-- `data/portfolio.json`
+- 打工仓超过 5% 的常规区间或 10% 硬上限
+- 近两年无常规股息、股息削减、自由现金流覆盖不足
+- 净利润 / EPS 明显下降、连续两年自由现金流为负
+- 两年负债率显著上升、总股本持续稀释
+- 基本面缺失、过期或长期增速置信度不足
 
-其中 `portfolio.json` 保存个人真实数据：当前持仓、`dividendLedger`、`dailySnapshots`、`cashFlows` 和 `yearlyManual`。这些数据不进入公开仓库或 GitHub Pages。
+诊断只暴露异常和数据缺口，不给“健康分”，也不构成买卖建议。
 
-这个文件只放在私有仓库，不在公开仓库中，也不会部署到 GitHub Pages。
+## 交互逻辑
 
-## 文件说明
+当前交互遵循“常用路径直接、复杂口径下沉”的原则：
 
-### 公开仓库
+- 首页顶部下拉超过阈值后松手刷新；拖动过程中带阻尼与连续进度反馈。
+- 首页月份、目录行、仓位结构和年度年份都直接映射到对应内容，不使用隐藏的多层菜单。
+- 编辑任务使用底部 sheet；删除等破坏性操作使用独立确认层。
+- 按钮按下即时缩放或变色；刷新、同步、成功和错误都有持续状态或 toast。
+- 云同步在后台等待新证券行情时不会锁住整个页面。
+- 金额遮罩会把已渲染数字替换成掩码，但它只是临时视觉隐私，不是加密。
+- 弹窗支持 `Escape` 关闭、`Enter` 保存，并自动聚焦首个输入框。
+- 系统开启“减少动态效果”“减少透明度”或“增强对比度”时，界面会分别关闭主要转场、改用实色表面或加强分隔线。
+
+## UI 语言：Mineral Swiss Ledger
+
+新版视觉不是传统金融 App 的蓝白仪表盘，也不是彩色卡片拼贴。它把瑞士排版的秩序感与纸本账册的温度结合起来，让数字始终高于装饰。
+
+### 色彩
+
+| Token | 值 | 用途 |
+| --- | --- | --- |
+| Mineral Paper | `#efefe9` | 暖矿物纸背景，消除偏蓝白和纯白屏幕感 |
+| Ledger Surface | `#fafaf6` | sheet、输入与必要的抬升表面 |
+| Ledger Ink | `#181916` | 标题、总额、关键结论 |
+| Iris | `#6958e8` | 当前状态、主操作、进度与焦点，不代表盈亏 |
+| Iris Soft | `#e5e1ff` | 按压、选中和轻量反馈 |
+| Gain / Loss | `#b94234` / `#26825c` | 仅用于收益语义；遵循 A 股习惯，红涨绿跌 |
+| Warning | `#a66a24` | 待核对与风险提示 |
+
+### 排版与结构
+
+- 大额结论使用系统 Display 字体、紧字距和高数字占比。
+- 价格、日期、比例和表格数据使用等宽数字字体，保证纵向比较稳定。
+- 英文微标签承担坐标与节奏，中文负责含义；两者不重复争夺层级。
+- 页面以发丝线、基线、比例轨道和留白分组，尽量不用大色块或层层卡片。
+- 核心内容沿单列 iPhone 轴线展开，首屏只保留一个主结论；解释、来源和历史明细通过折叠或 sheet 下沉。
+- 鸢尾紫只提示“可操作 / 当前 / 关系”，财务结果仍由墨色和小范围红绿表达。
+
+## 数据生命周期
+
+```text
+公开数据任务
+  ├─ 价格 / 汇率 / 派息 / 公告 ──> data/market.json
+  ├─ 年度基本面 ────────────────> data/fundamentals.json
+  └─ 财报日期 ──────────────────> data/report_calendar.json
+                         │
+                         ▼
+浏览器启动：本地账本 → 公共快照 → 手动覆盖 → 腾讯实时价格
+                         │
+                         ▼
+结算：日快照 → 股息账本 → 年度归档 → 当前年度持仓快照
+                         │
+                         ▼
+localStorage；可选同步到私有仓库 data/portfolio.json
+```
+
+每次启动先恢复本地状态并立即渲染，再并行加载基本面与财报日历，最后刷新市场数据。网络失败时保留已有账本和缓存；只要本地结算产生了新记录，仍会保存并重绘。
+
+结算会为当天创建一份日快照，但同一天已存在快照时不会重写。当天首次结算后的持仓、负债或汇率修改，不会追溯改变这份日快照。
+
+## 数据来源与自动更新
+
+| 数据 | 主要来源 | 更新方式 |
+| --- | --- | --- |
+| 价格 | 腾讯财经；Yahoo/yfinance 作为后台补充 | 市场任务每天 3 次；前端启动和手动刷新时再取实时价 |
+| USD/HKD 汇率 | Frankfurter | 市场任务每天 3 次 |
+| 历史派息 | Yahoo Chart，失败时回退 yfinance | 市场任务每天 3 次，失败保留缓存并标记状态 |
+| A/H 已公告派息 | 东方财富 / ET Net | 市场任务每天 3 次 |
+| 年度基本面 | yfinance | 每天复核一次 |
+| 财报日历 | 港交所、东方财富、Yahoo；手动覆盖优先 | 随市场任务执行，脚本带 18 小时缓存 |
+
+对应工作流：
+
+- `.github/workflows/update-market-data.yml`：刷新 `market.json` 与 `report_calendar.json`。
+- `.github/workflows/update-fundamentals.yml`：刷新 `fundamentals.json`。
+- `.github/workflows/deploy-pages.yml`：`main` 分支更新后发布 GitHub Pages。
+
+所有外部数据都可能延迟、缺失或被上游修订。自动账本会清理行情覆盖区间内已经失配的未确认记录，但用户确认、手动记录和覆盖区间以前的历史记录会保留。
+
+## 本地数据、云同步与隐私
+
+### 浏览器本地
+
+应用状态保存在 `localStorage`，包括：
+
+- 持仓及核心仓 / 打工仓分类
+- 股息账本、日快照、出入金、交易
+- 年度手填、自动归档与年度持仓
+- 期初现金、启用日期、负债和界面偏好
+- GitHub Personal Access Token（单独的 localStorage key）
+
+### 私有仓库
+
+点击云按钮时：
+
+1. 如果本地仍是示例模板，优先从私有仓库恢复 `data/portfolio.json`。
+2. 否则把当前个人账本写入私有仓库。
+3. 将新增证券代码追加到公开 `data/watchlist.json`。
+4. 必要时触发市场数据任务，并在后台等待新行情部署完成。
+
+私有快照包含个人账本，不包含作为公共数据重新获取的完整行情和基本面文件。
+
+### 公开边界
+
+公开仓库中的源码、配置和 `data/` 公共快照都可被任何人读取。`watchlist.json` 公开证券池，但不应包含数量、成本或个人备注。
+
+当前 Pages 工作流上传整个已检出的仓库目录，并非部署白名单。因此：
+
+> 任何提交到这个公开仓库的文件，都必须按“最终可能公开”处理。不要只依赖文件名或目录位置判断隐私。
+
+`.gitignore` 已阻止 `data/portfolio.json` 和 `data/portfolio_snapshot.json` 被新增提交，但它不能保护已经进入 Git 历史的秘密。若敏感文件曾经提交过，必须清理 Git 历史并轮换相关凭据。
+
+GitHub Token 以明文形式保存在当前站点域的 localStorage 中。建议使用 fine-grained token，只授权公开与私有两个目标仓库，并限制为所需的 Contents / Actions 权限。不要在共享设备或不可信浏览器配置中保存 Token。
+
+前端实时行情使用腾讯 JSONP，会把第三方脚本加载进当前页面上下文。它便于无后端获取行情，但安全级别不等同于隔离的服务端代理；这也是保存高权限 Token 时必须限制授权范围的原因。
+
+## 技术架构
+
+项目没有运行时框架，前端由原生 HTML、CSS 和 ES modules 组成；Vite 只用于本地开发与构建校验。
 
 ```text
 index.html
 styles.css
-config.json
 src/
-  constants.js
-  utils.js
-  state.js
-  compute.js
-  render.js
-  modal.js
-  network.js
-  sync.js
-  main.js
-assets/
-  icon.svg
+  constants.js        常量、标签、公共端点与默认模板
+  utils.js            格式化、校验、代码与派息事件标准化
+  state.js            状态、快照迁移、localStorage、toast / confirm
+  compute.js          持仓、现金、股息日历、年度收益、交易成本
+  revenue.js          日结算、股息账本、年度归档与持仓快照
+  annals.js           XIRR、年度归因与年鉴
+  fundamentals.js     基本面模型、历史经营回报与页面渲染
+  diagnostics.js      持仓异常规则
+  report-calendar.js  财报日历缓存、筛选与渲染
+  render.js           页面视图、增量更新与展示格式
+  modal.js            sheet 内容、编辑、保存与删除
+  network.js          公共快照、覆盖文件与腾讯实时行情
+  sync.js             私有快照、公开观察池与 GitHub 同步
+  main.js             启动、导航、事件与触控入口
 data/
   market.json
-  override.json
+  fundamentals.json
+  report_calendar.json
   watchlist.json
+  override.json
+  report_override.json
 scripts/
   update_market_data.py
-  requirements.txt
-.github/workflows/
-  update-market-data.yml
-  deploy-pages.yml
-package.json
-vite.config.js
-serve.ps1
+  update_fundamentals.py
+  update_report_calendar.py
+  settle_private_portfolio.py
+tests/
 ```
 
-### 关键文件
+`computeHoldings()` 使用 generation cache，状态发生变化时统一失效。视图刷新优先 patch 已有节点；持仓重排使用 FLIP 动画，避免整页闪烁。
 
-- `src/main.js`
-  前端入口，负责 UI 初始化、事件绑定和 boot 流程。
+## 本地运行与验证
 
-- `src/compute.js`
-  持仓计算核心，带 generation-based 缓存。所有市值、股息、权重、日内盈亏都在这里算。
-
-- `src/network.js`
-  行情数据加载：站点 market.json → GitHub API fallback → 腾讯 JSONP 实时价格。
-
-- `src/sync.js`
-  GitHub 云同步全流程：Token 管理、私有仓库读写、watchlist 追加、workflow dispatch。
-
-- `data/market.json`
-  后台自动生成的公共行情快照，包含价格、每股 TTM 股息、股息来源、更新时间、最近除息日、状态和汇率。
-
-- `data/watchlist.json`
-  公共观察名单，也是后台更新股票池。前端新增真实持仓后，云同步会自动把缺失的 symbol 追加进来。
-
-- `data/override.json`
-  手动股息覆盖，优先级高于后台抓取结果。
-
-- `config.json`
-  轻量配置文件，目前主要控制 `coreSymbols` 和 `staleDays`。
-
-- `scripts/update_market_data.py`
-  后台行情脚本。负责抓取价格、股息、汇率并写入 `data/market.json`。
-
-### 私有仓库
-
-```text
-data/
-  portfolio.json
-```
-
-- `data/portfolio.json`
-  个人真实数据快照，用于跨设备恢复和备份。包含当前持仓、股息账本、每日快照、出入金和历史回填。
-
-## 首页预估股息计算
-
-前端只认 `dividendPerShareTtm` 这个核心字段：
-
-```text
-预估股息率 = dividendPerShareTtm / 当前价格
-税前预估年化股息 = dividendPerShareTtm * 持股数量 * 汇率
-税后预估年化股息 = 税前预估年化股息 * (1 - 税率)
-```
-
-手动覆盖优先级高于后台值。
-
-已收股息后续以 `dividendLedger` 事件为准，按除息日归属年份统计，不用 TTM 反推。
-
-## 本地开发
-
-### 方式一：Vite（推荐）
+### Vite
 
 ```bash
 npm install
 npm run dev
 ```
 
-打开 `http://localhost:5173/`，支持热更新。
+默认访问 `http://localhost:5173/`。
 
-### 方式二：静态服务器
+### PowerShell 静态服务器
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File serve.ps1
 ```
 
-打开 `http://127.0.0.1:4173/`
+默认访问 `http://127.0.0.1:4173/`。
 
-### 方式三：任意 HTTP 服务器
+ES modules 必须通过 HTTP 加载，不能直接双击 `index.html` 使用 `file://`。
 
-ES modules 需要通过 HTTP 加载（不能 `file://`），任何支持静态文件的 HTTP 服务器都可以：
+### 测试与构建
 
 ```bash
-npx serve .
-# 或
-python -m http.server 8080
+npm test
+npm run build
 ```
 
-## 部署
+测试覆盖核心收益、股息确认、现金模型、年度回填、XIRR、收益归因和诊断规则。`npm run build` 生成 `dist/` 用于校验，但当前 Pages 工作流直接发布仓库中的静态源码，不使用 `dist/`。
 
-本项目使用 GitHub Actions + GitHub Pages，直接 serve 源码，无构建步骤。
+### 手动刷新公共数据
 
-### 工作流
-
-- `update-market-data.yml`
-  负责更新公开仓库里的 `data/market.json`，完成后 push 到 main
-
-- `deploy-pages.yml`
-  负责部署页面，只监听 `push` 和 `workflow_dispatch`。update-market-data push 到 main 后自动触发一次部署，不会重复
-
-部署链路：
-
-```text
-update-market-data 完成 → push market.json → 触发 deploy-pages（唯一路径）
+```bash
+pip install -r scripts/requirements.txt
+python scripts/update_market_data.py
+python scripts/update_fundamentals.py
+python scripts/update_report_calendar.py
 ```
 
-### 部署白名单
+这些脚本会访问外部数据源并改写 `data/` 公共文件；日常运行优先交给 GitHub Actions。
 
-`deploy-pages.yml` 使用白名单复制，只有以下文件会进入 GitHub Pages：
+## 当前边界
 
-```text
-index.html / styles.css / config.json
-src/（全部 JS 模块）
-assets/（图标）
-data/market.json / data/watchlist.json / data/override.json
-```
+- 产品是单用户个人账本，没有账号系统、多人协作或券商自动成交同步。
+- 价格、股息、财报与基本面来自第三方公共源，不保证实时性和完整性。
+- 节奏预估只用于现金流规划，不是公司派息承诺。
+- 现金模式依赖期初值和后续流水完整；漏记交易或出入金会直接影响现金、股数与收益。
+- 同一天的日快照只创建一次，不会因当天后续编辑自动回写。
+- 历史回填年度持仓若来自旧日快照，股数取历史快照，但价格可能按当前行情估算，只适合结构参考。
+- 历史经营回报、诊断和年鉴归因都是辅助复盘，不构成投资建议、税务意见或审计结论。
 
-`data/portfolio.json` 和其他私有文件即使不小心出现在仓库中，也不会被部署。
+---
 
-### 推荐的同步 Token 权限
-
-使用 fine-grained personal access token，并只授权这两个仓库：
-
-- `bebop-ledger-web`
-- `bebop-ledger-private`
-
-最小权限：
-
-- `Contents: Read and write`
-- `Actions: Read and write`
-
-## 技术细节
-
-### 性能
-
-- `computeHoldings()` 使用 generation counter 缓存，同一数据周期内多次调用直接返回缓存结果
-- DOM 更新使用增量 patch 策略：`patchSummaryView` / `patchLegendView` / `patchBucketsView` / `syncRenderedHoldingsView` 只更新变化的节点
-- 持仓列表排序变更时使用 FLIP 动画（`captureHoldingPositions` → `animateHoldingReflow`）
-
-### 安全
-
-- `.gitignore` 明确屏蔽 `data/portfolio.json` 和 `data/portfolio_snapshot.json`，防止私有持仓被意外提交到公开仓库
-- `deploy-pages.yml` 使用白名单复制，即使私有文件出现在仓库中也不会部署到 GitHub Pages
-- HTML 输出统一通过 `escapeHtml()` 转义，使用单次正则 + 映射表
-- 隐私模式在 JS 层面替换 DOM 文本为 mask 值，CSS 层同时切换 `privacy-hidden` 类作为瞬时视觉遮罩
-- GitHub Token 存储在 localStorage，仅当前域可访问
-- Base64 编解码使用 `TextEncoder` / `TextDecoder`，不依赖已废弃的 `unescape()`
-
-## 当前已知事实
-
-- 页面默认模板和真实持仓是两套概念
-- `watchlist.json` 是公共观察池，不是私有持仓快照
-- 私有真实持仓不在公开仓库中（`.gitignore` 拦截 + 部署白名单双重保障）
-- `Update Market Data` push 到 main 后触发 deploy，单条链路，不重复
-- 如果公开仓库历史 commit 中残留过 `portfolio.json`，需要用 `git filter-repo` 彻底清除
-- 腾讯实时行情通过 JSONP script 注入获取，存在潜在的 CDN 安全风险，但目前没有更好的免费替代方案
+Bebop Ledger 的设计目标不是展示更多数据，而是让每个重要数字都能回答三个问题：它从哪里来、属于预测还是事实、下一步能否被核对。
