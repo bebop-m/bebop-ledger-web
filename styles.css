@@ -10002,3 +10002,174 @@ body[data-active-page="home"] .home-nav-item { padding: clamp(9px, 1.25vh, 11px)
 @media (prefers-reduced-transparency: reduce) {
   .modal-sheet,.confirm-sheet { background: var(--ledger-paper); backdrop-filter: none; }
 }
+
+/* ── Home event rhythm, dividend chart and subpage consistency · 2026-07 ── */
+body[data-active-page="home"] .home-hero-pnl { font-weight: 650; }
+body[data-active-page="home"] .home-hero-pnl .is-market-up { color: rgba(185, 66, 52, .72) !important; }
+body[data-active-page="home"] .home-hero-pnl .is-market-down { color: rgba(30, 122, 69, .72) !important; }
+
+body[data-active-page="home"] .home-month-ledger {
+  margin-top: clamp(11px, 1.6vh, 16px);
+  padding-top: 0;
+  border-top: 0 !important;
+}
+body[data-active-page="home"] .home-month-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+}
+body[data-active-page="home"] .home-month-summary > span { min-width: 0; }
+body[data-active-page="home"] .home-month-summary > span + span { padding-left: 16px; border-left: 1px solid var(--ledger-line); text-align: right; }
+body[data-active-page="home"] .home-month-summary small { display: block; color: var(--ledger-muted); font-size: 9px; font-weight: 650; }
+body[data-active-page="home"] .home-month-summary strong { display: block; margin-top: 4px; color: var(--ledger-ink); font: 700 13px var(--font-data); }
+body[data-active-page="home"] .home-month.is-current::after { display: none; }
+body[data-active-page="home"] .home-month.is-current > b {
+  position: absolute;
+  bottom: -1px;
+  left: 50%;
+  width: 17px;
+  height: 2px;
+  transform: translateX(-50%);
+  background: linear-gradient(to right, var(--ledger-iris) 0 var(--home-month-progress, 0%), #d3d3cd var(--home-month-progress, 0%) 100%);
+}
+
+body[data-active-page="home"] .home-event-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  min-height: clamp(76px, 10.5vh, 94px);
+  margin-top: clamp(12px, 1.8vh, 18px);
+  border-top: 1px solid var(--ledger-line-strong);
+  border-bottom: 1px solid var(--ledger-line);
+}
+body[data-active-page="home"] .home-event-cell {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: center;
+  padding: 10px 9px;
+  border: 0;
+  background: transparent;
+  color: var(--ledger-ink);
+  text-align: left;
+}
+body[data-active-page="home"] .home-event-cell + .home-event-cell { border-left: 1px solid var(--ledger-line); }
+body[data-active-page="home"] .home-event-cell > span { color: var(--ledger-muted); font-size: 8.5px; font-weight: 680; letter-spacing: .04em; }
+body[data-active-page="home"] .home-event-cell > strong { align-self: center; overflow: hidden; color: var(--ledger-ink); font: 700 clamp(19px, 5.8vw, 23px)/1 var(--font-data); letter-spacing: -.025em; white-space: nowrap; }
+body[data-active-page="home"] .home-event-cell > strong em { margin-left: 3px; color: var(--ledger-muted); font-size: 8px; font-style: normal; letter-spacing: .05em; }
+body[data-active-page="home"] .home-event-cell > small { overflow: hidden; color: var(--ledger-muted); font-size: 8.5px; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+body[data-active-page="home"] .home-event-cell.is-action > strong { color: var(--ledger-iris); font-size: 29px; font-weight: 520; }
+body[data-active-page="home"] .home-event-cell:active { background: rgba(105, 88, 232, .08); }
+body[data-active-page="home"] .home-nav-list { margin-top: clamp(11px, 1.6vh, 16px); }
+
+@media (min-height: 620px) and (max-width: 430px) {
+  #homePage { height: calc(100dvh - 30px); }
+  body[data-active-page="home"] .home-nav-list { flex: 1; display: flex; flex-direction: column; }
+  body[data-active-page="home"] .home-nav-item { flex: 1 1 0; min-height: 36px; }
+}
+
+/* Dividend tabs: a single shared baseline; filter precedes annual forecast. */
+#dividendCalendarListView > #dividendFilterGroup.segmented-control {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 18px 0 0;
+  border: 0;
+  border-bottom: 1px solid var(--ledger-line);
+}
+#dividendCalendarListView > #dividendFilterGroup .segment-button {
+  position: relative;
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  color: var(--ledger-muted);
+  text-align: center;
+}
+#dividendCalendarListView > #dividendFilterGroup .segment-button.is-active { color: var(--ledger-ink); }
+#dividendCalendarListView > #dividendFilterGroup .segment-button.is-active::after {
+  content: "";
+  position: absolute;
+  right: 24%;
+  bottom: -1px;
+  left: 24%;
+  width: auto;
+  height: 2px;
+  background: var(--ledger-iris);
+}
+.dividend-overview-panel { padding-top: 20px !important; }
+.dividend-year-chart { margin-top: 21px; padding-top: 17px; border-top: 1px solid var(--ledger-line); }
+.dividend-year-chart-head { display: flex; align-items: baseline; justify-content: space-between; }
+.dividend-year-chart-head span { color: var(--ledger-muted); font-size: 11px; font-weight: 700; letter-spacing: .12em; }
+.dividend-year-chart-head small { color: var(--ledger-soft); font: 9px var(--font-data); }
+.dividend-year-bars {
+  height: 80px;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  align-items: end;
+  margin-top: 11px;
+  border-bottom: 1px solid var(--ledger-line);
+}
+.dividend-year-bars > span { height: 100%; display: grid; grid-template-rows: 1fr 17px; align-items: end; justify-items: center; }
+.dividend-year-bars i { width: 54%; max-width: 11px; background: #c7c7c0; }
+.dividend-year-bars .is-past i { background: #aaa9a2; }
+.dividend-year-bars .is-current i { background: var(--ledger-iris); }
+.dividend-year-bars small { align-self: center; color: var(--ledger-soft); font: 8px var(--font-data); }
+.dividend-year-bars .is-current small { color: var(--ledger-iris); font-weight: 700; }
+
+/* Records page uses the same header geometry as every other subpage. */
+#recordsPage .top-bar { grid-template-columns: 9px minmax(0, 1fr); }
+#recordsPage .top-bar-heading { display: block; }
+#recordsPage .records-ledger-panel { padding-top: 25px !important; }
+
+/* Income actions and quick-add choices lose the remaining boxed controls. */
+#incomeSummaryPage .income-actions-bar,
+#incomeSummaryPage.is-cash-active .income-actions-bar { display: flex; gap: 0; margin-top: 12px; border: 0; }
+#incomeSummaryPage .income-actions-bar .income-manual-button {
+  min-height: 38px;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+#incomeSummaryPage .income-actions-bar .income-manual-button + .income-manual-button { border-left: 1px solid var(--ledger-line) !important; }
+
+.quick-add-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 12px;
+  border-top: 1px solid var(--ledger-line);
+  border-bottom: 1px solid var(--ledger-line);
+}
+.quick-add-option {
+  min-height: 88px;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  padding: 12px 9px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  text-align: center;
+}
+.quick-add-option + .quick-add-option { border-left: 1px solid var(--ledger-line); }
+.quick-add-option strong { font-size: 14px; }
+.quick-add-option span { max-width: 120px; line-height: 1.4; }
+
+@media (max-height: 700px) and (max-width: 430px) {
+  body[data-active-page="home"] .home-hero { padding: 12px 0; }
+  body[data-active-page="home"] .home-cashflow { padding-top: 12px; }
+  body[data-active-page="home"] .home-cashflow-progress { margin-top: 12px; }
+  body[data-active-page="home"] .home-month-ledger { margin-top: 9px; }
+  body[data-active-page="home"] .home-month-track { margin-top: 9px; }
+  body[data-active-page="home"] .home-event-strip { min-height: 70px; margin-top: 9px; }
+  body[data-active-page="home"] .home-event-cell { padding-top: 8px; padding-bottom: 8px; }
+  body[data-active-page="home"] .home-nav-list { margin-top: 8px; }
+  body[data-active-page="home"] .home-nav-item { padding: 7px 0; }
+}

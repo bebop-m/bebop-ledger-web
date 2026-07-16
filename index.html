@@ -38,10 +38,6 @@
           <header class="home-top">
             <span class="home-brand">Bebop <small>Ledger</small></span>
             <div class="home-top-actions">
-              <button id="quickAddButton" class="quick-add-button" type="button" aria-label="记一笔交易或出入金">
-                <span class="quick-add-mark" aria-hidden="true">＋</span>
-                <span class="quick-add-copy"><strong>记一笔</strong></span>
-              </button>
               <button id="exportButton" class="summary-action-button summary-action-button--cloud" type="button" aria-label="同步到云端" title="同步到云端"><span class="cloud-sync-icon" aria-hidden="true"><svg class="cloud-sync-base" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 17a3.5 3.5 0 0 0-1.6-6.4h-.5A6.2 6.2 0 0 0 6 9.6 4.4 4.4 0 0 0 6.5 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg><span class="cloud-sync-badge"></span><svg class="cloud-sync-check" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4 4.9 9 9.8 3.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></button>
               <button id="importButton" class="text-button" type="button" hidden aria-hidden="true" tabindex="-1">导入快照</button>
               <button
@@ -202,15 +198,15 @@
             </div>
           </header>
 
-          <section class="panel dividend-overview-panel">
-            <div id="dividendMetricGrid" class="dividend-metric-grid"></div>
-          </section>
-
           <div id="dividendFilterGroup" class="segmented-control" aria-label="股息日历筛选">
             <button class="segment-button" type="button" data-dividend-filter="all">全部</button>
             <button class="segment-button" type="button" data-dividend-filter="core">核心仓</button>
             <button class="segment-button" type="button" data-dividend-filter="income">打工仓</button>
           </div>
+
+          <section class="panel dividend-overview-panel">
+            <div id="dividendMetricGrid" class="dividend-metric-grid"></div>
+          </section>
 
           <section class="panel dividend-months-panel">
             <header class="panel-bar">
@@ -290,12 +286,6 @@
             </button>
             <div class="top-bar-heading">
               <h2 class="top-bar-title">资金与交易</h2>
-            </div>
-            <span id="recordsYear" class="page-year" aria-label="记录年份"></span>
-            <div class="icon-actions">
-              <button id="incomeCashFlowButton" class="circle-button" type="button" aria-label="出入金">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.8v14.4M6.6 9.8 12 4.8l5.4 5M6.6 14.2l5.4 5 5.4-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              </button>
             </div>
           </header>
 

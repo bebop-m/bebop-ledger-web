@@ -72,6 +72,7 @@ refs.homeNavList.addEventListener('click', (event) => {
 });
 
 refs.homeFocusCard.addEventListener('click', (event) => {
+  if (event.target.closest('[data-home-action="quick-add"]')) { openModal('quickAdd'); return; }
   const btn = event.target.closest('[data-home-dividend-month]');
   if (btn) {
     const month = Math.floor(safeNumber(btn.dataset.homeDividendMonth, 0));
@@ -90,7 +91,7 @@ refs.pageBackButtons.forEach((button) => {
 });
 
 // 首页主行动始终先选择交易或出入金，避免现金模式下把「记一笔」误解为固定买入。
-refs.quickAddButton.addEventListener('click', () => { openModal('quickAdd'); });
+if (refs.quickAddButton) refs.quickAddButton.addEventListener('click', () => { openModal('quickAdd'); });
 
 if (refs.fundamentalsContent) refs.fundamentalsContent.addEventListener('click', (event) => {
   const symbolButton = event.target.closest('[data-fund-symbol]');
