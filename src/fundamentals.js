@@ -99,12 +99,15 @@ function getGroupedCompanies() {
   const companies = _data.companies;
   const holdings = [];
   const seen = new Set();
-  computeHoldings().holdings.forEach((holding) => {
+  computeHoldings().holdings
+    .slice()
+    .sort((a, b) => safeNumber(b.marketValueCny, 0) - safeNumber(a.marketValueCny, 0))
+    .forEach((holding) => {
     if (safeNumber(holding.quantity, 0) > 0 && companies[holding.symbol] && !seen.has(holding.symbol)) {
       seen.add(holding.symbol);
       holdings.push(companies[holding.symbol]);
     }
-  });
+    });
   const others = Object.keys(companies).sort()
     .filter((symbol) => !seen.has(symbol))
     .map((symbol) => companies[symbol]);
@@ -505,13 +508,19 @@ function buildDividendBars(company, visible) {
   if (!available.length) return '';
   const max = Math.max(1, ...available.map((row) => Math.abs(safeNumber(row.dividendPerShare, 0))));
   const latest = available[available.length - 1];
+  const growthStreak = getGrowthStreak(visible, 'dividendPerShare');
   return `<section class="fund-eps-section fund-dividend-section">
     <div class="fund-eps-head"><p class="ledger-eyebrow">每股分红</p><strong class="fund-bar-latest"><span>${latest.year}</span> ${escapeHtml(formatMetricValue(latest.dividendPerShare, 'money'))} ${escapeHtml(company.currency)}</strong></div>
     <div class="fund-eps-bars">${visible.map((row, index) => {
       const hasValue = row.dividendPerShare !== null && row.dividendPerShare !== undefined;
       const height = hasValue ? Math.max(4, Math.abs(safeNumber(row.dividendPerShare, 0)) / max * 72) : 0;
-      return `<span><b>${hasValue ? escapeHtml(formatMetricValue(row.dividendPerShare, 'money')) : '—'}</b><i style="height:${height.toFixed(1)}px" class="${index === visible.length - 1 && hasValue ? 'is-current' : ''}${hasValue ? '' : ' is-empty'}"></i><small>${row.year}</small></span>`;
+      return `<span><b>${hasValue ? escapeHtml(formatMetricValue(row.dividendPerShare, 'money')) : '—'}</b><span class="fund-bar-column"><i style="height:${height.toFixed(1)}px" class="${index === visible.length - 1 && hasValue ? 'is-current' : ''}${hasValue ? '' : ' is-empty'}"></i></span><small>${row.year}</small></span>`;
     }).join('')}</div>
+    <div class="fund-eps-stats fund-eps-stats--dividend">
+      <div><span>最新股息率</span><strong>${escapeHtml(formatMetricValue(latest.dividendYield, 'percent'))}</strong></div>
+      <div><span>特别股息</span><strong>${escapeHtml(formatMetricValue(latest.specialDividendPerShare, 'money'))}</strong></div>
+      <div><span>连续增长</span><strong>${growthStreak > 0 ? `${growthStreak} 年` : '—'}</strong></div>
+    </div>
   </section>`;
 }
 
@@ -531,17 +540,18 @@ function buildEpsLedger(company, visible) {
     ? `${String(Number(nextReport.reportDate.slice(5, 7))).padStart(2, '0')}/${String(Number(nextReport.reportDate.slice(8, 10))).padStart(2, '0')}`
     : '—';
   return `<section class="fund-eps-section">
-    <div class="fund-eps-head"><p class="ledger-eyebrow">EPS 每股收益</p>${growthText ? `<strong class="fund-eps-growth"><span class="fund-growth-year">${latest.year}</span><b class="${growthTone}">${escapeHtml(growthText)}</b></strong>` : ''}</div>
+    <div class="fund-eps-head"><p class="ledger-eyebrow">EPS 每股收益</p><strong class="fund-bar-latest"><span>${latest.year}</span> ${escapeHtml(formatMetricValue(latest.eps, 'money'))} ${escapeHtml(company.statementCurrency || company.currency)}</strong></div>
     <div class="fund-eps-bars">${visible.map((row, index) => {
       const hasValue = row.eps !== null && row.eps !== undefined;
       const height = hasValue ? Math.max(4, Math.abs(safeNumber(row.eps, 0)) / max * 72) : 0;
-      return `<span><b>${hasValue ? escapeHtml(formatMetricValue(row.eps, 'money')) : '—'}</b><i style="height:${height.toFixed(1)}px" class="${index === visible.length - 1 && hasValue ? 'is-current' : ''}${hasValue ? '' : ' is-empty'}"></i><small>${row.year}</small></span>`;
+      return `<span><b>${hasValue ? escapeHtml(formatMetricValue(row.eps, 'money')) : '—'}</b><span class="fund-bar-column"><i style="height:${height.toFixed(1)}px" class="${index === visible.length - 1 && hasValue ? 'is-current' : ''}${hasValue ? '' : ' is-empty'}"></i></span><small>${row.year}</small></span>`;
     }).join('')}</div>
     <div class="fund-eps-stats">
+      <div><span>EPS 增速</span><strong class="${growthTone}">${growthText ? escapeHtml(growthText) : '—'}</strong></div>
       <div><span>分红率</span><strong>${escapeHtml(formatMetricValue(latest.payoutRatio, 'percent'))}</strong></div>
       <div><span>负债率</span><strong>${escapeHtml(formatMetricValue(latest.debtRatio, 'percent'))}</strong></div>
-      <div><span>下场财报</span><strong>${escapeHtml(nextReportDate)}</strong></div>
     </div>
+    ${nextReportDate === '—' ? '' : `<p class="fund-chart-note">下场财报 ${escapeHtml(nextReportDate)}</p>`}
   </section>`;
 }
 

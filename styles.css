@@ -9850,3 +9850,155 @@ body[data-active-page="home"] .quick-add-button > svg { width: 12px; color: var(
   .return-bar-item small { font-size: 9px; }
   .return-bar-item strong { font-size: 12px; }
 }
+
+/* ── Density, chart baseline and borderless sheet refinement · 2026-07 ── */
+#homePage { display: flex; flex-direction: column; gap: 0; }
+body[data-active-page="home"] .home-top { align-items: flex-end; }
+body[data-active-page="home"] .home-brand { display: inline-flex; align-items: baseline; gap: 5px; font-size: 18px; line-height: 1; text-transform: none; }
+body[data-active-page="home"] .home-brand small { font-size: 10px; line-height: 1; letter-spacing: .1em; text-transform: none; }
+body[data-active-page="home"] .home-top-actions { align-items: flex-end; gap: 14px; }
+body[data-active-page="home"] .home-top-actions .quick-add-button {
+  width: auto;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ledger-ink);
+}
+body[data-active-page="home"] .home-top-actions .quick-add-mark { color: var(--ledger-iris); font: 700 14px/1 var(--font-data); }
+body[data-active-page="home"] .home-top-actions .quick-add-copy { display: block; }
+body[data-active-page="home"] .home-top-actions .quick-add-copy strong { font-size: 11px; font-weight: 700; white-space: nowrap; }
+body[data-active-page="home"] .home-hero { padding: clamp(15px, 2.2vh, 21px) 0; }
+body[data-active-page="home"] .home-hero-value { font-size: clamp(40px, 12vw, 50px); }
+body[data-active-page="home"] .home-cashflow { padding-top: clamp(15px, 2.2vh, 21px); }
+body[data-active-page="home"] .home-cashflow-value { font-size: clamp(30px, 8.8vw, 36px); }
+body[data-active-page="home"] .home-month-ledger,
+body[data-active-page="home"] .home-next-dividend,
+body[data-active-page="home"] .home-nav-list { margin-top: clamp(13px, 1.9vh, 19px); }
+body[data-active-page="home"] .home-nav-item { padding: clamp(9px, 1.25vh, 11px) 0; }
+@media (min-height: 620px) and (max-width: 430px) {
+  body[data-active-page="home"] { height: 100dvh; overflow-y: hidden; }
+}
+
+/* Calendar filter tabs share one grid and one underline baseline. */
+#dividendFilterGroup.segmented-control {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+}
+#dividendFilterGroup.segmented-control .segment-button { width: 100%; justify-content: center; text-align: center; }
+#dividendFilterGroup.segmented-control .segment-button.is-active::after { right: 24%; bottom: -1px; left: 24%; width: auto; }
+
+/* Each chart reserves a fixed plot row, so all bars land on the same baseline. */
+.fund-eps-bars { height: auto; align-items: stretch; border-bottom: 0; }
+.fund-eps-bars > span { height: auto; display: grid; grid-template-rows: 18px 76px 17px; align-items: end; }
+.fund-eps-bars > span > b { align-self: end; margin: 0 0 5px; }
+.fund-eps-bars .fund-bar-column { width: 100%; height: 76px; display: flex; align-items: flex-end; justify-content: center; border-bottom: 1px solid var(--ledger-line); }
+.fund-eps-bars .fund-bar-column i { width: 56%; background: #b9b9b2; }
+.fund-eps-bars .fund-bar-column i.is-current { background: var(--ledger-iris); }
+.fund-eps-bars .fund-bar-column i.is-empty { height: 1px !important; background: var(--ledger-line); }
+.fund-eps-bars > span > small { margin: 5px 0 0; align-self: start; }
+.fund-eps-stats { margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--ledger-line); }
+.fund-chart-note { margin: 12px 0 0; color: var(--ledger-soft); font-size: 10px; text-align: right; }
+
+/* Annual rows restore the backup's full data set in a legible mobile ledger. */
+#incomeSummaryPage .income-year-table { border-top: 1px solid var(--ledger-line-strong); }
+#incomeSummaryPage .income-year-row:not(.income-year-head) {
+  display: block;
+  padding: 17px 0 15px;
+  border-top: 0;
+  border-bottom: 1px solid var(--ledger-line);
+}
+#incomeSummaryPage .income-year-row > .income-year-primary { min-height: 0; display: grid; grid-template-columns: auto minmax(0, 1fr) 12px; align-items: baseline; gap: 9px; padding: 0; border: 0; text-align: left; }
+#incomeSummaryPage .income-year-primary > small { color: var(--ledger-muted); font-size: 10px; }
+#incomeSummaryPage .income-year-primary > svg { width: 12px; color: var(--ledger-ink); }
+#incomeSummaryPage .income-year-row > .income-year-metrics { min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; margin-top: 13px; padding: 0; border: 0; border-top: 1px solid var(--ledger-line); text-align: left; }
+#incomeSummaryPage .income-year-metrics > span { min-width: 0; padding: 11px 0 9px; border-bottom: 1px solid var(--ledger-line); text-align: left; }
+#incomeSummaryPage .income-year-metrics > span:nth-child(even) { padding-left: 16px; border-left: 1px solid var(--ledger-line); }
+#incomeSummaryPage .income-year-metrics small { display: block; color: var(--ledger-muted); font-size: 9px; }
+#incomeSummaryPage .income-year-metrics b { display: block; margin-top: 5px; overflow: hidden; color: var(--ledger-ink); font: 700 13px var(--font-data); text-overflow: ellipsis; white-space: nowrap; }
+#incomeSummaryPage .income-year-row > .income-year-secondary { min-height: 0; display: flex; flex-direction: row; justify-content: stretch; grid-column: auto; align-items: center; gap: 0; padding: 11px 0 0; border: 0; text-align: left; }
+#incomeSummaryPage .income-year-secondary button { flex: 1 1 0; width: auto; min-height: 28px; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--ledger-muted); }
+#incomeSummaryPage .income-year-secondary button + button { border-left: 1px solid var(--ledger-line); }
+
+/* Borderless ledger sheets: rounded surface, no black cap, no nested input boxes. */
+.modal-mask,.confirm-mask { background: rgba(24,25,22,.3); backdrop-filter: blur(4px); }
+.modal-sheet,.confirm-sheet {
+  width: min(calc(100% - 20px), 430px);
+  max-width: 430px;
+  padding: 18px 22px calc(18px + env(safe-area-inset-bottom));
+  border: 0;
+  border-radius: 22px;
+  background: rgba(250,250,246,.985);
+  box-shadow: 0 -12px 34px rgba(24,25,22,.12);
+  backdrop-filter: blur(18px) saturate(125%);
+}
+.sheet-handle { display: none; }
+.modal-title-row { padding: 0 0 8px; border: 0; }
+.modal-title { font-size: 19px; }
+.modal-note { max-width: 56%; font-size: 10px; }
+.modal-input,.modal-select,
+.dividend-receipt-sheet .modal-input {
+  min-height: 43px;
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--ledger-line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.modal-input:focus,.modal-select:focus,
+.dividend-receipt-sheet .modal-input:focus { border-color: var(--ledger-iris); box-shadow: none; }
+.modal-quote-line { padding: 8px 0; border-radius: 0; background: transparent; border-bottom: 1px solid var(--ledger-line); }
+.modal-bucket-group { gap: 4px; padding: 3px; border: 0; border-radius: 13px; background: rgba(24,25,22,.045); }
+.modal-bucket-button { min-height: 38px; border: 0; border-radius: 10px; background: transparent; }
+.modal-bucket-button.is-active,.modal-bucket-button.is-core.is-active,.modal-bucket-button.is-income.is-active { border: 0; border-radius: 10px; }
+.modal-check,.dividend-receipt-sheet .modal-check { padding: 11px 0; border: 0; border-bottom: 1px solid var(--ledger-line); background: transparent; }
+.quick-add-options { border-top: 0; }
+.quick-add-option { min-height: 57px; padding: 0; border-bottom: 1px solid var(--ledger-line); border-radius: 10px; }
+.modal-actions,.confirm-actions { gap: 8px; }
+.modal-button,.confirm-button { border: 0; border-radius: 12px; }
+.modal-button--secondary,.confirm-button--cancel { background: transparent; }
+.modal-button--primary,.confirm-button--ok { background: var(--ledger-iris); }
+.modal-button--danger,.confirm-button--danger { border: 0; background: transparent; }
+
+/* Month sheet: one calm header, then aligned company/date and amount/status rows. */
+.modal-sheet--detail .month-detail-head { margin: 0; }
+.month-detail-title { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 18px; }
+.month-detail-title > div { display: grid; gap: 4px; }
+.month-detail-title > div > small { color: var(--ledger-muted); font-size: 9px; font-weight: 700; letter-spacing: .12em; }
+.month-detail-title h3,.month-detail-title strong { margin: 0; font-size: 22px; line-height: 1; }
+.month-detail-total { text-align: right; }
+.month-detail-total strong { font-family: var(--font-data); font-size: 17px; }
+.month-detail-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 15px; border-top: 1px solid var(--ledger-line); border-bottom: 1px solid var(--ledger-line); }
+.month-detail-stats > span { padding: 10px 0; }
+.month-detail-stats > span + span { padding-left: 14px; border-left: 1px solid var(--ledger-line); }
+.month-detail-stats small { display: block; color: var(--ledger-muted); font-size: 9px; }
+.month-detail-stats strong { display: block; margin-top: 4px; color: var(--ledger-ink); font: 700 12px var(--font-data); }
+.month-detail-hint { margin: 9px 0 0; color: var(--ledger-muted); font-size: 9.5px; }
+.month-detail-list { margin-top: 8px; border: 0; }
+.modal-sheet--detail.is-past .month-detail-list,
+.modal-sheet--detail.is-current .month-detail-list,
+.modal-sheet--detail.is-future .month-detail-list { max-height: min(55dvh, 480px); overflow-y: auto; }
+.month-detail-row,
+.month-detail-row.is-clickable { grid-template-columns: minmax(0, 1fr) auto; gap: 14px; min-height: 62px; padding: 10px 0; border: 0; border-bottom: 1px solid var(--ledger-line); border-radius: 0; background: transparent; box-shadow: none; }
+.mdr-copy,.mdr-side { gap: 5px; }
+.mdr-copy { justify-items: start; text-align: left; }
+.mdr-side { justify-items: end; text-align: right; }
+.mdr-company { min-width: 0; display: flex; align-items: baseline; gap: 7px; }
+.mdr-company small { overflow: hidden; color: var(--ledger-soft); font: 9px var(--font-data); text-overflow: ellipsis; white-space: nowrap; }
+.mdr-name { overflow: hidden; font-size: 13px; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.mdr-date { width: 100%; color: var(--ledger-muted); font: 10px var(--font-data); text-align: left; }
+.mdr-amount { font-size: 13px; }
+.mdr-tag { font-size: 9.5px; }
+.mdr-dot { display: none; }
+
+@media (prefers-reduced-transparency: reduce) {
+  .modal-sheet,.confirm-sheet { background: var(--ledger-paper); backdrop-filter: none; }
+}

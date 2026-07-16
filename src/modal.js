@@ -280,11 +280,11 @@ function renderMonthDetailModal() {
     <section class="modal-sheet modal-sheet--detail is-${escapeHtml(detail.phase)}" role="dialog" aria-modal="true">
       <header class="month-detail-head">
         <div class="month-detail-title">
-          <h3>${escapeHtml(detail.title)}</h3>
-          <strong>${escapeHtml(detail.total)}</strong>
+          <div><small>股息月份</small><h3>${escapeHtml(detail.title)}</h3></div>
+          <div class="month-detail-total"><small>应收合计</small><strong>${escapeHtml(detail.total)}</strong></div>
         </div>
-        ${detail.summary ? `<p class="month-detail-summary">${escapeHtml(detail.summary)}</p>` : ''}
-        ${detail.hasConfirmable ? `<p class="month-detail-hint">${escapeHtml(LABELS.dividendConfirmHint)}</p>` : ''}
+        ${detail.stats.length ? `<div class="month-detail-stats">${detail.stats.map((item) => `<span><small>${escapeHtml(item.label)}</small><strong>${escapeHtml(item.value)}</strong></span>`).join('')}</div>` : ''}
+        ${detail.hasConfirmable ? '<p class="month-detail-hint">点按待核对项目，确认到账</p>' : ''}
       </header>
       <div class="month-detail-list">${detail.body}</div>
       <div class="modal-actions">

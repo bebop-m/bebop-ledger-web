@@ -539,8 +539,7 @@ export function buildDividendMonthDetail(month) {
           : '';
         const statusLabel = entry.isForecast ? '预估' : (entry.isAnnounced || entry.status === 'announced') ? '已公告' : entry.status === 'due' ? '待核对' : entry.confirmed ? '已到账' : '在途';
         return `<${tag} class="month-detail-row ${dotState}${clickable ? ' is-clickable' : ''}" ${attrs}>
-          <span class="mdr-dot" aria-hidden="true"></span>
-          <span class="mdr-copy"><span class="mdr-name">${escapeHtml(entry.name)}</span><span class="mdr-date">${escapeHtml(getMonthDetailDateShort(entry))}</span></span>
+          <span class="mdr-copy"><span class="mdr-company"><span class="mdr-name">${escapeHtml(entry.name)}</span><small>${escapeHtml(entry.symbol)}</small></span><span class="mdr-date">${escapeHtml(getMonthDetailDateShort(entry))}</span></span>
           <span class="mdr-side"><span class="mdr-amount">${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</span><span class="mdr-tag">${statusLabel}</span></span>
         </${tag}>`;
       }).join('')
@@ -550,6 +549,10 @@ export function buildDividendMonthDetail(month) {
     phase: item ? item.phase : 'future',
     total: item ? formatDisplayMoney(item.totalCny, 'CNY') : formatDisplayMoney(0, 'CNY'),
     summary: summaryParts.join(' · '),
+    stats: item ? [
+      { label: LABELS.dividendReceivedStatus, value: formatDisplayMoney(item.receivedCny, 'CNY') },
+      { label: item.dueCny > 0 ? '待核对' : LABELS.dividendUpcoming, value: formatDisplayMoney(item.dueCny > 0 ? item.dueCny : item.upcomingCny, 'CNY') }
+    ] : [],
     hasConfirmable: entries.some((entry) => !entry.isForecast && !(entry.isAnnounced || entry.status === 'announced') && entry.sourceId),
     body
   };
@@ -750,24 +753,29 @@ function renderIncomeYearList(model) {
     refs.incomeYearList.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无年度数据</p><p class="empty-state-note">导入历史回填后会显示年度列表。</p></div>`;
     return;
   }
-  const rows = model.rows.map((row) => `<div class="income-year-row" role="row" data-annual-year="${row.year}" tabindex="0">
-      <strong class="income-year-year">${row.year}</strong>
-      <span><small>股息</small><b>${escapeHtml(formatIncomeMoney(row.dividendCny))}</b></span>
-      <span><small>资金收益</small><b class="${getReturnTone(row.capitalReturnCny)}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</b></span>
-      <span><small>收益率</small><b class="${getReturnTone(row.capitalReturnRate)}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</b></span>
-      <div class="income-year-secondary">
-        <button type="button" data-year-holdings="${row.year}">持仓</button>
-        <button type="button" data-year-annals="${row.year}">年鉴</button>
-        <button type="button" data-income-manual-year="${row.year}">${row.hasManualBackfill ? '修正' : '回填'}</button>
+  const rows = model.rows.map((row) => `<div class="income-year-row" role="row" data-annual-year="${row.year}" tabindex="0" aria-label="查看 ${row.year} 年度回顾">
+      <div class="income-year-primary">
+        <strong class="income-year-year">${row.year}</strong>
+        <small>${row.hasManualBackfill ? '含手工回填' : '自动统计'}</small>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
       </div>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      <div class="income-year-metrics">
+        <span><small>股息</small><b>${escapeHtml(formatIncomeMoney(row.dividendCny))}</b></span>
+        <span><small>股息率</small><b>${escapeHtml(formatIncomeRate(row.dividendYieldRate))}</b></span>
+        <span><small>资金收益</small><b class="${getReturnTone(row.capitalReturnCny)}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</b></span>
+        <span><small>收益率</small><b class="${getReturnTone(row.capitalReturnRate)}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</b></span>
+        <span><small>年末净值</small><b>${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</b></span>
+        <span><small>净注入</small><b>${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</b></span>
+      </div>
+      <div class="income-year-secondary">
+        <button type="button" data-year-holdings="${row.year}">持仓快照</button>
+        <button type="button" data-year-annals="${row.year}">查看年鉴</button>
+        <button type="button" data-income-manual-year="${row.year}">${row.hasManualBackfill ? '编辑回填' : '回填数据'}</button>
+      </div>
     </div>`).join('');
   refs.incomeYearList.innerHTML = `<div class="income-year-table" role="table" aria-label="年度收益列表">
-    <div class="income-year-row income-year-head" role="row">
-      <div>年份</div><div>股息</div><div>资金收益</div><div>收益率</div><span aria-hidden="true"></span>
-    </div>
     ${rows}
-  </div><button class="income-open-annual" type="button" data-annual-year="${model.currentYear}">打开年度回顾 →</button>`;
+  </div>`;
 }
 
 function formatRecordQuantity(value) {

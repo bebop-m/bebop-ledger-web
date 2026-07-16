@@ -32,14 +32,23 @@ if (mutable.sortToggleButton) {
 }
 
 /* ── Page Navigation ── */
-function navigateTo(page) {
+const pageHistory = [];
+
+function navigateTo(page, options = {}) {
   if (!PAGE_KEYS.has(page) || state.activePage === page) return;
+  if (options.recordHistory !== false && state.activePage) pageHistory.push(state.activePage);
   closeActiveDividendTooltip(true);
   state.activePage = page;
   state.sortMenuOpen = false;
   saveState();
   renderApp({ incremental: true, animateHoldingReflow: false });
   window.scrollTo({ top: 0, behavior: 'auto' });
+}
+
+function navigateBack() {
+  const fallback = state.activePage === 'annual' ? 'income' : 'home';
+  const previous = pageHistory.pop() || fallback;
+  navigateTo(previous, { recordHistory: false });
 }
 
 /* ── Event Bindings ── */
@@ -77,7 +86,7 @@ refs.homeFocusCard.addEventListener('click', (event) => {
 });
 
 refs.pageBackButtons.forEach((button) => {
-  button.addEventListener('click', () => navigateTo(state.activePage === 'annual' ? 'income' : 'home'));
+  button.addEventListener('click', navigateBack);
 });
 
 // 首页主行动始终先选择交易或出入金，避免现金模式下把「记一笔」误解为固定买入。
@@ -259,6 +268,97 @@ refs.stockList.addEventListener('click', (event) => {
   if (action === 'edit-tax') { openModal('tax', { localId, name: computed ? computed.name : holding.symbol, value: holding.taxRateOverride }); return; }
   if (action === 'edit-dividend') { openModal('dividend', { localId, name: computed ? computed.name : holding.symbol, currency: computed ? computed.currency : 'HKD', value: holding.dividendPerShareTtmOverride }); }
 });
+
+/* ── 二级页左缘右滑返回 ──
+   只从屏幕左缘起手；横向意图明确后 1:1 跟手，并结合距离和释放速度决定返回。 */
+const EDGE_BACK_START_PX = 28;
+const EDGE_BACK_INTENT_PX = 10;
+const EDGE_BACK_MIN_DISTANCE_PX = 72;
+const EDGE_BACK_MIN_VELOCITY = 520;
+let activeEdgeBack = null;
+
+function getActivePageElement() {
+  return refs.pageViews.find((view) => !view.hidden) || null;
+}
+
+function clearEdgeBackStyles(page) {
+  if (!page) return;
+  page.style.transform = '';
+  page.style.opacity = '';
+  page.style.willChange = '';
+}
+
+function settleEdgeBack(commit) {
+  if (!activeEdgeBack) return;
+  const gesture = activeEdgeBack;
+  activeEdgeBack = null;
+  const page = gesture.page;
+  if (!gesture.dragging) { clearEdgeBackStyles(page); return; }
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const startX = Math.max(0, gesture.lastX - gesture.startX);
+  const endX = commit ? window.innerWidth : 0;
+  const animation = page.animate([
+    { transform: reducedMotion ? 'none' : `translate3d(${startX}px, 0, 0)`, opacity: String(Math.max(0.72, 1 - startX / window.innerWidth * 0.24)) },
+    { transform: reducedMotion ? 'none' : `translate3d(${endX}px, 0, 0)`, opacity: commit ? '0.76' : '1' }
+  ], { duration: reducedMotion ? 1 : (commit ? 190 : 220), easing: 'cubic-bezier(.22,1,.36,1)', fill: 'forwards' });
+  animation.finished.then(() => {
+    animation.cancel();
+    clearEdgeBackStyles(page);
+    if (commit) navigateBack();
+  }).catch(() => clearEdgeBackStyles(page));
+}
+
+document.addEventListener('touchstart', (event) => {
+  if (state.activePage === 'home' || state.modal || event.touches.length !== 1) return;
+  const touch = event.touches[0];
+  if (touch.clientX > EDGE_BACK_START_PX) return;
+  const page = getActivePageElement();
+  if (!page) return;
+  page.getAnimations().forEach((animation) => animation.cancel());
+  activeEdgeBack = {
+    page,
+    startX: touch.clientX,
+    startY: touch.clientY,
+    lastX: touch.clientX,
+    lastTime: performance.now(),
+    velocityX: 0,
+    dragging: false
+  };
+}, { passive: true, capture: true });
+
+document.addEventListener('touchmove', (event) => {
+  if (!activeEdgeBack || event.touches.length !== 1) return;
+  const touch = event.touches[0];
+  const dx = touch.clientX - activeEdgeBack.startX;
+  const dy = touch.clientY - activeEdgeBack.startY;
+  if (!activeEdgeBack.dragging) {
+    if (Math.abs(dx) < EDGE_BACK_INTENT_PX && Math.abs(dy) < EDGE_BACK_INTENT_PX) return;
+    if (dx <= 0 || Math.abs(dy) >= Math.abs(dx)) { activeEdgeBack = null; return; }
+    activeEdgeBack.dragging = true;
+    activePagePull = null;
+    mutable.activeHoldingSwipe = null;
+    activeEdgeBack.page.style.willChange = 'transform, opacity';
+  }
+  if (event.cancelable) event.preventDefault();
+  const now = performance.now();
+  const elapsed = Math.max(1, now - activeEdgeBack.lastTime);
+  activeEdgeBack.velocityX = (touch.clientX - activeEdgeBack.lastX) / elapsed * 1000;
+  activeEdgeBack.lastX = touch.clientX;
+  activeEdgeBack.lastTime = now;
+  const distance = Math.max(0, dx);
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  activeEdgeBack.page.style.transform = reducedMotion ? 'none' : `translate3d(${distance}px, 0, 0)`;
+  activeEdgeBack.page.style.opacity = String(Math.max(0.72, 1 - distance / window.innerWidth * 0.24));
+}, { passive: false, capture: true });
+
+document.addEventListener('touchend', () => {
+  if (!activeEdgeBack) return;
+  const distance = Math.max(0, activeEdgeBack.lastX - activeEdgeBack.startX);
+  settleEdgeBack(distance >= Math.min(EDGE_BACK_MIN_DISTANCE_PX, window.innerWidth * 0.23)
+    || (distance >= 36 && activeEdgeBack.velocityX >= EDGE_BACK_MIN_VELOCITY));
+}, { passive: true, capture: true });
+
+document.addEventListener('touchcancel', () => settleEdgeBack(false), { passive: true, capture: true });
 
 /* ── 首页 / 持仓页下拉刷新 ──
    顶部下拉超过阈值松手即刷新；指示器随拉动渐显并旋转，刷新中持续转圈。
