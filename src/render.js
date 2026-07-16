@@ -92,8 +92,6 @@ function renderHomeHero(summary) {
     <p class="home-hero-fx">USD/CNY ${safeNumber(state.rates.USD, 0).toFixed(2)} · HKD/CNY ${safeNumber(state.rates.HKD, 0).toFixed(4)}</p>`;
 }
 
-const HOME_MONTH_CODES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-
 function getHomeMonthWindow(months, currentMonth) {
   const start = Math.min(Math.max(currentMonth - 2, 1), 7);
   return months.slice(start - 1, start + 5);
@@ -115,7 +113,7 @@ function getHomeDividendDateParts(entry) {
   const month = Math.max(1, Math.min(12, Number(parts[1]) || entry.month || 1));
   return {
     day: parts[2] ? String(Number(parts[2])).padStart(2, '0') : '\u2014',
-    month: HOME_MONTH_CODES[month - 1]
+    month: `${month}月`
   };
 }
 
@@ -124,7 +122,7 @@ function getHomeEventDateParts(value) {
   const month = Math.max(1, Math.min(12, Number(parts[1]) || 1));
   return {
     day: parts[2] ? String(Number(parts[2])).padStart(2, '0') : '\u2014',
-    month: parts[1] ? HOME_MONTH_CODES[month - 1] : ''
+    month: parts[1] ? `${month}月` : ''
   };
 }
 

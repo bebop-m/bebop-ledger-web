@@ -10046,16 +10046,14 @@ body[data-active-page="home"] .home-event-cell {
   display: grid;
   grid-template-rows: auto 1fr auto;
   align-items: center;
-  padding: 10px 0;
+  justify-items: center;
+  padding: 10px 6px;
   border: 0;
   background: transparent;
   color: var(--ledger-ink);
-  text-align: left;
+  text-align: center;
 }
 body[data-active-page="home"] .home-event-cell + .home-event-cell { border-left: 0; }
-body[data-active-page="home"] .home-event-cell:first-child { justify-items: start; text-align: left; }
-body[data-active-page="home"] .home-event-cell:nth-child(2) { justify-items: center; text-align: center; }
-body[data-active-page="home"] .home-event-cell:last-child { justify-items: end; text-align: right; }
 body[data-active-page="home"] .home-event-cell > span { color: var(--ledger-muted); font-size: 8.5px; font-weight: 680; letter-spacing: .04em; }
 body[data-active-page="home"] .home-event-cell > strong { max-width: 100%; align-self: center; overflow: hidden; color: var(--ledger-ink); font: 700 clamp(19px, 5.8vw, 23px)/1 var(--font-data); letter-spacing: -.025em; white-space: nowrap; }
 body[data-active-page="home"] .home-event-cell > strong em { margin-left: 3px; color: var(--ledger-muted); font-size: 8px; font-style: normal; letter-spacing: .05em; }
