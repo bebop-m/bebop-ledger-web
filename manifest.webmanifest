@@ -1,0 +1,33 @@
+{
+  "id": "./",
+  "name": "\u6ce2\u666e\u8d26\u672c \u00b7 Bebop Ledger",
+  "short_name": "\u6ce2\u666e\u8d26\u672c",
+  "description": "\u6301\u4ed3\u3001\u80a1\u606f\u4e0e\u6295\u8d44\u6536\u76ca\u8d26\u672c",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#efefe9",
+  "theme_color": "#efefe9",
+  "categories": ["finance", "utilities"],
+  "icons": [
+    {
+      "src": "./assets/pwa-icon-192-v2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/pwa-icon-512-v2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/pwa-icon-maskable-512-v2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
