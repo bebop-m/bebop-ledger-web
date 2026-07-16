@@ -8,6 +8,7 @@ import {
 import { computeHoldings, getBucketSegments, isCashModelActive } from './compute.js';
 import {
   renderApp, renderSavedStateQuietly, renderSortChips, renderBucketsView,
+  renderReturnBar,
   applyLegendExpandState, applyHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
@@ -53,6 +54,7 @@ if (refs.diagnosticsButton) refs.diagnosticsButton.addEventListener('click', () 
 refs.addButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'add'); });
 if (refs.incomeManualButton) refs.incomeManualButton.addEventListener('click', () => { openModal('yearlyManual'); });
 if (refs.incomeCashFlowButton) refs.incomeCashFlowButton.addEventListener('click', () => { openModal('cashFlow'); });
+if (refs.incomeOverviewCashFlowButton) refs.incomeOverviewCashFlowButton.addEventListener('click', () => { openModal('cashFlow'); });
 if (refs.incomeOpeningCashButton) refs.incomeOpeningCashButton.addEventListener('click', () => { openModal('openingCash'); });
 
 refs.homeNavList.addEventListener('click', (event) => {
@@ -65,9 +67,8 @@ refs.homeFocusCard.addEventListener('click', (event) => {
   if (btn) {
     const month = Math.floor(safeNumber(btn.dataset.homeDividendMonth, 0));
     if (month >= 1 && month <= 12) {
-      state.activeDividendMonth = month;
-      saveState();
       navigateTo('dividends');
+      openModal('monthDetail', { month });
     }
     return;
   }
@@ -79,8 +80,8 @@ refs.pageBackButtons.forEach((button) => {
   button.addEventListener('click', () => navigateTo(state.activePage === 'annual' ? 'income' : 'home'));
 });
 
-// 首页主行动：现金模式直接记一笔交易，否则先选择记录类型。
-refs.quickAddButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'quickAdd'); });
+// 首页主行动始终先选择交易或出入金，避免现金模式下把「记一笔」误解为固定买入。
+refs.quickAddButton.addEventListener('click', () => { openModal('quickAdd'); });
 
 if (refs.fundamentalsContent) refs.fundamentalsContent.addEventListener('click', (event) => {
   const symbolButton = event.target.closest('[data-fund-symbol]');
@@ -114,9 +115,7 @@ refs.dividendMonthGrid.addEventListener('click', (event) => {
   if (!btn) return;
   const month = Math.floor(safeNumber(btn.dataset.dividendMonth, 0));
   if (month < 1 || month > 12) return;
-  state.activeDividendMonth = month;
-  saveState();
-  renderApp({ incremental: true, animateHoldingReflow: false });
+  openModal('monthDetail', { month });
 });
 
 if (refs.dividendMonthDetailView) refs.dividendMonthDetailView.addEventListener('click', (event) => {
@@ -130,16 +129,20 @@ if (refs.dividendMonthDetailView) refs.dividendMonthDetailView.addEventListener(
   if (entry) openModal('dividendLedger', { sourceId: entry.dataset.sourceId });
 });
 
-if (refs.holdingsSortLabel) refs.holdingsSortLabel.addEventListener('click', () => {
-  state.sortMenuOpen = !state.sortMenuOpen;
-  renderSortChips();
+if (refs.holdingsSortLabel) refs.holdingsSortLabel.addEventListener('click', (event) => {
+  event.stopPropagation();
+  applyHoldingSortSelection(state.sortField);
 });
 
-if (refs.marketTimestamp) refs.marketTimestamp.addEventListener('click', () => openModal('holdingsMenu'));
+if (refs.marketTimestamp) refs.marketTimestamp.addEventListener('click', () => openModal('diagnostics'));
+
+if (refs.incomeOverviewGrid) refs.incomeOverviewGrid.addEventListener('click', (event) => {
+  if (event.target.closest('[data-income-cash-settings]')) openModal('openingCash');
+});
 
 refs.incomeYearList.addEventListener('click', (event) => {
   const annualTarget = event.target.closest('[data-annual-year]');
-  if (annualTarget && !event.target.closest('[data-year-holdings], [data-income-manual-year]')) {
+  if (annualTarget && !event.target.closest('[data-year-holdings], [data-year-annals], [data-income-manual-year]')) {
     const year = Math.floor(safeNumber(annualTarget.dataset.annualYear, 0));
     if (year) {
       state.activeAnnualYear = year;
@@ -201,11 +204,11 @@ if (refs.incomeRecordsList) refs.incomeRecordsList.addEventListener('click', (ev
 });
 
 refs.sortChips.forEach((chip) => {
-  chip.addEventListener('click', () => { const f = chip.dataset.sortField; if (!f || !state.sortMenuOpen) return; state.sortMenuOpen = false; applyHoldingSortSelection(f); });
+  chip.addEventListener('click', () => { const f = chip.dataset.sortField; if (!f) return; state.sortMenuOpen = false; applyHoldingSortSelection(f); });
 });
 
 document.addEventListener('click', (event) => {
-  if (state.sortMenuOpen && !event.target.closest('.sort-group') && !event.target.closest('.sort-toggle-button')) { state.sortMenuOpen = false; renderSortChips(); }
+  if (state.sortMenuOpen && !event.target.closest('.sort-group') && !event.target.closest('.sort-toggle-button') && !event.target.closest('#holdingsSortLabel')) { state.sortMenuOpen = false; renderSortChips(); }
   if (mutable.activeDividendTooltipButton && event.target.closest('.dividend-status-button--value') !== mutable.activeDividendTooltipButton) closeActiveDividendTooltip(true);
 });
 
@@ -215,6 +218,7 @@ refs.bucketTrack.addEventListener('click', (event) => {
   state.activeBucketKey = state.activeBucketKey === key ? null : key;
   const summary = computeHoldings();
   renderBucketsView(getBucketSegments(summary.holdings), summary.holdings, summary, { animateDetail: true });
+  renderReturnBar();
 });
 
 refs.stockList.addEventListener('mouseover', (e) => { const b = e.target.closest('.dividend-status-button'); if (b) updateDividendTooltipSide(b); });
@@ -256,17 +260,21 @@ refs.stockList.addEventListener('click', (event) => {
   if (action === 'edit-dividend') { openModal('dividend', { localId, name: computed ? computed.name : holding.symbol, currency: computed ? computed.currency : 'HKD', value: holding.dividendPerShareTtmOverride }); }
 });
 
-/* ── 首页下拉刷新 ──
+/* ── 首页 / 持仓页下拉刷新 ──
    顶部下拉超过阈值松手即刷新；指示器随拉动渐显并旋转，刷新中持续转圈。
-   仅首页、页面在顶部、无弹窗、非刷新中时接管手势，其余情况不干扰原生滚动。 */
+   仅支持页面在顶部、无弹窗、非刷新中时接管纵向手势。 */
 const PULL_TRIGGER_PX = 56;
 const PULL_MAX_PX = 88;
 const PULL_HOLD_PX = 44;
 const PULL_RESISTANCE = 0.45;
-let activeHomePull = null;
+let activePagePull = null;
 
-function setHomePullDistance(distance, opts = {}) {
-  const el = refs.homePullIndicator;
+function getPullIndicator(page) {
+  return page === 'holdings' ? refs.holdingsPullIndicator : refs.homePullIndicator;
+}
+
+function setPagePullDistance(page, distance, opts = {}) {
+  const el = getPullIndicator(page);
   if (!el) return;
   el.classList.toggle('is-dragging', opts.dragging === true);
   el.classList.toggle('is-armed', distance >= PULL_TRIGGER_PX);
@@ -275,43 +283,44 @@ function setHomePullDistance(distance, opts = {}) {
 }
 
 document.addEventListener('touchstart', (event) => {
-  if (state.activePage !== 'home' || state.modal || state.syncing) return;
+  if (!['home', 'holdings'].includes(state.activePage) || state.modal || state.syncing) return;
   if (window.scrollY > 0 || event.touches.length !== 1) return;
-  activeHomePull = { startY: event.touches[0].clientY, distance: 0, pulling: false };
+  activePagePull = { page: state.activePage, startY: event.touches[0].clientY, distance: 0, pulling: false };
 }, { passive: true });
 
 document.addEventListener('touchmove', (event) => {
-  if (!activeHomePull) return;
-  const dy = event.touches[0].clientY - activeHomePull.startY;
-  if (!activeHomePull.pulling) {
-    if (dy < -8 || window.scrollY > 0) { activeHomePull = null; return; }
+  if (!activePagePull) return;
+  const dy = event.touches[0].clientY - activePagePull.startY;
+  if (!activePagePull.pulling) {
+    if (dy < -8 || window.scrollY > 0) { activePagePull = null; return; }
     if (dy < 8) return;
-    activeHomePull.pulling = true;
+    activePagePull.pulling = true;
   }
   if (event.cancelable) event.preventDefault();
-  activeHomePull.distance = Math.min(PULL_MAX_PX, Math.max(0, dy) * PULL_RESISTANCE);
-  setHomePullDistance(activeHomePull.distance, { dragging: true });
+  activePagePull.distance = Math.min(PULL_MAX_PX, Math.max(0, dy) * PULL_RESISTANCE);
+  setPagePullDistance(activePagePull.page, activePagePull.distance, { dragging: true });
 }, { passive: false });
 
-async function settleHomePull() {
-  if (!activeHomePull) return;
-  const triggered = activeHomePull.pulling && activeHomePull.distance >= PULL_TRIGGER_PX;
-  const wasPulling = activeHomePull.pulling;
-  activeHomePull = null;
+async function settlePagePull() {
+  if (!activePagePull) return;
+  const pull = activePagePull;
+  const triggered = pull.pulling && pull.distance >= PULL_TRIGGER_PX;
+  const wasPulling = pull.pulling;
+  activePagePull = null;
   if (!wasPulling) return;
-  if (!triggered) { setHomePullDistance(0); return; }
-  const el = refs.homePullIndicator;
+  if (!triggered) { setPagePullDistance(pull.page, 0); return; }
+  const el = getPullIndicator(pull.page);
   if (el) el.classList.add('is-refreshing');
-  setHomePullDistance(PULL_HOLD_PX);
+  setPagePullDistance(pull.page, PULL_HOLD_PX);
   try { await refreshMarketData({ silent: false }); }
   finally {
     if (el) el.classList.remove('is-refreshing');
-    setHomePullDistance(0);
+    setPagePullDistance(pull.page, 0);
   }
 }
 
-document.addEventListener('touchend', () => { void settleHomePull(); }, { passive: true });
-document.addEventListener('touchcancel', () => { void settleHomePull(); }, { passive: true });
+document.addEventListener('touchend', () => { void settlePagePull(); }, { passive: true });
+document.addEventListener('touchcancel', () => { void settlePagePull(); }, { passive: true });
 
 /* ── Touch / Swipe ── */
 refs.stockList.addEventListener('touchstart', (event) => {
@@ -350,7 +359,12 @@ refs.modalRoot.addEventListener('click', (event) => {
   const t = a.dataset.modalAction;
   if (t === 'confirm-dividend') { toggleDividendConfirm(a.dataset.sourceId); return; }
   if (t === 'pick-fund-symbol') { selectFundamentalsSymbol(a.dataset.symbol); closeModal(); return; }
-  if (t === 'edit-dividend-ledger') { openModal('dividendLedger', { sourceId: a.dataset.sourceId }); return; }
+  if (t === 'edit-dividend-ledger') {
+    const returnMonth = state.modal === 'monthDetail'
+      ? Math.floor(safeNumber(state.modalPayload && state.modalPayload.month, 0)) : 0;
+    openModal('dividendLedger', { sourceId: a.dataset.sourceId, returnMonth });
+    return;
+  }
   if (t === 'open-trade') { openModal('trade'); return; }
   if (t === 'open-cash-flow') { openModal('cashFlow'); return; }
   if (t === 'holding-diagnostics') { closeModal(); refs.diagnosticsButton.click(); return; }

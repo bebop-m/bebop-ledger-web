@@ -79,7 +79,7 @@
           </header>
 
           <section id="homeHero" class="home-hero" aria-label="总资产"></section>
-          <section id="homeFocusCard" class="home-metrics" aria-label="本月现金流与股息节奏"></section>
+          <section id="homeFocusCard" class="home-metrics" aria-label="本年现金流与股息节奏"></section>
 
           <nav id="homeNavList" class="home-nav-list" aria-label="主导航">
             <button class="home-nav-item" type="button" data-page-nav="holdings">
@@ -104,10 +104,17 @@
             </button>
           </nav>
 
-          <button id="quickAddButton" class="quick-add-button" type="button"><span aria-hidden="true">＋</span>记一笔</button>
+          <button id="quickAddButton" class="quick-add-button" type="button">
+            <span class="quick-add-mark" aria-hidden="true">＋</span>
+            <span class="quick-add-copy"><strong>记一笔</strong><small>交易或出入金</small></span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </button>
         </div>
 
         <div id="holdingsPage" class="page-view page-stack" data-page-view="holdings" hidden>
+          <div id="holdingsPullIndicator" class="home-pull-indicator" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.6 8.4A7.6 7.6 0 1 0 19 15.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15.2 5.8H20v4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </div>
           <header class="top-bar panel-bar--list ledger-page-head">
             <button class="back-button" type="button" data-page-back aria-label="返回首页">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
@@ -117,13 +124,14 @@
               <button id="marketTimestamp" class="panel-note holdings-menu-button" type="button" aria-label="打开持仓操作"></button>
             </div>
             <div class="icon-actions holdings-primary-actions">
-              <button id="diagnosticsButton" class="diagnostics-button" type="button" aria-label="持仓诊断">诊断</button>
+              <button id="diagnosticsButton" class="diagnostics-button" type="button" aria-label="持仓诊断" hidden>诊断</button>
               <button id="sortToggleButton" class="circle-button sort-toggle-button" type="button" aria-label="排序" aria-expanded="false"></button>
               <button
                 id="refreshButton"
                 class="circle-button"
                 type="button"
                 aria-label="刷新行情"
+                hidden
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path
@@ -149,6 +157,7 @@
                 class="circle-button"
                 type="button"
                 aria-label="新增持仓"
+                hidden
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path
@@ -161,11 +170,6 @@
                 </svg>
               </button>
             </div>
-            <div class="sort-group">
-              <button class="sort-chip" type="button" data-sort-field="marketValueCny"></button>
-              <button class="sort-chip" type="button" data-sort-field="effectiveYield"></button>
-              <button class="sort-chip" type="button" data-sort-field="netAnnualDividendCny"></button>
-            </div>
           </header>
 
           <section class="panel holdings-structure-panel ledger-holdings-overview">
@@ -176,6 +180,11 @@
           <div class="ledger-section-head holdings-list-head">
             <span>逐股</span>
             <button id="holdingsSortLabel" class="ledger-inline-action" type="button">按市值 ↓</button>
+          </div>
+          <div class="sort-group holdings-list-sort" aria-label="持仓排序">
+            <button class="sort-chip" type="button" data-sort-field="marketValueCny"></button>
+            <button class="sort-chip" type="button" data-sort-field="effectiveYield"></button>
+            <button class="sort-chip" type="button" data-sort-field="netAnnualDividendCny"></button>
           </div>
           <div id="companyLegend" class="legend-list" hidden></div>
           <div id="stockList" class="stock-list"></div>
@@ -233,6 +242,10 @@
               <button id="incomeOpeningCashButton" class="income-manual-button" type="button" aria-label="期初现金">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h16v10H4zM4 8l3-3h10l3 3M15 13h2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                 <span>期初现金</span>
+              </button>
+              <button id="incomeOverviewCashFlowButton" class="income-manual-button" type="button" aria-label="新增出入金">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.8v14.4M6.6 9.8 12 4.8l5.4 5M6.6 14.2l5.4 5 5.4-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <span>出入金</span>
               </button>
             </div>
           </section>

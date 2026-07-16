@@ -9719,3 +9719,134 @@ body:not([data-active-page="home"]) .panel {
   .page-view:not([hidden]) { animation: none; }
   .dividend-receipt-sheet .modal-check input::after { transition: none; }
 }
+
+/* ── Ledger interaction repair · 2026-07 ── */
+body[data-active-page="home"] .home-month-track { border-bottom: 0; }
+body[data-active-page="home"] .home-month-track::before { display: none; }
+body[data-active-page="home"] .home-hero-pnl .is-market-up { color: var(--ledger-gain); }
+body[data-active-page="home"] .home-hero-pnl .is-market-down { color: var(--ledger-loss); }
+body[data-active-page="home"] .home-ledger-period { max-width: 62%; text-align: right; line-height: 1.35; }
+body[data-active-page="home"] .home-cashflow-split { justify-content: space-between; }
+
+body[data-active-page="home"] .quick-add-button {
+  width: 100%;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 14px;
+  gap: 10px;
+  align-items: center;
+  margin: clamp(20px, 2.8vh, 27px) 0 0;
+  padding: 11px 0;
+  border: 0;
+  border-top: 1px solid var(--ledger-line-strong);
+  border-bottom: 1px solid var(--ledger-line);
+  border-radius: 0;
+  text-align: left;
+}
+body[data-active-page="home"] .quick-add-button .quick-add-mark { color: var(--ledger-iris); font: 700 20px/1 var(--font-data); }
+body[data-active-page="home"] .quick-add-copy { display: grid; gap: 3px; }
+body[data-active-page="home"] .quick-add-copy strong { color: var(--ledger-ink); font-size: 14px; }
+body[data-active-page="home"] .quick-add-copy small { color: var(--ledger-muted); font-size: 10px; font-weight: 600; }
+body[data-active-page="home"] .quick-add-button > svg { width: 12px; color: var(--ledger-ink); }
+
+.ledger-structure-values { gap: 0; }
+#holdingsPage .ledger-structure-values > .ledger-structure-item {
+  min-width: 0;
+  display: block;
+  padding: 8px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ledger-ink);
+  text-align: left;
+}
+#holdingsPage .ledger-structure-values > .ledger-structure-item:last-child { padding-left: 20px; text-align: right; }
+#holdingsPage .ledger-structure-values > .ledger-structure-item.is-active { border-bottom-color: var(--ledger-iris); background: var(--ledger-iris-soft); }
+.ledger-structure-item small::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 6px; background: #aaa9a2; }
+.ledger-structure-item.is-core small::before { background: var(--ledger-iris); }
+.ledger-structure-item small { color: var(--ledger-muted); font-size: 11px; }
+.ledger-structure-item strong { display: block; margin-top: 4px; font: 700 22px/1 var(--font-data); font-variant-numeric: tabular-nums; }
+.ledger-structure-item strong em { color: var(--ledger-muted); font-size: 12px; font-style: normal; }
+.ledger-structure-item > span { display: block; margin-top: 4px; color: var(--ledger-muted); font: 11px var(--font-data); font-variant-numeric: tabular-nums; }
+.return-bar-item { min-width: 0; display: grid; align-content: center; }
+.return-bar-item--yield { justify-items: center; text-align: center; }
+.return-bar-item small,.return-bar-item strong { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.holding-meta-row .is-sort-focus,.holding-side .is-sort-focus { color: var(--ledger-iris) !important; }
+#holdingsSortLabel { display: none; }
+.holdings-list-sort,
+.holdings-list-sort.is-collapsed {
+  position: static;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 8px 0 4px;
+  overflow: visible;
+  border: 1px solid var(--ledger-line);
+  border-radius: 0;
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+}
+.holdings-list-sort .sort-chip,
+.holdings-list-sort.is-collapsed .sort-chip { min-width: 0; min-height: 34px; padding: 0 5px; border: 0 !important; border-right: 1px solid var(--ledger-line) !important; border-radius: 0 !important; background: transparent; color: var(--ledger-muted); font-size: 9.5px; white-space: nowrap; visibility: visible; opacity: 1; pointer-events: auto; transform: none; }
+.holdings-list-sort .sort-chip:last-child { border-right: 0 !important; }
+.holdings-list-sort .sort-chip.is-active { background: var(--ledger-iris-soft); color: var(--ledger-iris); }
+
+.dividend-month-row.is-current { position: relative; padding-bottom: 16px; border-bottom: 1px solid var(--ledger-line); }
+.dividend-month-row .dmr-progress { position: absolute; right: 0; bottom: 0; left: 0; display: block; height: 3px; background: #deded8; pointer-events: none; }
+.dividend-month-row .dmr-progress i { display: block; width: var(--dmr-progress, 0%); height: 100%; background: var(--ledger-iris); }
+.dividend-past-toggle { width: 100%; min-height: 42px; padding: 0; border: 0; border-bottom: 1px solid var(--ledger-line); background: transparent; color: var(--ledger-iris); font-size: 11px; font-weight: 700; text-align: left; }
+
+#incomeSummaryPage .income-hero-context { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#incomeSummaryPage .income-hero-context span,
+#incomeSummaryPage .income-hero-context .income-cash-context { min-width: 0; display: block; padding: 8px 0; border: 0; background: transparent; text-align: left; }
+#incomeSummaryPage .income-hero-context > :nth-child(even) { padding-left: 12px; border-left: 1px solid var(--ledger-line); }
+#incomeSummaryPage .income-cash-context strong { display: block; margin-top: 4px; font: 700 14px var(--font-data); }
+#incomeSummaryPage .income-cash-context em { display: block; margin-top: 3px; color: var(--ledger-iris); font-size: 9px; font-style: normal; }
+#incomeSummaryPage .income-cash-standalone { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--ledger-line); }
+#incomeSummaryPage .income-cash-standalone .income-cash-context { width: 100%; padding: 0; border: 0; background: transparent; text-align: left; }
+#incomeSummaryPage .income-actions-bar,
+#incomeSummaryPage.is-cash-active .income-actions-bar { display: flex; }
+#incomeSummaryPage.is-cash-active .income-actions-bar #incomeOpeningCashButton { display: inline-flex !important; }
+#incomeSummaryPage .income-actions-bar .income-manual-button { flex: 1; border: 1px solid var(--ledger-line); border-radius: 0; background: transparent; color: var(--ledger-ink); }
+#incomeSummaryPage .income-year-row:not(.income-year-head) { grid-template-rows: auto auto; }
+#incomeSummaryPage .income-year-row > .income-year-secondary { grid-column: 1 / -1; display: flex; gap: 8px; padding-top: 10px; }
+#incomeSummaryPage .income-year-secondary button { min-height: 28px; padding: 0 10px; border: 1px solid var(--ledger-line); border-radius: 0; background: transparent; color: var(--ledger-muted); font-size: 10px; font-weight: 700; }
+#incomeSummaryPage .income-year-row:not(.income-year-head) > svg { grid-column: 5; grid-row: 1; }
+#recordsPage .icon-actions { display: flex; }
+
+.fund-company-head { display: block; }
+.fund-company-trigger { width: 100%; display: flex; align-items: center; gap: 7px; padding: 0; border: 0; background: transparent; text-align: left; }
+.fund-company-caret { width: 14px; color: var(--ledger-iris); }
+.fund-company-count { margin-left: auto; color: var(--ledger-muted); font-size: 10px; }
+.fund-bar-latest { color: var(--ledger-muted); font: 700 10px var(--font-data); }
+.fund-bar-latest span,.fund-growth-year { color: var(--ledger-muted); font-weight: 600; }
+.fund-eps-growth { display: inline-flex; gap: 6px; align-items: baseline; color: var(--ledger-muted); }
+.fund-eps-growth b { font: inherit; }
+.fund-eps-bars i { width: 56%; background: #b9b9b2; }
+.fund-eps-bars i.is-current { background: var(--ledger-iris); }
+.fund-eps-bars i.is-empty { height: 1px !important; background: var(--ledger-line); }
+.annual-dividend-bars i { background: #b9b9b2; }
+.annual-dividend-bars i.is-current { background: var(--ledger-iris); }
+
+.modal-sheet,.confirm-sheet {
+  left: 0;
+  right: 0;
+  width: min(calc(100% - 28px), 430px);
+  max-width: 430px;
+  margin-right: auto;
+  margin-left: auto;
+  box-sizing: border-box;
+}
+
+@media (max-width: 370px) {
+  body[data-active-page="home"] .home-ledger-period { max-width: 58%; font-size: 10px; }
+  .return-bar-row { gap: 8px; }
+  .return-bar-item + .return-bar-item { padding-left: 8px; }
+  .return-bar-item small { font-size: 9px; }
+  .return-bar-item strong { font-size: 12px; }
+}

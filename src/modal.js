@@ -14,6 +14,7 @@ import { getPortfolioDiagnostics } from './diagnostics.js';
 let _keydownHandler = null;
 
 export function openModal(type, payload = {}) {
+  if (_keydownHandler) document.removeEventListener('keydown', _keydownHandler, true);
   state.modal = type; state.modalPayload = payload;
   document.body.classList.add('modal-open');
   renderModal();
@@ -643,6 +644,7 @@ function saveTradeEdit() {
 export function handleModalSave() {
   if (state.modal === 'monthDetail' || state.modal === 'yearHoldings' || state.modal === 'yearAnnals' || state.modal === 'diagnostics' || state.modal === 'fundPicker' || state.modal === 'holdingsMenu') { closeModal(); return; }
   if (state.modal === 'quickAdd') return;
+  let returnMonth = 0;
   if (state.modal === 'quantity') {
     const v = Math.max(0, safeNumber(document.getElementById('modalQuantityInput').value, 0));
     state.holdings = state.holdings.map((i) => i.localId === state.modalPayload.localId ? { ...i, quantity: v } : i);
@@ -660,6 +662,7 @@ export function handleModalSave() {
     state.openingCashCny = openingNegative ? -openingAmount : openingAmount;
     state.openingDate = formatDateLabel(document.getElementById('modalOpeningDateInput').value) || getTodayLabel();
   } else if (state.modal === 'dividendLedger') {
+    returnMonth = Math.floor(safeNumber(state.modalPayload && state.modalPayload.returnMonth, 0));
     if (!saveDividendLedgerEdit()) return;
   } else if (state.modal === 'cashFlow') {
     if (!saveCashFlowEdit()) return;
@@ -703,7 +706,16 @@ export function handleModalSave() {
     state.quotes = mergeQuotes(state.quotes, { [symbol]: inferQuote(symbol) });
     state.nextId += 1;
   }
-  saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: true });
+  saveState();
+  if (returnMonth >= 1 && returnMonth <= 12) {
+    renderSavedStateQuietly({ animateHoldingReflow: false });
+    state.modal = 'monthDetail';
+    state.modalPayload = { month: returnMonth };
+    renderModal();
+    return;
+  }
+  closeModal();
+  renderSavedStateQuietly({ animateHoldingReflow: true });
 }
 
 export function handleModalDelete() {

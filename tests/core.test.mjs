@@ -12,7 +12,10 @@ const stateModule = await import('../src/state.js');
 const computeModule = await import('../src/compute.js');
 const revenueModule = await import('../src/revenue.js');
 const { state, applySnapshot, invalidateComputeCache, createDemoSnapshot } = stateModule;
-const { computeCashBalance, computeCashFlowRecords, computeTradeSummary, computeDividendCalendar, computeIncomeSummary } = computeModule;
+const {
+  computeCashBalance, computeCashFlowRecords, computeTradeSummary, computeDividendCalendar,
+  computeIncomeSummary, computeHoldings, getBucketSummaryItems, getAnnualDividendOverview
+} = computeModule;
 const { settleRevenueData } = revenueModule;
 
 function applyTestSnapshot(overrides = {}) {
@@ -143,6 +146,65 @@ test('manual dividend edits do not become cash until explicitly confirmed', () =
   assert.equal(income.dividendCny, 10);
   item = computeDividendCalendar('2026-07-10').allDetails.find((entry) => entry.id === 'div_manual');
   assert.equal(item.status, 'received');
+});
+
+test('cash balance applies deposits, withdrawals, trade direction, fees and confirmed dividends', () => {
+  applyTestSnapshot({
+    openingDate: '2026-01-01',
+    openingCashCny: 100,
+    cashFlows: [
+      { id: 'deposit', date: '2026-02-01', amountCny: 50, type: 'deposit' },
+      { id: 'withdrawal', date: '2026-02-02', amountCny: 20, type: 'withdrawal' }
+    ],
+    trades: [
+      { id: 'buy', date: '2026-03-01', symbol: 'TEST.HK', side: 'buy', shares: 10, price: 20, currency: 'CNY', fxRate: 1, feeCny: 5, bucket: 'core' },
+      { id: 'sell', date: '2026-04-01', symbol: 'TEST.HK', side: 'sell', shares: 2, price: 25, currency: 'CNY', fxRate: 1, feeCny: 1, bucket: 'core' }
+    ],
+    dividendLedger: [{
+      id: 'confirmed', sourceId: 'TEST.HK|2026-05-01|1', symbol: 'TEST.HK', exDate: '2026-05-01',
+      receivedDate: '2026-05-10', amountPerShare: 1, shares: 10, currency: 'CNY', fxRate: 1,
+      grossCny: 10, netCny: 10, confirmed: true, bucket: 'core'
+    }]
+  });
+  assert.equal(computeCashBalance(), -16);
+});
+
+test('bucket summaries and all three holding sorts use the same computed values', () => {
+  applyTestSnapshot({
+    holdings: [
+      { localId: 1, symbol: 'CORE.HK', quantity: 10, bucket: 'core' },
+      { localId: 2, symbol: 'INCOME.HK', quantity: 20, bucket: 'income' }
+    ],
+    quotes: {
+      'CORE.HK': { name: 'Core', price: 10, currency: 'CNY', dividendPerShareTtm: 0.2, dividends: [] },
+      'INCOME.HK': { name: 'Income', price: 5, currency: 'CNY', dividendPerShareTtm: 1, dividends: [] }
+    }
+  });
+  let summary = computeHoldings();
+  const buckets = getBucketSummaryItems(summary.holdings);
+  assert.deepEqual(buckets.map((item) => [item.key, item.marketValueCny, item.totalDividendCny, item.averageYield]), [
+    ['core', 100, 2, 0.02],
+    ['income', 100, 20, 0.2]
+  ]);
+
+  state.sortField = 'effectiveYield'; state.sortDirection = 'desc'; invalidateComputeCache();
+  assert.equal(computeHoldings().holdings[0].symbol, 'INCOME.HK');
+  state.sortField = 'netAnnualDividendCny'; state.sortDirection = 'asc'; invalidateComputeCache();
+  assert.equal(computeHoldings().holdings[0].symbol, 'CORE.HK');
+  state.sortField = 'marketValueCny'; state.sortDirection = 'desc'; invalidateComputeCache();
+  summary = computeHoldings();
+  assert.equal(summary.holdings.length, 2);
+});
+
+test('annual dividend overview reports expected cashflow, remaining amount, progress and yield', () => {
+  const overview = getAnnualDividendOverview({ metrics: { projectedCny: 120, receivedCny: 45 } }, { totalMarketValueCny: 2000 });
+  assert.deepEqual(overview, {
+    projectedCny: 120,
+    receivedCny: 45,
+    waitingCny: 75,
+    receivedRatio: 0.375,
+    annualYield: 0.06
+  });
 });
 
 test('an all-cash year overwrites the current holdings snapshot with an empty list', () => {

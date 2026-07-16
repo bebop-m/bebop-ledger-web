@@ -2,7 +2,7 @@ import { state, refs, mutable, saveState, isDemoMode } from './state.js';
 import {
   computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems,
   computeDividendCalendar, computeIncomeSummary,
-  computeCashFlowRecords, computeTradeSummary, isCashModelActive
+  computeCashFlowRecords, computeTradeSummary, isCashModelActive, getAnnualDividendOverview
 } from './compute.js';
 import { renderFundamentalsPage, getFundamentalsCompanyCount, getPortfolioReturnSummary } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
@@ -74,7 +74,7 @@ export function renderHomePage(summary) {
   const bucketItems = getBucketSummaryItems(summary.holdings);
   const totalMv = bucketItems.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0) || 1;
   renderHomeHero(summary);
-  renderHomeMetrics(calendarModel);
+  renderHomeMetrics(calendarModel, summary);
   renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems, totalMv);
 }
 
@@ -120,14 +120,13 @@ function getHomeDividendDateParts(entry) {
 }
 
 // \u9996\u9875\u73b0\u91d1\u6536\u5165\u8f74\uff1a\u5f53\u6708\u80a1\u606f -> \u4e0b\u6b21\u5230\u8d26 -> \u6708\u4efd\u8f74 -> \u5168\u5e74\u9884\u8ba1\u3002
-function renderHomeMetrics(calendarModel) {
-  const m = calendarModel.metrics;
-  const currentMonth = calendarModel.months[calendarModel.currentMonth - 1] || null;
-  const currentTotal = safeNumber(currentMonth && currentMonth.totalCny, 0);
-  const currentReceived = safeNumber(currentMonth && currentMonth.receivedCny, 0);
-  const currentWaiting = safeNumber(currentMonth && currentMonth.dueCny, 0) + safeNumber(currentMonth && currentMonth.upcomingCny, 0);
-  const annualProjected = safeNumber(m.projectedCny, 0);
-  const currentRatio = currentTotal > 0 ? Math.min(1, Math.max(0, currentReceived / currentTotal)) : 0;
+function renderHomeMetrics(calendarModel, summary) {
+  const annual = getAnnualDividendOverview(calendarModel, summary);
+  const annualProjected = annual.projectedCny;
+  const annualReceived = annual.receivedCny;
+  const annualWaiting = annual.waitingCny;
+  const annualRatio = annual.receivedRatio;
+  const annualYield = annual.annualYield;
   const nextDividend = getNextHomeDividend(calendarModel);
   const nextDate = getHomeDividendDateParts(nextDividend);
   const monthWindow = getHomeMonthWindow(calendarModel.months, calendarModel.currentMonth);
@@ -139,19 +138,19 @@ function renderHomeMetrics(calendarModel) {
   const nextName = nextDividend ? (nextDividend.name || nextDividend.symbol) : '';
 
   refs.homeFocusCard.innerHTML = `
-    <button class="home-cashflow" type="button" data-page-nav="dividends" aria-label="打开本月股息">
+    <button class="home-cashflow" type="button" data-page-nav="dividends" aria-label="打开本年股息">
       <div class="home-ledger-head">
-        <span class="home-ledger-label">本月现金流</span>
-        <span class="home-ledger-period">${calendarModel.year} / ${String(calendarModel.currentMonth).padStart(2, '0')}</span>
+        <span class="home-ledger-label">本年现金流</span>
+        <span class="home-ledger-period">${calendarModel.year} · 年度股息率 ${escapeHtml(formatPercent(annualYield))}</span>
       </div>
-      <strong class="home-cashflow-value">${formatLedgerMoney(currentTotal, 'CNY')}</strong>
-      <div class="home-cashflow-progress" aria-label="本月股息到账进度 ${Math.round(currentRatio * 100)}%">
-        <i style="width:${Math.max(currentRatio * 100, currentTotal > 0 ? 0.6 : 0).toFixed(1)}%"></i>
-        <b style="left:${Math.min(98.8, Math.max(1.2, currentRatio * 100)).toFixed(1)}%"></b>
+      <strong class="home-cashflow-value">${formatLedgerMoney(annualProjected, 'CNY')}</strong>
+      <div class="home-cashflow-progress" aria-label="本年股息到账进度 ${Math.round(annualRatio * 100)}%">
+        <i style="width:${Math.max(annualRatio * 100, annualProjected > 0 ? 0.6 : 0).toFixed(1)}%"></i>
+        <b style="left:${Math.min(98.8, Math.max(1.2, annualRatio * 100)).toFixed(1)}%"></b>
       </div>
       <div class="home-cashflow-split">
-        <span>已到账 <strong>${escapeHtml(formatDisplayMoney(currentReceived, 'CNY'))}</strong> · 待到账 <strong>${escapeHtml(formatDisplayMoney(currentWaiting, 'CNY'))}</strong></span>
-        <span>全年预估 <strong>${escapeHtml(formatDisplayMoney(annualProjected, 'CNY'))}</strong></span>
+        <span>已到账 <strong>${escapeHtml(formatDisplayMoney(annualReceived, 'CNY'))}</strong></span>
+        <span>待到账 <strong>${escapeHtml(formatDisplayMoney(annualWaiting, 'CNY'))}</strong></span>
       </div>
     </button>
     <section class="home-month-ledger">
@@ -297,8 +296,8 @@ export function renderBucketsView(segments, holdings, summary, opts = {}) {
     <p class="ledger-eyebrow">仓位结构</p>
     <div class="ledger-structure-bar" aria-label="核心仓 ${(corePct * 100).toFixed(1)}%，打工仓 ${(incomePct * 100).toFixed(1)}%"><i style="width:${(corePct * 100).toFixed(2)}%"></i><span></span></div>
     <div class="ledger-structure-values">
-      <div><small class="is-core">${escapeHtml(core.label)}</small><strong>${(corePct * 100).toFixed(1)}<em>%</em></strong><span>${escapeHtml(formatDisplayMoney(core.marketValueCny, 'CNY'))}</span></div>
-      <div><small>${escapeHtml(income.label)}</small><strong>${(incomePct * 100).toFixed(1)}<em>%</em></strong><span>${escapeHtml(formatDisplayMoney(income.marketValueCny, 'CNY'))}</span></div>
+      <button class="ledger-structure-item is-core${state.activeBucketKey === 'core' ? ' is-active' : ''}" type="button" data-bucket-toggle="core" aria-pressed="${state.activeBucketKey === 'core'}"><small>${escapeHtml(core.label)}</small><strong>${(corePct * 100).toFixed(1)}<em>%</em></strong><span>${escapeHtml(formatDisplayMoney(core.marketValueCny, 'CNY'))}</span></button>
+      <button class="ledger-structure-item is-income${state.activeBucketKey === 'income' ? ' is-active' : ''}" type="button" data-bucket-toggle="income" aria-pressed="${state.activeBucketKey === 'income'}"><small>${escapeHtml(income.label)}</small><strong>${(incomePct * 100).toFixed(1)}<em>%</em></strong><span>${escapeHtml(formatDisplayMoney(income.marketValueCny, 'CNY'))}</span></button>
     </div>`;
 }
 
@@ -310,13 +309,18 @@ export function patchBucketsView(segments, holdings, summary) {
 export function renderReturnBar() {
   if (!refs.holdingsReturnBar) return;
   const summary = computeHoldings();
-  const yieldRate = summary.totalMarketValueCny > 0 ? summary.totalDividendCny / summary.totalMarketValueCny : 0;
+  const bucketItems = getBucketSummaryItems(summary.holdings);
+  const active = bucketItems.find((item) => item.key === state.activeBucketKey) || null;
+  const marketValueCny = active ? active.marketValueCny : summary.totalMarketValueCny;
+  const dividendCny = active ? active.totalDividendCny : summary.totalDividendCny;
+  const yieldRate = marketValueCny > 0 ? dividendCny / marketValueCny : 0;
+  const yieldLabel = active ? `${active.label}股息率` : '组合股息率';
   refs.holdingsReturnBar.hidden = false;
   refs.holdingsReturnBar.innerHTML = `
     <div class="return-bar-row">
-      <span class="return-bar-item"><small>股票市值</small><strong>${escapeHtml(formatDisplayMoney(summary.totalMarketValueCny, 'CNY'))}</strong></span>
-      <span class="return-bar-item"><small>税后年化股息</small><strong>${escapeHtml(formatDisplayMoney(summary.totalDividendCny, 'CNY'))}</strong></span>
-      <span class="return-bar-item"><small>组合股息率</small><strong>${escapeHtml(formatPercent(yieldRate))}</strong></span>
+      <span class="return-bar-item"><small>股票市值</small><strong>${escapeHtml(formatDisplayMoney(marketValueCny, 'CNY'))}</strong></span>
+      <span class="return-bar-item"><small>税后年化股息</small><strong>${escapeHtml(formatDisplayMoney(dividendCny, 'CNY'))}</strong></span>
+      <span class="return-bar-item return-bar-item--yield"><small>${escapeHtml(yieldLabel)}</small><strong>${escapeHtml(formatPercent(yieldRate))}</strong></span>
     </div>`;
 }
 
@@ -356,8 +360,9 @@ export function renderSortChips() {
 
 export function renderTimestamp() {
   const count = computeHoldings().holdings.length;
-  refs.marketTimestamp.textContent = `${count} 项`;
-  refs.marketTimestamp.title = formatTimestamp(state.lastUpdatedAt) || '持仓操作';
+  refs.marketTimestamp.textContent = `${count} 项 · 持仓诊断`;
+  refs.marketTimestamp.title = formatTimestamp(state.lastUpdatedAt) || '打开持仓诊断';
+  refs.marketTimestamp.setAttribute('aria-label', `打开持仓诊断，当前 ${count} 项持仓`);
 }
 
 export function renderPrivacyButton() {
@@ -451,7 +456,9 @@ export function toggleDividendPastMonths() {
 }
 
 function renderDividendMonths(model) {
-  const visible = model.months.filter((item) => item.totalCny > 0);
+  const populated = model.months.filter((item) => item.totalCny > 0);
+  const past = populated.filter((item) => item.phase === 'past');
+  const visible = populated.filter((item) => item.phase !== 'past' || dividendPastExpanded);
   const rowSummary = (item) => {
     const entries = model.allDetails.filter((entry) => entry.month === item.month);
     const names = Array.from(new Set(entries.map((entry) => entry.name || entry.symbol))).slice(0, 2).join(' · ');
@@ -472,14 +479,17 @@ function renderDividendMonths(model) {
   };
   const rows = visible.length ? visible.map((item) => {
     const key = tone(item);
-    return `<button class="dividend-month-row is-${item.phase} is-${key}" type="button" data-dividend-month="${item.month}">
+    const progress = item.totalCny > 0 ? Math.min(100, Math.max(0, item.receivedCny / item.totalCny * 100)) : 0;
+    return `<button class="dividend-month-row is-${item.phase} is-${key}" type="button" data-dividend-month="${item.month}"${item.phase === 'current' ? ` style="--dmr-progress:${progress.toFixed(1)}%" aria-label="${item.month} 月，到账进度 ${Math.round(progress)}%"` : ''}>
       <span class="dmr-label">${String(item.month).padStart(2, '0')}</span>
       <span class="dmr-status"><i aria-hidden="true"></i><span>${escapeHtml(rowSummary(item))}</span></span>
       <strong class="dmr-total">${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}</strong>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      ${item.phase === 'current' ? '<span class="dmr-progress" aria-hidden="true"><i></i></span>' : ''}
     </button>`;
   }).join('') : '<div class="month-detail-empty">当前筛选暂无股息记录</div>';
-  refs.dividendMonthGrid.innerHTML = `${rows}<p class="dividend-month-note">黄＝待核对 · 紫＝在途／当月 · 灰＝节奏预估。点按某月查看逐笔并确认到账。</p>`;
+  const pastToggle = past.length ? `<button class="dividend-past-toggle" type="button" data-dividend-past-toggle aria-expanded="${dividendPastExpanded}">${dividendPastExpanded ? '收起已过月份' : `展开已过月份 · ${past.length}`}</button>` : '';
+  refs.dividendMonthGrid.innerHTML = `${pastToggle}${rows}<p class="dividend-month-note">黄＝待核对 · 紫＝在途／当月 · 灰＝节奏预估。点按某月查看逐笔并确认到账。</p>`;
 }
 
 function getShortMonthDay(value) {
@@ -553,21 +563,9 @@ export function renderDividendCalendarPage() {
     button.classList.toggle('is-active', isActive);
     button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
   });
-  const month = Math.floor(safeNumber(state.activeDividendMonth, 0));
-  refs.dividendCalendarListView.hidden = month >= 1 && month <= 12;
-  refs.dividendMonthDetailView.hidden = !(month >= 1 && month <= 12);
-  if (month >= 1 && month <= 12) {
-    const detail = buildDividendMonthDetail(month);
-    refs.dividendMonthDetailView.innerHTML = `
-      <header class="top-bar ledger-page-head month-detail-page-head">
-        <button class="back-button" type="button" data-dividend-detail-back aria-label="返回股息日历"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
-        <div class="top-bar-heading"><h2 class="top-bar-title">${escapeHtml(detail.title)}</h2></div>
-        <strong class="month-detail-total">${escapeHtml(detail.total)}</strong>
-      </header>
-      <p class="month-detail-guide">点按一笔编辑到账日、实收金额与备注 · <span class="is-confirmed">绿=已确认</span> <span class="is-due">黄=待核对</span> <span class="is-announced">蓝=已公告</span> <span class="is-forecast">灰=预估</span></p>
-      <div class="month-detail-list">${detail.body}</div>`;
-    return;
-  }
+  refs.dividendCalendarListView.hidden = false;
+  refs.dividendMonthDetailView.hidden = true;
+  refs.dividendMonthDetailView.innerHTML = '';
   renderDividendMetricGrid(model);
   renderDividendMonths(model);
 }
@@ -600,8 +598,12 @@ function formatIncomeRate(value) {
 // 年初净值、净注入和现金余额属于计算口径，折叠下沉，避免首屏同时争夺注意力。
 function renderIncomeOverview(model) {
   const row = model.current;
+  const holdingSummary = computeHoldings();
+  const cashActive = isCashModelActive();
+  const cashText = cashActive ? formatDisplayMoney(holdingSummary.cashBalanceCny, 'CNY') : '未设置';
+  const cashMarkup = `<button class="income-cash-context" type="button" data-income-cash-settings aria-label="${cashActive ? '编辑期初现金设置' : '设置期初现金'}"><small>现金余额</small><strong class="income-amount ${cashActive ? getSignedTone(holdingSummary.cashBalanceCny) : 'is-flat'}">${escapeHtml(cashText)}</strong><em>${cashActive ? '现金设置' : '点击启用'}</em></button>`;
   if (!row || !row.capitalReturnAvailable) {
-    refs.incomeOverviewGrid.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无资金收益数据</p><p class="empty-state-note">回填或生成 ${model.currentYear - 1} 年末净值后，这里会展示今年至今的资金收益。</p></div>`;
+    refs.incomeOverviewGrid.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无资金收益数据</p><p class="empty-state-note">回填或生成 ${model.currentYear - 1} 年末净值后，这里会展示今年至今的资金收益。</p></div><div class="income-cash-standalone">${cashMarkup}</div>`;
     return;
   }
   refs.incomeOverviewGrid.innerHTML = `
@@ -615,6 +617,7 @@ function renderIncomeOverview(model) {
         <span><small>当前净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</strong></span>
         <span><small>年初净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearStartNetCny))}</strong></span>
         <span><small>净注入</small><strong class="income-amount">${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</strong></span>
+        ${cashMarkup}
       </div>
     </article>`;
 }
@@ -754,6 +757,7 @@ function renderIncomeYearList(model) {
       <span><small>收益率</small><b class="${getReturnTone(row.capitalReturnRate)}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</b></span>
       <div class="income-year-secondary">
         <button type="button" data-year-holdings="${row.year}">持仓</button>
+        <button type="button" data-year-annals="${row.year}">年鉴</button>
         <button type="button" data-income-manual-year="${row.year}">${row.hasManualBackfill ? '修正' : '回填'}</button>
       </div>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
@@ -951,13 +955,16 @@ function getHoldingViewModel(item, index = 0) {
 
 function getHoldingMarkup(item, index, opts = {}) {
   const { animate = true } = opts, v = getHoldingViewModel(item, index);
+  const marketValueFocus = state.sortField === 'marketValueCny' ? ' is-sort-focus' : '';
+  const dividendFocus = state.sortField === 'netAnnualDividendCny' ? ' is-sort-focus' : '';
+  const yieldFocus = state.sortField === 'effectiveYield' ? ' is-sort-focus' : '';
   return `<div class="holding-swipe${animate ? ' is-entering' : ''}" data-id="${item.localId}" style="--holding-swipe-offset:0px;animation-delay:${v.staggerDelay}ms;">
     <article class="holding-card" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
       <div class="holding-row-main">
         <div class="holding-main"><div class="holding-title-line"><h3 class="holding-name">${escapeHtml(item.name)}</h3><span class="holding-code">${escapeHtml(item.symbol)}</span></div>
-          <div class="holding-meta-row"><span class="holding-price" data-holding-field="price">${escapeHtml(v.priceText)}</span><span>· 税后年化 </span><button type="button" data-action="edit-tax" data-holding-field="annualDividend">${escapeHtml(v.annualDividendText)}</button><span> · </span><button type="button" data-action="edit-dividend" data-holding-field="effectiveYieldValue">${escapeHtml(v.yieldText)}</button></div>
+          <div class="holding-meta-row"><span class="holding-price" data-holding-field="price">${escapeHtml(v.priceText)}</span><span>· 税后年化 </span><button class="${dividendFocus.trim()}" type="button" data-action="edit-tax" data-holding-field="annualDividend">${escapeHtml(v.annualDividendText)}</button><span> · </span><button class="${yieldFocus.trim()}" type="button" data-action="edit-dividend" data-holding-field="effectiveYieldValue">${escapeHtml(v.yieldText)}</button></div>
         </div>
-        <button class="holding-side" type="button" data-action="edit-quantity"><strong data-holding-field="marketValue">${escapeHtml(v.marketValueText)}</strong><span data-holding-field="weight">${escapeHtml(v.weightText)}</span></button>
+        <button class="holding-side" type="button" data-action="edit-quantity"><strong class="${marketValueFocus.trim()}" data-holding-field="marketValue">${escapeHtml(v.marketValueText)}</strong><span data-holding-field="weight">${escapeHtml(v.weightText)}</span></button>
       </div>
     </article></div>`;
 }

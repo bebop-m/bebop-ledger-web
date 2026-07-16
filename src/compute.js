@@ -534,6 +534,21 @@ export function computeCurrentYearDividendCny() {
   return computeDividendCalendar(new Date(), 'all').metrics.projectedCny;
 }
 
+// 首页年度现金流的单一口径：全年应收、确认进度与相对当前股票市值的年度股息率。
+export function getAnnualDividendOverview(calendarModel, holdingSummary = computeHoldings()) {
+  const metrics = calendarModel && calendarModel.metrics ? calendarModel.metrics : (calendarModel || {});
+  const projectedCny = Math.max(0, safeNumber(metrics.projectedCny, 0));
+  const receivedCny = Math.max(0, safeNumber(metrics.receivedCny, 0));
+  const marketValueCny = Math.max(0, safeNumber(holdingSummary && holdingSummary.totalMarketValueCny, 0));
+  return {
+    projectedCny: roundMoney(projectedCny),
+    receivedCny: roundMoney(receivedCny),
+    waitingCny: roundMoney(Math.max(0, projectedCny - receivedCny)),
+    receivedRatio: projectedCny > 0 ? Math.min(1, receivedCny / projectedCny) : 0,
+    annualYield: marketValueCny > 0 ? projectedCny / marketValueCny : 0
+  };
+}
+
 function getIncomeYear(value) {
   const parts = getDateParts(value);
   return parts ? parts.year : 0;

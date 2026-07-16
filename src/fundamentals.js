@@ -500,28 +500,43 @@ function buildFormulaBlock(company) {
   </div>`;
 }
 
-function buildFundChipRail(companies, selectedSymbol) {
-  return `<div class="fund-chip-rail" role="tablist" aria-label="选择公司">${companies.map((company) => `<button type="button" role="tab" data-fund-symbol="${escapeHtml(company.symbol)}" aria-selected="${company.symbol === selectedSymbol}" class="${company.symbol === selectedSymbol ? 'is-active' : ''}">${escapeHtml(getCompanyDisplayName(company))}</button>`).join('')}</div>`;
+function buildDividendBars(company, visible) {
+  const available = visible.filter((row) => row.dividendPerShare !== null && row.dividendPerShare !== undefined);
+  if (!available.length) return '';
+  const max = Math.max(1, ...available.map((row) => Math.abs(safeNumber(row.dividendPerShare, 0))));
+  const latest = available[available.length - 1];
+  return `<section class="fund-eps-section fund-dividend-section">
+    <div class="fund-eps-head"><p class="ledger-eyebrow">每股分红</p><strong class="fund-bar-latest"><span>${latest.year}</span> ${escapeHtml(formatMetricValue(latest.dividendPerShare, 'money'))} ${escapeHtml(company.currency)}</strong></div>
+    <div class="fund-eps-bars">${visible.map((row, index) => {
+      const hasValue = row.dividendPerShare !== null && row.dividendPerShare !== undefined;
+      const height = hasValue ? Math.max(4, Math.abs(safeNumber(row.dividendPerShare, 0)) / max * 72) : 0;
+      return `<span><b>${hasValue ? escapeHtml(formatMetricValue(row.dividendPerShare, 'money')) : '—'}</b><i style="height:${height.toFixed(1)}px" class="${index === visible.length - 1 && hasValue ? 'is-current' : ''}${hasValue ? '' : ' is-empty'}"></i><small>${row.year}</small></span>`;
+    }).join('')}</div>
+  </section>`;
 }
 
-function buildEpsLedger(company, rows) {
-  const visible = rows.filter((row) => row.eps !== null && row.eps !== undefined).slice(-4);
-  if (!visible.length) return '';
-  const max = Math.max(1, ...visible.map((row) => Math.abs(safeNumber(row.eps, 0))));
-  const latest = visible[visible.length - 1];
-  const previous = visible.length > 1 ? visible[visible.length - 2] : null;
+function buildEpsLedger(company, visible) {
+  const available = visible.filter((row) => row.eps !== null && row.eps !== undefined);
+  if (!available.length) return '';
+  const max = Math.max(1, ...available.map((row) => Math.abs(safeNumber(row.eps, 0))));
+  const latest = available[available.length - 1];
+  const previous = available.length > 1 ? available[available.length - 2] : null;
   const latestGrowth = previous && safeNumber(previous.eps, 0) !== 0
     ? (safeNumber(latest.eps, 0) - safeNumber(previous.eps, 0)) / Math.abs(safeNumber(previous.eps, 0))
     : null;
   const growthTone = latestGrowth === null ? 'is-flat' : latestGrowth > 0 ? 'is-gain' : latestGrowth < 0 ? 'is-loss' : 'is-flat';
-  const growthText = latestGrowth === null ? '' : `${latest.year} ${latestGrowth > 0 ? '+' : latestGrowth < 0 ? '−' : ''}${Math.abs(latestGrowth * 100).toFixed(1)}%`;
+  const growthText = latestGrowth === null ? '' : `${latestGrowth > 0 ? '+' : latestGrowth < 0 ? '−' : ''}${Math.abs(latestGrowth * 100).toFixed(1)}%`;
   const nextReport = getNextReportEvent(company.symbol);
   const nextReportDate = nextReport && nextReport.reportDate
     ? `${String(Number(nextReport.reportDate.slice(5, 7))).padStart(2, '0')}/${String(Number(nextReport.reportDate.slice(8, 10))).padStart(2, '0')}`
     : '—';
   return `<section class="fund-eps-section">
-    <div class="fund-eps-head"><p class="ledger-eyebrow">EPS 每股收益</p>${growthText ? `<strong class="fund-eps-growth ${growthTone}">${escapeHtml(growthText)}</strong>` : ''}</div>
-    <div class="fund-eps-bars">${visible.map((row, index) => `<span><b>${escapeHtml(formatMetricValue(row.eps, 'money'))}</b><i style="height:${Math.max(4, Math.abs(safeNumber(row.eps, 0)) / max * 72).toFixed(1)}px" class="${index === visible.length - 1 ? 'is-current' : ''}"></i><small>${row.year}</small></span>`).join('')}</div>
+    <div class="fund-eps-head"><p class="ledger-eyebrow">EPS 每股收益</p>${growthText ? `<strong class="fund-eps-growth"><span class="fund-growth-year">${latest.year}</span><b class="${growthTone}">${escapeHtml(growthText)}</b></strong>` : ''}</div>
+    <div class="fund-eps-bars">${visible.map((row, index) => {
+      const hasValue = row.eps !== null && row.eps !== undefined;
+      const height = hasValue ? Math.max(4, Math.abs(safeNumber(row.eps, 0)) / max * 72) : 0;
+      return `<span><b>${hasValue ? escapeHtml(formatMetricValue(row.eps, 'money')) : '—'}</b><i style="height:${height.toFixed(1)}px" class="${index === visible.length - 1 && hasValue ? 'is-current' : ''}${hasValue ? '' : ' is-empty'}"></i><small>${row.year}</small></span>`;
+    }).join('')}</div>
     <div class="fund-eps-stats">
       <div><span>分红率</span><strong>${escapeHtml(formatMetricValue(latest.payoutRatio, 'percent'))}</strong></div>
       <div><span>负债率</span><strong>${escapeHtml(formatMetricValue(latest.debtRatio, 'percent'))}</strong></div>
@@ -568,15 +583,17 @@ export function renderFundamentalsPage() {
   const company = allCompanies.find((item) => item.symbol === _selectedSymbol);
 
   const { rows, allRows, metrics, currentYear } = buildCompanyMetrics(company);
+  const chartRows = rows.slice(-4);
   const summary = buildCompanySummary(company, rows);
   refs.fundamentalsContent.innerHTML = `
-    ${buildFundChipRail(allCompanies, company.symbol)}
     <section class="panel fund-head-panel">
       <div class="fund-company-head">
         <div>
-          <div class="fund-company-trigger">
+          <button class="fund-company-trigger" type="button" data-fund-picker-open aria-haspopup="dialog" aria-label="切换公司">
             <h3 class="fund-company-name">${escapeHtml(getCompanyDisplayName(company))}</h3>
-          </div>
+            <svg class="fund-company-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5 12 15l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            ${allCompanies.length > 1 ? `<span class="fund-company-count">${allCompanies.length} 家</span>` : ''}
+          </button>
           <p class="fund-company-code">${escapeHtml(company.symbol)} · 股息按 ${escapeHtml(company.currency)}/股 · 财报币种 ${escapeHtml(company.statementCurrency || company.currency)}</p>
         </div>
       </div>
@@ -584,7 +601,8 @@ export function renderFundamentalsPage() {
       ${summary ? `<p class="fund-company-summary">${escapeHtml(summary)}</p>` : ''}
       ${buildNextReportLine(company.symbol)}
     </section>
-    ${buildEpsLedger(company, rows)}
+    ${buildDividendBars(company, chartRows)}
+    ${buildEpsLedger(company, chartRows)}
     <details class="fund-fold">
       <summary><span>年度数据明细</span><small>${allRows.length} 年</small></summary>
       ${buildCompanyTable(allRows, metrics, currentYear)}
