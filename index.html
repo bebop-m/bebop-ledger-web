@@ -79,9 +79,8 @@
           </header>
 
           <section id="homeHero" class="home-hero" aria-label="总资产"></section>
-          <section id="homeFocusCard" class="home-metrics" aria-label="今年关键指标"></section>
+          <section id="homeFocusCard" class="home-metrics" aria-label="本月现金流与股息节奏"></section>
 
-          <p class="section-label"><b>05</b> LEDGER INDEX · 账本目录</p>
           <nav id="homeNavList" class="home-nav-list" aria-label="主导航">
             <button class="home-nav-item" type="button" data-page-nav="holdings">
               <span class="home-nav-title">持仓</span>
@@ -105,7 +104,7 @@
             </button>
           </nav>
 
-          <button id="quickAddButton" class="quick-add-button" type="button">＋ 记一笔</button>
+          <button id="quickAddButton" class="quick-add-button" type="button"><span aria-hidden="true">＋</span>记一笔</button>
         </div>
 
         <div id="holdingsPage" class="page-view page-stack" data-page-view="holdings" hidden>
@@ -175,7 +174,7 @@
           </section>
 
           <div class="ledger-section-head holdings-list-head">
-            <span>HOLDINGS · 逐股</span>
+            <span>逐股</span>
             <button id="holdingsSortLabel" class="ledger-inline-action" type="button">按市值 ↓</button>
           </div>
           <div id="companyLegend" class="legend-list" hidden></div>
@@ -280,6 +279,7 @@
             <div class="top-bar-heading">
               <h2 class="top-bar-title">资金与交易</h2>
             </div>
+            <span id="recordsYear" class="page-year" aria-label="记录年份"></span>
             <div class="icon-actions">
               <button id="incomeCashFlowButton" class="circle-button" type="button" aria-label="出入金">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.8v14.4M6.6 9.8 12 4.8l5.4 5M6.6 14.2l5.4 5 5.4-5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>

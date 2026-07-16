@@ -50,6 +50,7 @@ export function setModalBucketSelection(next) {
 
 export function setModalCashFlowTypeSelection(next) {
   const type = next === 'withdrawal' ? 'withdrawal' : 'deposit';
+  state.modalPayload = { ...(state.modalPayload || {}), type };
   const input = document.getElementById('modalCashFlowTypeInput'); if (input) input.value = type;
   Array.from(document.querySelectorAll('[data-cash-flow-type]')).forEach((b) => {
     const a = b.dataset.cashFlowType === type; b.classList.toggle('is-active', a); b.setAttribute('aria-pressed', a ? 'true' : 'false');
@@ -58,6 +59,7 @@ export function setModalCashFlowTypeSelection(next) {
 
 export function setModalTradeSideSelection(next) {
   const side = next === 'sell' ? 'sell' : 'buy';
+  state.modalPayload = { ...(state.modalPayload || {}), side };
   const input = document.getElementById('modalTradeSideInput'); if (input) input.value = side;
   Array.from(document.querySelectorAll('[data-trade-side]')).forEach((b) => {
     const a = b.dataset.tradeSide === side; b.classList.toggle('is-active', a); b.setAttribute('aria-pressed', a ? 'true' : 'false');
@@ -93,7 +95,8 @@ function getCashFlowPayload() {
 
 function getTradePayload() {
   if (!state.modalPayload || !state.modalPayload.id) return null;
-  return state.trades.find((entry) => entry && entry.id === state.modalPayload.id) || state.modalPayload;
+  const stored = state.trades.find((entry) => entry && entry.id === state.modalPayload.id);
+  return stored ? { ...stored, ...state.modalPayload } : state.modalPayload;
 }
 
 function renderSegmentGroup(hiddenId, value, options) {
@@ -604,13 +607,14 @@ function saveCashFlowEdit() {
 function saveTradeEdit() {
   const previousId = state.modalPayload && state.modalPayload.id;
   const symbolValue = document.getElementById('modalTradeSymbolInput').value;
+  const selectedSide = document.querySelector('[data-trade-side][aria-pressed="true"]')?.dataset.tradeSide;
   // 币种按代码自动识别；汇率按当天行情自动换算。
   const currency = detectTradeCurrency(symbolValue);
   const entry = sanitizeTradeEntry({
     id: previousId || createRecordId('tr'),
     date: document.getElementById('modalTradeDateInput').value,
     symbol: symbolValue,
-    side: document.getElementById('modalTradeSideInput').value,
+    side: selectedSide === 'sell' ? 'sell' : document.getElementById('modalTradeSideInput').value,
     shares: safeNumber(document.getElementById('modalTradeSharesInput').value, 0),
     price: safeNumber(document.getElementById('modalTradePriceInput').value, 0),
     currency,

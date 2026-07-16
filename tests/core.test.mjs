@@ -11,8 +11,8 @@ globalThis.localStorage = { getItem: () => null, setItem: () => {} };
 const stateModule = await import('../src/state.js');
 const computeModule = await import('../src/compute.js');
 const revenueModule = await import('../src/revenue.js');
-const { state, applySnapshot, invalidateComputeCache } = stateModule;
-const { computeCashBalance, computeDividendCalendar, computeIncomeSummary } = computeModule;
+const { state, applySnapshot, invalidateComputeCache, createDemoSnapshot } = stateModule;
+const { computeCashBalance, computeCashFlowRecords, computeTradeSummary, computeDividendCalendar, computeIncomeSummary } = computeModule;
 const { settleRevenueData } = revenueModule;
 
 function applyTestSnapshot(overrides = {}) {
@@ -32,6 +32,17 @@ function applyTestSnapshot(overrides = {}) {
   });
   invalidateComputeCache();
 }
+
+test('demo records preserve buy and sell directions', () => {
+  applySnapshot(createDemoSnapshot());
+  const trades = computeTradeSummary();
+  const cash = computeCashFlowRecords();
+  assert.equal(trades.count, 6);
+  assert.equal(trades.records.filter((entry) => entry.side === 'buy').length, 3);
+  assert.equal(trades.records.filter((entry) => entry.side === 'sell').length, 3);
+  assert.equal(trades.records.find((entry) => entry.id === 'demo_tr_6').side, 'sell');
+  assert.equal(cash.count, 4);
+});
 
 test('legacy auto yearly data migrates separately from manual overrides', () => {
   applyTestSnapshot({

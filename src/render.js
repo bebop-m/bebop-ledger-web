@@ -1,4 +1,4 @@
-import { state, refs, mutable, saveState } from './state.js';
+import { state, refs, mutable, saveState, isDemoMode } from './state.js';
 import {
   computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems,
   computeDividendCalendar, computeIncomeSummary,
@@ -34,10 +34,6 @@ function formatLedgerMoney(value, currency = 'CNY', fractionClass = '') {
   const match = formatted.match(/^(.*?)([.,]\d{2})$/);
   if (!match) return `<span>${escapeHtml(formatted)}</span>`;
   return `<span>${escapeHtml(match[1])}</span><small${fractionClass ? ` class="${fractionClass}"` : ''}>${escapeHtml(match[2])}</small>`;
-}
-
-function formatLedgerDate(value) {
-  return String(value || '').replace(/-/g, ' / ');
 }
 
 /* ── Tooltip helpers ── */
@@ -78,7 +74,7 @@ export function renderHomePage(summary) {
   const bucketItems = getBucketSummaryItems(summary.holdings);
   const totalMv = bucketItems.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0) || 1;
   renderHomeHero(summary);
-  renderHomeMetrics(calendarModel, incomeModel);
+  renderHomeMetrics(calendarModel);
   renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems, totalMv);
 }
 
@@ -87,17 +83,13 @@ function renderHomeHero(summary) {
   const hasPnl = summary.holdings.some((h) => safeNumber(h.previousClose, 0) > 0);
   const pnlText = hasPnl && state.showAmounts ? formatDailyPnl(pnl, summary.totalMarketValueCny) : '';
   const pnlArrow = pnl > 0 ? '\u25b2' : pnl < 0 ? '\u25bc' : '';
-  const today = formatLedgerDate(new Date().toISOString().slice(0, 10));
   refs.homeHero.innerHTML = `
     <div class="home-hero-label-row">
-      <button class="home-hero-label" type="button" data-summary-action="liability" aria-label="编辑负债"><b>01</b> <span>总资产 · TOTAL WEALTH</span></button>
-      <span class="home-hero-date">${today}</span>
+      <button class="home-hero-label" type="button" data-summary-action="liability" aria-label="编辑负债">总资产</button>
+      ${pnlText ? `<span class="home-hero-pnl"><strong class="${pnl > 0 ? 'is-market-up' : pnl < 0 ? 'is-market-down' : 'is-flat'}">${pnlArrow} ${escapeHtml(pnlText)}</strong><span>今日</span></span>` : ''}
     </div>
     <strong class="home-hero-value">${formatLedgerMoney(summary.netMarketValueCny, 'CNY', 'home-hero-fraction')}</strong>
-    <div class="home-hero-foot">
-      ${pnlText ? `<span class="home-hero-pnl"><strong class="${getReturnTone(pnl)}">${pnlArrow} ${escapeHtml(pnlText)}</strong> <span>今日</span></span>` : '<span></span>'}
-      <span class="home-hero-fx">USD ${safeNumber(state.rates.USD, 0).toFixed(2)} · HKD ${safeNumber(state.rates.HKD, 0).toFixed(4)}</span>
-    </div>`;
+    <p class="home-hero-fx">USD/CNY ${safeNumber(state.rates.USD, 0).toFixed(2)} · HKD/CNY ${safeNumber(state.rates.HKD, 0).toFixed(4)}</p>`;
 }
 
 const HOME_MONTH_CODES = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
@@ -128,52 +120,50 @@ function getHomeDividendDateParts(entry) {
 }
 
 // \u9996\u9875\u73b0\u91d1\u6536\u5165\u8f74\uff1a\u5f53\u6708\u80a1\u606f -> \u4e0b\u6b21\u5230\u8d26 -> \u6708\u4efd\u8f74 -> \u5168\u5e74\u9884\u8ba1\u3002
-function renderHomeMetrics(calendarModel, incomeModel) {
+function renderHomeMetrics(calendarModel) {
   const m = calendarModel.metrics;
   const currentMonth = calendarModel.months[calendarModel.currentMonth - 1] || null;
   const currentTotal = safeNumber(currentMonth && currentMonth.totalCny, 0);
   const currentReceived = safeNumber(currentMonth && currentMonth.receivedCny, 0);
   const currentWaiting = safeNumber(currentMonth && currentMonth.dueCny, 0) + safeNumber(currentMonth && currentMonth.upcomingCny, 0);
-  const annualReceived = safeNumber(m.receivedCny, 0);
   const annualProjected = safeNumber(m.projectedCny, 0);
-  const annualRatio = annualProjected > 0 ? Math.min(1, Math.max(0, annualReceived / annualProjected)) : 0;
+  const currentRatio = currentTotal > 0 ? Math.min(1, Math.max(0, currentReceived / currentTotal)) : 0;
   const nextDividend = getNextHomeDividend(calendarModel);
   const nextDate = getHomeDividendDateParts(nextDividend);
   const monthWindow = getHomeMonthWindow(calendarModel.months, calendarModel.currentMonth);
   const monthButtons = monthWindow.map((item) => `
-    <span class="home-month${item.month === calendarModel.currentMonth ? ' is-current' : ''}">
+    <button class="home-month${item.month === calendarModel.currentMonth ? ' is-current' : ''}" type="button" data-home-dividend-month="${item.month}" aria-label="查看 ${item.month} 月股息">
+      <i aria-hidden="true"></i>
       <span>${String(item.month).padStart(2, '0')}</span>
-    </span>`).join('');
-  const income = incomeModel.current;
-  const capital = income && income.capitalReturnAvailable ? income.capitalReturnCny : null;
-  const capitalRate = income && income.capitalReturnRate !== null ? formatIncomeRate(income.capitalReturnRate) : '—';
+    </button>`).join('');
+  const nextName = nextDividend ? (nextDividend.name || nextDividend.symbol) : '';
 
   refs.homeFocusCard.innerHTML = `
-    <div class="home-dual-metrics">
-      <section class="home-number-cell home-number-cell--return">
-        <span class="home-ledger-label"><b>02</b> 今年资金收益</span>
-        <strong>${capital === null ? '待回填' : escapeHtml(formatIncomeSignedMoney(capital))}</strong>
-        <small class="${getReturnTone(capital)}"><i aria-hidden="true"></i>${escapeHtml(capitalRate)}</small>
-      </section>
-      <section class="home-number-cell home-number-cell--dividend">
-        <span class="home-ledger-label"><b>03</b> 全年股息</span>
-        <strong>${formatLedgerMoney(annualProjected, 'CNY')}</strong>
-        <div class="home-dividend-progress"><i style="width:${(annualRatio * 100).toFixed(1)}%"></i></div>
-        <small>已到账 ${escapeHtml(formatDisplayMoney(annualReceived, 'CNY'))} · ${Math.round(annualRatio * 100)}%</small>
-      </section>
-    </div>
-
-    <button class="home-cashflow" type="button" data-page-nav="dividends" aria-label="打开股息日历">
+    <button class="home-cashflow" type="button" data-page-nav="dividends" aria-label="打开本月股息">
       <div class="home-ledger-head">
-        <span class="home-ledger-label"><b>04</b> 本月现金流 · CASH FLOW</span>
+        <span class="home-ledger-label">本月现金流</span>
         <span class="home-ledger-period">${calendarModel.year} / ${String(calendarModel.currentMonth).padStart(2, '0')}</span>
       </div>
-      <div class="home-cashflow-columns">
-        <span><small>本月股息</small><strong>${escapeHtml(formatDisplayMoney(currentTotal, 'CNY'))}</strong></span>
-        <span><small>下次到账</small><strong><b>${nextDate.day}</b> <em>${nextDate.month}</em> <small>· ${nextDividend ? escapeHtml(formatDisplayMoney(nextDividend.netCny, 'CNY')) : '—'}</small></strong></span>
+      <strong class="home-cashflow-value">${formatLedgerMoney(currentTotal, 'CNY')}</strong>
+      <div class="home-cashflow-progress" aria-label="本月股息到账进度 ${Math.round(currentRatio * 100)}%">
+        <i style="width:${Math.max(currentRatio * 100, currentTotal > 0 ? 0.6 : 0).toFixed(1)}%"></i>
+        <b style="left:${Math.min(98.8, Math.max(1.2, currentRatio * 100)).toFixed(1)}%"></b>
+      </div>
+      <div class="home-cashflow-split">
+        <span>已到账 <strong>${escapeHtml(formatDisplayMoney(currentReceived, 'CNY'))}</strong> · 待到账 <strong>${escapeHtml(formatDisplayMoney(currentWaiting, 'CNY'))}</strong></span>
+        <span>全年预估 <strong>${escapeHtml(formatDisplayMoney(annualProjected, 'CNY'))}</strong></span>
+      </div>
+    </button>
+    <section class="home-month-ledger">
+      <div class="home-ledger-head">
+        <span class="home-ledger-label">股息月份</span>
+        <span class="home-ledger-period">${calendarModel.year}</span>
       </div>
       <div class="home-month-track">${monthButtons}</div>
-      <p class="home-ledger-note">已到账 ${escapeHtml(formatDisplayMoney(currentReceived, 'CNY'))} · 待到账 ${escapeHtml(formatDisplayMoney(currentWaiting, 'CNY'))}</p>
+    </section>
+    <button class="home-next-dividend" type="button" data-page-nav="dividends" aria-label="查看下一笔股息">
+      <span class="home-ledger-label">下次到账</span>
+      <strong><b>${nextDate.day}</b> <small>${nextDate.month}</small>${nextName ? ` · ${escapeHtml(nextName)}` : ''} <em>${nextDividend ? escapeHtml(formatDisplayMoney(nextDividend.netCny, 'CNY')) : '—'}</em></strong>
     </button>`;
 }
 
@@ -304,7 +294,7 @@ export function renderBucketsView(segments, holdings, summary, opts = {}) {
   const incomePct = income.marketValueCny / total;
   refs.bucketTrack.className = 'bucket-track ledger-structure';
   refs.bucketTrack.innerHTML = `
-    <p class="ledger-eyebrow">STRUCTURE · 仓位结构</p>
+    <p class="ledger-eyebrow">仓位结构</p>
     <div class="ledger-structure-bar" aria-label="核心仓 ${(corePct * 100).toFixed(1)}%，打工仓 ${(incomePct * 100).toFixed(1)}%"><i style="width:${(corePct * 100).toFixed(2)}%"></i><span></span></div>
     <div class="ledger-structure-values">
       <div><small class="is-core">${escapeHtml(core.label)}</small><strong>${(corePct * 100).toFixed(1)}<em>%</em></strong><span>${escapeHtml(formatDisplayMoney(core.marketValueCny, 'CNY'))}</span></div>
@@ -389,6 +379,7 @@ export function renderPageChrome() {
   });
   // CSS 钩子：记一笔胶囊只在首页出现，子页样式也按此区分。
   document.body.dataset.activePage = activePage;
+  document.body.classList.toggle('demo-mode', isDemoMode());
 }
 
 /* ── Dividend Calendar ── */
@@ -432,7 +423,7 @@ function renderDividendMetricGrid(model) {
   const receivedProgress = getDividendProgressPercent(m.receivedCny, m.projectedCny);
   refs.dividendMetricGrid.innerHTML = `
     <div class="dividend-ledger-hero">
-      <span class="dm-label">PROJECTED · 预计全年</span>
+      <span class="dm-label">预计全年</span>
       <strong class="dm-value is-projected">${escapeHtml(formatDisplayMoney(m.projectedCny, 'CNY'))}</strong>
       <div class="dividend-ledger-rule" aria-label="全年股息到账进度 ${receivedProgress}%"><i style="width:${receivedProgress}%"></i></div>
       <div class="dividend-ledger-split">
@@ -479,7 +470,7 @@ function renderDividendMonths(model) {
     if (model.allDetails.some((entry) => entry.month === item.month && entry.status === 'pending')) return 'pending';
     return 'forecast';
   };
-  refs.dividendMonthGrid.innerHTML = visible.length ? visible.map((item) => {
+  const rows = visible.length ? visible.map((item) => {
     const key = tone(item);
     return `<button class="dividend-month-row is-${item.phase} is-${key}" type="button" data-dividend-month="${item.month}">
       <span class="dmr-label">${String(item.month).padStart(2, '0')}</span>
@@ -488,6 +479,7 @@ function renderDividendMonths(model) {
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
     </button>`;
   }).join('') : '<div class="month-detail-empty">当前筛选暂无股息记录</div>';
+  refs.dividendMonthGrid.innerHTML = `${rows}<p class="dividend-month-note">黄＝待核对 · 紫＝在途／当月 · 灰＝节奏预估。点按某月查看逐笔并确认到账。</p>`;
 }
 
 function getShortMonthDay(value) {
@@ -618,7 +610,7 @@ function renderIncomeOverview(model) {
         <span class="income-hero-label">${model.currentYear} 资金收益</span>
         <strong class="income-hero-rate">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</strong>
       </div>
-      <strong class="income-hero-value income-amount">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</strong>
+      <strong class="income-hero-value income-amount ${getReturnTone(row.capitalReturnCny)}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</strong>
       <div class="income-hero-context">
         <span><small>当前净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</strong></span>
         <span><small>年初净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearStartNetCny))}</strong></span>
@@ -699,6 +691,12 @@ function renderIncomeTrend(model) {
     refs.incomeTrend.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无趋势数据</p><p class="empty-state-note">有历年净值或历史回填后会展示收益率趋势。</p></div>`;
     return;
   }
+  const pointCounts = ['capitalReturnRate', 'dividendYieldRate']
+    .map((key) => rows.filter((row) => getTrendValue(row, key) !== null).length);
+  if (!pointCounts.some((count) => count >= 2)) {
+    refs.incomeTrend.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">历史数据不足</p><p class="empty-state-note">至少两个年度有收益率后，才会绘制可比较的趋势。</p></div>`;
+    return;
+  }
   const minValue = Math.min(0, ...values);
   const maxValue = Math.max(0, ...values);
   const zeroPoint = getTrendPoint({ rate: 0 }, 0, 1, 'rate', minValue, maxValue);
@@ -762,7 +760,7 @@ function renderIncomeYearList(model) {
     </div>`).join('');
   refs.incomeYearList.innerHTML = `<div class="income-year-table" role="table" aria-label="年度收益列表">
     <div class="income-year-row income-year-head" role="row">
-      <div>年份</div><div>股息</div><div>资金收益</div><div>收益率</div>
+      <div>年份</div><div>股息</div><div>资金收益</div><div>收益率</div><span aria-hidden="true"></span>
     </div>
     ${rows}
   </div><button class="income-open-annual" type="button" data-annual-year="${model.currentYear}">打开年度回顾 →</button>`;
@@ -813,7 +811,7 @@ function renderCashFlowRows(records) {
 }
 
 function renderTradeRows(records) {
-  if (!records.length) return getRecordEmptyMarkup('暂无交易', '记录买卖后会生成成本、已实现盈亏和 Yield on Cost。');
+  if (!records.length) return getRecordEmptyMarkup('暂无交易', '新增买入或卖出后，会在这里按时间保留明细。');
   return records.map((entry) => `
     <button class="income-record-row income-record-row--trade" type="button" data-trade-id="${escapeHtml(entry.id)}">
       <span class="record-main">
@@ -825,50 +823,31 @@ function renderTradeRows(records) {
   `).join('');
 }
 
-function renderTradePositionRows(rows) {
-  if (!rows.length) return getRecordEmptyMarkup('暂无成本视图', '录入交易后，这里会按股票汇总剩余股数和成本。');
-  return rows.map((row) => {
-    const mismatch = row.currentHoldingShares !== null && Math.abs(row.currentHoldingShares - row.shares) > 0.000001;
-    return `<div class="income-position-row ledger-position-row">
-      <div class="position-title">
-        <strong>${escapeHtml(row.name)}</strong>
-        <small>${escapeHtml(row.symbol)} · 均价 ${row.shares > 0 ? escapeHtml(formatIncomeMoney(row.costCny / row.shares)) : '—'}${mismatch ? ` · 当前 ${escapeHtml(formatRecordQuantity(row.currentHoldingShares))} 股` : ''}</small>
-      </div>
-      <div class="position-side">
-        <strong class="income-amount ${getReturnTone(row.unrealizedPnlCny)}">${escapeHtml(formatIncomeSignedMoney(row.unrealizedPnlCny))}</strong>
-        <small>浮动盈亏 · YOC ${row.yieldOnCost === null ? '—' : escapeHtml(formatPercent(row.yieldOnCost))}</small>
-      </div>
-    </div>`;
-  }).join('');
-}
-
 export function renderIncomeRecords() {
   if (!refs.incomeRecordsList) return;
+  const recordsYear = document.getElementById('recordsYear');
+  if (recordsYear) recordsYear.textContent = String(new Date().getFullYear());
   const cash = computeCashFlowRecords();
   const trades = computeTradeSummary();
-  const portfolio = computeHoldings();
+  const buyCount = trades.records.filter((entry) => entry.side === 'buy').length;
+  const sellCount = trades.records.filter((entry) => entry.side === 'sell').length;
   refs.incomeRecordsList.innerHTML = `
     <section class="record-focus">
-      <span class="ledger-eyebrow">NET CONTRIBUTION · 净注入</span>
+      <span class="ledger-eyebrow">净注入</span>
       <strong class="income-amount ${getSignedTone(cash.netInflowCny)}">${escapeHtml(formatIncomeSignedMoney(cash.netInflowCny))}</strong>
       <p>累计入金减去出金 · ${cash.count} 笔资金记录</p>
     </section>
     <div class="income-record-overview ledger-record-stats">
-      <article><span>现金余额</span><strong class="income-amount">${escapeHtml(formatIncomeMoney(portfolio.cashBalanceCny))}</strong></article>
-      <article><span>持仓成本</span><strong class="income-amount">${escapeHtml(formatIncomeMoney(trades.totalCostCny))}</strong></article>
-      <article><span>成本股息率</span><strong>${trades.totalCostCny > 0 ? escapeHtml(formatPercent(trades.totalAnnualDividendCny / trades.totalCostCny)) : '—'}</strong></article>
+      <article><span>买入</span><strong>${buyCount} 笔</strong></article>
+      <article><span>卖出</span><strong>${sellCount} 笔</strong></article>
+      <article><span>出入金</span><strong>${cash.count} 笔</strong></article>
     </div>
     <section class="income-record-block ledger-record-block">
-      <div class="income-record-head"><h3>TRADES · 交易流水</h3><span>${trades.count} 笔</span></div>
+      <div class="income-record-head"><h3>买卖流水</h3><span>${trades.count} 笔</span></div>
       <div class="income-record-list">${renderTradeRows(trades.records)}</div>
-      <p class="record-realized">已实现盈亏 <strong class="${getReturnTone(trades.totalRealizedPnlCny)}">${escapeHtml(formatIncomeSignedMoney(trades.totalRealizedPnlCny))}</strong></p>
     </section>
     <section class="income-record-block ledger-record-block">
-      <div class="income-record-head"><h3>POSITIONS · 持仓成本</h3><span>${trades.positions.length} 项</span></div>
-      <div class="income-position-list">${renderTradePositionRows(trades.positions)}</div>
-    </section>
-    <section class="income-record-block ledger-record-block">
-      <div class="income-record-head"><h3>CASH FLOW · 出入金</h3><span>${cash.count} 笔</span></div>
+      <div class="income-record-head"><h3>出入金流水</h3><span>${cash.count} 笔</span></div>
       <div class="income-record-list">${renderCashFlowRows(cash.records)}</div>
     </section>`;
 }
@@ -922,9 +901,11 @@ export function renderAnnualReviewPage() {
   const maxDividend = Math.max(1, ...annals.dividendMonths.map((value) => safeNumber(value, 0)));
   const currentMonth = annals.isCurrentYear ? new Date().getMonth() : -1;
   const monthLabels = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+  const annualBuyCount = annals.trades.filter((trade) => trade.side === 'buy').length;
+  const annualSellCount = annals.trades.filter((trade) => trade.side === 'sell').length;
   const trades = annals.trades.length ? annals.trades.map((trade) => `<div class="annual-trade-row">
     <span><strong>${trade.side === 'sell' ? '卖出' : '买入'} ${escapeHtml(trade.name)}</strong><small>${escapeHtml(trade.date.slice(5).replace('-', '/'))} · ${escapeHtml(String(trade.shares))} 股 @ ${escapeHtml(String(trade.price))}</small></span>
-    <span><b>${escapeHtml(formatAnnualSignedMoney(trade.cashImpactCny))}</b>${trade.side === 'sell' ? `<small class="${getReturnTone(trade.realizedPnlCny)}">已实现 ${escapeHtml(formatAnnualSignedMoney(trade.realizedPnlCny))}</small>` : ''}</span>
+    <span><b>${escapeHtml(formatAnnualSignedMoney(trade.cashImpactCny))}</b></span>
   </div>`).join('') : '<div class="month-detail-empty">该年暂无交易记录</div>';
 
   refs.annualReviewContent.innerHTML = `
@@ -935,20 +916,20 @@ export function renderAnnualReviewPage() {
       <p>${annals.isCurrentYear ? `截至 ${summary.today.slice(0, 7).replace('-', '/')}` : '完整年度'} · 年初净值 ${escapeHtml(formatIncomeMoney(row.yearStartNetCny))} → ${annals.isCurrentYear ? '当前' : '年末'} ${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</p>
     </section>
     <section class="annual-section">
-      <p class="ledger-eyebrow">ATTRIBUTION · 收益归因</p>
+      <p class="ledger-eyebrow">收益归因</p>
       <div class="annual-attribution-bar">${attrBar}</div>
       <div class="annual-attribution-rows">${attrRows.map((item) => `<div><span><i class="is-${item.tone}"></i>${item.label}</span><strong class="${getReturnTone(item.value)}">${escapeHtml(formatAnnualSignedMoney(item.value))}</strong></div>`).join('')}</div>
       <p class="annual-note">${attribution.available ? `覆盖 ${Math.round(safeNumber(attribution.epsSplitCoverage, 0) * 100)}% 持仓 · 归因为辅助复盘，非会计级精确拆分。` : '缺少年初持仓或年界汇率，当前仅展示可核对部分。'}</p>
     </section>
     <section class="annual-section">
-      <p class="ledger-eyebrow">DIVIDEND · 当年股息现金流</p>
+      <p class="ledger-eyebrow">当年股息现金流</p>
       <div class="annual-dividend-bars">${annals.dividendMonths.map((value, index) => `<span><i class="${index === currentMonth ? 'is-current' : ''}" style="height:${Math.max(value > 0 ? 3 : 1, safeNumber(value, 0) / maxDividend * 58).toFixed(1)}px"></i><small>${monthLabels[index]}</small></span>`).join('')}</div>
       <div class="annual-total-row"><span>${annals.isCurrentYear ? '全年预计股息' : '全年确认股息'}</span><strong>${escapeHtml(formatIncomeMoney(row.dividendCny))}</strong></div>
     </section>
     <section class="annual-section">
-      <p class="ledger-eyebrow">TRADES · 交易复盘</p>
+      <p class="ledger-eyebrow">交易复盘</p>
       <div class="annual-trades">${trades}</div>
-      <p class="annual-trade-summary">全年 <strong>${annals.trades.length}</strong> 笔 · 已实现盈亏 <strong class="${getReturnTone(annals.realizedPnlCny)}">${escapeHtml(formatAnnualSignedMoney(annals.realizedPnlCny))}</strong></p>
+      <p class="annual-trade-summary">全年 <strong>${annals.trades.length}</strong> 笔 · 买入 <strong>${annualBuyCount}</strong> · 卖出 <strong>${annualSellCount}</strong></p>
     </section>`;
 }
 

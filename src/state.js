@@ -14,6 +14,16 @@ import {
 /* ── Default Quotes (normalized from seed data) ── */
 export const DEFAULT_QUOTES = normalizeSeedQuoteMap(SEED_QUOTES);
 
+const DEMO_STORAGE_KEY = `${STORAGE_KEY}:demo-v1`;
+
+export function isDemoMode() {
+  return typeof window !== 'undefined' && /(?:^|[?&])demo=1(?:&|$)/.test(window.location.search);
+}
+
+function getActiveStorageKey() {
+  return isDemoMode() ? DEMO_STORAGE_KEY : STORAGE_KEY;
+}
+
 /* ── Application State ── */
 export const state = {
   holdings: [],
@@ -223,6 +233,37 @@ export function createDefaultSnapshot() {
   };
 }
 
+export function createDemoSnapshot() {
+  const snapshot = createDefaultSnapshot();
+  const year = new Date().getFullYear();
+  const previousYear = year - 1;
+  const openingYear = year - 2;
+  return {
+    ...snapshot,
+    openingCashCny: 160000,
+    openingDate: `${openingYear}-01-01`,
+    cashFlows: [
+      { id: 'demo_cf_1', date: `${previousYear}-01-10`, amountCny: 60000, type: 'deposit', note: '年度追加资金' },
+      { id: 'demo_cf_2', date: `${previousYear}-08-05`, amountCny: 12000, type: 'withdrawal', note: '提取备用金' },
+      { id: 'demo_cf_3', date: `${year}-02-15`, amountCny: 30000, type: 'deposit', note: '新增投资资金' },
+      { id: 'demo_cf_4', date: `${year}-06-18`, amountCny: 8000, type: 'withdrawal', note: '阶段性取用' }
+    ],
+    trades: [
+      { id: 'demo_tr_1', date: `${previousYear}-01-15`, symbol: '00700.HK', side: 'buy', shares: 400, price: 380, currency: 'HKD', fxRate: 0.92, feeCny: 28, bucket: 'core', note: '建立腾讯底仓' },
+      { id: 'demo_tr_2', date: `${previousYear}-02-10`, symbol: '600519.SH', side: 'buy', shares: 20, price: 1480, currency: 'CNY', fxRate: 1, feeCny: 12, bucket: 'core', note: '分批买入' },
+      { id: 'demo_tr_3', date: `${previousYear}-08-18`, symbol: '00700.HK', side: 'sell', shares: 100, price: 450, currency: 'HKD', fxRate: 0.92, feeCny: 24, bucket: 'core', note: '阶段止盈' },
+      { id: 'demo_tr_4', date: `${year}-03-08`, symbol: 'PDD', side: 'buy', shares: 120, price: 105, currency: 'USD', fxRate: 7.22, feeCny: 36, bucket: 'income', note: '新增观察仓' },
+      { id: 'demo_tr_5', date: `${year}-05-22`, symbol: 'PDD', side: 'sell', shares: 40, price: 125, currency: 'USD', fxRate: 7.22, feeCny: 24, bucket: 'income', note: '减仓锁定收益' },
+      { id: 'demo_tr_6', date: `${year}-07-16`, symbol: '00700.HK', side: 'sell', shares: 100, price: 489, currency: 'HKD', fxRate: 0.92, feeCny: 20, bucket: 'core', note: '腾讯减仓' }
+    ],
+    yearlyManual: [
+      { year: openingYear, dividendCny: 5800, yearEndNetCny: 205000, netInflowCny: 0, capitalReturnCny: 11000, capitalReturnRate: 0.0567 },
+      { year: previousYear, dividendCny: 7395.28, yearEndNetCny: 267200, netInflowCny: 48000, capitalReturnCny: 14200, capitalReturnRate: 0.069268 },
+      { year, dividendCny: 4200, yearEndNetCny: 308300, netInflowCny: 22000, capitalReturnCny: 19100, capitalReturnRate: 0.071482 }
+    ]
+  };
+}
+
 export function applySnapshot(snapshot) {
   invalidateComputeCache();
   const defaults = createDefaultSnapshot();
@@ -299,18 +340,23 @@ export function getPersistedSnapshot() {
 
 export function saveState() {
   invalidateComputeCache();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(getPersistedSnapshot()));
+  localStorage.setItem(getActiveStorageKey(), JSON.stringify(getPersistedSnapshot()));
 }
 
 export function restoreState() {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    const saved = JSON.parse(localStorage.getItem(getActiveStorageKey()) || 'null');
+    if ((!saved || typeof saved !== 'object') && isDemoMode()) {
+      applySnapshot(createDemoSnapshot());
+      saveState();
+      return true;
+    }
     if (!saved || typeof saved !== 'object') throw new Error('invalid state');
     applySnapshot(saved);
     saveState();
     return true;
   } catch (_error) {
-    applySnapshot(createDefaultSnapshot());
+    applySnapshot(isDemoMode() ? createDemoSnapshot() : createDefaultSnapshot());
     return false;
   }
 }
