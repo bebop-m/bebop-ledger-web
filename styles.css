@@ -7694,7 +7694,8 @@ body[data-active-page="home"] .home-brand small {
   font-size: 8px;
   font-weight: 720;
   letter-spacing: 0.12em;
-  vertical-align: 5px;
+  vertical-align: 4px;
+  text-transform: none;
 }
 
 body[data-active-page="home"] .home-top-actions {
@@ -7768,7 +7769,7 @@ body[data-active-page="home"] .home-hero-value {
 body[data-active-page="home"] .home-hero-fraction {
   margin-left: 1px;
   font-size: 24px;
-  font-weight: 520;
+  font-weight: 600;
   color: var(--home-soft);
   letter-spacing: -0.02em;
 }
@@ -8066,7 +8067,16 @@ body[data-active-page="home"] .quick-add-button:active {
 }
 
 body[data-active-page="home"] .quick-add-button {
-  border-color: rgba(24, 25, 22, 0.5);
+  display: block;
+  align-self: center;
+  width: fit-content;
+  min-height: 0;
+  margin: 16px auto 0;
+  padding: 9px 22px;
+  border: 1px solid rgba(24, 25, 22, 0.5);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 /* --- 首页样板:02/03 网格与 04 现金流校准到设计稿（收敛到本作用域，压过散落旧裸类）--- */
@@ -8113,7 +8123,7 @@ body[data-active-page="home"] .home-number-cell > strong small {
   margin-left: 1px;
   color: var(--home-soft);
   font-size: 16px;
-  font-weight: 520;
+  font-weight: 640;
 }
 
 body[data-active-page="home"] .home-number-cell--return > small {
@@ -8123,7 +8133,7 @@ body[data-active-page="home"] .home-number-cell--return > small {
   margin-top: 8px;
   font-family: ui-monospace, "SFMono-Regular", "SF Mono", monospace;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 body[data-active-page="home"] .home-number-cell--return > small.is-gain { color: #b94234; }
@@ -8163,15 +8173,15 @@ body[data-active-page="home"] .home-cashflow-columns strong {
   color: var(--home-ink);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
   font-size: 20px;
-  font-weight: 660;
+  font-weight: 680;
   font-variant-numeric: tabular-nums lining-nums;
 }
 
 /* 下次到账不是焦点数：日期墨色、JUL/金额弱色，紫色只留给全年股息 */
 body[data-active-page="home"] .home-cashflow-columns strong b {
   color: var(--home-ink);
-  font-size: 22px;
-  font-weight: 690;
+  font-size: 20px;
+  font-weight: 680;
 }
 
 body[data-active-page="home"] .home-cashflow-columns strong em {
@@ -8188,8 +8198,15 @@ body[data-active-page="home"] .home-cashflow-columns strong small {
 }
 
 body[data-active-page="home"] .home-month {
-  min-height: 40px;
-  padding: 8px 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  min-height: 0;
+  padding: 0;
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", monospace;
+  font-size: 10px;
+  font-weight: 650;
   color: var(--home-muted);
 }
 

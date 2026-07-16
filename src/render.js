@@ -141,9 +141,9 @@ function renderHomeMetrics(calendarModel, incomeModel) {
   const nextDate = getHomeDividendDateParts(nextDividend);
   const monthWindow = getHomeMonthWindow(calendarModel.months, calendarModel.currentMonth);
   const monthButtons = monthWindow.map((item) => `
-    <button class="home-month${item.month === calendarModel.currentMonth ? ' is-current' : ''}" type="button" data-home-dividend-month="${item.month}" aria-label="${item.month}\u6708\u80a1\u606f ${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}">
+    <span class="home-month${item.month === calendarModel.currentMonth ? ' is-current' : ''}">
       <span>${String(item.month).padStart(2, '0')}</span>
-    </button>`).join('');
+    </span>`).join('');
   const income = incomeModel.current;
   const capital = income && income.capitalReturnAvailable ? income.capitalReturnCny : null;
   const capitalRate = income && income.capitalReturnRate !== null ? formatIncomeRate(income.capitalReturnRate) : '—';
