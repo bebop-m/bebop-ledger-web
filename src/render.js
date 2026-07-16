@@ -171,21 +171,21 @@ function renderHomeMetrics(calendarModel, summary) {
       </div>
     </button>
     <section class="home-month-ledger">
-      <div class="home-month-summary">
-        <span><small>${calendarModel.currentMonth} 月总股息</small><strong>${escapeHtml(formatDisplayMoney(currentMonthItem.totalCny, 'CNY'))}</strong></span>
-        <span><small>已到账</small><strong>${escapeHtml(formatDisplayMoney(currentMonthItem.receivedCny, 'CNY'))}</strong></span>
-      </div>
       <div class="home-month-track">${monthButtons}</div>
+      <div class="home-month-summary">
+        <span><small>已到账</small><strong>${escapeHtml(formatDisplayMoney(currentMonthItem.receivedCny, 'CNY'))}</strong></span>
+        <span><small>${calendarModel.currentMonth} 月总股息</small><strong>${escapeHtml(formatDisplayMoney(currentMonthItem.totalCny, 'CNY'))}</strong></span>
+      </div>
     </section>
     <section class="home-event-strip" aria-label="快捷操作与近期事件">
-      <button id="quickAddButton" class="home-event-cell is-action" type="button" data-home-action="quick-add" aria-label="记一笔交易或出入金">
-        <span>记一笔</span><strong>＋</strong><small>交易 / 出入金</small>
-      </button>
       <button class="home-event-cell" type="button" data-page-nav="dividends" aria-label="查看下一笔股息">
         <span>下次到账</span><strong>${nextDate.day}<em>${nextDate.month}</em></strong><small>${nextName ? escapeHtml(nextName) : '待更新'}${nextDividend ? ` · ${escapeHtml(formatDisplayMoney(nextDividend.netCny, 'CNY'))}` : ''}</small>
       </button>
       <button class="home-event-cell" type="button" data-page-nav="fundamentals" aria-label="查看下一场财报">
         <span>下一场财报</span><strong>${nextReportDate.day}<em>${nextReportDate.month}</em></strong><small>${nextReportName ? escapeHtml(nextReportName) : '待更新'}${nextReport ? ` · ${escapeHtml(nextReport.reportType)}` : ''}</small>
+      </button>
+      <button id="quickAddButton" class="home-event-cell is-action" type="button" data-home-action="quick-add" aria-label="记一笔交易或出入金">
+        <span>记一笔</span><strong>＋</strong><small>交易 / 出入金</small>
       </button>
     </section>`;
 }

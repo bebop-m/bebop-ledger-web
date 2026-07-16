@@ -10017,9 +10017,10 @@ body[data-active-page="home"] .home-month-summary {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: end;
+  margin-top: 8px;
 }
 body[data-active-page="home"] .home-month-summary > span { min-width: 0; }
-body[data-active-page="home"] .home-month-summary > span + span { padding-left: 16px; border-left: 1px solid var(--ledger-line); text-align: right; }
+body[data-active-page="home"] .home-month-summary > span + span { text-align: right; }
 body[data-active-page="home"] .home-month-summary small { display: block; color: var(--ledger-muted); font-size: 9px; font-weight: 650; }
 body[data-active-page="home"] .home-month-summary strong { display: block; margin-top: 4px; color: var(--ledger-ink); font: 700 13px var(--font-data); }
 body[data-active-page="home"] .home-month.is-current::after { display: none; }
@@ -10038,8 +10039,7 @@ body[data-active-page="home"] .home-event-strip {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   min-height: clamp(76px, 10.5vh, 94px);
   margin-top: clamp(12px, 1.8vh, 18px);
-  border-top: 1px solid var(--ledger-line-strong);
-  border-bottom: 1px solid var(--ledger-line);
+  border: 0;
 }
 body[data-active-page="home"] .home-event-cell {
   min-width: 0;
@@ -10052,7 +10052,7 @@ body[data-active-page="home"] .home-event-cell {
   color: var(--ledger-ink);
   text-align: left;
 }
-body[data-active-page="home"] .home-event-cell + .home-event-cell { border-left: 1px solid var(--ledger-line); }
+body[data-active-page="home"] .home-event-cell + .home-event-cell { border-left: 0; }
 body[data-active-page="home"] .home-event-cell > span { color: var(--ledger-muted); font-size: 8.5px; font-weight: 680; letter-spacing: .04em; }
 body[data-active-page="home"] .home-event-cell > strong { align-self: center; overflow: hidden; color: var(--ledger-ink); font: 700 clamp(19px, 5.8vw, 23px)/1 var(--font-data); letter-spacing: -.025em; white-space: nowrap; }
 body[data-active-page="home"] .home-event-cell > strong em { margin-left: 3px; color: var(--ledger-muted); font-size: 8px; font-style: normal; letter-spacing: .05em; }
@@ -10062,7 +10062,7 @@ body[data-active-page="home"] .home-event-cell:active { background: rgba(105, 88
 body[data-active-page="home"] .home-nav-list { margin-top: clamp(11px, 1.6vh, 16px); }
 
 @media (min-height: 620px) and (max-width: 430px) {
-  #homePage { height: calc(100dvh - 30px); }
+  #homePage { height: calc(100dvh - 38px); }
   body[data-active-page="home"] .home-nav-list { flex: 1; display: flex; flex-direction: column; }
   body[data-active-page="home"] .home-nav-item { flex: 1 1 0; min-height: 36px; }
 }
@@ -10094,11 +10094,13 @@ body[data-active-page="home"] .home-nav-list { margin-top: clamp(11px, 1.6vh, 16
 #dividendCalendarListView > #dividendFilterGroup .segment-button.is-active::after {
   content: "";
   position: absolute;
-  right: 24%;
+  right: auto;
   bottom: -1px;
-  left: 24%;
-  width: auto;
+  left: 50%;
+  width: 52%;
+  max-width: 96px;
   height: 2px;
+  transform: translateX(-50%);
   background: var(--ledger-iris);
 }
 .dividend-overview-panel { padding-top: 20px !important; }
@@ -10161,6 +10163,24 @@ body[data-active-page="home"] .home-nav-list { margin-top: clamp(11px, 1.6vh, 16
 .quick-add-option + .quick-add-option { border-left: 1px solid var(--ledger-line); }
 .quick-add-option strong { font-size: 14px; }
 .quick-add-option span { max-width: 120px; line-height: 1.4; }
+
+/* Fundamental chart headlines follow the backup's reading hierarchy: primary metric first, companion second. */
+.fund-bar-latest {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--ledger-ink);
+  font-size: 14px;
+  text-align: right;
+}
+.fund-bar-latest > small {
+  color: var(--ledger-muted);
+  font-size: 9px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.fund-eps-stats,
+.fund-eps-stats--dividend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 @media (max-height: 700px) and (max-width: 430px) {
   body[data-active-page="home"] .home-hero { padding: 12px 0; }
