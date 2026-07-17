@@ -210,7 +210,10 @@ if (refs.incomeRecordsList) refs.incomeRecordsList.addEventListener('click', (ev
   if (tradeButton) {
     const entry = state.trades.find((item) => item && item.id === tradeButton.dataset.tradeId);
     if (entry) openModal('trade', { ...entry });
+    return;
   }
+  const dividendButton = event.target.closest('[data-dividend-source-id]');
+  if (dividendButton) openModal('dividendLedger', { sourceId: dividendButton.dataset.dividendSourceId });
 });
 
 refs.sortChips.forEach((chip) => {
@@ -245,6 +248,7 @@ refs.stockList.addEventListener('click', (event) => {
   const holding = state.holdings.find((i) => i.localId === localId); if (!holding) return;
   const computed = computeHoldings().holdings.find((i) => i.localId === localId);
   const action = button.dataset.action;
+  if (action === 'view-holding') { openModal('holdingDetail', { localId }); return; }
   if (action === 'delete') {
     const name = computed ? computed.name : holding.symbol;
     showConfirm(LABELS.deleteConfirm, { sub: name, okLabel: '\u5220\u9664', danger: true, cancelLabel: LABELS.cancel }).then((confirmed) => {

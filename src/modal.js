@@ -6,7 +6,7 @@ import {
 } from './utils.js';
 import { LABELS } from './constants.js';
 import { renderSavedStateQuietly, buildDividendMonthDetail, formatDisplayMoney } from './render.js';
-import { inferQuote, isCashModelActive, computeIncomeSummary } from './compute.js';
+import { inferQuote, isCashModelActive, computeHoldings, computeIncomeSummary } from './compute.js';
 import { getFundamentalsPickerModel } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
 import { getPortfolioDiagnostics } from './diagnostics.js';
@@ -152,6 +152,7 @@ export function updateTradeQuoteInfo() {
 function renderModal() {
   if (!state.modal) { refs.modalRoot.innerHTML = ''; return; }
   if (state.modal === 'monthDetail') { renderMonthDetailModal(); return; }
+  if (state.modal === 'holdingDetail') { renderHoldingDetailModal(); return; }
   if (state.modal === 'yearHoldings') { renderYearHoldingsModal(); return; }
   if (state.modal === 'yearAnnals') { renderYearAnnalsModal(); return; }
   if (state.modal === 'diagnostics') { renderDiagnosticsModal(); return; }
@@ -642,7 +643,7 @@ function saveTradeEdit() {
 }
 
 export function handleModalSave() {
-  if (state.modal === 'monthDetail' || state.modal === 'yearHoldings' || state.modal === 'yearAnnals' || state.modal === 'diagnostics' || state.modal === 'fundPicker' || state.modal === 'holdingsMenu') { closeModal(); return; }
+  if (state.modal === 'monthDetail' || state.modal === 'holdingDetail' || state.modal === 'yearHoldings' || state.modal === 'yearAnnals' || state.modal === 'diagnostics' || state.modal === 'fundPicker' || state.modal === 'holdingsMenu') { closeModal(); return; }
   if (state.modal === 'quickAdd') return;
   let returnMonth = 0;
   if (state.modal === 'quantity') {
@@ -716,6 +717,49 @@ export function handleModalSave() {
   }
   closeModal();
   renderSavedStateQuietly({ animateHoldingReflow: true });
+}
+
+function formatHoldingQuantity(value) {
+  if (!state.showAmounts) return '••••';
+  return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 4 }).format(Math.max(0, safeNumber(value, 0)));
+}
+
+function renderHoldingDetailModal() {
+  const localId = safeNumber(state.modalPayload && state.modalPayload.localId, 0);
+  const item = computeHoldings().holdings.find((holding) => holding.localId === localId);
+  if (!item) {
+    refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+      <section class="modal-sheet holding-detail-sheet" role="dialog" aria-modal="true">
+        <div class="modal-title-row"><h3 class="modal-title">持仓详情</h3></div>
+        <p class="holding-detail-empty">未找到这项持仓。</p>
+        <div class="modal-actions"><button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button></div>
+      </section>`;
+    return;
+  }
+  const taxPercent = Math.max(0, safeNumber(item.taxRateOverride, 0));
+  const bucketLabel = item.bucket === 'income' ? LABELS.income : LABELS.core;
+  const sourceLabel = item.dividendPerShareTtmOverrideTouched === true ? '手动每股股息' : '自动行情';
+  const quantity = formatHoldingQuantity(item.quantity);
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet holding-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="holdingDetailTitle">
+      <header class="holding-detail-head">
+        <div><small>${escapeHtml(item.symbol)} · ${escapeHtml(bucketLabel)}</small><h3 id="holdingDetailTitle">${escapeHtml(item.name)}</h3></div>
+        <span>${escapeHtml((safeNumber(item.holdingWeight, 0) * 100).toFixed(1))}%</span>
+      </header>
+      <section class="holding-detail-quantity" aria-label="当前持股数量">
+        <small>当前持股</small><strong>${escapeHtml(quantity)}</strong><span>股</span>
+      </section>
+      <dl class="holding-detail-ledger">
+        <div><dt>现价</dt><dd>${escapeHtml(state.showAmounts ? formatDisplayMoney(item.price, item.currency) : '••••')}</dd></div>
+        <div><dt>持仓市值</dt><dd>${escapeHtml(formatDisplayMoney(item.marketValueCny, 'CNY'))}</dd></div>
+        <div><dt>股息税率</dt><dd>${escapeHtml(`${taxPercent}%`)}</dd></div>
+        <div><dt>每股 TTM 股息</dt><dd>${escapeHtml(state.showAmounts ? formatDisplayMoney(item.effectiveDividendPerShareTtm, item.currency) : '••••')}</dd></div>
+        <div><dt>税前年化股息</dt><dd>${escapeHtml(formatDisplayMoney(item.grossAnnualDividendCny, 'CNY'))}</dd></div>
+        <div><dt>税后年化股息</dt><dd>${escapeHtml(formatDisplayMoney(item.netAnnualDividendCny, 'CNY'))}</dd></div>
+      </dl>
+      <p class="holding-detail-note">${escapeHtml(sourceLabel)} · 金额按当前汇率折算为人民币；已除息事件以除息日快照为准。</p>
+      <div class="modal-actions"><button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button></div>
+    </section>`;
 }
 
 export function handleModalDelete() {

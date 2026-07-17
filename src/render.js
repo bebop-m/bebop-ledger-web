@@ -2,7 +2,7 @@ import { state, refs, mutable, saveState, isDemoMode } from './state.js';
 import {
   computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems,
   computeDividendCalendar, computeIncomeSummary,
-  computeCashFlowRecords, computeTradeSummary, isCashModelActive, getAnnualDividendOverview
+  computeCashFlowRecords, computeDividendRecords, computeTradeSummary, isCashModelActive, getAnnualDividendOverview
 } from './compute.js';
 import { renderFundamentalsPage, getFundamentalsCompanyCount, getPortfolioReturnSummary } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
@@ -190,6 +190,7 @@ function renderHomeMetrics(calendarModel, summary) {
 
 function renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems, totalMv) {
   const cash = computeCashFlowRecords();
+  const dividends = computeDividendRecords();
   const trades = computeTradeSummary();
   const monthItem = calendarModel.months[new Date().getMonth()] || null;
   const coreItem = bucketItems.find((item) => item.key === 'core');
@@ -199,7 +200,7 @@ function renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems
     dividends: monthItem ? `${monthItem.label} ${formatDisplayMoney(monthItem.totalCny, 'CNY')} · 已到账 ${formatDisplayMoney(monthItem.receivedCny, 'CNY')}` : '',
     income: cur && cur.capitalReturnAvailable ? `\u5f53\u5e74 ${formatIncomeSignedMoney(cur.capitalReturnCny)}` : '\u5386\u5e74\u8d8b\u52bf \u00b7 \u5e74\u5ea6\u8868',
     fundamentals: getFundamentalsCompanyCount() > 0 ? `${getFundamentalsCompanyCount()} \u5bb6 \u00b7 \u80a1\u606f / EPS` : '\u80a1\u606f / EPS \u00b7 \u5e74\u62a5\u53e3\u5f84',
-    records: `${cash.count} \u51fa\u5165\u91d1 \u00b7 ${trades.count} \u4ea4\u6613`
+    records: `${cash.count} \u51fa\u5165\u91d1 \u00b7 ${trades.count} \u4ea4\u6613 \u00b7 ${dividends.count} \u80a1\u606f`
   };
   refs.homeNavList.querySelectorAll('[data-nav-summary]').forEach((el) => {
     el.textContent = summaries[el.dataset.navSummary] || '';
@@ -867,10 +868,24 @@ function renderTradeRows(records) {
   `).join('');
 }
 
+function renderDividendRecordRows(records) {
+  if (!records.length) return getRecordEmptyMarkup('暂无股息入账', '在股息日历中确认实收入账后，会在这里保留记录。');
+  return records.map((entry) => `
+    <button class="income-record-row" type="button" data-dividend-source-id="${escapeHtml(entry.sourceId)}">
+      <span class="record-main">
+        <strong>股息 · ${escapeHtml(entry.name || entry.symbol)}</strong>
+        <small>${escapeHtml(entry.date)}${entry.note ? ` · ${escapeHtml(entry.note)}` : ''}</small>
+      </span>
+      <span class="record-amount income-amount ${getSignedTone(entry.amountCny)}">${escapeHtml(formatIncomeSignedMoney(entry.amountCny))}</span>
+    </button>
+  `).join('');
+}
+
 export function renderIncomeRecords() {
   if (!refs.incomeRecordsList) return;
   const recordsYear = new Date().getFullYear();
   const cash = computeCashFlowRecords();
+  const dividends = computeDividendRecords();
   const trades = computeTradeSummary();
   const buyCount = trades.records.filter((entry) => entry.side === 'buy').length;
   const sellCount = trades.records.filter((entry) => entry.side === 'sell').length;
@@ -884,6 +899,7 @@ export function renderIncomeRecords() {
       <article><span>买入</span><strong>${buyCount} 笔</strong></article>
       <article><span>卖出</span><strong>${sellCount} 笔</strong></article>
       <article><span>出入金</span><strong>${cash.count} 笔</strong></article>
+      <article><span>股息</span><strong>${dividends.count} 笔</strong></article>
     </div>
     <section class="income-record-block ledger-record-block">
       <div class="income-record-head"><h3>买卖流水</h3><span>${trades.count} 笔</span></div>
@@ -892,6 +908,10 @@ export function renderIncomeRecords() {
     <section class="income-record-block ledger-record-block">
       <div class="income-record-head"><h3>出入金流水</h3><span>${cash.count} 笔</span></div>
       <div class="income-record-list">${renderCashFlowRows(cash.records)}</div>
+    </section>
+    <section class="income-record-block ledger-record-block">
+      <div class="income-record-head"><h3>股息入账</h3><span>${dividends.count} 笔 · ${escapeHtml(formatIncomeMoney(dividends.totalCny))}</span></div>
+      <div class="income-record-list">${renderDividendRecordRows(dividends.records)}</div>
     </section>`;
 }
 
@@ -1000,7 +1020,7 @@ function getHoldingMarkup(item, index, opts = {}) {
   return `<div class="holding-swipe${animate ? ' is-entering' : ''}" data-id="${item.localId}" style="--holding-swipe-offset:0px;animation-delay:${v.staggerDelay}ms;">
     <article class="holding-card" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
       <div class="holding-row-main">
-        <div class="holding-main"><div class="holding-title-line"><h3 class="holding-name">${escapeHtml(item.name)}</h3><span class="holding-code">${escapeHtml(item.symbol)}</span></div>
+        <div class="holding-main"><div class="holding-title-line"><button class="holding-name holding-name-button" type="button" data-action="view-holding" aria-label="查看 ${escapeHtml(item.name)} 持仓详情">${escapeHtml(item.name)}</button><span class="holding-code">${escapeHtml(item.symbol)}</span></div>
           <div class="holding-meta-row"><span class="holding-price" data-holding-field="price">${escapeHtml(v.priceText)}</span><span>· 税后年化 </span><button class="${dividendFocus.trim()}" type="button" data-action="edit-tax" data-holding-field="annualDividend">${escapeHtml(v.annualDividendText)}</button><span> · </span><button class="${yieldFocus.trim()}" type="button" data-action="edit-dividend" data-holding-field="effectiveYieldValue">${escapeHtml(v.yieldText)}</button></div>
         </div>
         <button class="holding-side" type="button" data-action="edit-quantity"><strong class="${marketValueFocus.trim()}" data-holding-field="marketValue">${escapeHtml(v.marketValueText)}</strong><span data-holding-field="weight">${escapeHtml(v.weightText)}</span></button>

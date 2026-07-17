@@ -623,6 +623,29 @@ export function computeCashFlowRecords() {
   };
 }
 
+// 已确认股息本身就是一类资金记录。这里从股息账本投影视图，不复制到 cashFlows，
+// 避免现金余额把同一笔收入计算两次。
+export function computeDividendRecords() {
+  const records = state.dividendLedger
+    .filter((entry) => entry && entry.confirmed === true)
+    .map((entry) => {
+      const quote = inferQuote(entry.symbol);
+      const calendarDate = getLedgerCalendarDate(entry);
+      return {
+        ...entry,
+        date: calendarDate.date || formatDateLabel(entry.exDate),
+        name: quote.name || entry.symbol,
+        amountCny: roundMoney(getLedgerNetCny(entry))
+      };
+    })
+    .sort((a, b) => `${b.date}|${b.id}`.localeCompare(`${a.date}|${a.id}`));
+  return {
+    records,
+    totalCny: roundMoney(records.reduce((sum, entry) => sum + entry.amountCny, 0)),
+    count: records.length
+  };
+}
+
 function getTradeSortKey(entry) {
   return `${entry && entry.date || ''}|${entry && entry.id || ''}`;
 }

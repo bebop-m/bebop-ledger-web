@@ -14,7 +14,7 @@ const revenueModule = await import('../src/revenue.js');
 const { state, applySnapshot, invalidateComputeCache, createDemoSnapshot } = stateModule;
 const {
   computeCashBalance, computeCashFlowRecords, computeTradeSummary, computeDividendCalendar,
-  computeIncomeSummary, computeHoldings, getBucketSummaryItems, getAnnualDividendOverview
+  computeDividendRecords, computeIncomeSummary, computeHoldings, getBucketSummaryItems, getAnnualDividendOverview
 } = computeModule;
 const { settleRevenueData } = revenueModule;
 
@@ -167,6 +167,29 @@ test('cash balance applies deposits, withdrawals, trade direction, fees and conf
     }]
   });
   assert.equal(computeCashBalance(), -16);
+});
+
+test('confirmed dividends appear as records without becoming duplicate cash flows', () => {
+  applyTestSnapshot({
+    dividendLedger: [
+      {
+        id: 'received', sourceId: 'TEST.HK|2026-05-01|1', symbol: 'TEST.HK', exDate: '2026-05-01',
+        payDate: '2026-05-08', receivedDate: '2026-05-10', amountPerShare: 1, shares: 10,
+        currency: 'CNY', fxRate: 1, grossCny: 10, netCny: 9, confirmed: true, note: '券商实收'
+      },
+      {
+        id: 'pending', sourceId: 'TEST.HK|2026-06-01|1', symbol: 'TEST.HK', exDate: '2026-06-01',
+        payDate: '2026-06-08', amountPerShare: 1, shares: 10, currency: 'CNY', fxRate: 1,
+        grossCny: 10, netCny: 9, confirmed: false
+      }
+    ]
+  });
+  const dividends = computeDividendRecords();
+  assert.equal(dividends.count, 1);
+  assert.equal(dividends.totalCny, 9);
+  assert.equal(dividends.records[0].date, '2026-05-10');
+  assert.equal(dividends.records[0].name, 'Test');
+  assert.equal(computeCashFlowRecords().count, 0);
 });
 
 test('bucket summaries and all three holding sorts use the same computed values', () => {

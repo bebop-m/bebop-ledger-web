@@ -10003,6 +10003,92 @@ body[data-active-page="home"] .home-nav-item { padding: clamp(9px, 1.25vh, 11px)
   .modal-sheet,.confirm-sheet { background: var(--ledger-paper); backdrop-filter: none; }
 }
 
+/* Holding detail: a compact audit slip, opened from the company name. */
+.holding-name-button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+.holding-name-button:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--ledger-iris);
+  outline-offset: 3px;
+}
+.holding-name-button:active { color: var(--ledger-iris); }
+.holding-detail-sheet { max-height: min(82dvh, 680px); overflow-y: auto; }
+.holding-detail-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+.holding-detail-head small {
+  display: block;
+  color: var(--ledger-muted);
+  font: 9px var(--font-data);
+  letter-spacing: .08em;
+}
+.holding-detail-head h3 {
+  margin: 5px 0 0;
+  color: var(--ledger-ink);
+  font-size: 21px;
+  line-height: 1.1;
+}
+.holding-detail-head > span {
+  color: var(--ledger-iris);
+  font: 700 13px var(--font-data);
+}
+.holding-detail-quantity {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-top: 18px;
+  padding: 18px 0 16px;
+  border-top: 1px solid var(--ledger-line-strong);
+  border-bottom: 1px solid var(--ledger-line-strong);
+}
+.holding-detail-quantity small {
+  align-self: flex-start;
+  min-width: 64px;
+  padding-top: 5px;
+  color: var(--ledger-muted);
+  font-size: 9px;
+  letter-spacing: .08em;
+}
+.holding-detail-quantity strong {
+  margin-left: auto;
+  color: var(--ledger-iris);
+  font: 700 clamp(30px, 9vw, 40px)/.9 var(--font-data);
+  letter-spacing: -.035em;
+}
+.holding-detail-quantity span { color: var(--ledger-muted); font-size: 11px; }
+.holding-detail-ledger { margin: 8px 0 0; }
+.holding-detail-ledger > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--ledger-line);
+}
+.holding-detail-ledger dt { color: var(--ledger-muted); font-size: 11px; }
+.holding-detail-ledger dd {
+  margin: 0;
+  color: var(--ledger-ink);
+  font: 700 12px var(--font-data);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.holding-detail-note,.holding-detail-empty {
+  margin: 12px 0 0;
+  color: var(--ledger-muted);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.income-record-overview.ledger-record-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
 /* ── Home event rhythm, dividend chart and subpage consistency · 2026-07 ── */
 body[data-active-page="home"] .home-hero-pnl { font-weight: 650; }
 body[data-active-page="home"] .home-hero-pnl .is-market-up { color: rgba(185, 66, 52, .72) !important; }
