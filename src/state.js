@@ -8,7 +8,7 @@ import {
   sanitizeHolding, sanitizePerShareOverrideInput, normalizeSymbol,
   sanitizeDividendLedgerEntry, sanitizeDailySnapshotEntry,
   sanitizeCashFlowEntry, sanitizeYearlyManualEntry, sanitizeTradeEntry,
-  sanitizeYearlyHoldingsEntry, sanitizeYearlyArchiveEntry
+  sanitizeYearlyHoldingsEntry, sanitizeYearlyArchiveEntry, formatDateLabel
 } from './utils.js';
 
 /* ── Default Quotes (normalized from seed data) ── */
@@ -39,8 +39,9 @@ export const state = {
   sortDirection: 'desc',
   legendExpanded: false,
   liabilityCny: 0,
-  openingCashCny: 0,
-  openingDate: '',
+  currentCashCny: null,
+  currentCashAsOfDate: '',
+  positionOpeningDate: '',
   dividendLedger: [],
   dailySnapshots: [],
   cashFlows: [],
@@ -222,8 +223,9 @@ export function createDefaultSnapshot() {
     sortDirection: 'desc',
     legendExpanded: false,
     liabilityCny: 0,
-    openingCashCny: 0,
-    openingDate: '',
+    currentCashCny: null,
+    currentCashAsOfDate: '',
+    positionOpeningDate: '',
     dividendLedger: [],
     dailySnapshots: [],
     cashFlows: [],
@@ -242,8 +244,9 @@ export function createDemoSnapshot() {
   const openingYear = year - 2;
   return {
     ...snapshot,
-    openingCashCny: 160000,
-    openingDate: `${openingYear}-01-01`,
+    currentCashCny: 160000,
+    currentCashAsOfDate: `${year}-07-16`,
+    positionOpeningDate: `${openingYear}-01-01`,
     cashFlows: [
       { id: 'demo_cf_1', date: `${previousYear}-01-10`, amountCny: 60000, type: 'deposit', note: '年度追加资金' },
       { id: 'demo_cf_2', date: `${previousYear}-08-05`, amountCny: 12000, type: 'withdrawal', note: '提取备用金' },
@@ -264,6 +267,51 @@ export function createDemoSnapshot() {
       { year, dividendCny: 4200, yearEndNetCny: 308300, netInflowCny: 22000, capitalReturnCny: 19100, capitalReturnRate: 0.071482 }
     ]
   };
+}
+
+function roundCash(value) {
+  return Math.round((safeNumber(value, 0) + Number.EPSILON) * 100) / 100;
+}
+
+function getLegacyCashFlowImpact(entry) {
+  const amount = Math.abs(safeNumber(entry && entry.amountCny, 0));
+  return entry && ['withdraw', 'withdrawal', 'out', 'outflow'].includes(String(entry.type || '').trim().toLowerCase())
+    ? -amount : amount;
+}
+
+function getLegacyTradeImpact(entry) {
+  const value = safeNumber(entry && entry.shares, 0) * safeNumber(entry && entry.price, 0) * safeNumber(entry && entry.fxRate, 1);
+  const fee = Math.max(0, safeNumber(entry && entry.feeCny, 0));
+  return entry && entry.side === 'sell' ? value - fee : -(value + fee);
+}
+
+function deriveLegacyCurrentCash(snapshot, cashFlows, trades, dividendLedger) {
+  const openingDate = formatDateLabel(snapshot && snapshot.openingDate);
+  if (!openingDate) return null;
+  let cash = safeNumber(snapshot && snapshot.openingCashCny, 0);
+  cashFlows.forEach((entry) => {
+    if (formatDateLabel(entry && entry.date) >= openingDate) cash += getLegacyCashFlowImpact(entry);
+  });
+  trades.forEach((entry) => {
+    if (formatDateLabel(entry && entry.date) >= openingDate) cash += getLegacyTradeImpact(entry);
+  });
+  dividendLedger.forEach((entry) => {
+    if (!entry || entry.confirmed !== true) return;
+    const date = formatDateLabel(entry.receivedDate || entry.payDate || entry.exDate);
+    if (date >= openingDate) cash += safeNumber(entry.netCny, 0);
+  });
+  return roundCash(cash);
+}
+
+export function setCurrentCashBalance(value, asOfDate = '') {
+  state.currentCashCny = value === null || value === undefined ? null : roundCash(value);
+  state.currentCashAsOfDate = state.currentCashCny === null
+    ? '' : (formatDateLabel(asOfDate) || formatDateLabel(new Date()));
+}
+
+export function adjustCurrentCashBalance(delta) {
+  if (state.currentCashCny === null) return;
+  state.currentCashCny = roundCash(safeNumber(state.currentCashCny, 0) + safeNumber(delta, 0));
 }
 
 export function applySnapshot(snapshot) {
@@ -292,8 +340,6 @@ export function applySnapshot(snapshot) {
   state.sortDirection = snapshot && snapshot.sortDirection === 'asc' ? 'asc' : 'desc';
   state.legendExpanded = Boolean(snapshot && snapshot.legendExpanded);
   state.liabilityCny = Math.max(0, safeNumber(snapshot && snapshot.liabilityCny, 0));
-  state.openingCashCny = safeNumber(snapshot && snapshot.openingCashCny, 0);
-  state.openingDate = typeof (snapshot && snapshot.openingDate) === 'string' ? snapshot.openingDate : '';
   state.dividendLedger = Array.isArray(snapshot && snapshot.dividendLedger)
     ? snapshot.dividendLedger.map(sanitizeDividendLedgerEntry).filter(Boolean)
     : [];
@@ -306,6 +352,22 @@ export function applySnapshot(snapshot) {
   state.trades = Array.isArray(snapshot && snapshot.trades)
     ? snapshot.trades.map(sanitizeTradeEntry).filter(Boolean)
     : [];
+  const legacyOpeningDate = formatDateLabel(snapshot && snapshot.openingDate);
+  state.positionOpeningDate = formatDateLabel(snapshot && (snapshot.positionOpeningDate || snapshot.openingDate));
+  // 兼容一次误把“当前现金日期”设到未来的旧数据：持仓交易起点不得因此越过已有交易。
+  const today = formatDateLabel(new Date());
+  if (!(snapshot && snapshot.positionOpeningDate) && state.positionOpeningDate > today) {
+    const earliestTradeDate = state.trades.map((entry) => formatDateLabel(entry.date)).filter(Boolean).sort()[0] || '';
+    if (earliestTradeDate && earliestTradeDate < state.positionOpeningDate) state.positionOpeningDate = earliestTradeDate;
+  }
+  const hasCurrentCash = Boolean(snapshot && Object.prototype.hasOwnProperty.call(snapshot, 'currentCashCny'));
+  const migratedCash = hasCurrentCash
+    ? (snapshot.currentCashCny === null ? null : roundCash(snapshot.currentCashCny))
+    : deriveLegacyCurrentCash(snapshot, state.cashFlows, state.trades, state.dividendLedger);
+  state.currentCashCny = migratedCash;
+  state.currentCashAsOfDate = migratedCash === null ? '' : (
+    formatDateLabel(snapshot && snapshot.currentCashAsOfDate) || today || legacyOpeningDate
+  );
   const legacyYearly = Array.isArray(snapshot && snapshot.yearlyManual) ? snapshot.yearlyManual : [];
   const explicitArchives = Array.isArray(snapshot && snapshot.yearlyArchives) ? snapshot.yearlyArchives : [];
   state.yearlyManual = legacyYearly
@@ -331,7 +393,9 @@ export function getPersistedSnapshot() {
     dividendCalendarBucket: state.dividendCalendarBucket, activeDividendMonth: state.activeDividendMonth,
     activeAnnualYear: state.activeAnnualYear, sortField: state.sortField,
     sortDirection: state.sortDirection, legendExpanded: state.legendExpanded,
-    liabilityCny: state.liabilityCny, openingCashCny: state.openingCashCny, openingDate: state.openingDate,
+    liabilityCny: state.liabilityCny,
+    currentCashCny: state.currentCashCny, currentCashAsOfDate: state.currentCashAsOfDate,
+    positionOpeningDate: state.positionOpeningDate,
     dividendLedger: state.dividendLedger,
     dailySnapshots: state.dailySnapshots, cashFlows: state.cashFlows,
     trades: state.trades, yearlyManual: state.yearlyManual, yearlyArchives: state.yearlyArchives,
@@ -415,8 +479,9 @@ export function buildPortfolioSnapshot() {
     sortDirection: persisted.sortDirection === 'asc' ? 'asc' : 'desc',
     legendExpanded: Boolean(persisted.legendExpanded),
     liabilityCny: Math.max(0, safeNumber(persisted.liabilityCny, 0)),
-    openingCashCny: safeNumber(persisted.openingCashCny, 0),
-    openingDate: typeof persisted.openingDate === 'string' ? persisted.openingDate : '',
+    currentCashCny: persisted.currentCashCny === null ? null : roundCash(persisted.currentCashCny),
+    currentCashAsOfDate: formatDateLabel(persisted.currentCashAsOfDate),
+    positionOpeningDate: formatDateLabel(persisted.positionOpeningDate),
     lastUpdatedAt: typeof persisted.lastUpdatedAt === 'string' ? persisted.lastUpdatedAt : ''
   };
 }

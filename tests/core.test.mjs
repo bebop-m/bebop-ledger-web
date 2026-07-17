@@ -108,10 +108,10 @@ test('late official pay date patches automatic ledger and due remains in project
   assert.equal(state.dividendLedger[0].payDate, '2026-07-09');
 });
 
-test('manual dividend edits do not become cash until explicitly confirmed', () => {
+test('a current-cash snapshot is not replayed when historical dividend records change', () => {
   applyTestSnapshot({
-    openingDate: '2026-01-01',
-    openingCashCny: 1000,
+    currentCashCny: 1000,
+    currentCashAsOfDate: '2026-07-10',
     dividendLedger: [{
       id: 'div_manual',
       sourceId: 'TEST.HK|2026-06-02|1',
@@ -141,7 +141,7 @@ test('manual dividend edits do not become cash until explicitly confirmed', () =
 
   state.dividendLedger[0].confirmed = true;
   state.dividendLedger[0].receivedDate = '2026-07-08';
-  assert.equal(computeCashBalance(), 1010);
+  assert.equal(computeCashBalance(), 1000);
   income = computeIncomeSummary('2026-07-10').rows.find((row) => row.year === 2026);
   assert.equal(income.dividendCny, 10);
   item = computeDividendCalendar('2026-07-10').allDetails.find((entry) => entry.id === 'div_manual');
@@ -167,6 +167,40 @@ test('cash balance applies deposits, withdrawals, trade direction, fees and conf
     }]
   });
   assert.equal(computeCashBalance(), -16);
+  assert.equal(state.currentCashCny, -16);
+  assert.equal(state.positionOpeningDate, '2026-01-01');
+  assert.equal(computeHoldings().holdings[0].quantity, 18);
+});
+
+test('future legacy cash date migrates without changing the actual holding quantity', () => {
+  applyTestSnapshot({
+    holdings: [{ localId: 1, symbol: '600519.SH', quantity: 1300, bucket: 'core' }],
+    quotes: { '600519.SH': { name: '贵州茅台', price: 1400, currency: 'CNY', dividends: [] } },
+    openingDate: '2026-07-18',
+    openingCashCny: -366813,
+    trades: [{
+      id: 'moutai-buy', date: '2026-07-02', symbol: '600519.SH', side: 'buy',
+      shares: 100, price: 1187, currency: 'CNY', fxRate: 1, feeCny: 17.26, bucket: 'core'
+    }]
+  });
+
+  const summary = computeHoldings();
+  assert.equal(state.currentCashCny, -366813);
+  assert.equal(state.positionOpeningDate, '2026-07-02');
+  assert.equal(summary.holdings[0].quantity, 1400);
+  assert.equal(summary.cashBalanceCny, -366813);
+  assert.equal(summary.netMarketValueCny, 1593187);
+});
+
+test('direct current cash stays exact even when historical records exist', () => {
+  applyTestSnapshot({
+    currentCashCny: 345678.9,
+    currentCashAsOfDate: '2026-07-17',
+    positionOpeningDate: '2026-01-01',
+    cashFlows: [{ id: 'old-deposit', date: '2026-06-01', amountCny: 50000, type: 'deposit' }],
+    trades: [{ id: 'old-buy', date: '2026-06-02', symbol: 'TEST.HK', side: 'buy', shares: 2, price: 20, currency: 'CNY', fxRate: 1, feeCny: 1, bucket: 'core' }]
+  });
+  assert.equal(computeCashBalance(), 345678.9);
 });
 
 test('confirmed dividends appear as records without becoming duplicate cash flows', () => {

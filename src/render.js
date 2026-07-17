@@ -637,7 +637,7 @@ function renderIncomeOverview(model) {
   const holdingSummary = computeHoldings();
   const cashActive = isCashModelActive();
   const cashText = cashActive ? formatDisplayMoney(holdingSummary.cashBalanceCny, 'CNY') : '未设置';
-  const cashMarkup = `<button class="income-cash-context" type="button" data-income-cash-settings aria-label="${cashActive ? '编辑期初现金设置' : '设置期初现金'}"><small>现金余额</small><strong class="income-amount ${cashActive ? getSignedTone(holdingSummary.cashBalanceCny) : 'is-flat'}">${escapeHtml(cashText)}</strong><em>${cashActive ? '现金设置' : '点击启用'}</em></button>`;
+  const cashMarkup = `<button class="income-cash-context" type="button" data-income-cash-settings aria-label="${cashActive ? '编辑当前现金余额' : '设置当前现金余额'}"><small>现金余额</small><strong class="income-amount ${cashActive ? getSignedTone(holdingSummary.cashBalanceCny) : 'is-flat'}">${escapeHtml(cashText)}</strong><em>${cashActive ? '当前余额' : '点击设置'}</em></button>`;
   if (!row || !row.capitalReturnAvailable) {
     refs.incomeOverviewGrid.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无资金收益数据</p><p class="empty-state-note">回填或生成 ${model.currentYear - 1} 年末净值后，这里会展示今年至今的资金收益。</p></div><div class="income-cash-standalone">${cashMarkup}</div>`;
     return;
@@ -917,7 +917,7 @@ export function renderIncomeRecords() {
 
 export function renderIncomeSummaryPage() {
   const model = computeIncomeSummary();
-  // 现金模式启用后，收益页隐藏「期初现金」重复入口（CSS 按此类名区分）。
+  // 已设置当前现金后，收益页隐藏重复入口（CSS 按此类名区分）。
   if (refs.incomeSummaryPage) refs.incomeSummaryPage.classList.toggle('is-cash-active', isCashModelActive());
   renderIncomeOverview(model);
   renderIncomeTrend(model);

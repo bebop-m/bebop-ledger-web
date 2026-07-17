@@ -11,24 +11,24 @@ export function inferQuote(symbol) {
   return inferQuoteFromMap(symbol, state.quotes, DEFAULT_QUOTES);
 }
 
-// 现金余额模式是否启用：填过期初日期即启用；否则完全按旧行为（无现金、数量可直接改）。
+// 现金余额模式是否启用：保存过当前现金即启用；历史流水不再重算该快照。
 export function isCashModelActive() {
-  return Boolean(state.openingDate);
+  return state.currentCashCny !== null;
 }
 
-// 期初日之后的事件才计入现金/持仓推算（期初日之前的已经包含在期初值里）。
-function isOnOrAfterOpening(dateValue) {
-  if (!state.openingDate) return true;
+// 持仓交易起点与现金快照彻底解耦；旧数据沿用原起点，修改现金不会改变持股。
+function isOnOrAfterPositionOpening(dateValue) {
+  if (!state.positionOpeningDate) return false;
   const label = formatDateLabel(dateValue);
-  return label ? label >= state.openingDate : false;
+  return label ? label >= state.positionOpeningDate : false;
 }
 
 // 每只股票在期初日之后的买卖净股数（买 +、卖 −）。
 function getNetTradeSharesBySymbol() {
   const map = new Map();
-  if (!isCashModelActive()) return map;
+  if (!state.positionOpeningDate) return map;
   state.trades.forEach((trade) => {
-    if (!trade || !isOnOrAfterOpening(trade.date)) return;
+    if (!trade || !isOnOrAfterPositionOpening(trade.date)) return;
     const shares = Math.max(0, safeNumber(trade.shares, 0));
     const delta = trade.side === 'sell' ? -shares : shares;
     map.set(trade.symbol, safeNumber(map.get(trade.symbol), 0) + delta);
@@ -36,27 +36,10 @@ function getNetTradeSharesBySymbol() {
   return map;
 }
 
-/* 现金余额 = 期初现金 + 入金 − 出金 + 卖出所得 − 买入花费 + 已到账股息。
-   全部按期初日之后的记录推算，未启用现金模式时恒为 0。 */
+/* 当前现金是用户对券商余额的直接快照。历史记录用于复盘，不再回放污染该值。 */
 export function computeCashBalance() {
   if (!isCashModelActive()) return 0;
-  let cash = safeNumber(state.openingCashCny, 0);
-  state.cashFlows.forEach((entry) => {
-    if (entry && isOnOrAfterOpening(entry.date)) cash += getCashFlowNetAmount(entry);
-  });
-  state.trades.forEach((trade) => {
-    if (!trade || !isOnOrAfterOpening(trade.date)) return;
-    const value = getTradeValueCny(trade);
-    const fee = Math.max(0, safeNumber(trade.feeCny, 0));
-    cash += trade.side === 'sell' ? (value - fee) : -(value + fee);
-  });
-  state.dividendLedger.forEach((entry) => {
-    const received = entry && entry.confirmed === true;
-    if (!received) return;
-    const payDate = getLedgerCalendarDate(entry).date || (entry && entry.exDate);
-    if (isOnOrAfterOpening(payDate)) cash += getLedgerNetCny(entry);
-  });
-  return roundMoney(cash);
+  return roundMoney(state.currentCashCny);
 }
 
 export function computeHoldings() {
@@ -199,6 +182,10 @@ function getLedgerNetCny(entry) {
   const gross = safeNumber(entry && entry.grossCny, 0)
     || safeNumber(entry && entry.amountPerShare, 0) * safeNumber(entry && entry.shares, 0) * safeNumber(entry && entry.fxRate, 1);
   return roundMoney(gross * (1 - Math.max(0, safeNumber(entry && entry.taxRate, 0))));
+}
+
+export function getDividendCashImpactCny(entry) {
+  return entry && entry.confirmed === true ? roundMoney(getLedgerNetCny(entry)) : 0;
 }
 
 function getHoldingTaxRate(holding) {
@@ -602,6 +589,10 @@ function getCashFlowNetAmount(entry) {
   return amount;
 }
 
+export function getCashFlowCashImpactCny(entry) {
+  return roundMoney(getCashFlowNetAmount(entry));
+}
+
 export function computeCashFlowRecords() {
   const records = state.cashFlows
     .map((entry) => {
@@ -652,6 +643,13 @@ function getTradeSortKey(entry) {
 
 function getTradeValueCny(entry) {
   return roundMoney(safeNumber(entry && entry.shares, 0) * safeNumber(entry && entry.price, 0) * safeNumber(entry && entry.fxRate, 1));
+}
+
+export function getTradeCashImpactCny(entry) {
+  if (!entry) return 0;
+  const value = getTradeValueCny(entry);
+  const fee = Math.max(0, safeNumber(entry.feeCny, 0));
+  return roundMoney(entry.side === 'sell' ? value - fee : -(value + fee));
 }
 
 function getTradeHolding(symbol) {

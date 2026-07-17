@@ -1,4 +1,6 @@
-import { state, refs, saveState, showToast } from './state.js';
+import {
+  state, refs, saveState, showToast, setCurrentCashBalance, adjustCurrentCashBalance
+} from './state.js';
 import {
   safeNumber, escapeHtml, normalizeSymbol, sanitizePerShareOverrideInput,
   mergeQuotes, sanitizeCashFlowEntry, sanitizeTradeEntry, formatDateLabel,
@@ -6,7 +8,10 @@ import {
 } from './utils.js';
 import { LABELS } from './constants.js';
 import { renderSavedStateQuietly, buildDividendMonthDetail, formatDisplayMoney } from './render.js';
-import { inferQuote, isCashModelActive, computeHoldings, computeIncomeSummary } from './compute.js';
+import {
+  inferQuote, isCashModelActive, computeHoldings, computeIncomeSummary,
+  getDividendCashImpactCny, getCashFlowCashImpactCny, getTradeCashImpactCny
+} from './compute.js';
 import { getFundamentalsPickerModel } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
 import { getPortfolioDiagnostics } from './diagnostics.js';
@@ -74,6 +79,22 @@ function getDefaultManualYear() {
 function getTodayLabel() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getDividendCashDate(entry) {
+  return formatDateLabel(entry && (entry.receivedDate || entry.payDate || entry.exDate));
+}
+
+function getTrackedCashImpact(entry, impact, dateValue) {
+  if (!entry || !isCashModelActive()) return 0;
+  const date = formatDateLabel(dateValue);
+  return date && date > state.currentCashAsOfDate ? impact : 0;
+}
+
+function adjustCashForRecordChange(previousEntry, previousImpact, previousDate, nextEntry, nextImpact, nextDate) {
+  const oldTracked = getTrackedCashImpact(previousEntry, previousImpact, previousDate);
+  const nextTracked = getTrackedCashImpact(nextEntry, nextImpact, nextDate);
+  adjustCurrentCashBalance(nextTracked - oldTracked);
 }
 
 function createRecordId(prefix) {
@@ -187,11 +208,10 @@ function renderModal() {
     title = LABELS.liabilityTitle; note = LABELS.totalMarketValue;
     fields = `<input id="modalLiabilityInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.liabilityPlaceholder}">`;
   } else if (state.modal === 'openingCash') {
-    title = '期初现金 · 现金余额模式';
-    note = '填入券商当前可用现金即启用；此后买卖、股息、出入金自动进出现金';
-    fields = `<label class="modal-field"><span>期初现金（CNY）</span><input id="modalOpeningCashInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(Math.abs(safeNumber(state.openingCashCny, 0))))}" placeholder="0.00"></label>
-      <label class="modal-check"><input id="modalOpeningCashNegativeInput" type="checkbox"${safeNumber(state.openingCashCny, 0) < 0 ? ' checked' : ''}><span>现金为负数（融资 / 透支）</span></label>
-      <label class="modal-field"><span>启用日期（期初）</span><input id="modalOpeningDateInput" class="modal-input" type="date" value="${escapeHtml(state.openingDate || getTodayLabel())}"></label>`;
+    title = '当前现金余额';
+    note = '填写券商此刻的实际现金；保存不会重算历史交易，也不会改变持股数量';
+    fields = `<label class="modal-field"><span>当前现金（CNY，可为负数）</span><input id="modalCurrentCashInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(state.currentCashCny === null ? '' : String(state.currentCashCny))}" placeholder="0.00"></label>
+      <p class="modal-quote-line">截至 ${escapeHtml(state.currentCashAsOfDate || getTodayLabel())} · 此后到账股息、交易和出入金会自动更新</p>`;
   } else if (state.modal === 'dividendLedger') {
     const entry = getDividendLedgerEntryBySourceId(state.modalPayload && state.modalPayload.sourceId);
     const quote = entry ? inferQuote(entry.symbol) : {};
@@ -547,7 +567,7 @@ export function toggleDividendConfirm(sourceId) {
   if (index < 0) return;
   const entry = state.dividendLedger[index];
   const confirming = entry.confirmed !== true;
-  state.dividendLedger[index] = {
+  const nextEntry = {
     ...entry,
     confirmed: confirming,
     receiptStatus: confirming ? 'received' : (entry.receiptStatus || 'pending'),
@@ -555,6 +575,11 @@ export function toggleDividendConfirm(sourceId) {
     receivedDate: confirming ? (formatDateLabel(entry.receivedDate) || getTodayLabel()) : '',
     updatedAt: new Date().toISOString()
   };
+  adjustCashForRecordChange(
+    entry, getDividendCashImpactCny(entry), getDividendCashDate(entry),
+    nextEntry, getDividendCashImpactCny(nextEntry), getDividendCashDate(nextEntry)
+  );
+  state.dividendLedger[index] = nextEntry;
   saveState();
   renderSavedStateQuietly({ animateHoldingReflow: false });
   if (state.modal === 'monthDetail') renderMonthDetailModal();
@@ -575,7 +600,7 @@ function saveDividendLedgerEdit() {
   const receiptStatus = confirmed
     ? 'received'
     : ((effectivePay.date || entry.exDate) <= getTodayLabel() ? 'due' : 'pending');
-  state.dividendLedger[index] = {
+  const nextEntry = {
     ...entry,
     payDate,
     receivedDate,
@@ -586,11 +611,17 @@ function saveDividendLedgerEdit() {
     note: document.getElementById('modalDividendNoteInput').value.trim(),
     updatedAt: new Date().toISOString()
   };
+  adjustCashForRecordChange(
+    entry, getDividendCashImpactCny(entry), getDividendCashDate(entry),
+    nextEntry, getDividendCashImpactCny(nextEntry), getDividendCashDate(nextEntry)
+  );
+  state.dividendLedger[index] = nextEntry;
   return true;
 }
 
 function saveCashFlowEdit() {
   const previousId = state.modalPayload && state.modalPayload.id;
+  const previousEntry = state.cashFlows.find((item) => item.id === previousId) || null;
   const entry = sanitizeCashFlowEntry({
     id: previousId || createRecordId('cf'),
     date: document.getElementById('modalCashFlowDateInput').value,
@@ -599,6 +630,10 @@ function saveCashFlowEdit() {
     note: document.getElementById('modalCashFlowNoteInput').value.trim()
   });
   if (!entry || entry.amountCny <= 0) { showToast('请输入有效出入金', { type: 'error' }); return false; }
+  adjustCashForRecordChange(
+    previousEntry, getCashFlowCashImpactCny(previousEntry), previousEntry && previousEntry.date,
+    entry, getCashFlowCashImpactCny(entry), entry.date
+  );
   state.cashFlows = state.cashFlows
     .filter((item) => item.id !== previousId && item.id !== entry.id)
     .concat(entry)
@@ -608,6 +643,7 @@ function saveCashFlowEdit() {
 
 function saveTradeEdit() {
   const previousId = state.modalPayload && state.modalPayload.id;
+  const previousEntry = state.trades.find((item) => item.id === previousId) || null;
   const symbolValue = document.getElementById('modalTradeSymbolInput').value;
   const selectedSide = document.querySelector('[data-trade-side][aria-pressed="true"]')?.dataset.tradeSide;
   // 币种按代码自动识别；汇率按当天行情自动换算。
@@ -626,13 +662,18 @@ function saveTradeEdit() {
     note: document.getElementById('modalTradeNoteInput').value.trim()
   });
   if (!entry) { showToast('请输入有效交易', { type: 'error' }); return false; }
+  adjustCashForRecordChange(
+    previousEntry, getTradeCashImpactCny(previousEntry), previousEntry && previousEntry.date,
+    entry, getTradeCashImpactCny(entry), entry.date
+  );
+  if (!state.positionOpeningDate) state.positionOpeningDate = entry.date;
   state.trades = state.trades
     .filter((item) => item.id !== previousId && item.id !== entry.id)
     .concat(entry)
     .sort((a, b) => `${b.date}|${b.id}`.localeCompare(`${a.date}|${a.id}`));
   state.quotes = mergeQuotes(state.quotes, { [entry.symbol]: inferQuote(entry.symbol) });
-  // 现金模式下买入一只尚未持有的股票时，自动建一条持仓（期初股数 0，有效股数由交易推算），使其出现在首页。
-  if (isCashModelActive() && !state.holdings.some((h) => h.symbol === entry.symbol)) {
+  // 买入一只尚未持有的股票时，自动建一条基准股数为 0 的持仓；现金是否设置不再影响持股推算。
+  if (!state.holdings.some((h) => h.symbol === entry.symbol)) {
     state.holdings = state.holdings.concat({
       localId: state.nextId, symbol: entry.symbol, quantity: 0, bucket: entry.bucket === 'income' ? 'income' : 'core',
       taxRateOverride: '', dividendPerShareTtmOverride: '', dividendPerShareTtmOverrideTouched: false
@@ -658,10 +699,7 @@ export function handleModalSave() {
   } else if (state.modal === 'liability') {
     state.liabilityCny = Math.max(0, safeNumber(document.getElementById('modalLiabilityInput').value, 0));
   } else if (state.modal === 'openingCash') {
-    const openingAmount = Math.abs(safeNumber(document.getElementById('modalOpeningCashInput').value, 0));
-    const openingNegative = document.getElementById('modalOpeningCashNegativeInput').checked === true;
-    state.openingCashCny = openingNegative ? -openingAmount : openingAmount;
-    state.openingDate = formatDateLabel(document.getElementById('modalOpeningDateInput').value) || getTodayLabel();
+    setCurrentCashBalance(safeNumber(document.getElementById('modalCurrentCashInput').value, 0), getTodayLabel());
   } else if (state.modal === 'dividendLedger') {
     returnMonth = Math.floor(safeNumber(state.modalPayload && state.modalPayload.returnMonth, 0));
     if (!saveDividendLedgerEdit()) return;
@@ -766,6 +804,11 @@ export function handleModalDelete() {
   if (state.modal === 'cashFlow') {
     const id = state.modalPayload && state.modalPayload.id;
     if (!id) return;
+    const entry = state.cashFlows.find((item) => item.id === id) || null;
+    adjustCashForRecordChange(
+      entry, getCashFlowCashImpactCny(entry), entry && entry.date,
+      null, 0, ''
+    );
     state.cashFlows = state.cashFlows.filter((item) => item.id !== id);
     saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
     return;
@@ -773,6 +816,11 @@ export function handleModalDelete() {
   if (state.modal === 'trade') {
     const id = state.modalPayload && state.modalPayload.id;
     if (!id) return;
+    const entry = state.trades.find((item) => item.id === id) || null;
+    adjustCashForRecordChange(
+      entry, getTradeCashImpactCny(entry), entry && entry.date,
+      null, 0, ''
+    );
     state.trades = state.trades.filter((item) => item.id !== id);
     saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
     return;

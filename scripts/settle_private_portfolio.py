@@ -177,17 +177,88 @@ def normalize_holding(item, index=0):
     }
 
 
+def cash_flow_impact(entry):
+    amount = abs(safe_float((entry or {}).get("amountCny"), 0.0))
+    entry_type = str((entry or {}).get("type") or "").strip().lower()
+    return -amount if entry_type in {"withdraw", "withdrawal", "out", "outflow"} else amount
+
+
+def trade_impact(entry):
+    entry = entry or {}
+    value = safe_float(entry.get("shares", entry.get("quantity")), 0.0) * safe_float(entry.get("price"), 0.0) * safe_float(entry.get("fxRate"), 1.0)
+    fee = max(0.0, safe_float(entry.get("feeCny"), 0.0))
+    return value - fee if str(entry.get("side") or "").lower() == "sell" else -(value + fee)
+
+
+def derive_legacy_current_cash(portfolio):
+    opening_date = normalize_date(portfolio.get("openingDate"))
+    if not opening_date:
+        return None
+    cash = safe_float(portfolio.get("openingCashCny"), 0.0)
+    for entry in portfolio.get("cashFlows", []):
+        if normalize_date((entry or {}).get("date")) >= opening_date:
+            cash += cash_flow_impact(entry)
+    for entry in portfolio.get("trades", []):
+        if normalize_date((entry or {}).get("date")) >= opening_date:
+            cash += trade_impact(entry)
+    for entry in portfolio.get("dividendLedger", []):
+        if not isinstance(entry, dict) or entry.get("confirmed") is not True:
+            continue
+        entry_date = normalize_date(entry.get("receivedDate") or entry.get("payDate") or entry.get("exDate"))
+        if entry_date >= opening_date:
+            cash += safe_float(entry.get("netCny"), 0.0)
+    return round_money(cash)
+
+
+def effective_holdings(portfolio):
+    holdings = [copy.deepcopy(item) for item in portfolio.get("holdings", []) if isinstance(item, dict)]
+    by_symbol = {item.get("symbol"): item for item in holdings if item.get("symbol")}
+    opening_date = normalize_date(portfolio.get("positionOpeningDate"))
+    if not opening_date:
+        return holdings
+    for trade in portfolio.get("trades", []):
+        if not isinstance(trade, dict) or normalize_date(trade.get("date")) < opening_date:
+            continue
+        symbol = normalize_symbol(trade.get("symbol"))
+        if not symbol:
+            continue
+        holding = by_symbol.get(symbol)
+        if holding is None:
+            holding = normalize_holding({"symbol": symbol, "quantity": 0, "bucket": trade.get("bucket")}, len(holdings))
+            holdings.append(holding)
+            by_symbol[symbol] = holding
+        delta = max(0.0, safe_float(trade.get("shares", trade.get("quantity")), 0.0))
+        if str(trade.get("side") or "").lower() == "sell":
+            delta = -delta
+        holding["quantity"] = max(0.0, safe_float(holding.get("quantity"), 0.0) + delta)
+        holding["shares"] = holding["quantity"]
+    return holdings
+
+
 def normalize_snapshot(snapshot):
     result = copy.deepcopy(snapshot) if isinstance(snapshot, dict) else {}
     holdings = result.get("holdings")
     if not isinstance(holdings, list):
         holdings = result.get("positions") if isinstance(result.get("positions"), list) else []
     result["type"] = "portfolio-snapshot"
-    result["version"] = max(3, int(safe_float(result.get("version"), 3)))
+    result["version"] = max(4, int(safe_float(result.get("version"), 4)))
     result["holdings"] = [h for h in (normalize_holding(item, i) for i, item in enumerate(holdings)) if h]
     for key in ("dividendLedger", "dailySnapshots", "cashFlows", "yearlyManual", "yearlyArchives", "yearlyHoldings", "trades"):
         if not isinstance(result.get(key), list):
             result[key] = []
+    legacy_opening_date = normalize_date(result.get("openingDate"))
+    result["positionOpeningDate"] = normalize_date(result.get("positionOpeningDate") or legacy_opening_date)
+    if not result.get("positionOpeningDate") or result.get("positionOpeningDate") > today_label():
+        trade_dates = sorted(filter(None, (normalize_date((entry or {}).get("date")) for entry in result.get("trades", []))))
+        if trade_dates and (not result.get("positionOpeningDate") or trade_dates[0] < result["positionOpeningDate"]):
+            result["positionOpeningDate"] = trade_dates[0]
+    if "currentCashCny" not in result:
+        result["currentCashCny"] = derive_legacy_current_cash(result)
+    elif result.get("currentCashCny") is not None:
+        result["currentCashCny"] = round_money(result.get("currentCashCny"))
+    result["currentCashAsOfDate"] = "" if result.get("currentCashCny") is None else (normalize_date(result.get("currentCashAsOfDate")) or today_label())
+    result.pop("openingCashCny", None)
+    result.pop("openingDate", None)
     return result
 
 
@@ -196,7 +267,7 @@ def build_today_snapshot(portfolio, market, today):
     quotes = market.get("quotes") or {}
     total = 0.0
     holdings = []
-    for holding in portfolio.get("holdings", []):
+    for holding in effective_holdings(portfolio):
         symbol = holding["symbol"]
         quote = quotes.get(symbol) or {}
         currency = normalize_currency(quote.get("currency"), infer_currency(symbol))
@@ -211,10 +282,11 @@ def build_today_snapshot(portfolio, market, today):
             "taxRate": parse_tax_rate(holding),
         })
     liability = max(0.0, safe_float(portfolio.get("liabilityCny"), 0.0))
+    current_cash = safe_float(portfolio.get("currentCashCny"), 0.0) if portfolio.get("currentCashCny") is not None else 0.0
     return {
         "date": today,
         "rates": {"CNY": 1, "USD": rates["USD"], "HKD": rates["HKD"]},
-        "netCny": round_money(total - liability),
+        "netCny": round_money(total + current_cash - liability),
         "totalMarketValueCny": round_money(total),
         "liabilityCny": liability,
         "holdings": holdings,
@@ -248,7 +320,7 @@ def dividend_context(portfolio, symbol, ex_date, currency):
             "confidence": "snapshot" if normalize_date(snapshot.get("date")) == normalize_date(ex_date) else "carryForward",
         }
 
-    holding = next((item for item in portfolio.get("holdings", []) if item.get("symbol") == symbol), None)
+    holding = next((item for item in effective_holdings(portfolio) if item.get("symbol") == symbol), None)
     if not holding or safe_float(holding.get("quantity", holding.get("shares", 0.0)), 0.0) <= 0:
         return None
     rates = portfolio.get("rates") or DEFAULT_RATES
@@ -318,7 +390,7 @@ def settle_portfolio(portfolio, market, today):
         changed = True
         stats["ledgerRemoved"] = removed
 
-    relevant = {holding["symbol"] for holding in portfolio.get("holdings", []) if holding.get("quantity", 0) > 0}
+    relevant = {holding["symbol"] for holding in effective_holdings(portfolio) if holding.get("quantity", 0) > 0}
     for snapshot in portfolio.get("dailySnapshots", []):
         for holding in snapshot.get("holdings", []) if isinstance(snapshot, dict) else []:
             if safe_float(holding.get("shares"), 0.0) > 0:

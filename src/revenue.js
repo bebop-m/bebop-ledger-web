@@ -33,7 +33,7 @@ function buildTodaySnapshot(today = formatLocalDate()) {
     netCny: summary.netMarketValueCny,
     totalMarketValueCny: summary.totalMarketValueCny,
     liabilityCny: state.liabilityCny,
-    holdings: state.holdings.map((holding) => ({
+    holdings: summary.holdings.map((holding) => ({
       symbol: holding.symbol,
       shares: Math.max(0, safeNumber(holding.quantity, 0)),
       bucket: holding.bucket === 'income' ? 'income' : 'core',
