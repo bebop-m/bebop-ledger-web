@@ -74,8 +74,8 @@ export function renderHomePage(summary) {
   const bucketItems = getBucketSummaryItems(summary.holdings);
   const totalMv = bucketItems.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0) || 1;
   renderHomeHero(summary);
-  renderHomeMetrics(calendarModel, summary);
-  renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems, totalMv);
+  renderHomeMetrics(calendarModel, summary, incomeModel);
+  renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv);
 }
 
 function renderHomeHero(summary) {
@@ -126,12 +126,42 @@ function getHomeEventDateParts(value) {
   };
 }
 
+/* \u9996\u9875\u300c\u672c\u5e74\u6536\u76ca\u300d\u53e3\u5f84\u8bf4\u660e\uff1a\u7528 capitalReturnCny/Rate\uff0c\u5373\u300c\u5f53\u524d\u51c0\u503c \u2212 \u5e74\u521d\u51c0\u503c \u2212 \u51c0\u6ce8\u5165\u300d\u3002
+   \u5b83\u867d\u7136\u53eb capitalReturn\uff0c\u4f46\u8d70\u7684\u662f\u51c0\u503c\u94fe\uff0c\u80a1\u606f\u5230\u8d26\u540e\u7559\u5728\u8d26\u6237\u91cc\u5df2\u7ecf\u62ac\u9ad8\u4e86\u5f53\u524d\u51c0\u503c\uff0c
+   \u6240\u4ee5\u8fd9\u4e2a\u6570**\u672c\u8eab\u5c31\u542b\u80a1\u606f**\uff0c\u4e5f\u542b\u6c47\u7387\u6298\u7b97\uff08\u51c0\u503c\u4e00\u5f8b CNY \u8ba1\u4ef7\uff09\u3002
+   \u5343\u4e07\u522b\u6539\u7528 totalReferenceCny\uff08= \u8d44\u672c\u5229\u5f97 + \u80a1\u606f\uff09\u2014\u2014\u90a3\u4f1a\u628a\u80a1\u606f\u7b97\u4e24\u904d\u3002 */
+function renderHomeReturn(incomeModel) {
+  const row = incomeModel && incomeModel.current;
+  const year = incomeModel ? incomeModel.currentYear : new Date().getFullYear();
+  const available = Boolean(row && row.capitalReturnAvailable && row.capitalReturnCny !== null);
+  if (!available) {
+    return `
+    <button class="home-return is-empty" type="button" data-page-nav="income" aria-label="\u56de\u586b\u5e74\u521d\u51c0\u503c\u540e\u67e5\u770b\u672c\u5e74\u6536\u76ca">
+      <span class="home-return-label">${year} \u5e74\u6536\u76ca</span>
+      <span class="home-return-empty">\u5f85\u56de\u586b\u5e74\u521d\u51c0\u503c</span>
+    </button>`;
+  }
+  const value = row.capitalReturnCny;
+  const rate = row.capitalReturnRate;
+  const tone = value > 0 ? 'is-market-up' : value < 0 ? 'is-market-down' : 'is-flat';
+  const sign = value > 0 ? '+' : '';
+  const rateText = rate === null || rate === undefined
+    ? ''
+    : `${rate > 0 ? '+' : ''}${escapeHtml(formatPercent(rate))}`;
+  return `
+    <button class="home-return" type="button" data-page-nav="income" aria-label="\u67e5\u770b ${year} \u5e74\u6536\u76ca\u660e\u7ec6">
+      <span class="home-return-label">${year} \u5e74\u6536\u76ca</span>
+      <span class="home-return-figures ${tone}">
+        <strong>${state.showAmounts ? sign + escapeHtml(formatMoney(value, 'CNY')) : MASK_AMOUNT}</strong>
+        ${rateText ? `<em>${rateText}</em>` : ''}
+      </span>
+    </button>`;
+}
+
 // \u9996\u9875\u73b0\u91d1\u6536\u5165\u8f74\uff1a\u5f53\u6708\u80a1\u606f -> \u4e0b\u6b21\u5230\u8d26 -> \u6708\u4efd\u8f74 -> \u5168\u5e74\u9884\u8ba1\u3002
-function renderHomeMetrics(calendarModel, summary) {
+function renderHomeMetrics(calendarModel, summary, incomeModel) {
   const annual = getAnnualDividendOverview(calendarModel, summary);
   const annualProjected = annual.projectedCny;
-  const annualReceived = annual.receivedCny;
-  const annualWaiting = annual.waitingCny;
   const annualRatio = annual.receivedRatio;
   const annualYield = annual.annualYield;
   const nextDividend = getNextHomeDividend(calendarModel);
@@ -139,7 +169,6 @@ function renderHomeMetrics(calendarModel, summary) {
   const nextReport = getUpcomingReportEvents()[0] || null;
   const nextReportDate = getHomeEventDateParts(nextReport && nextReport.reportDate);
   const monthWindow = getHomeMonthWindow(calendarModel.months, calendarModel.currentMonth);
-  const currentMonthItem = calendarModel.months[calendarModel.currentMonth - 1] || { totalCny: 0, receivedCny: 0 };
   const monthButtons = monthWindow.map((item) => {
     const progress = item.totalCny > 0 ? Math.min(100, Math.max(0, item.receivedCny / item.totalCny * 100)) : 0;
     return `
@@ -153,6 +182,7 @@ function renderHomeMetrics(calendarModel, summary) {
   const nextReportName = nextReport ? (nextReport.name || nextReport.symbol) : '';
 
   refs.homeFocusCard.innerHTML = `
+    ${renderHomeReturn(incomeModel)}
     <button class="home-cashflow" type="button" data-page-nav="dividends" aria-label="打开本年股息">
       <div class="home-ledger-head">
         <span class="home-ledger-label">本年现金流</span>
@@ -163,17 +193,9 @@ function renderHomeMetrics(calendarModel, summary) {
         <i style="width:${Math.max(annualRatio * 100, annualProjected > 0 ? 0.6 : 0).toFixed(1)}%"></i>
         <b style="left:${Math.min(98.8, Math.max(1.2, annualRatio * 100)).toFixed(1)}%"></b>
       </div>
-      <div class="home-cashflow-split">
-        <span>已到账 <strong>${escapeHtml(formatDisplayMoney(annualReceived, 'CNY'))}</strong></span>
-        <span>待到账 <strong>${escapeHtml(formatDisplayMoney(annualWaiting, 'CNY'))}</strong></span>
-      </div>
     </button>
     <section class="home-month-ledger">
       <div class="home-month-track">${monthButtons}</div>
-      <div class="home-month-summary">
-        <span><small>已到账</small><strong>${escapeHtml(formatDisplayMoney(currentMonthItem.receivedCny, 'CNY'))}</strong></span>
-        <span><small>${calendarModel.currentMonth} 月总股息</small><strong>${escapeHtml(formatDisplayMoney(currentMonthItem.totalCny, 'CNY'))}</strong></span>
-      </div>
     </section>
     <section class="home-event-strip" aria-label="快捷操作与近期事件">
       <button class="home-event-cell" type="button" data-page-nav="dividends" aria-label="查看下一笔股息">
@@ -188,17 +210,17 @@ function renderHomeMetrics(calendarModel, summary) {
     </section>`;
 }
 
-function renderHomeNavSummaries(summary, calendarModel, incomeModel, bucketItems, totalMv) {
+function renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv) {
   const cash = computeCashFlowRecords();
   const dividends = computeDividendRecords();
   const trades = computeTradeSummary();
   const monthItem = calendarModel.months[new Date().getMonth()] || null;
   const coreItem = bucketItems.find((item) => item.key === 'core');
-  const cur = incomeModel.current;
   const summaries = {
     holdings: `${summary.holdings.length} \u9879${coreItem ? ` \u00b7 ${LABELS.core} ${((coreItem.marketValueCny / totalMv) * 100).toFixed(1)}%` : ''}`,
     dividends: monthItem ? `${monthItem.label} ${formatDisplayMoney(monthItem.totalCny, 'CNY')} · 已到账 ${formatDisplayMoney(monthItem.receivedCny, 'CNY')}` : '',
-    income: cur && cur.capitalReturnAvailable ? `\u5f53\u5e74 ${formatIncomeSignedMoney(cur.capitalReturnCny)}` : '\u5386\u5e74\u8d8b\u52bf \u00b7 \u5e74\u5ea6\u8868',
+    // \u5f53\u5e74\u6536\u76ca\u5df2\u7531\u9996\u9875\u300cN \u5e74\u6536\u76ca\u300d\u4e3b\u884c\u627f\u62c5\uff0c\u8fd9\u91cc\u4e0d\u518d\u91cd\u590d\u540c\u4e00\u4e2a\u6570\u5b57\u3002
+    income: '\u5386\u5e74\u8d8b\u52bf \u00b7 \u5e74\u5ea6\u8868',
     fundamentals: getFundamentalsCompanyCount() > 0 ? `${getFundamentalsCompanyCount()} \u5bb6 \u00b7 \u80a1\u606f / EPS` : '\u80a1\u606f / EPS \u00b7 \u5e74\u62a5\u53e3\u5f84',
     records: `${cash.count} \u51fa\u5165\u91d1 \u00b7 ${trades.count} \u4ea4\u6613 \u00b7 ${dividends.count} \u80a1\u606f`
   };

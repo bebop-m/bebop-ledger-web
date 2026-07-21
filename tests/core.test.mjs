@@ -18,6 +18,13 @@ const {
 } = computeModule;
 const { settleRevenueData } = revenueModule;
 
+// 与 state.js 的 formatDateLabel 一样按本地时区取日期，避免跨时区差一天。
+function shiftToday(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function applyTestSnapshot(overrides = {}) {
   applySnapshot({
     version: 2,
@@ -173,20 +180,24 @@ test('cash balance applies deposits, withdrawals, trade direction, fees and conf
 });
 
 test('future legacy cash date migrates without changing the actual holding quantity', () => {
+  // 这条迁移只在“旧数据把开仓日填到了未来”时触发，日期必须相对今天算，
+  // 否则写死的未来日期迟早会变成过去，测试会凭空失败。
+  const futureOpeningDate = shiftToday(30);
+  const tradeDate = shiftToday(-14);
   applyTestSnapshot({
     holdings: [{ localId: 1, symbol: '600519.SH', quantity: 1300, bucket: 'core' }],
     quotes: { '600519.SH': { name: '贵州茅台', price: 1400, currency: 'CNY', dividends: [] } },
-    openingDate: '2026-07-18',
+    openingDate: futureOpeningDate,
     openingCashCny: -366813,
     trades: [{
-      id: 'moutai-buy', date: '2026-07-02', symbol: '600519.SH', side: 'buy',
+      id: 'moutai-buy', date: tradeDate, symbol: '600519.SH', side: 'buy',
       shares: 100, price: 1187, currency: 'CNY', fxRate: 1, feeCny: 17.26, bucket: 'core'
     }]
   });
 
   const summary = computeHoldings();
   assert.equal(state.currentCashCny, -366813);
-  assert.equal(state.positionOpeningDate, '2026-07-02');
+  assert.equal(state.positionOpeningDate, tradeDate);
   assert.equal(summary.holdings[0].quantity, 1400);
   assert.equal(summary.cashBalanceCny, -366813);
   assert.equal(summary.netMarketValueCny, 1593187);
