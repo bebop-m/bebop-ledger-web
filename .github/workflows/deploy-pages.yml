@@ -4,6 +4,16 @@ on:
   push:
     branches:
       - main
+  # The data-refresh bots commit with the built-in GITHUB_TOKEN, and GitHub blocks
+  # token-pushed commits from triggering `push` (and other) workflows. workflow_run
+  # is exempt, so it re-publishes Pages after each scheduled data refresh completes.
+  # Without this, bot-committed market/fundamentals data never reaches the live site.
+  workflow_run:
+    workflows:
+      - "Update Market Data"
+      - "Update Fundamentals Data"
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
