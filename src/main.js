@@ -61,10 +61,6 @@ refs.refreshButton.addEventListener('click', () => { refreshMarketData({ silent:
 if (refs.diagnosticsButton) refs.diagnosticsButton.addEventListener('click', () => { openModal('diagnostics'); });
 // 现金模式下，首页「+」直接开一笔买入交易（替代旧的新增持仓）；未启用时仍是新增持仓。
 refs.addButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'add'); });
-if (refs.incomeManualButton) refs.incomeManualButton.addEventListener('click', () => { openModal('yearlyManual'); });
-if (refs.incomeCashFlowButton) refs.incomeCashFlowButton.addEventListener('click', () => { openModal('cashFlow'); });
-if (refs.incomeOverviewCashFlowButton) refs.incomeOverviewCashFlowButton.addEventListener('click', () => { openModal('cashFlow'); });
-if (refs.incomeOpeningCashButton) refs.incomeOpeningCashButton.addEventListener('click', () => { openModal('openingCash'); });
 
 refs.homeNavList.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-page-nav]');
@@ -472,6 +468,7 @@ refs.modalRoot.addEventListener('click', (event) => {
   }
   if (t === 'open-trade') { openModal('trade'); return; }
   if (t === 'open-cash-flow') { openModal('cashFlow'); return; }
+  if (t === 'open-current-cash') { openModal('openingCash'); return; }
   if (t === 'holding-diagnostics') { closeModal(); refs.diagnosticsButton.click(); return; }
   if (t === 'holding-refresh') { closeModal(); refs.refreshButton.click(); return; }
   if (t === 'holding-add') { closeModal(); refs.addButton.click(); return; }

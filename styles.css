@@ -10297,6 +10297,13 @@ body[data-active-page="home"] .home-nav-list { margin-top: clamp(11px, 1.6vh, 16
   text-align: center;
 }
 .quick-add-option + .quick-add-option { border-left: 1px solid var(--ledger-line); }
+/* 三项时第三项独占整行：否则它孤零零落在第二行左格，还会因为相邻选择器
+   在左边留一道无所依靠的竖线。「当前现金」是余额校准而非流水，独占一行也如实分组。 */
+.quick-add-options > .quick-add-option:nth-child(3):last-child {
+  grid-column: 1 / -1;
+  border-left: 0;
+  border-top: 1px solid var(--ledger-line);
+}
 .quick-add-option strong { font-size: 14px; }
 .quick-add-option span { max-width: 120px; line-height: 1.4; }
 

@@ -181,10 +181,12 @@ function renderModal() {
   let title = '', note = '', fields = '';
   if (state.modal === 'quickAdd') {
     title = '记一笔';
-    note = '选择要记录的类型';
+    note = '选择要记录或校准的项目';
+    // 出入金是「流水」，当前现金是「余额快照」——描述上要让人一眼分清，填错会污染现金口径。
     fields = `<div class="quick-add-options">
       <button class="quick-add-option" type="button" data-modal-action="open-trade"><strong>交易</strong><span>买入 / 卖出一笔股票</span></button>
       <button class="quick-add-option" type="button" data-modal-action="open-cash-flow"><strong>出入金</strong><span>真实的资金转入 / 转出</span></button>
+      <button class="quick-add-option" type="button" data-modal-action="open-current-cash"><strong>当前现金</strong><span>直接校准券商的现金余额</span></button>
     </div>`;
   } else if (state.modal === 'holdingsMenu') {
     title = '持仓操作';
