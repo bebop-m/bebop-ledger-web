@@ -423,7 +423,8 @@ function buildDividendMonthItems(entries, currentMonth) {
     dueCny: roundMoney(item.dueCny),
     announcedCny: roundMoney(item.announcedCny),
     forecastCny: roundMoney(item.forecastCny),
-    upcomingCny: roundMoney(item.pendingCny + item.announcedCny + item.forecastCny),
+    // due（到账日已过但未勾确认）也算「即将到账」，否则 已到账 + 即将到账 ≠ 总额。
+    upcomingCny: roundMoney(item.dueCny + item.pendingCny + item.announcedCny + item.forecastCny),
     totalCny: roundMoney(item.totalCny),
     phase: item.month < currentMonth ? 'past' : item.month === currentMonth ? 'current' : 'future'
   }));
@@ -481,9 +482,11 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
   const forecastCny = entries
     .filter((entry) => entry.status === 'forecast')
     .reduce((sum, entry) => sum + entry.netCny, 0);
-  // 即将到账 = 在途待到账(pending) + 已公告未除息(announced) + 节奏预估(forecast)。
-  const upcomingCny = pendingCny + announcedCny + forecastCny;
-  const projectedCny = receivedCny + dueCny + upcomingCny;
+  /* 即将到账 = 待核对(due) + 在途(pending) + 已公告未除息(announced) + 节奏预估(forecast)。
+     due 是「到账日已过但没勾确认」的钱，早先被排除在 upcoming 之外，导致日历页
+     「已到账 + 即将到账」永远比「全年预计」少一截，对不上账。 */
+  const upcomingCny = dueCny + pendingCny + announcedCny + forecastCny;
+  const projectedCny = receivedCny + upcomingCny;
   // 同比：今年「预计全年」对比上一年实际到账总额（同口径筛选）。
   const lastYear = year - 1;
   const lastYearTotalCny = roundMoney(state.dividendLedger.reduce((sum, entry) => {

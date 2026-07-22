@@ -100,9 +100,11 @@ test('late official pay date patches automatic ledger and due remains in project
   settleRevenueData(new Date(2026, 6, 10));
   assert.equal(state.dividendLedger[0].receiptStatus, 'due');
   let metrics = computeDividendCalendar('2026-07-10').metrics;
-  assert.equal(metrics.upcomingCny, 0);
+  // due（到账日已过但未确认）计入「即将到账」，这样 已到账 + 即将到账 恒等于 全年预计。
   assert.equal(metrics.dueCny, 10);
+  assert.equal(metrics.upcomingCny, 10);
   assert.equal(metrics.projectedCny, 10);
+  assert.equal(metrics.receivedCny + metrics.upcomingCny, metrics.projectedCny);
 
   state.quotes['TEST.HK'].dividends[0].payDate = '2026-07-08';
   settleRevenueData(new Date(2026, 6, 10));

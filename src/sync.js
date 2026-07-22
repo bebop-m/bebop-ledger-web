@@ -21,9 +21,21 @@ function encodeBase64Utf8(value) {
   return btoa(binary);
 }
 
+/* GitHub 的报错必须原样带出来：状态码 + 官方 message。否则一律吞成
+   「请检查 Token 或仓库权限」，遇到 409 冲突、限流、网络问题时会把人引向错误方向。 */
+function buildGithubError(status, message) {
+  const err = new Error(message || `HTTP ${status}`);
+  err.status = status;
+  return err;
+}
+
 async function fetchGithubContentsEntry(apiUrl, token, opts = {}) {
   const r = await fetch(apiUrl, { headers: createGithubHeaders(token) });
-  if (!r.ok) { if (opts.allowMissing && r.status === 404) return null; throw new Error(`github contents request failed: ${r.status}`); }
+  if (!r.ok) {
+    if (opts.allowMissing && r.status === 404) return null;
+    const ed = await r.json().catch(() => ({}));
+    throw buildGithubError(r.status, ed.message);
+  }
   return await r.json();
 }
 
@@ -39,7 +51,7 @@ async function saveGithubJsonFile(apiUrl, token, payload, message) {
   const body = { message, content: encodeBase64Utf8(JSON.stringify(payload, null, 2)) };
   if (existing && typeof existing.sha === 'string' && existing.sha) body.sha = existing.sha;
   const r = await fetch(apiUrl, { method: 'PUT', headers: createGithubHeaders(token, { 'Content-Type': 'application/json' }), body: JSON.stringify(body) });
-  if (!r.ok) { const ed = await r.json().catch(() => ({})); throw new Error(ed.message || `HTTP ${r.status}`); }
+  if (!r.ok) { const ed = await r.json().catch(() => ({})); throw buildGithubError(r.status, ed.message); }
   return await r.json().catch(() => null);
 }
 
@@ -58,6 +70,22 @@ function isLocalPortfolioTemplateState() {
 
 function getSyncEligibleSymbols(holdings = state.holdings) {
   return Array.from(new Set((holdings || []).filter((i) => Math.max(0, safeNumber(i && i.quantity != null ? i.quantity : i && i.shares, 0)) > 0).map((i) => normalizeSymbol(i && i.symbol)).filter(Boolean)));
+}
+
+/* 把 GitHub 的状态码翻成人话。注意 404：Token 看不见私有仓时 GitHub 返回的是
+   404 而不是 403，所以「找不到」和「没权限」必须一起提示，否则会误判成仓库被删。 */
+function describeSyncFailure(error) {
+  const status = error && error.status;
+  const detail = (error && error.message ? String(error.message) : '').trim();
+  const hint = {
+    401: 'Token 无效或已过期，请重新填写',
+    403: 'Token 没有该仓库的写入权限（细粒度 Token 需要 Contents: Read and write）',
+    404: '仓库或路径不存在；也可能是 Token 未勾选这个私有仓的访问权限',
+    409: '云端版本已变动，请再点一次同步',
+    422: '提交内容被 GitHub 拒绝'
+  }[status];
+  if (!status) return `${LABELS.syncFailed}${detail ? `（${detail}）` : ''}`;
+  return `同步失败 ${status}：${hint || detail || '未知错误'}${hint && detail ? `。GitHub：${detail}` : ''}`;
 }
 
 function buildSyncSuccessMessage(opts = {}) {
@@ -150,7 +178,7 @@ export async function syncPortfolioToCloud() {
   const localIsTemplate = isLocalPortfolioTemplateState();
   let restored = false, keepBusy = false, shouldFlash = false;
   try {
-    if (localIsTemplate) { const rr = await restoreFromCloud(token); if (rr.reason === 'error') { showToast(LABELS.syncFailed, { type: 'error' }); return; } if (!rr.restored) { showToast(LABELS.syncNoPrivateSnapshot, { type: 'error' }); return; } restored = true; }
+    if (localIsTemplate) { const rr = await restoreFromCloud(token); if (rr.reason === 'error') { showToast(describeSyncFailure(rr.error), { type: 'error' }); return; } if (!rr.restored) { showToast(LABELS.syncNoPrivateSnapshot, { type: 'error' }); return; } restored = true; }
     else { await uploadPrivatePortfolioSnapshot(token); }
     const baseline = state.lastUpdatedAt;
     let wlResult = { addedSymbols: [], workflowTriggered: false }, wlFailed = false;
@@ -159,7 +187,7 @@ export async function syncPortfolioToCloud() {
     showToast(buildSyncSuccessMessage({ restored, addedCount: wlResult.addedSymbols.length, workflowTriggered: wlResult.workflowTriggered, watchlistUpdateFailed: wlFailed }), { type: wlFailed ? 'error' : 'success' });
     if (wlResult.workflowTriggered && wlResult.addedSymbols.length) { keepBusy = true; void runBackgroundMarketRefreshWait({ baselineUpdatedAt: baseline, requiredSymbols: wlResult.addedSymbols.slice() }); }
     else { shouldFlash = true; }
-  } catch (e) { console.warn('cloud sync failed', e); showToast(LABELS.syncFailed, { type: 'error' }); }
+  } catch (e) { console.warn('cloud sync failed', e); showToast(describeSyncFailure(e), { type: 'error' }); }
   finally { if (!keepBusy) { setCloudSyncButtonBusy(false); if (shouldFlash) flashCloudSyncButtonSuccess(); } }
 }
 
