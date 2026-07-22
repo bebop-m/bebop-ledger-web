@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { computeHoldings, computeIncomeSummary, inferQuote } from './compute.js';
 import {
-  buildDividendSourceId, canonicalDividendSourceId, formatDateLabel, normalizeQuoteDividendEvent,
+  buildDividendSourceId, canonicalDividendSourceId, dividendIgnoreKey, formatDateLabel, normalizeQuoteDividendEvent,
   parsePercentOverride, resolveEffectivePayDate, resolveFxRate, resolveQuoteCurrency, safeNumber,
   sanitizeDailySnapshotEntry, sanitizeDividendLedgerEntry, sanitizeYearlyArchiveEntry,
   sanitizeYearlyHoldingsEntry
@@ -141,8 +141,8 @@ function buildLedgerEntry(symbol, dividend, today) {
 function updateExistingLedgerEntry(symbol, dividend, today) {
   const event = normalizeQuoteDividendEvent(dividend, symbol);
   if (!event || !isDateOnOrBefore(event.exDate, today) || event.amountPerShare <= 0) return false;
-  const sourceId = buildDividendSourceId(event);
-  const index = state.dividendLedger.findIndex((entry) => entry && entry.sourceId === sourceId);
+  const canonicalId = canonicalDividendSourceId(buildDividendSourceId(event));
+  const index = state.dividendLedger.findIndex((entry) => entry && canonicalDividendSourceId(entry.sourceId) === canonicalId);
   if (index < 0) return false;
   const existing = state.dividendLedger[index];
   const nextPayDate = event.payDate || existing.payDate || '';
@@ -181,7 +181,7 @@ function reconcileDividendLedger() {
     dividends.forEach((dividend) => {
       const event = normalizeQuoteDividendEvent(dividend, symbol);
       if (!event || !event.sourceId) return;
-      ids.add(event.sourceId);
+      ids.add(canonicalDividendSourceId(event.sourceId));
       if (event.exDate && (!minExDate || event.exDate < minExDate)) minExDate = event.exDate;
     });
     if (ids.size) validBySymbol.set(symbol, { ids, minExDate });
@@ -193,7 +193,7 @@ function reconcileDividendLedger() {
     if (entry.confirmed === true || entry.sharesSource === 'manual' || entry.confidence === 'manual') return true;
     const valid = validBySymbol.get(entry.symbol);
     if (!valid) return true;                          // 该 symbol 当前无行情派息数据（可能已离开行情）→ 保留
-    if (valid.ids.has(entry.sourceId)) return true;   // 与当前派息事件匹配 → 保留
+    if (valid.ids.has(canonicalDividendSourceId(entry.sourceId))) return true; // 与当前派息事件匹配 → 保留
     if (entry.exDate && valid.minExDate && entry.exDate < valid.minExDate) return true; // 早于覆盖区间，无法核对 → 保留
     return false;                                     // 在覆盖区间内却无匹配 → 旧的被修订数据，清理
   });
@@ -210,7 +210,7 @@ function generateDividendLedgerEntries(today = formatLocalDate()) {
     });
   });
   const ignored = new Set((Array.isArray(state.dividendLedgerIgnored) ? state.dividendLedgerIgnored : [])
-    .map(canonicalDividendSourceId));
+    .map(dividendIgnoreKey));
   const removed = reconcileDividendLedger();
   const additions = [];
   let updated = 0;
@@ -221,8 +221,11 @@ function generateDividendLedgerEntries(today = formatLocalDate()) {
       const event = normalizeQuoteDividendEvent(dividend, symbol);
       const sourceId = event && buildDividendSourceId(event);
       // 用户手动删除过的派息事件不再重建。
-      if (sourceId && ignored.has(canonicalDividendSourceId(sourceId))) return;
-      if (sourceId && state.dividendLedger.some((entry) => entry && entry.sourceId === sourceId)) {
+      if (sourceId && ignored.has(dividendIgnoreKey(sourceId))) return;
+      /* 比对一律走 canonical：台账里可能混有结算脚本写的 "1.0" 和前端写的 "1"，
+         按原字符串比会认不出同一笔派息，于是再追加一条，造成重复计账。 */
+      const canonicalId = sourceId ? canonicalDividendSourceId(sourceId) : '';
+      if (canonicalId && state.dividendLedger.some((entry) => entry && canonicalDividendSourceId(entry.sourceId) === canonicalId)) {
         if (updateExistingLedgerEntry(symbol, dividend, today)) updated += 1;
         return;
       }

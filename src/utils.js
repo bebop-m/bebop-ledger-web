@@ -326,6 +326,18 @@ export function canonicalDividendSourceId(sourceId) {
   return [parts[0], parts[1], roundTo(amount), parts[3]].join('|');
 }
 
+/* 删除墓碑的匹配键：只取「股票 + 除息日」，不含金额。
+   金额被数据源小幅修订（1 → 1.01）会让完整 sourceId 变样，删掉的记录随即复活；
+   除息日则是这笔派息事件的稳定身份。含年份，所以挡不到以后年份的同期派息。
+   取舍：同一除息日若同时有常规息与特别息，删一个会连带挡住另一个——
+   而用户删除的典型场景正是「除息日我根本没持有」，这时全挡掉才是对的。 */
+export function dividendIgnoreKey(sourceId) {
+  const raw = String(sourceId || '').trim();
+  const parts = raw.split('|');
+  if (parts.length < 2 || !parts[0] || !parts[1]) return raw;
+  return `${parts[0]}|${parts[1]}`;
+}
+
 export function normalizeQuoteDividendEvent(item, symbolFallback = '') {
   if (!item || typeof item !== 'object') return null;
   const symbol = normalizeSymbol(item.symbol || symbolFallback);

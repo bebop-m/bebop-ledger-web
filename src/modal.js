@@ -86,6 +86,18 @@ function getDividendCashDate(entry) {
   return formatDateLabel(entry && (entry.receivedDate || entry.payDate || entry.exDate));
 }
 
+// 删除已归档年度的股息时，同步把该年度归档里的股息总额扣掉，避免统计退回旧值。
+function reduceArchivedDividendForYear(dateLabel, netCny) {
+  const year = Math.floor(safeNumber(String(formatDateLabel(dateLabel) || '').slice(0, 4), 0));
+  if (!year || !netCny) return;
+  const index = state.yearlyArchives.findIndex((item) => item && item.year === year);
+  if (index < 0) return;
+  const archived = state.yearlyArchives[index];
+  if (archived.dividendCny === null || archived.dividendCny === undefined) return;
+  const next = Math.max(0, safeNumber(archived.dividendCny, 0) - netCny);
+  state.yearlyArchives[index] = { ...archived, dividendCny: Number(next.toFixed(2)) };
+}
+
 function getTrackedCashImpact(entry, impact, dateValue) {
   if (!entry || !isCashModelActive()) return 0;
   const date = formatDateLabel(dateValue);
@@ -840,6 +852,9 @@ export function handleModalDelete() {
       null, 0, ''
     );
     ignoreDividendLedgerEntry(sourceId);
+    /* 已归档年度的股息总额是当年冻结下来的自动口径，不会随台账变化。
+       删掉该年度的记录后若不同步扣减，年度统计会在台账清空时退回旧的 archive 值。 */
+    reduceArchivedDividendForYear(entry.exDate, safeNumber(entry.netCny, 0));
     saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
     showToast('已删除这笔股息，不会再自动生成', { type: 'success' });
     return;

@@ -129,6 +129,19 @@ def canonical_source_id(source_id):
     return "|".join([parts[0], parts[1], amount, parts[3]])
 
 
+def dividend_ignore_key(source_id):
+    """删除墓碑的匹配键：只取「股票 + 除息日」，不含金额。
+
+    金额被数据源小幅修订会让完整 sourceId 变样，删掉的记录随即复活；
+    除息日含年份，所以挡不到以后年份的同期派息。须与前端 dividendIgnoreKey 一致。
+    """
+    raw = str(source_id or "").strip()
+    parts = raw.split("|")
+    if len(parts) < 2 or not parts[0] or not parts[1]:
+        return raw
+    return f"{parts[0]}|{parts[1]}"
+
+
 def build_source_id(symbol, ex_date, amount, currency):
     return "|".join([
         normalize_symbol(symbol),
@@ -367,7 +380,7 @@ def reconcile_ledger(portfolio, market):
     for symbol, quote in quotes.items():
         events = [normalize_dividend_event(item, symbol) for item in quote.get("dividends") or []]
         events = [event for event in events if event]
-        ids = {event["sourceId"] for event in events}
+        ids = {canonical_source_id(event["sourceId"]) for event in events}
         ex_dates = [event["exDate"] for event in events if event.get("exDate")]
         if ids:
             valid_by_symbol[normalize_symbol(symbol)] = {"ids": ids, "minExDate": min(ex_dates) if ex_dates else ""}
@@ -383,7 +396,7 @@ def reconcile_ledger(portfolio, market):
         if should_preserve_ledger_entry(entry) or not valid:
             kept.append(entry)
             continue
-        source_id = str(entry.get("sourceId") or "").strip()
+        source_id = canonical_source_id(entry.get("sourceId"))
         ex_date = normalize_date(entry.get("exDate"))
         if source_id in valid["ids"] or (ex_date and valid["minExDate"] and ex_date < valid["minExDate"]):
             kept.append(entry)
@@ -415,14 +428,16 @@ def settle_portfolio(portfolio, market, today):
             if safe_float(holding.get("shares"), 0.0) > 0:
                 relevant.add(normalize_symbol(holding.get("symbol")))
 
+    # 一律用 canonical ID 建索引：台账里可能混有前端写的 "1" 和本脚本写的 "1.0"，
+    # 按原字符串查找会认不出同一笔派息，于是又追加一条，造成重复计账。
     existing_by_id = {
-        str(entry.get("sourceId") or ""): entry
+        canonical_source_id(entry.get("sourceId")): entry
         for entry in portfolio.get("dividendLedger", []) if isinstance(entry, dict) and entry.get("sourceId")
     }
     existing_ids = set(existing_by_id)
     # 用户在 App 里手动删掉的派息事件，这里也不能重建，否则删除会被云端结算还原。
     ignored_ids = {
-        canonical_source_id(item)
+        dividend_ignore_key(item)
         for item in (portfolio.get("dividendLedgerIgnored") or [])
         if str(item or "").strip()
     }
@@ -434,9 +449,9 @@ def settle_portfolio(portfolio, market, today):
             event = normalize_dividend_event(raw_event, symbol)
             if not event or event["exDate"] > today:
                 continue
-            if canonical_source_id(event["sourceId"]) in ignored_ids:
+            if dividend_ignore_key(event["sourceId"]) in ignored_ids:
                 continue
-            existing = existing_by_id.get(event["sourceId"])
+            existing = existing_by_id.get(canonical_source_id(event["sourceId"]))
             if existing:
                 if existing.get("confidence") == "manual":
                     continue
@@ -483,7 +498,7 @@ def settle_portfolio(portfolio, market, today):
                 "createdAt": now_iso,
                 "updatedAt": now_iso,
             })
-            existing_ids.add(source_id)
+            existing_ids.add(canonical_source_id(source_id))
             stats["ledgerAdded"] += 1
             changed = True
 

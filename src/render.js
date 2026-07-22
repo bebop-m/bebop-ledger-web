@@ -576,8 +576,12 @@ export function buildDividendMonthDetail(month) {
   if (item) {
     summaryParts.push(`${LABELS.dividendReceivedStatus} ${formatDisplayMoney(item.receivedCny, 'CNY')}`);
     if (item.dueCny > 0) summaryParts.push(`待核对 ${formatDisplayMoney(item.dueCny, 'CNY')}`);
-    if (item.phase !== 'past') summaryParts.push(`${LABELS.dividendUpcoming} ${formatDisplayMoney(item.upcomingCny, 'CNY')}`);
-    else if (item.pendingCny > 0) summaryParts.push(`${LABELS.dividendPending} ${formatDisplayMoney(item.pendingCny, 'CNY')}`);
+    /* upcomingCny 已含 dueCny，这里必须减掉，否则同一笔钱在「待核对」和「即将到账」里各出现一次。
+       三项互不重叠且相加等于当月合计。 */
+    const restUpcomingCny = Math.max(0, item.upcomingCny - item.dueCny);
+    if (item.phase !== 'past') {
+      if (restUpcomingCny > 0) summaryParts.push(`${LABELS.dividendUpcoming} ${formatDisplayMoney(restUpcomingCny, 'CNY')}`);
+    } else if (item.pendingCny > 0) summaryParts.push(`${LABELS.dividendPending} ${formatDisplayMoney(item.pendingCny, 'CNY')}`);
   }
   const body = entries.length
     ? entries.map((entry) => {
