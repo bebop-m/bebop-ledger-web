@@ -1,5 +1,6 @@
 import {
-  state, refs, saveState, showToast, setCurrentCashBalance, adjustCurrentCashBalance
+  state, refs, saveState, showToast, setCurrentCashBalance, adjustCurrentCashBalance,
+  ignoreDividendLedgerEntry
 } from './state.js';
 import {
   safeNumber, escapeHtml, normalizeSymbol, sanitizePerShareOverrideInput,
@@ -292,6 +293,7 @@ function renderModal() {
     ${state.modal === 'yearlyManual' && state.modalPayload.existing ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-yearly-manual">删除</button>' : ''}
     ${state.modal === 'cashFlow' && state.modalPayload && state.modalPayload.id ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-record">删除</button>' : ''}
     ${state.modal === 'trade' && state.modalPayload && state.modalPayload.id ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-record">删除</button>' : ''}
+    ${state.modal === 'dividendLedger' && state.modalPayload && state.modalPayload.sourceId ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-dividend-ledger">删除</button>' : ''}
     <button class="modal-button modal-button--secondary" type="button" data-modal-action="cancel">${LABELS.cancel}</button>
     ${state.modal === 'quickAdd' || state.modal === 'holdingsMenu' ? '' : `<button class="modal-button modal-button--primary" type="button" data-modal-action="save">${LABELS.save}</button>`}</div></section>`;
 }
@@ -825,6 +827,21 @@ export function handleModalDelete() {
     );
     state.trades = state.trades.filter((item) => item.id !== id);
     saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
+    return;
+  }
+  if (state.modal === 'dividendLedger') {
+    const sourceId = state.modalPayload && state.modalPayload.sourceId;
+    if (!sourceId) return;
+    const entry = getDividendLedgerEntryBySourceId(sourceId);
+    if (!entry) return;
+    // 已确认的股息进过现金余额，删除时要原路冲回。
+    adjustCashForRecordChange(
+      entry, getDividendCashImpactCny(entry), getDividendCashDate(entry),
+      null, 0, ''
+    );
+    ignoreDividendLedgerEntry(sourceId);
+    saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
+    showToast('已删除这笔股息，不会再自动生成', { type: 'success' });
     return;
   }
   if (state.modal !== 'yearlyManual') return;

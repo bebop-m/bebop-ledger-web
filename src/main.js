@@ -475,6 +475,7 @@ refs.modalRoot.addEventListener('click', (event) => {
   if (t === 'close' || t === 'cancel') { closeModal(); return; }
   if (t === 'delete-yearly-manual') { handleModalDelete(); return; }
   if (t === 'delete-record') { handleModalDelete(); return; }
+  if (t === 'delete-dividend-ledger') { handleModalDelete(); return; }
   if (t === 'save') handleModalSave();
 });
 

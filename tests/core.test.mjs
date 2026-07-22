@@ -11,7 +11,10 @@ globalThis.localStorage = { getItem: () => null, setItem: () => {} };
 const stateModule = await import('../src/state.js');
 const computeModule = await import('../src/compute.js');
 const revenueModule = await import('../src/revenue.js');
-const { state, applySnapshot, invalidateComputeCache, createDemoSnapshot } = stateModule;
+const {
+  state, applySnapshot, invalidateComputeCache, createDemoSnapshot,
+  ignoreDividendLedgerEntry, buildPortfolioSnapshot
+} = stateModule;
 const {
   computeCashBalance, computeCashFlowRecords, computeTradeSummary, computeDividendCalendar,
   computeDividendRecords, computeIncomeSummary, computeHoldings, getBucketSummaryItems, getAnnualDividendOverview
@@ -298,4 +301,41 @@ test('dividend yield derives from manual capital pair when prior year-end is mis
   assert.equal(row.dividendYieldRate, 7000 / (12000 / 0.06));
   assert.equal(row.capitalReturnCny, 12000);
   assert.equal(row.capitalReturnRate, 0.06);
+});
+
+test('删除的股息不会被自动结算重建，且跨端 sourceId 格式都能挡住', () => {
+  const seed = () => {
+    applyTestSnapshot({
+      holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 10, bucket: 'income' }],
+      quotes: {
+        'TEST.HK': {
+          name: 'Test', price: 10, currency: 'HKD',
+          dividends: [{ exDate: '2026-06-02', payDate: '2026-06-20', amountPerShare: 1, currency: 'HKD', source: 'yahoo' }]
+        }
+      }
+    });
+  };
+
+  seed();
+  settleRevenueData(new Date(2026, 6, 10));
+  assert.equal(state.dividendLedger.length, 1);
+  const sourceId = state.dividendLedger[0].sourceId;
+
+  ignoreDividendLedgerEntry(sourceId);
+  assert.equal(state.dividendLedger.length, 0);
+  settleRevenueData(new Date(2026, 6, 11));
+  assert.equal(state.dividendLedger.length, 0, '删除后不得被结算重建');
+
+  // 忽略名单必须随快照同步，否则换设备/云端回灌后又会复活
+  assert.ok(buildPortfolioSnapshot().dividendLedgerIgnored.includes(sourceId));
+
+  /* 结算脚本(Python)拼整数金额得到 "1.0"，前端得到 "1"。
+     名单里存的若是另一端的写法，也必须挡得住。 */
+  seed();
+  settleRevenueData(new Date(2026, 6, 10));
+  state.dividendLedger = [];
+  state.dividendLedgerIgnored = ['TEST.HK|2026-06-02|1.0|HKD'];
+  invalidateComputeCache();
+  settleRevenueData(new Date(2026, 6, 12));
+  assert.equal(state.dividendLedger.length, 0, '跨端 sourceId 格式也必须匹配');
 });

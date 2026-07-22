@@ -315,6 +315,17 @@ export function buildDividendSourceId(input = {}) {
   return [symbol, exDate, amountPerShare, currency].join('|');
 }
 
+/* JS 与 Python 结算脚本拼 sourceId 时对整数金额的写法不同（1 vs 1.0），
+   跨端比对（如删除忽略名单）必须先归一化金额段，否则整数股息永远匹配不上。 */
+export function canonicalDividendSourceId(sourceId) {
+  const raw = String(sourceId || '').trim();
+  const parts = raw.split('|');
+  if (parts.length !== 4) return raw;
+  const amount = Number(parts[2]);
+  if (!Number.isFinite(amount)) return raw;
+  return [parts[0], parts[1], roundTo(amount), parts[3]].join('|');
+}
+
 export function normalizeQuoteDividendEvent(item, symbolFallback = '') {
   if (!item || typeof item !== 'object') return null;
   const symbol = normalizeSymbol(item.symbol || symbolFallback);

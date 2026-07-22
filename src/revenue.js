@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { computeHoldings, computeIncomeSummary, inferQuote } from './compute.js';
 import {
-  buildDividendSourceId, formatDateLabel, normalizeQuoteDividendEvent,
+  buildDividendSourceId, canonicalDividendSourceId, formatDateLabel, normalizeQuoteDividendEvent,
   parsePercentOverride, resolveEffectivePayDate, resolveFxRate, resolveQuoteCurrency, safeNumber,
   sanitizeDailySnapshotEntry, sanitizeDividendLedgerEntry, sanitizeYearlyArchiveEntry,
   sanitizeYearlyHoldingsEntry
@@ -209,6 +209,8 @@ function generateDividendLedgerEntries(today = formatLocalDate()) {
       if (holding && holding.symbol && safeNumber(holding.shares, 0) > 0) relevantSymbols.add(holding.symbol);
     });
   });
+  const ignored = new Set((Array.isArray(state.dividendLedgerIgnored) ? state.dividendLedgerIgnored : [])
+    .map(canonicalDividendSourceId));
   const removed = reconcileDividendLedger();
   const additions = [];
   let updated = 0;
@@ -218,6 +220,8 @@ function generateDividendLedgerEntries(today = formatLocalDate()) {
     dividends.forEach((dividend) => {
       const event = normalizeQuoteDividendEvent(dividend, symbol);
       const sourceId = event && buildDividendSourceId(event);
+      // 用户手动删除过的派息事件不再重建。
+      if (sourceId && ignored.has(canonicalDividendSourceId(sourceId))) return;
       if (sourceId && state.dividendLedger.some((entry) => entry && entry.sourceId === sourceId)) {
         if (updateExistingLedgerEntry(symbol, dividend, today)) updated += 1;
         return;

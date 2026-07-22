@@ -9757,7 +9757,8 @@ body:not([data-active-page="home"]) .panel {
 }
 .dividend-receipt-sheet .modal-check { min-height: 52px; padding: 0 12px; border: 1px solid var(--ledger-line); background: transparent; }
 .dividend-receipt-sheet .modal-check span { font-size: 13px; font-weight: 600; }
-.dividend-receipt-sheet .modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+/* 按钮数自适应：加了「删除」后是三个，写死两列会把「保存」挤到第二行。 */
+.dividend-receipt-sheet .modal-actions { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 10px; margin-top: 16px; }
 .dividend-receipt-sheet .modal-button { min-height: 47px; font-size: 14px; }
 .quick-add-option { border-radius: 0; }
 .toast { border-radius: 0; box-shadow: none; }

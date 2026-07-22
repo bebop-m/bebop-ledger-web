@@ -111,6 +111,24 @@ def parse_tax_rate(holding):
     return max(0.0, safe_float(raw, 0.0) / 100)
 
 
+def canonical_source_id(source_id):
+    """归一化 sourceId 的金额段，用于跨端比对。
+
+    前端 JS 拼整数金额得到 "1"，本脚本得到 "1.0"，直接比字符串会漏掉整数股息。
+    只用于比对，不改动任何已存储的 sourceId。
+    """
+    raw = str(source_id or "").strip()
+    parts = raw.split("|")
+    if len(parts) != 4:
+        return raw
+    try:
+        value = round(float(parts[2]), 6)
+    except (TypeError, ValueError):
+        return raw
+    amount = str(int(value)) if value == int(value) else repr(value)
+    return "|".join([parts[0], parts[1], amount, parts[3]])
+
+
 def build_source_id(symbol, ex_date, amount, currency):
     return "|".join([
         normalize_symbol(symbol),
@@ -243,7 +261,8 @@ def normalize_snapshot(snapshot):
     result["type"] = "portfolio-snapshot"
     result["version"] = max(4, int(safe_float(result.get("version"), 4)))
     result["holdings"] = [h for h in (normalize_holding(item, i) for i, item in enumerate(holdings)) if h]
-    for key in ("dividendLedger", "dailySnapshots", "cashFlows", "yearlyManual", "yearlyArchives", "yearlyHoldings", "trades"):
+    for key in ("dividendLedger", "dailySnapshots", "cashFlows", "yearlyManual", "yearlyArchives",
+                "yearlyHoldings", "trades", "dividendLedgerIgnored"):
         if not isinstance(result.get(key), list):
             result[key] = []
     legacy_opening_date = normalize_date(result.get("openingDate"))
@@ -401,6 +420,12 @@ def settle_portfolio(portfolio, market, today):
         for entry in portfolio.get("dividendLedger", []) if isinstance(entry, dict) and entry.get("sourceId")
     }
     existing_ids = set(existing_by_id)
+    # 用户在 App 里手动删掉的派息事件，这里也不能重建，否则删除会被云端结算还原。
+    ignored_ids = {
+        canonical_source_id(item)
+        for item in (portfolio.get("dividendLedgerIgnored") or [])
+        if str(item or "").strip()
+    }
     quotes = market.get("quotes") or {}
     now_iso = utc_now_iso()
     for symbol in sorted(relevant):
@@ -408,6 +433,8 @@ def settle_portfolio(portfolio, market, today):
         for raw_event in quote.get("dividends") or []:
             event = normalize_dividend_event(raw_event, symbol)
             if not event or event["exDate"] > today:
+                continue
+            if canonical_source_id(event["sourceId"]) in ignored_ids:
                 continue
             existing = existing_by_id.get(event["sourceId"])
             if existing:

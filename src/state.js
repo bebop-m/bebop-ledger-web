@@ -49,6 +49,9 @@ export const state = {
   yearlyManual: [],
   yearlyArchives: [],
   yearlyHoldings: [],
+  /* 用户手动删掉的股息 sourceId。台账是按行情派息事件自动生成的，
+     不记下来的话下次结算会照原样再长回来。客户端与 Actions 结算脚本都要认这份名单。 */
+  dividendLedgerIgnored: [],
   lastUpdatedAt: '',
   modal: null,
   modalPayload: null,
@@ -229,6 +232,7 @@ export function createDefaultSnapshot() {
     yearlyManual: [],
     yearlyArchives: [],
     yearlyHoldings: [],
+    dividendLedgerIgnored: [],
     lastUpdatedAt: ''
   };
 }
@@ -297,6 +301,23 @@ function deriveLegacyCurrentCash(snapshot, cashFlows, trades, dividendLedger) {
     if (date >= openingDate) cash += safeNumber(entry.netCny, 0);
   });
   return roundCash(cash);
+}
+
+function normalizeIgnoredDividendIds(value) {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(value.map((id) => String(id || '').trim()).filter(Boolean)));
+}
+
+/* 删除一笔自动生成的股息：既要移出台账，也要把 sourceId 记进忽略名单，
+   否则下一次 settleRevenueData 会按行情派息事件把它原样重建。 */
+export function ignoreDividendLedgerEntry(sourceId) {
+  const id = String(sourceId || '').trim();
+  if (!id) return false;
+  const before = state.dividendLedger.length;
+  state.dividendLedger = state.dividendLedger.filter((entry) => entry && entry.sourceId !== id);
+  if (!state.dividendLedgerIgnored.includes(id)) state.dividendLedgerIgnored.push(id);
+  invalidateComputeCache();
+  return state.dividendLedger.length !== before;
 }
 
 export function setCurrentCashBalance(value, asOfDate = '') {
@@ -378,6 +399,7 @@ export function applySnapshot(snapshot) {
   state.yearlyHoldings = Array.isArray(snapshot && snapshot.yearlyHoldings)
     ? snapshot.yearlyHoldings.map(sanitizeYearlyHoldingsEntry).filter(Boolean)
     : [];
+  state.dividendLedgerIgnored = normalizeIgnoredDividendIds(snapshot && snapshot.dividendLedgerIgnored);
   state.lastUpdatedAt = typeof (snapshot && snapshot.lastUpdatedAt) === 'string' ? snapshot.lastUpdatedAt : '';
 }
 
@@ -396,6 +418,7 @@ export function getPersistedSnapshot() {
     dailySnapshots: state.dailySnapshots, cashFlows: state.cashFlows,
     trades: state.trades, yearlyManual: state.yearlyManual, yearlyArchives: state.yearlyArchives,
     yearlyHoldings: state.yearlyHoldings,
+    dividendLedgerIgnored: state.dividendLedgerIgnored,
     lastUpdatedAt: state.lastUpdatedAt
   };
 }
@@ -469,6 +492,7 @@ export function buildPortfolioSnapshot() {
     yearlyHoldings: Array.isArray(persisted.yearlyHoldings)
       ? persisted.yearlyHoldings.map(sanitizeYearlyHoldingsEntry).filter(Boolean)
       : [],
+    dividendLedgerIgnored: normalizeIgnoredDividendIds(persisted.dividendLedgerIgnored),
     nextId: Math.max(holdings.reduce((max, item) => Math.max(max, item.localId), 0) + 1, Math.floor(safeNumber(persisted.nextId, 1))),
     showAmounts: persisted.showAmounts !== false,
     sortField: ['effectiveYield', 'netAnnualDividendCny'].includes(persisted.sortField) ? persisted.sortField : 'marketValueCny',
