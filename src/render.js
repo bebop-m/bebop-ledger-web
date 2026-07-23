@@ -73,12 +73,35 @@ export function renderHomePage(summary) {
   const incomeModel = computeIncomeSummary();
   const bucketItems = getBucketSummaryItems(summary.holdings);
   const totalMv = bucketItems.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0) || 1;
-  renderHomeHero(summary);
-  renderHomeMetrics(calendarModel, summary, incomeModel);
+  renderHomeHero(summary, incomeModel);
+  renderHomeMetrics(calendarModel, summary);
   renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv);
 }
 
-function renderHomeHero(summary) {
+/* 今年收益 = 当前净值 − 年初净值 − 净注入（净值链口径，已含股息与汇率）。
+   它是净资产的年度变化量，所以贴着净资产展示，与右上「今日」徽章同一语法：金额 (百分比)。 */
+function getHomeYearReturnMarkup(incomeModel) {
+  const row = incomeModel && incomeModel.current;
+  const year = incomeModel ? incomeModel.currentYear : new Date().getFullYear();
+  const available = Boolean(row && row.capitalReturnAvailable && row.capitalReturnCny !== null);
+  if (!available) {
+    return `<button class="home-hero-year is-empty" type="button" data-page-nav="income" aria-label="回填年初净值后查看本年收益">
+      <span>${year} 收益</span><strong>待回填年初净值</strong>
+    </button>`;
+  }
+  const value = row.capitalReturnCny;
+  const rate = row.capitalReturnRate;
+  const tone = value > 0 ? 'is-market-up' : value < 0 ? 'is-market-down' : 'is-flat';
+  const sign = value > 0 ? '+' : value < 0 ? '-' : '';
+  const amountText = state.showAmounts ? `${sign}¥${Math.round(Math.abs(value)).toLocaleString('en-US')}` : MASK_AMOUNT;
+  const rateText = rate === null || rate === undefined
+    ? '' : ` (${rate > 0 ? '+' : rate < 0 ? '-' : ''}${formatPercent(Math.abs(rate))})`;
+  return `<button class="home-hero-year" type="button" data-page-nav="income" aria-label="查看 ${year} 年收益明细">
+    <span>${year} 收益</span><strong class="${tone}">${escapeHtml(amountText)}${escapeHtml(rateText)}</strong>
+  </button>`;
+}
+
+function renderHomeHero(summary, incomeModel) {
   const pnl = safeNumber(summary.totalDailyPnlCny, 0);
   const hasPnl = summary.holdings.some((h) => safeNumber(h.previousClose, 0) > 0);
   const pnlText = hasPnl && state.showAmounts ? formatDailyPnl(pnl, summary.dailyPnlBaseCny) : '';
@@ -89,6 +112,7 @@ function renderHomeHero(summary) {
       ${pnlText ? `<span class="home-hero-pnl"><strong class="${pnl > 0 ? 'is-market-up' : pnl < 0 ? 'is-market-down' : 'is-flat'}">${pnlArrow} ${escapeHtml(pnlText)}</strong></span>` : ''}
     </div>
     <strong class="home-hero-value">${formatLedgerMoney(summary.netMarketValueCny, 'CNY', 'home-hero-fraction')}</strong>
+    ${getHomeYearReturnMarkup(incomeModel)}
     <p class="home-hero-fx">USD/CNY ${safeNumber(state.rates.USD, 0).toFixed(2)} · HKD/CNY ${safeNumber(state.rates.HKD, 0).toFixed(4)}</p>`;
 }
 
@@ -126,38 +150,8 @@ function getHomeEventDateParts(value) {
   };
 }
 
-/* 首页净值链收益 = 当前净值 − 年初净值 − 净注入。
-   现金模式下已到账股息已进入净值，非现金模式下则不含股息；展示不再额外叠加股息。 */
-function renderHomeReturn(incomeModel) {
-  const row = incomeModel && incomeModel.current;
-  const year = incomeModel ? incomeModel.currentYear : new Date().getFullYear();
-  const available = Boolean(row && row.capitalReturnAvailable && row.capitalReturnCny !== null);
-  if (!available) {
-    return `
-    <button class="home-return is-empty" type="button" data-page-nav="income" aria-label="\u56de\u586b\u5e74\u521d\u51c0\u503c\u540e\u67e5\u770b\u672c\u5e74\u6536\u76ca">
-      <span class="home-return-label">${year} 净值链收益</span>
-      <span class="home-return-empty">\u5f85\u56de\u586b\u5e74\u521d\u51c0\u503c</span>
-    </button>`;
-  }
-  const value = row.capitalReturnCny;
-  const rate = row.capitalReturnRate;
-  const tone = value > 0 ? 'is-market-up' : value < 0 ? 'is-market-down' : 'is-flat';
-  const sign = value > 0 ? '+' : '';
-  const rateText = rate === null || rate === undefined
-    ? ''
-    : `${rate > 0 ? '+' : ''}${escapeHtml(formatPercent(rate))}`;
-  return `
-    <button class="home-return" type="button" data-page-nav="income" aria-label="\u67e5\u770b ${year} \u5e74\u6536\u76ca\u660e\u7ec6">
-      <span class="home-return-label">${year} 净值链收益</span>
-      <span class="home-return-figures ${tone}">
-        <strong>${state.showAmounts ? sign + escapeHtml(formatMoney(value, 'CNY')) : MASK_AMOUNT}</strong>
-        ${rateText ? `<em>${rateText}</em>` : ''}
-      </span>
-    </button>`;
-}
-
 // \u9996\u9875\u73b0\u91d1\u6536\u5165\u8f74\uff1a\u5f53\u6708\u80a1\u606f -> \u4e0b\u6b21\u5230\u8d26 -> \u6708\u4efd\u8f74 -> \u5168\u5e74\u9884\u8ba1\u3002
-function renderHomeMetrics(calendarModel, summary, incomeModel) {
+function renderHomeMetrics(calendarModel, summary) {
   const annual = getAnnualDividendOverview(calendarModel, summary);
   const annualProjected = annual.projectedCny;
   const annualRatio = annual.receivedRatio;
@@ -180,7 +174,6 @@ function renderHomeMetrics(calendarModel, summary, incomeModel) {
   const nextReportName = nextReport ? (nextReport.name || nextReport.symbol) : '';
 
   refs.homeFocusCard.innerHTML = `
-    ${renderHomeReturn(incomeModel)}
     <button class="home-cashflow" type="button" data-page-nav="dividends" aria-label="打开本年股息">
       <div class="home-ledger-head">
         <span class="home-ledger-label">本年预计股息</span>

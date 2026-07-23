@@ -232,7 +232,12 @@ refs.bucketTrack.addEventListener('click', (event) => {
 
 refs.stockList.addEventListener('mouseover', (e) => { const b = e.target.closest('.dividend-status-button'); if (b) updateDividendTooltipSide(b); });
 refs.stockList.addEventListener('focusin', (e) => { const b = e.target.closest('.dividend-status-button'); if (b) updateDividendTooltipSide(b); });
-refs.homeHero.addEventListener('click', (e) => { if (e.target.closest('[data-summary-action="liability"]')) openModal('liability', { value: state.liabilityCny > 0 ? String(state.liabilityCny) : '' }); });
+refs.homeHero.addEventListener('click', (e) => {
+  if (e.target.closest('[data-summary-action="liability"]')) { openModal('liability', { value: state.liabilityCny > 0 ? String(state.liabilityCny) : '' }); return; }
+  // 「今年收益」行点按进收益明细，与焦点卡的 data-page-nav 语义一致。
+  const nav = e.target.closest('[data-page-nav]');
+  if (nav) navigateTo(nav.dataset.pageNav);
+});
 
 refs.stockList.addEventListener('click', (event) => {
   if (Date.now() < mutable.suppressHoldingClickUntil) { event.preventDefault(); event.stopPropagation(); return; }
