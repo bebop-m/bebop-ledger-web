@@ -7820,45 +7820,19 @@ body[data-active-page="home"] .home-ledger-period {
   font-variant-numeric: tabular-nums;
 }
 
-/* 今年收益：净资产的年度变化量，贴在大数下方，与右上「今日」徽章同一语法（金额 (百分比)）。
-   标签与数值都压到 meta 层级，首页只保留净资产一个英雄数字。 */
-body[data-active-page="home"] .home-hero-year {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-  margin-top: 9px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  text-align: left;
-}
-
-body[data-active-page="home"] .home-hero-year span {
-  color: var(--home-muted);
-  font-size: 9px;
-  font-weight: 730;
-  letter-spacing: 0.13em;
-  white-space: nowrap;
-}
-
-body[data-active-page="home"] .home-hero-year strong {
+/* 导航入口的 HUD 摘要：每个入口后面展示该子页面的关键信息。
+   收益明细的摘要携带涨跌色金额，数字用等宽字保持与其他 meta 行一致。 */
+body[data-active-page="home"] .home-nav-summary b {
   font-family: ui-monospace, "SFMono-Regular", "SF Mono", monospace;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.01em;
   color: var(--home-ink);
   font-variant-numeric: tabular-nums lining-nums;
 }
 
-body[data-active-page="home"] .home-hero-year strong.is-market-up { color: var(--ledger-gain); }
-body[data-active-page="home"] .home-hero-year strong.is-market-down { color: var(--ledger-loss); }
-
-body[data-active-page="home"] .home-hero-year.is-empty strong {
-  color: var(--home-muted);
-  font-weight: 600;
-}
-
-body[data-active-page="home"] .home-hero-year:active { opacity: 0.65; }
+body[data-active-page="home"] .home-nav-summary b.is-market-up { color: var(--ledger-gain); }
+body[data-active-page="home"] .home-nav-summary b.is-market-down { color: var(--ledger-loss); }
 
 body[data-active-page="home"] .home-cashflow {
   padding: 17px 0 13px;

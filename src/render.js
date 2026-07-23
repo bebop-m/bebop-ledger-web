@@ -73,22 +73,18 @@ export function renderHomePage(summary) {
   const incomeModel = computeIncomeSummary();
   const bucketItems = getBucketSummaryItems(summary.holdings);
   const totalMv = bucketItems.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0) || 1;
-  renderHomeHero(summary, incomeModel);
+  renderHomeHero(summary);
   renderHomeMetrics(calendarModel, summary);
-  renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv);
+  renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv, incomeModel);
 }
 
 /* 今年收益 = 当前净值 − 年初净值 − 净注入（净值链口径，已含股息与汇率）。
-   它是净资产的年度变化量，所以贴着净资产展示，与右上「今日」徽章同一语法：金额 (百分比)。 */
-function getHomeYearReturnMarkup(incomeModel) {
+   作为「收益明细」入口的 HUD 摘要展示：首页每个入口后面都带该子页面的关键信息。 */
+function getIncomeNavSummaryHtml(incomeModel) {
   const row = incomeModel && incomeModel.current;
   const year = incomeModel ? incomeModel.currentYear : new Date().getFullYear();
   const available = Boolean(row && row.capitalReturnAvailable && row.capitalReturnCny !== null);
-  if (!available) {
-    return `<button class="home-hero-year is-empty" type="button" data-page-nav="income" aria-label="回填年初净值后查看本年收益">
-      <span>${year} 收益</span><strong>待回填年初净值</strong>
-    </button>`;
-  }
+  if (!available) return `${year} · 待回填年初净值`;
   const value = row.capitalReturnCny;
   const rate = row.capitalReturnRate;
   const tone = value > 0 ? 'is-market-up' : value < 0 ? 'is-market-down' : 'is-flat';
@@ -96,12 +92,10 @@ function getHomeYearReturnMarkup(incomeModel) {
   const amountText = state.showAmounts ? `${sign}¥${Math.round(Math.abs(value)).toLocaleString('en-US')}` : MASK_AMOUNT;
   const rateText = rate === null || rate === undefined
     ? '' : ` (${rate > 0 ? '+' : rate < 0 ? '-' : ''}${formatPercent(Math.abs(rate))})`;
-  return `<button class="home-hero-year" type="button" data-page-nav="income" aria-label="查看 ${year} 年收益明细">
-    <span>${year} 收益</span><strong class="${tone}">${escapeHtml(amountText)}${escapeHtml(rateText)}</strong>
-  </button>`;
+  return `${year} · <b class="${tone}">${escapeHtml(amountText)}${escapeHtml(rateText)}</b>`;
 }
 
-function renderHomeHero(summary, incomeModel) {
+function renderHomeHero(summary) {
   const pnl = safeNumber(summary.totalDailyPnlCny, 0);
   const hasPnl = summary.holdings.some((h) => safeNumber(h.previousClose, 0) > 0);
   const pnlText = hasPnl && state.showAmounts ? formatDailyPnl(pnl, summary.dailyPnlBaseCny) : '';
@@ -112,7 +106,6 @@ function renderHomeHero(summary, incomeModel) {
       ${pnlText ? `<span class="home-hero-pnl"><strong class="${pnl > 0 ? 'is-market-up' : pnl < 0 ? 'is-market-down' : 'is-flat'}">${pnlArrow} ${escapeHtml(pnlText)}</strong></span>` : ''}
     </div>
     <strong class="home-hero-value">${formatLedgerMoney(summary.netMarketValueCny, 'CNY', 'home-hero-fraction')}</strong>
-    ${getHomeYearReturnMarkup(incomeModel)}
     <p class="home-hero-fx">USD/CNY ${safeNumber(state.rates.USD, 0).toFixed(2)} · HKD/CNY ${safeNumber(state.rates.HKD, 0).toFixed(4)}</p>`;
 }
 
@@ -201,7 +194,7 @@ function renderHomeMetrics(calendarModel, summary) {
     </section>`;
 }
 
-function renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv) {
+function renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv, incomeModel) {
   const cash = computeCashFlowRecords();
   const dividends = computeDividendRecords();
   const trades = computeTradeSummary();
@@ -210,13 +203,13 @@ function renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv) {
   const summaries = {
     holdings: `${summary.holdings.length} \u9879${coreItem ? ` \u00b7 ${LABELS.core} ${((coreItem.marketValueCny / totalMv) * 100).toFixed(1)}%` : ''}`,
     dividends: monthItem ? `${monthItem.label} ${formatDisplayMoney(monthItem.totalCny, 'CNY')} · 已到账 ${formatDisplayMoney(monthItem.receivedCny, 'CNY')}` : '',
-    // \u5f53\u5e74\u6536\u76ca\u5df2\u7531\u9996\u9875\u300cN \u5e74\u6536\u76ca\u300d\u4e3b\u884c\u627f\u62c5\uff0c\u8fd9\u91cc\u4e0d\u518d\u91cd\u590d\u540c\u4e00\u4e2a\u6570\u5b57\u3002
-    income: '\u5386\u5e74\u8d8b\u52bf \u00b7 \u5e74\u5ea6\u8868',
+    income: getIncomeNavSummaryHtml(incomeModel),
     fundamentals: getFundamentalsCompanyCount() > 0 ? `${getFundamentalsCompanyCount()} \u5bb6 \u00b7 \u80a1\u606f / EPS` : '\u80a1\u606f / EPS \u00b7 \u5e74\u62a5\u53e3\u5f84',
     records: `${cash.count} \u51fa\u5165\u91d1 \u00b7 ${trades.count} \u4ea4\u6613 \u00b7 ${dividends.count} \u80a1\u606f`
   };
+  // 摘要允许携带涨跌色的 <b> 片段；所有动态文本均已转义或由格式化函数生成。
   refs.homeNavList.querySelectorAll('[data-nav-summary]').forEach((el) => {
-    el.textContent = summaries[el.dataset.navSummary] || '';
+    el.innerHTML = summaries[el.dataset.navSummary] || '';
   });
 }
 
