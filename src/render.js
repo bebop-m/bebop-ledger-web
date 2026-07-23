@@ -484,7 +484,7 @@ function renderDividendMetricGrid(model) {
   const stackWidth = (value) => (m.projectedCny > 0 ? Math.max(0, safeNumber(value, 0) / m.projectedCny * 100) : 0).toFixed(2);
   refs.dividendMetricGrid.innerHTML = `
     <div class="dividend-ledger-hero">
-      <span class="dm-label">预计全年</span>
+      <span class="dm-label">预计全年${m.projectedYoy !== null && Number.isFinite(Number(m.projectedYoy)) ? `<em class="dm-yoy">${formatYoyBadge(m.projectedYoy)}</em>` : ''}</span>
       <strong class="dm-value is-projected">${escapeHtml(formatDisplayMoney(m.projectedCny, 'CNY'))}</strong>
       <div class="dividend-ledger-stack" role="img" aria-label="构成：已到账 ${receivedProgress}%，在途与预估待入账">
         <i class="is-received" style="width:${stackWidth(m.receivedCny)}%"></i><i class="is-pipeline" style="width:${stackWidth(pipelineCny)}%"></i><i class="is-forecast" style="width:${stackWidth(m.forecastCny)}%"></i>

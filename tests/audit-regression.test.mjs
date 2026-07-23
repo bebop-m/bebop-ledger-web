@@ -20,8 +20,8 @@ const {
   ignoreDividendLedgerEntry
 } = stateModule;
 const {
-  computeHoldings, computeIncomeSummary, computeTradeSummary, getEffectiveHoldingQuantityAtDate,
-  normalizeEconomicDividendEntries, validateTradeInventory
+  computeHoldings, computeIncomeSummary, computeTradeSummary, computeDividendCalendar,
+  getEffectiveHoldingQuantityAtDate, normalizeEconomicDividendEntries, validateTradeInventory
 } = computeModule;
 const { settleRevenueData, archiveCompletedYears } = revenueModule;
 const { roundMoney, roundTo, formatDateLabel } = utilsModule;
@@ -260,6 +260,38 @@ test('trade chronology rejects oversell and unknown opening cost is never report
   assert.equal(position.realizedPnlComplete, false);
   assert.equal(position.realizedPnlCny, 0);
   assert.equal(getEffectiveHoldingQuantityAtDate('TEST.HK', '2026-07-01'), 5);
+});
+
+test('calendar YoY falls back to the manual baseline year when the ledger predates bookkeeping', () => {
+  /* 账本从 2026 年才开始记录，2025 只有收益页手工回填的基准（如 300000）。
+     台账里不存在 2025 年已确认股息时，日历同比应改用该基准，而不是显示「上年无数据」。 */
+  applyBase({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 10, bucket: 'income' }],
+    quotes: { 'TEST.HK': { name: 'Test', price: 10, currency: 'HKD', dividends: [] } },
+    dividendLedger: [{
+      id: 'recv', sourceId: 'TEST.HK|2026-05-01|1|HKD', symbol: 'TEST.HK', exDate: '2026-05-01',
+      payDate: '2026-05-10', receivedDate: '2026-05-10', amountPerShare: 1, currency: 'HKD',
+      shares: 10, sharesSource: 'manual', fxRate: 1, taxRate: 0, grossCny: 10, netCny: 330,
+      bucket: 'income', confirmed: true
+    }],
+    yearlyManual: [{ year: 2025, dividendCny: 300, yearEndNetCny: 10000 }]
+  });
+  const metrics = computeDividendCalendar('2026-07-23', 'all').metrics;
+  assert.equal(metrics.lastYearTotalCny, 300, '回退到 2025 手工回填基准');
+  assert.equal(metrics.projectedYoy, (metrics.projectedCny - 300) / 300);
+  // 手工基准是全仓口径，分仓筛选下不得借用，否则口径错配。
+  const filtered = computeDividendCalendar('2026-07-23', 'income').metrics;
+  assert.equal(filtered.lastYearTotalCny, 0);
+  assert.equal(filtered.projectedYoy, null);
+  // 台账里真有上年已确认记录时，仍以台账优先，不用基准。
+  state.dividendLedger.push({
+    id: 'ly', sourceId: 'TEST.HK|2025-06-01|1|HKD', symbol: 'TEST.HK', exDate: '2025-06-01',
+    payDate: '2025-06-10', receivedDate: '2025-06-10', amountPerShare: 1, currency: 'HKD',
+    shares: 10, sharesSource: 'manual', fxRate: 1, taxRate: 0, grossCny: 10, netCny: 88,
+    bucket: 'income', confirmed: true
+  });
+  invalidateComputeCache();
+  assert.equal(computeDividendCalendar('2026-07-23', 'all').metrics.lastYearTotalCny, 88);
 });
 
 test('unrealized pnl covers only cost-basis shares; baseline shares never masquerade as profit', () => {

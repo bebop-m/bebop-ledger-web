@@ -8779,6 +8779,11 @@ body:not([data-active-page="home"]) .holding-card .dividend-status-value { color
 .dividend-yoy-number.is-up { color: var(--ledger-gain); }
 .dividend-yoy-number.is-down { color: var(--ledger-loss); }
 
+/* 「预计全年」标签行右侧的同比徽章：基准来自上年台账或手工回填。 */
+.dividend-ledger-hero .dm-label { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.dividend-ledger-hero .dm-yoy { font-style: normal; }
+.dividend-ledger-hero .dm-yoy .dividend-yoy-text { font-size: 9.5px; }
+
 /* 预计全年的构成分段条：已到账（实色）→ 在途（半调）→ 预估（点线灰）。 */
 .dividend-ledger-stack { display: flex; height: 6px; margin-top: 14px; border-radius: 1px; overflow: hidden; background: var(--ledger-line); }
 .dividend-ledger-stack i { display: block; height: 100%; }

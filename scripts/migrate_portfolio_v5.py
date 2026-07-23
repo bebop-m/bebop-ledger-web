@@ -106,9 +106,11 @@ def migrate_snapshot(payload, today=None):
                 next_entry["grossCny"] = gross
                 next_entry["netCny"] = settlement.round_money(gross * (1 - context["taxRate"]))
             else:
-                next_entry["confidence"] = "unverifiedHistorical"
-                next_entry["excludedFromTotals"] = True
+                # 记账起点之前、又无任何持仓锚点的自动条目：这个账本从 2026 年才开始
+                # 记录投资，倒推出来的早年股息不是账，直接删除。新结算逻辑不会再生成，
+                # 无需墓碑。用户确认过的条目在上方 is_auto_historical 判定中已被排除。
                 flagged += 1
+                continue
         normalized_ledger.append(next_entry)
 
     migrated["dividendLedger"] = settlement.normalize_economic_entries(normalized_ledger, migrated.get("rates"))
@@ -121,7 +123,7 @@ def migrate_snapshot(payload, today=None):
         "changed": migrated != raw,
         "holdingsCollapsed": holdings_removed,
         "dividendDuplicatesRemoved": duplicates_removed,
-        "unverifiedHistoricalFlagged": flagged,
+        "unverifiedHistoricalRemoved": flagged,
         "taxRatesCapped": tax_capped,
         "duplicateDailySnapshotsRemoved": snapshots_removed,
         "unsafeYearlyBackfillsRemoved": len(raw_backfills),

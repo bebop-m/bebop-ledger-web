@@ -654,15 +654,27 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
   const upcomingCny = dueCny + pendingCny + announcedCny + forecastCny;
   const committedCny = receivedCny + dueCny + pendingCny + announcedCny;
   const projectedCny = receivedCny + upcomingCny;
-  // 同比：今年「预计全年」对比上一年实际到账总额（同口径筛选）。
+  // 同比：今年「预计全年」对比上一年实际到账总额（同口径筛选），只认已确认。
   const lastYear = year - 1;
-  const lastYearTotalCny = roundMoney(normalizedLedger.reduce((sum, entry) => {
+  let lastYearTotalCny = roundMoney(normalizedLedger.reduce((sum, entry) => {
     if (!entry || entry.confirmed !== true) return sum;
     const payYear = getIncomeYear(getLedgerCalendarDate(entry).date || (entry && entry.exDate));
     if (payYear !== lastYear) return sum;
     if (!matchesDividendFilter({ bucket: entry.bucket === 'income' ? 'income' : 'core' }, filterKey)) return sum;
     return sum + getLedgerNetCny(entry);
   }, 0));
+  /* 上一年早于记账起点时台账没有已确认记录（本账本从 2026 年才开始记录），
+     回退到收益页同一基准：用户手工回填 > 年度归档。这两个都是全仓口径，
+     只在「全部」筛选下使用，避免与核心仓/打工仓筛选口径错配。 */
+  if (lastYearTotalCny <= 0 && filterKey === 'all') {
+    const manualBaseline = state.yearlyManual.find((entry) => entry && entry.year === lastYear);
+    const archiveBaseline = state.yearlyArchives.find((entry) => entry && entry.year === lastYear);
+    const baselineCny = manualBaseline && manualBaseline.dividendCny !== null && manualBaseline.dividendCny !== undefined
+      ? manualBaseline.dividendCny
+      : (archiveBaseline && archiveBaseline.dividendCny !== null && archiveBaseline.dividendCny !== undefined
+        ? archiveBaseline.dividendCny : null);
+    if (baselineCny !== null && baselineCny > 0) lastYearTotalCny = roundMoney(baselineCny);
+  }
   const projectedYoy = lastYearTotalCny > 0 ? (projectedCny - lastYearTotalCny) / lastYearTotalCny : null;
   const currentMonth = todayParts ? todayParts.month : new Date().getMonth() + 1;
   return {
