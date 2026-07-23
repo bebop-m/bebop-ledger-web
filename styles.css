@@ -8779,6 +8779,25 @@ body:not([data-active-page="home"]) .holding-card .dividend-status-value { color
 .dividend-yoy-number.is-up { color: var(--ledger-gain); }
 .dividend-yoy-number.is-down { color: var(--ledger-loss); }
 
+/* 预计全年的构成分段条：已到账（实色）→ 在途（半调）→ 预估（点线灰）。 */
+.dividend-ledger-stack { display: flex; height: 6px; margin-top: 14px; border-radius: 1px; overflow: hidden; background: var(--ledger-line); }
+.dividend-ledger-stack i { display: block; height: 100%; }
+.dividend-ledger-stack i.is-received { background: var(--ledger-iris); }
+.dividend-ledger-stack i.is-pipeline { background: rgba(105, 88, 232, 0.38); }
+.dividend-ledger-stack i.is-forecast { background: repeating-linear-gradient(135deg, rgba(105, 88, 232, 0.16) 0 3px, transparent 3px 6px); }
+
+.dividend-ledger-legend { margin-top: 10px; border-top: 1px solid var(--ledger-line-strong); }
+.dll-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--ledger-line); }
+.dll-row:last-child { border-bottom: 0; padding-bottom: 2px; }
+.dll-key { display: inline-flex; align-items: center; gap: 6px; color: var(--ledger-ink); font-size: 11px; font-weight: 640; letter-spacing: 0.02em; white-space: nowrap; }
+.dll-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.dll-dot.is-received { background: var(--ledger-iris); }
+.dll-dot.is-pipeline { background: rgba(105, 88, 232, 0.38); }
+.dll-dot.is-forecast { background: transparent; border: 1.5px solid rgba(105, 88, 232, 0.35); }
+.dll-row small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ledger-muted); font-size: 9.5px; }
+.dll-row b { color: var(--ledger-ink); font-family: var(--font-data); font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dll-row:first-child b { color: var(--ledger-iris); }
+
 .dividend-ledger-rule { position: relative; height: 18px; margin-top: 14px; border-top: 2px solid rgba(105, 88, 232, 0.2); }
 .dividend-ledger-rule i { position: absolute; top: -2px; left: 0; height: 2px; background: var(--ledger-iris); }
 .dividend-ledger-rule i::after { content: ""; position: absolute; top: -3px; right: -4px; width: 8px; height: 8px; border-radius: 50%; background: var(--ledger-iris); }

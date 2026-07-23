@@ -161,6 +161,7 @@ function renderHomeMetrics(calendarModel, summary, incomeModel) {
   const annual = getAnnualDividendOverview(calendarModel, summary);
   const annualProjected = annual.projectedCny;
   const annualRatio = annual.receivedRatio;
+  const annualYield = annual.annualYield;
   const nextDividend = getNextHomeDividend(calendarModel);
   const nextDate = getHomeDividendDateParts(nextDividend);
   const nextReport = getUpcomingReportEvents()[0] || null;
@@ -183,7 +184,7 @@ function renderHomeMetrics(calendarModel, summary, incomeModel) {
     <button class="home-cashflow" type="button" data-page-nav="dividends" aria-label="打开本年股息">
       <div class="home-ledger-head">
         <span class="home-ledger-label">本年预计股息</span>
-        <span class="home-ledger-period">${calendarModel.year} · 已承诺 ${escapeHtml(formatDisplayMoney(calendarModel.metrics.committedCny, 'CNY'))} · 模型 ${escapeHtml(formatDisplayMoney(calendarModel.metrics.forecastCny, 'CNY'))}</span>
+        <span class="home-ledger-period">${calendarModel.year} · 年度股息率 ${escapeHtml(formatPercent(annualYield))}</span>
       </div>
       <strong class="home-cashflow-value">${formatLedgerMoney(annualProjected, 'CNY')}</strong>
       <div class="home-cashflow-progress" aria-label="本年股息到账进度 ${Math.round(annualRatio * 100)}%">
@@ -476,16 +477,24 @@ function renderDividendMetricGrid(model) {
     const tone = item.month === model.currentMonth ? ' is-current' : item.phase === 'past' ? ' is-past' : '';
     return `<span class="${tone.trim()}" title="${item.month} 月 ${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}"><i style="height:${height.toFixed(1)}px"></i><small>${item.month}</small></span>`;
   }).join('');
+  /* 三个互斥的桶，相加恒等于「预计全年」：
+     已到账（钱已入账）→ 在途（已公告/待核对，等着到账）→ 预估（按往年节奏推算）。
+     旧版「已确认 ⊂ 已承诺」是包含关系，读者要做减法才知道还差多少，改为互斥分段。 */
+  const pipelineCny = Math.max(0, m.committedCny - m.receivedCny);
+  const stackWidth = (value) => (m.projectedCny > 0 ? Math.max(0, safeNumber(value, 0) / m.projectedCny * 100) : 0).toFixed(2);
   refs.dividendMetricGrid.innerHTML = `
     <div class="dividend-ledger-hero">
-      <span class="dm-label">全年预计（含模型）</span>
+      <span class="dm-label">预计全年</span>
       <strong class="dm-value is-projected">${escapeHtml(formatDisplayMoney(m.projectedCny, 'CNY'))}</strong>
-      <div class="dividend-ledger-rule" aria-label="全年股息到账进度 ${receivedProgress}%"><i style="width:${receivedProgress}%"></i></div>
-      <div class="dividend-ledger-split">
-        <span>已确认 ${escapeHtml(formatDisplayMoney(m.receivedCny, 'CNY'))} · 已承诺 ${escapeHtml(formatDisplayMoney(m.committedCny, 'CNY'))}</span>
-        <span>模型预测 ${escapeHtml(formatDisplayMoney(m.forecastCny, 'CNY'))}</span>
+      <div class="dividend-ledger-stack" role="img" aria-label="构成：已到账 ${receivedProgress}%，在途与预估待入账">
+        <i class="is-received" style="width:${stackWidth(m.receivedCny)}%"></i><i class="is-pipeline" style="width:${stackWidth(pipelineCny)}%"></i><i class="is-forecast" style="width:${stackWidth(m.forecastCny)}%"></i>
       </div>
-      ${model.excludedHistoricalEstimateCount > 0 ? `<small class="dm-sub">${model.excludedHistoricalEstimateCount} 笔缺少历史持仓锚点，未计入</small>` : ''}
+      <div class="dividend-ledger-legend">
+        <div class="dll-row"><span class="dll-key"><i class="dll-dot is-received"></i>已到账</span><small>钱已入账</small><b>${escapeHtml(formatDisplayMoney(m.receivedCny, 'CNY'))}</b></div>
+        <div class="dll-row"><span class="dll-key"><i class="dll-dot is-pipeline"></i>在途</span><small>已公告 · 等待到账</small><b>${escapeHtml(formatDisplayMoney(pipelineCny, 'CNY'))}</b></div>
+        <div class="dll-row"><span class="dll-key"><i class="dll-dot is-forecast"></i>预估</span><small>按往年节奏推算</small><b>${escapeHtml(formatDisplayMoney(m.forecastCny, 'CNY'))}</b></div>
+      </div>
+      ${model.excludedHistoricalEstimateCount > 0 ? `<small class="dm-sub">另有 ${model.excludedHistoricalEstimateCount} 笔早年股息缺少当年持仓记录，仅存档、不计入统计</small>` : ''}
     </div>
     <div class="dividend-year-chart" role="img" aria-label="全年各月股息柱状图">
       <div class="dividend-year-chart-head"><span>月度股息</span><small>1—12 月</small></div>
