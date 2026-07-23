@@ -12,7 +12,19 @@ export function getStaleDays() { return _staleDays; }
 /* ── Core Utilities ── */
 export function roundTo(value, digits = 6) {
   const numeric = Number(value);
-  return Number.isFinite(numeric) ? Number(numeric.toFixed(digits)) : 0;
+  if (!Number.isFinite(numeric)) return 0;
+  const places = Math.max(0, Math.floor(safeNumber(digits, 0)));
+  const [coefficient, exponent = '0'] = Math.abs(numeric).toString().split('e');
+  const shifted = Number(`${coefficient}e${Number(exponent) + places}`);
+  if (!Number.isFinite(shifted)) return numeric;
+  const integer = Math.round(shifted);
+  const [roundedCoefficient, roundedExponent = '0'] = integer.toString().split('e');
+  const rounded = Number(`${roundedCoefficient}e${Number(roundedExponent) - places}`);
+  return numeric < 0 ? -rounded : rounded;
+}
+
+export function roundMoney(value) {
+  return roundTo(value, 2);
 }
 
 export function safeNumber(value, fallback = 0) {
@@ -55,12 +67,12 @@ export function formatPercent(value) {
   return `${(safeNumber(value, 0) * 100).toFixed(2)}%`;
 }
 
-export function formatDailyPnl(pnlCny, totalMarketValueCny) {
+export function formatDailyPnl(pnlCny, previousMarketValueCny) {
   const pnl = safeNumber(pnlCny, 0);
   const sign = pnl > 0 ? '+' : pnl < 0 ? '-' : '';
   const absolute = Math.abs(pnl);
   const amountStr = `${sign}\u00a5${Math.round(absolute).toLocaleString('en-US')}`;
-  const pctBase = safeNumber(totalMarketValueCny, 0) - pnl;
+  const pctBase = safeNumber(previousMarketValueCny, 0);
   const pct = pctBase > 0 ? pnl / pctBase : 0;
   const pctSign = pct > 0 ? '+' : pct < 0 ? '-' : '';
   const pctStr = `(${pctSign}${Math.abs(pct * 100).toFixed(2)}%)`;
@@ -79,12 +91,21 @@ export function formatTimestamp(isoString) {
 }
 
 export function formatDateLabel(value) {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return '';
+    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+  }
   const raw = String(value || '').trim();
   if (!raw) return '';
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-  const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) return raw;
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  const isoDate = raw.match(/^(\d{4}-\d{2}-\d{2})(?:$|[T\s])/);
+  if (isoDate) {
+    const [year, month, day] = isoDate[1].split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    const validDate = date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+    if (!validDate || (raw !== isoDate[1] && Number.isNaN(new Date(raw).getTime()))) return '';
+    return isoDate[1];
+  }
+  return '';
 }
 
 /* ── Dividend Logic ── */
@@ -323,7 +344,8 @@ export function canonicalDividendSourceId(sourceId) {
   if (parts.length !== 4) return raw;
   const amount = Number(parts[2]);
   if (!Number.isFinite(amount)) return raw;
-  return [parts[0], parts[1], roundTo(amount), parts[3]].join('|');
+  const amountKey = roundTo(amount).toFixed(6).replace(/\.?0+$/, '') || '0';
+  return [parts[0], parts[1], amountKey, parts[3]].join('|');
 }
 
 /* 删除墓碑的匹配键：只取「股票 + 除息日」，不含金额。
@@ -421,9 +443,11 @@ export function sanitizeDividendLedgerEntry(item, index = 0) {
     shares: Math.max(0, safeNumber(item.shares, 0)),
     sharesSource: typeof item.sharesSource === 'string' && item.sharesSource.trim() ? item.sharesSource.trim() : 'manual',
     fxRate: Math.max(0, safeNumber(item.fxRate, 1)),
-    taxRate: Math.max(0, safeNumber(item.taxRate, 0)),
+    taxRate: Math.min(1, Math.max(0, safeNumber(item.taxRate, 0))),
     grossCny: safeNumber(item.grossCny, 0),
     netCny: safeNumber(item.netCny, 0),
+    cashTrackedCny: item.cashTrackedCny === null || item.cashTrackedCny === undefined
+      ? null : roundMoney(item.cashTrackedCny),
     bucket: item.bucket === 'income' ? 'income' : 'core',
     receiptStatus,
     confidence,
@@ -448,7 +472,7 @@ export function sanitizeDailySnapshotEntry(item) {
           symbol: symbol || String(holding.symbol || '').trim(),
           shares: Math.max(0, safeNumber(holding.shares != null ? holding.shares : holding.quantity, 0)),
           bucket: holding.bucket === 'income' ? 'income' : 'core',
-          taxRate: Math.max(0, safeNumber(holding.taxRate, 0))
+          taxRate: Math.min(1, Math.max(0, safeNumber(holding.taxRate, 0)))
         };
       }).filter(Boolean)
     : [];
@@ -463,6 +487,8 @@ export function sanitizeDailySnapshotEntry(item) {
     netCny: safeNumber(item.netCny, 0),
     totalMarketValueCny: safeNumber(item.totalMarketValueCny, 0),
     liabilityCny: Math.max(0, safeNumber(item.liabilityCny, 0)),
+    cashCny: item.cashCny === null || item.cashCny === undefined ? null : roundMoney(item.cashCny),
+    cashModelActive: item.cashModelActive === true,
     holdings
   };
 }
@@ -484,6 +510,8 @@ export function sanitizeCashFlowEntry(item, index = 0) {
     date,
     amountCny: Math.abs(rawAmountCny),
     type,
+    cashTrackedCny: item.cashTrackedCny === null || item.cashTrackedCny === undefined
+      ? null : roundMoney(item.cashTrackedCny),
     note: typeof item.note === 'string' ? item.note : ''
   };
 }
@@ -509,13 +537,15 @@ export function sanitizeTradeEntry(item, index = 0) {
     currency: normalizeCurrencyCode(item.currency, resolveQuoteCurrency({}, symbol)),
     fxRate: Math.max(0, roundTo(safeNumber(item.fxRate, 1), 6)),
     feeCny: Math.max(0, roundTo(safeNumber(item.feeCny, 0), 2)),
+    cashTrackedCny: item.cashTrackedCny === null || item.cashTrackedCny === undefined
+      ? null : roundMoney(item.cashTrackedCny),
     bucket: item.bucket === 'income' ? 'income' : 'core',
     note: typeof item.note === 'string' ? item.note : ''
   };
 }
 
 /* 年度持仓快照：每年一条，记录该年（年末或最近结算日）的逐只持仓。
-   当年条目随结算持续覆盖，跨年后自然冻结为年末状态；backfill 条目由历史日快照补出（价格按当前价估算）。 */
+   当年条目随结算持续覆盖，跨年后自然冻结；旧版按当前价格倒填的 backfill 条目会在迁移时移除。 */
 export function sanitizeYearlyHoldingsEntry(item) {
   if (!item || typeof item !== 'object') return null;
   const year = Math.floor(safeNumber(item.year, 0));
@@ -560,7 +590,7 @@ export function sanitizeYearlyManualEntry(item) {
     year,
     dividendCny: sanitizeNullableNumber(item.dividendCny, { nonNegative: true }),
     dividendYieldRate: sanitizeNullableNumber(item.dividendYieldRate, { nonNegative: true }),
-    yearEndNetCny: sanitizeNullableNumber(item.yearEndNetCny, { nonNegative: true }),
+    yearEndNetCny: sanitizeNullableNumber(item.yearEndNetCny),
     netInflowCny: sanitizeNullableNumber(item.netInflowCny),
     capitalReturnCny: sanitizeNullableNumber(item.capitalReturnCny),
     capitalReturnRate: sanitizeNullableNumber(item.capitalReturnRate),
@@ -572,15 +602,12 @@ export function sanitizeYearlyArchiveEntry(item) {
   if (!item || typeof item !== 'object') return null;
   const year = Math.floor(safeNumber(item.year, 0));
   if (year <= 0) return null;
-  const archivedNumber = (value, opts = {}) => {
-    const numeric = sanitizeNullableNumber(value, opts);
-    return numeric === 0 ? null : numeric;
-  };
+  const archivedNumber = (value, opts = {}) => sanitizeNullableNumber(value, opts);
   return {
     year,
     dividendCny: archivedNumber(item.dividendCny, { nonNegative: true }),
     dividendYieldRate: archivedNumber(item.dividendYieldRate, { nonNegative: true }),
-    yearEndNetCny: archivedNumber(item.yearEndNetCny, { nonNegative: true }),
+    yearEndNetCny: archivedNumber(item.yearEndNetCny),
     netInflowCny: archivedNumber(item.netInflowCny),
     capitalReturnCny: archivedNumber(item.capitalReturnCny),
     capitalReturnRate: archivedNumber(item.capitalReturnRate),
@@ -608,18 +635,22 @@ export function sanitizeHolding(item, index, quoteMap = {}) {
   return {
     localId: Math.max(1, Math.floor(safeNumber(item && item.localId, index + 1))),
     symbol,
+    accountType: item && typeof item.accountType === 'string' && item.accountType.trim()
+      ? item.accountType.trim() : 'default',
     quantity: Math.max(0, safeNumber(item && item.quantity != null ? item.quantity : item && item.shares, 0)),
     bucket: item && item.bucket === 'income' ? 'income' : 'core',
     taxRateOverride: item && item.taxRateOverride != null ? String(item.taxRateOverride) : item && item.taxRate != null ? String(item.taxRate) : '',
     dividendPerShareTtmOverride: nextOverride,
-    dividendPerShareTtmOverrideTouched: nextOverride !== ''
+    dividendPerShareTtmOverrideTouched: nextOverride !== '',
+    createdAt: item && typeof item.createdAt === 'string' ? item.createdAt : '',
+    updatedAt: item && typeof item.updatedAt === 'string' ? item.updatedAt : ''
   };
 }
 
 export function parsePercentOverride(value) {
   if (value === '' || value === null || value === undefined) return null;
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.max(0, parsed) : null;
+  return Number.isFinite(parsed) ? Math.min(100, Math.max(0, parsed)) : null;
 }
 
 export function resolveManualDividendPerShareOverride(value, isExplicit = false) {

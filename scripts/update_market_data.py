@@ -371,12 +371,27 @@ def date_distance_days(first, second):
     return abs((first_dt.date() - second_dt.date()).days)
 
 
-def same_dividend_event(left, right):
+# 金额比对容差：同币种按原币 0.5%；跨币种要经过汇率折算，放宽到 1.5% 吸收汇率漂移；
+# 「不同数据源 + 同币种 + 同一除息日」再放宽到 3.5%——REIT 分派等场景两源的申报值
+# 常差几个百分点（如领展 1.5959 vs 1.550903），而同日两笔金额只差 3% 的真实派息不存在。
+SAME_CCY_AMOUNT_TOL = 0.005
+CROSS_CCY_AMOUNT_TOL = 0.015
+CROSS_SOURCE_AMOUNT_TOL = 0.035
+
+
+def dividend_amount_cny(event, rates):
+    amount = safe_float((event or {}).get('amountPerShare'), 0.0)
+    currency = normalize_currency_code((event or {}).get('currency'), 'CNY')
+    fx = safe_float((rates or DEFAULT_RATES).get(currency), 0.0)
+    if currency == 'CNY':
+        fx = 1.0
+    return amount * fx if fx > 0 else 0.0
+
+
+def same_dividend_event(left, right, rates=None):
     if not left or not right:
         return False
-    left_currency = normalize_currency_code(left.get('currency'), '')
-    right_currency = normalize_currency_code(right.get('currency'), '')
-    if left_currency and right_currency and left_currency != right_currency:
+    if date_distance_days(left.get('exDate'), right.get('exDate')) > 1:
         return False
 
     left_amount = safe_float(left.get('amountPerShare'), 0.0)
@@ -384,18 +399,32 @@ def same_dividend_event(left, right):
     if left_amount <= 0 or right_amount <= 0:
         return False
 
-    tolerance = max(0.005, min(left_amount, right_amount) * 0.005)
-    return date_distance_days(left.get('exDate'), right.get('exDate')) <= 1 and abs(left_amount - right_amount) <= tolerance
+    left_currency = normalize_currency_code(left.get('currency'), '')
+    right_currency = normalize_currency_code(right.get('currency'), '')
+    if not left_currency or not right_currency or left_currency == right_currency:
+        tolerance = max(0.005, min(left_amount, right_amount) * SAME_CCY_AMOUNT_TOL)
+        return abs(left_amount - right_amount) <= tolerance
+
+    # 跨币种：同一笔派息可能被两个数据源用不同币种申报（如京东 0.5 USD vs 3.92 HKD），
+    # 折算成 CNY 后比对，不能像过去那样直接判为不同事件。
+    if not rates:
+        return False
+    left_cny = dividend_amount_cny(left, rates)
+    right_cny = dividend_amount_cny(right, rates)
+    if left_cny <= 0 or right_cny <= 0:
+        return False
+    tolerance = max(0.01, min(left_cny, right_cny) * CROSS_CCY_AMOUNT_TOL)
+    return abs(left_cny - right_cny) <= tolerance
 
 
-def merge_dividend_event_lists(base_events, next_events, symbol='', currency=''):
+def merge_dividend_event_lists(base_events, next_events, symbol='', currency='', rates=None):
     merged = normalize_dividend_events(base_events, symbol, currency)
     for raw_event in next_events or []:
         event = normalize_dividend_event(raw_event, symbol, currency)
         if not event:
             continue
 
-        duplicate_index = next((index for index, item in enumerate(merged) if same_dividend_event(item, event)), -1)
+        duplicate_index = next((index for index, item in enumerate(merged) if same_dividend_event(item, event, rates)), -1)
         if duplicate_index < 0:
             merged.append(event)
             continue
@@ -403,7 +432,16 @@ def merge_dividend_event_lists(base_events, next_events, symbol='', currency='')
         existing = merged[duplicate_index]
         # 同一笔派息始终保留信息更完整的一侧。Yahoo 历史事件通常只有除息日，
         # Eastmoney / ETNet 公告则可能带真实派付日；不能在除息后把 payDate 覆盖丢失。
-        combined = {**existing, **event}
+        if normalize_currency_code(existing.get('currency'), '') == normalize_currency_code(event.get('currency'), ''):
+            combined = {**existing, **event}
+        else:
+            # 跨币种匹配：金额与币种保留基线表示（sourceId 稳定），只补公告侧的元数据。
+            combined = {**existing}
+            for key in ('payDate', 'announceDate', 'status'):
+                if not combined.get(key) and event.get(key):
+                    combined[key] = event[key]
+            if 'tentative' in event and 'tentative' not in combined:
+                combined['tentative'] = event['tentative']
         if not event.get('payDate') and existing.get('payDate'):
             combined['payDate'] = existing['payDate']
         if not event.get('announceDate') and existing.get('announceDate'):
@@ -411,6 +449,123 @@ def merge_dividend_event_lists(base_events, next_events, symbol='', currency='')
         merged[duplicate_index] = combined
 
     return sorted(merged, key=lambda item: item['exDate'])
+
+
+def _near_equal_for_collapse(left, right, rates):
+    """折叠专用等值判断：在 same_dividend_event 基础上，对「跨源同币种同除息日」放宽容差。
+
+    只用于同一 exDate 组内折叠，不用于公告事件匹配——匹配阶段维持保守容差。"""
+    if same_dividend_event(left, right, rates):
+        return True
+    left_source = str(left.get('source') or '').strip().lower()
+    right_source = str(right.get('source') or '').strip().lower()
+    if not left_source or not right_source or left_source == right_source:
+        return False
+    left_currency = normalize_currency_code(left.get('currency'), '')
+    right_currency = normalize_currency_code(right.get('currency'), '')
+    if not left_currency or left_currency != right_currency:
+        return False
+    left_amount = safe_float(left.get('amountPerShare'), 0.0)
+    right_amount = safe_float(right.get('amountPerShare'), 0.0)
+    if left_amount <= 0 or right_amount <= 0:
+        return False
+    tolerance = max(0.005, min(left_amount, right_amount) * CROSS_SOURCE_AMOUNT_TOL)
+    return abs(left_amount - right_amount) <= tolerance
+
+
+def _dividend_event_keep_score(event, quote_currency):
+    score = 0
+    if normalize_currency_code(event.get('currency'), '') == normalize_currency_code(quote_currency, ''):
+        score += 4
+    if event.get('payDate'):
+        score += 2
+    if event.get('announceDate'):
+        score += 1
+    return score
+
+
+def _merge_dropped_event_metadata(kept, dropped_list):
+    combined = {**kept}
+    for dropped in dropped_list:
+        if not combined.get('payDate') and dropped.get('payDate'):
+            combined['payDate'] = dropped['payDate']
+        if not combined.get('announceDate') and dropped.get('announceDate'):
+            combined['announceDate'] = dropped['announceDate']
+    return combined
+
+
+def _find_component_subset(candidates, target_cny, rates):
+    """在同除息日组里找「若干分量相加 ≈ 目标聚合值」的最小子集（组内事件极少，位掩码即可）。"""
+    count = min(len(candidates), 10)
+    best = None
+    for mask in range(1, 1 << count):
+        indexes = [i for i in range(count) if mask & (1 << i)]
+        if len(indexes) < 2:
+            continue
+        total = sum(dividend_amount_cny(candidates[i], rates) for i in indexes)
+        tolerance = max(0.01, min(total, target_cny) * CROSS_CCY_AMOUNT_TOL)
+        if abs(total - target_cny) > tolerance:
+            continue
+        if best is None or len(indexes) < len(best):
+            best = indexes
+    return best
+
+
+def collapse_duplicate_dividend_events(events, quote_currency, rates):
+    """折叠同一除息日的重复表示：等值跨源事件、以及「聚合 = 分量之和」的跨源组合。
+
+    同源多笔（如 etnet 的末期息 + 特别息，且无聚合项）是合法拆分，保持独立。
+    历史快照里已经存在的重复也会在这里清理，而不只是防新增。"""
+    groups = {}
+    ordered_keys = []
+    for event in events or []:
+        key = normalize_date_string(event.get('exDate'))
+        if key not in groups:
+            groups[key] = []
+            ordered_keys.append(key)
+        groups[key].append(event)
+
+    result = []
+    for key in ordered_keys:
+        group = groups[key]
+        if len(group) < 2:
+            result.extend(group)
+            continue
+
+        # 1) 等值折叠：金额（折 CNY）几乎相同的表示只留一条，优先报价币种、带 payDate 的一条。
+        unique = []
+        for event in group:
+            match_index = next(
+                (i for i, kept in enumerate(unique) if _near_equal_for_collapse(kept, event, rates)), -1)
+            if match_index < 0:
+                unique.append(event)
+                continue
+            kept = unique[match_index]
+            if _dividend_event_keep_score(event, quote_currency) > _dividend_event_keep_score(kept, quote_currency):
+                unique[match_index] = _merge_dropped_event_metadata(event, [kept])
+            else:
+                unique[match_index] = _merge_dropped_event_metadata(kept, [event])
+
+        # 2) 聚合折叠：某条 ≈ 另一来源若干条之和 → 留聚合，丢分量（补齐 payDate 等元数据）。
+        pending = sorted(unique, key=lambda item: dividend_amount_cny(item, rates), reverse=True)
+        while pending:
+            aggregate = pending.pop(0)
+            aggregate_source = str(aggregate.get('source') or '').strip().lower()
+            subset = _find_component_subset(pending, dividend_amount_cny(aggregate, rates), rates)
+            cross_source = subset is not None and all(
+                str(pending[i].get('source') or '').strip().lower()
+                and str(pending[i].get('source') or '').strip().lower() != aggregate_source
+                for i in subset
+            )
+            if not subset or not cross_source:
+                result.append(aggregate)
+                continue
+            dropped = [pending[i] for i in subset]
+            result.append(_merge_dropped_event_metadata(aggregate, dropped))
+            for i in sorted(subset, reverse=True):
+                pending.pop(i)
+
+    return sorted(result, key=lambda item: item['exDate'])
 
 
 def build_dividend_events_from_series(series, currency):
@@ -828,7 +983,7 @@ def get_previous_future_announced_events(previous_quote, symbol, currency, today
     ]
 
 
-def merge_announced_dividend_snapshots(quotes, previous_quotes, announced_events, fetched_symbols, stale_days):
+def merge_announced_dividend_snapshots(quotes, previous_quotes, announced_events, fetched_symbols, stale_days, rates=None):
     today_label = local_today_label()
     history_cutoff = (datetime.now(LOCAL_TZ) - timedelta(days=365 * 5 + 10)).date().isoformat()
     merged = {}
@@ -855,8 +1010,9 @@ def merge_announced_dividend_snapshots(quotes, previous_quotes, announced_events
                 today_label
             )
 
+        merged_events = merge_dividend_event_lists(base_events, next_announced, symbol, quote_currency, rates)
         normalized_quote['dividends'] = [
-            event for event in merge_dividend_event_lists(base_events, next_announced, symbol, quote_currency)
+            event for event in collapse_duplicate_dividend_events(merged_events, quote_currency, rates)
             if normalize_date_string(event.get('exDate')) >= history_cutoff
         ]
         merged[symbol] = normalize_quote_entry(symbol, normalized_quote, stale_days)
@@ -1399,7 +1555,8 @@ def main():
         previous_quotes,
         announced_events,
         fetched_announcement_symbols,
-        config['staleDays']
+        config['staleDays'],
+        rates
     )
 
     payload = {

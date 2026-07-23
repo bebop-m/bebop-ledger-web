@@ -7820,65 +7820,19 @@ body[data-active-page="home"] .home-ledger-period {
   font-variant-numeric: tabular-nums;
 }
 
-/* 本年收益：单行，标签左 / 金额+百分比右。金额与百分比必须基线对齐。 */
-body[data-active-page="home"] .home-return {
-  width: 100%;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 0;
-  border: 0;
-  border-bottom: 1px solid var(--home-line);
-  background: transparent;
-  text-align: left;
-}
-
-body[data-active-page="home"] .home-return-label {
-  color: var(--home-muted);
-  font-size: 9px;
-  font-weight: 730;
-  line-height: 1.2;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-body[data-active-page="home"] .home-return-figures {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-  min-width: 0;
+/* 导航入口的 HUD 摘要：每个入口后面展示该子页面的关键信息。
+   收益明细的摘要携带涨跌色金额，数字用等宽字保持与其他 meta 行一致。 */
+body[data-active-page="home"] .home-nav-summary b {
+  font-family: ui-monospace, "SFMono-Regular", "SF Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   color: var(--home-ink);
   font-variant-numeric: tabular-nums lining-nums;
 }
 
-body[data-active-page="home"] .home-return-figures strong {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
-  /* 窄屏降一档：七位数亏损 + 百分比在 320px 上刚好顶满，留点余量防换行。 */
-  font-size: clamp(20px, 6.2vw, 23px);
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.045em;
-}
-
-body[data-active-page="home"] .home-return-figures em {
-  font-size: 12.5px;
-  font-style: normal;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-
-body[data-active-page="home"] .home-return-figures.is-market-up { color: var(--ledger-gain); }
-body[data-active-page="home"] .home-return-figures.is-market-down { color: var(--ledger-loss); }
-
-body[data-active-page="home"] .home-return-empty {
-  color: var(--home-muted);
-  font-size: 12.5px;
-  font-weight: 650;
-}
-
-body[data-active-page="home"] .home-return:active { background: rgba(105, 88, 232, .06); }
+body[data-active-page="home"] .home-nav-summary b.is-market-up { color: var(--ledger-gain); }
+body[data-active-page="home"] .home-nav-summary b.is-market-down { color: var(--ledger-loss); }
 
 body[data-active-page="home"] .home-cashflow {
   padding: 17px 0 13px;
@@ -8778,6 +8732,30 @@ body:not([data-active-page="home"]) .holding-card .dividend-status-value { color
 .dividend-ledger-hero .dm-sub { display: block; min-height: 15px; margin-top: 7px; color: var(--ledger-muted); font-size: 9.5px; }
 .dividend-yoy-number.is-up { color: var(--ledger-gain); }
 .dividend-yoy-number.is-down { color: var(--ledger-loss); }
+
+/* 「预计全年」标签行右侧的同比徽章：基准来自上年台账或手工回填。 */
+.dividend-ledger-hero .dm-label { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.dividend-ledger-hero .dm-yoy { font-style: normal; }
+.dividend-ledger-hero .dm-yoy .dividend-yoy-text { font-size: 9.5px; }
+
+/* 预计全年的构成分段条：已到账（实色）→ 在途（半调）→ 预估（点线灰）。 */
+.dividend-ledger-stack { display: flex; height: 6px; margin-top: 14px; border-radius: 1px; overflow: hidden; background: var(--ledger-line); }
+.dividend-ledger-stack i { display: block; height: 100%; }
+.dividend-ledger-stack i.is-received { background: var(--ledger-iris); }
+.dividend-ledger-stack i.is-pipeline { background: rgba(105, 88, 232, 0.38); }
+.dividend-ledger-stack i.is-forecast { background: repeating-linear-gradient(135deg, rgba(105, 88, 232, 0.16) 0 3px, transparent 3px 6px); }
+
+.dividend-ledger-legend { margin-top: 10px; border-top: 1px solid var(--ledger-line-strong); }
+.dll-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--ledger-line); }
+.dll-row:last-child { border-bottom: 0; padding-bottom: 2px; }
+.dll-key { display: inline-flex; align-items: center; gap: 6px; color: var(--ledger-ink); font-size: 11px; font-weight: 640; letter-spacing: 0.02em; white-space: nowrap; }
+.dll-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.dll-dot.is-received { background: var(--ledger-iris); }
+.dll-dot.is-pipeline { background: rgba(105, 88, 232, 0.38); }
+.dll-dot.is-forecast { background: transparent; border: 1.5px solid rgba(105, 88, 232, 0.35); }
+.dll-row small { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ledger-muted); font-size: 9.5px; }
+.dll-row b { color: var(--ledger-ink); font-family: var(--font-data); font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dll-row:first-child b { color: var(--ledger-iris); }
 
 .dividend-ledger-rule { position: relative; height: 18px; margin-top: 14px; border-top: 2px solid rgba(105, 88, 232, 0.2); }
 .dividend-ledger-rule i { position: absolute; top: -2px; left: 0; height: 2px; background: var(--ledger-iris); }

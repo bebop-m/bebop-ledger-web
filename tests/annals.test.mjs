@@ -123,3 +123,24 @@ test('year annals: xirr from net value chain and fx/eps/valuation attribution', 
   assert.ok(Math.abs(att.valuationCny - 2500) < 5);
   assert.ok(Math.abs(att.epsSplitCoverage - 1) < 1e-9);
 });
+
+test('year annals uses confirmed dividend calendar dates for monthly totals and XIRR', () => {
+  applyTestSnapshot({
+    dailySnapshots: [
+      { date: '2024-12-31', netCny: 1000, totalMarketValueCny: 1000, holdings: [], rates: { CNY: 1, USD: 7.2, HKD: 0.92 } },
+      { date: '2025-12-31', netCny: 1100, totalMarketValueCny: 1100, holdings: [], rates: { CNY: 1, USD: 7.2, HKD: 0.92 } }
+    ],
+    dividendLedger: [{
+      id: 'confirmed-dividend', sourceId: '00700.HK|2025-05-20|1|HKD', symbol: '00700.HK',
+      exDate: '2025-05-20', payDate: '2025-06-18', receivedDate: '2025-06-20',
+      amountPerShare: 1, currency: 'HKD', shares: 10, fxRate: 1, taxRate: 0,
+      grossCny: 10, netCny: 10, confirmed: true, receiptStatus: 'received'
+    }]
+  });
+
+  const annals = computeYearAnnals(2025);
+  assert.ok(annals);
+  assert.equal(annals.dividendMonths[5], 10);
+  assert.equal(annals.xirrScope, '股息+资金');
+  assert.ok(Number.isFinite(annals.xirr));
+});

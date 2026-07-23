@@ -56,12 +56,13 @@ function latestPair(rows, key) {
 
 function addPositionDiagnostics(items, holding, source) {
   if (holding.bucket !== 'income') return;
-  if (holding.holdingWeight > INCOME_HARD_MAX) {
+  const assetWeight = holding.totalAssetWeight === null ? holding.holdingWeight : holding.totalAssetWeight;
+  if (assetWeight > INCOME_HARD_MAX) {
     items.push(makeItem('critical', holding, '打工仓超过 10% 上限',
-      `当前占总资产 ${percent(holding.holdingWeight)}，超过策略硬上限 ${percent(INCOME_HARD_MAX, 0)}`, source, 'income-hard-max'));
-  } else if (holding.holdingWeight > INCOME_USUAL_MAX) {
+      `当前占总资产 ${percent(assetWeight)}，超过策略硬上限 ${percent(INCOME_HARD_MAX, 0)}`, source, 'income-hard-max'));
+  } else if (assetWeight > INCOME_USUAL_MAX) {
     items.push(makeItem('attention', holding, '打工仓高于常规区间',
-      `当前占总资产 ${percent(holding.holdingWeight)}，常规仓位为 2%–5%`, source, 'income-usual-max'));
+      `当前占总资产 ${percent(assetWeight)}，常规仓位为 2%–5%`, source, 'income-usual-max'));
   }
 }
 

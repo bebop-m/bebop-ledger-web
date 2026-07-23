@@ -1,5 +1,7 @@
 import { state, refs, mutable, saveState, applySnapshot, showToast, showConfirm, buildPortfolioSnapshot, DEFAULT_QUOTES } from './state.js';
 import { safeNumber, normalizeSymbol, mergeQuotes } from './utils.js';
+import { canonicalDividendSourceId } from './utils.js';
+import { computeHoldings, normalizeEconomicDividendEntries } from './compute.js';
 import {
   GITHUB_TOKEN_STORAGE_KEY, GITHUB_PRIVATE_PORTFOLIO_CONTENTS_API, GITHUB_WATCHLIST_CONTENTS_API,
   GITHUB_MARKET_WORKFLOW_DISPATCH_API, MARKET_ENDPOINT, MARKET_DEPLOY_WAIT_TIMEOUT_MS,
@@ -10,8 +12,17 @@ import { renderSavedStateQuietly } from './render.js';
 import { refreshMarketData, decodeBase64Utf8 } from './network.js';
 
 /* ── GitHub Token ── */
-function getGithubToken() { return (localStorage.getItem(GITHUB_TOKEN_STORAGE_KEY) || '').trim(); }
-function saveGithubToken(token) { localStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, token.trim()); }
+function getGithubToken() {
+  const sessionToken = (sessionStorage.getItem(GITHUB_TOKEN_STORAGE_KEY) || '').trim();
+  if (sessionToken) return sessionToken;
+  const legacyToken = (localStorage.getItem(GITHUB_TOKEN_STORAGE_KEY) || '').trim();
+  if (legacyToken) {
+    sessionStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, legacyToken);
+    localStorage.removeItem(GITHUB_TOKEN_STORAGE_KEY);
+  }
+  return legacyToken;
+}
+function saveGithubToken(token) { sessionStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, token.trim()); }
 function promptGithubToken() { const t = window.prompt(LABELS.syncTokenPrompt); if (!t || !t.trim()) return null; saveGithubToken(t); return t.trim(); }
 function createGithubHeaders(token, extra = {}) { return { Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`, ...extra }; }
 
@@ -46,10 +57,12 @@ async function loadGithubJsonFile(apiUrl, token, opts = {}) {
   return { sha: typeof entry.sha === 'string' ? entry.sha : null, payload: JSON.parse(decodeBase64Utf8(entry.content.replace(/\n/g, ''))) };
 }
 
-async function saveGithubJsonFile(apiUrl, token, payload, message) {
-  const existing = await fetchGithubContentsEntry(apiUrl, token, { allowMissing: true });
+async function saveGithubJsonFile(apiUrl, token, payload, message, opts = {}) {
+  const hasExpectedSha = Object.prototype.hasOwnProperty.call(opts, 'expectedSha');
+  const existing = hasExpectedSha ? null : await fetchGithubContentsEntry(apiUrl, token, { allowMissing: true });
   const body = { message, content: encodeBase64Utf8(JSON.stringify(payload, null, 2)) };
-  if (existing && typeof existing.sha === 'string' && existing.sha) body.sha = existing.sha;
+  const sha = hasExpectedSha ? opts.expectedSha : existing && existing.sha;
+  if (typeof sha === 'string' && sha) body.sha = sha;
   const r = await fetch(apiUrl, { method: 'PUT', headers: createGithubHeaders(token, { 'Content-Type': 'application/json' }), body: JSON.stringify(body) });
   if (!r.ok) { const ed = await r.json().catch(() => ({})); throw buildGithubError(r.status, ed.message); }
   return await r.json().catch(() => null);
@@ -64,12 +77,110 @@ function normalizeImportedSnapshotSource(payload) {
 }
 
 function isLocalPortfolioTemplateState() {
-  return state.holdings.length > 0 && state.holdings.length === DEFAULT_HOLDINGS.length &&
-    state.holdings.every((h, i) => DEFAULT_HOLDINGS[i] && h.symbol === DEFAULT_HOLDINGS[i].symbol && h.quantity === DEFAULT_HOLDINGS[i].quantity);
+  const holdingsAreDefault = state.holdings.length > 0 && state.holdings.length === DEFAULT_HOLDINGS.length
+    && state.holdings.every((h, i) => DEFAULT_HOLDINGS[i] && h.symbol === DEFAULT_HOLDINGS[i].symbol && h.quantity === DEFAULT_HOLDINGS[i].quantity);
+  return holdingsAreDefault
+    && !state.dividendLedger.length && !state.dailySnapshots.length && !state.cashFlows.length && !state.trades.length
+    && !state.yearlyManual.length && !state.yearlyArchives.length && !state.yearlyHoldings.length
+    && !state.dividendLedgerIgnored.length && !state.dividendLedgerTombstones.length
+    && state.currentCashCny === null && safeNumber(state.liabilityCny, 0) === 0;
 }
 
-function getSyncEligibleSymbols(holdings = state.holdings) {
+function getSyncEligibleSymbols(holdings = computeHoldings().holdings) {
   return Array.from(new Set((holdings || []).filter((i) => Math.max(0, safeNumber(i && i.quantity != null ? i.quantity : i && i.shares, 0)) > 0).map((i) => normalizeSymbol(i && i.symbol)).filter(Boolean)));
+}
+
+function recordTimestamp(entry) {
+  return String(entry && (entry.updatedAt || entry.createdAt || entry.deletedAt) || '');
+}
+
+function preferRecord(remoteEntry, localEntry) {
+  if (!remoteEntry) return localEntry;
+  if (!localEntry) return remoteEntry;
+  const remoteTime = recordTimestamp(remoteEntry);
+  const localTime = recordTimestamp(localEntry);
+  if (remoteTime && localTime && remoteTime !== localTime) return remoteTime > localTime ? remoteEntry : localEntry;
+  return localEntry;
+}
+
+function mergeByKey(remoteItems, localItems, keyOf) {
+  const merged = new Map();
+  (Array.isArray(remoteItems) ? remoteItems : []).forEach((entry) => {
+    const key = keyOf(entry);
+    if (key) merged.set(key, entry);
+  });
+  (Array.isArray(localItems) ? localItems : []).forEach((entry) => {
+    const key = keyOf(entry);
+    if (key) merged.set(key, preferRecord(merged.get(key), entry));
+  });
+  return Array.from(merged.values());
+}
+
+function mergeTombstones(remoteValue, localValue) {
+  const remote = remoteValue && typeof remoteValue === 'object' ? remoteValue : {};
+  const local = localValue && typeof localValue === 'object' ? localValue : {};
+  const union = (key, normalize = (value) => String(value || '').trim()) => Array.from(new Set([
+    ...(Array.isArray(remote[key]) ? remote[key] : []),
+    ...(Array.isArray(local[key]) ? local[key] : [])
+  ].map(normalize).filter(Boolean)));
+  const holdingDeletes = mergeByKey(remote.holdingDeletes, local.holdingDeletes, (entry) => normalizeSymbol(entry && entry.symbol));
+  return {
+    cashFlowIds: union('cashFlowIds'),
+    tradeIds: union('tradeIds'),
+    holdingSymbols: union('holdingSymbols', normalizeSymbol),
+    holdingDeletes
+  };
+}
+
+export function mergePortfolioSnapshots(remotePayload, localPayload) {
+  const remote = normalizeImportedSnapshotSource(remotePayload) || {};
+  const local = normalizeImportedSnapshotSource(localPayload) || {};
+  const tombstones = mergeTombstones(remote.recordTombstones, local.recordTombstones);
+  const holdingTombstones = new Set(tombstones.holdingSymbols);
+  const holdingDeleteBySymbol = new Map(tombstones.holdingDeletes.map((entry) => [entry.symbol, entry]));
+  const cashTombstones = new Set(tombstones.cashFlowIds);
+  const tradeTombstones = new Set(tombstones.tradeIds);
+  const holdings = local.holdings && local.holdings.length === 0
+    ? []
+    : mergeByKey(remote.holdings, local.holdings, (entry) => normalizeSymbol(entry && entry.symbol))
+      .filter((entry) => {
+        const symbol = normalizeSymbol(entry && entry.symbol);
+        const deletion = holdingDeleteBySymbol.get(symbol);
+        if (deletion && deletion.deletedAt) return recordTimestamp(entry) > deletion.deletedAt;
+        if (!holdingTombstones.has(symbol)) return true;
+        return Boolean((Array.isArray(local.holdings) ? local.holdings : [])
+          .find((item) => normalizeSymbol(item && item.symbol) === symbol && recordTimestamp(item)));
+      });
+  const dividendLedger = normalizeEconomicDividendEntries(mergeByKey(
+    remote.dividendLedger,
+    local.dividendLedger,
+    (entry) => canonicalDividendSourceId(entry && entry.sourceId)
+  ));
+  return {
+    ...remote,
+    ...local,
+    type: 'portfolio-snapshot',
+    holdings,
+    dividendLedger,
+    dailySnapshots: mergeByKey(remote.dailySnapshots, local.dailySnapshots, (entry) => String(entry && entry.date || '')),
+    cashFlows: mergeByKey(remote.cashFlows, local.cashFlows, (entry) => String(entry && entry.id || ''))
+      .filter((entry) => !cashTombstones.has(String(entry && entry.id || ''))),
+    trades: mergeByKey(remote.trades, local.trades, (entry) => String(entry && entry.id || ''))
+      .filter((entry) => !tradeTombstones.has(String(entry && entry.id || ''))),
+    yearlyManual: mergeByKey(remote.yearlyManual, local.yearlyManual, (entry) => String(entry && entry.year || '')),
+    yearlyArchives: mergeByKey(remote.yearlyArchives, local.yearlyArchives, (entry) => String(entry && entry.year || '')),
+    yearlyHoldings: mergeByKey(remote.yearlyHoldings, local.yearlyHoldings, (entry) => String(entry && entry.year || '')),
+    dividendLedgerIgnored: Array.from(new Set([
+      ...(Array.isArray(remote.dividendLedgerIgnored) ? remote.dividendLedgerIgnored : []),
+      ...(Array.isArray(local.dividendLedgerIgnored) ? local.dividendLedgerIgnored : [])
+    ].map((entry) => String(entry || '').trim()).filter(Boolean))),
+    dividendLedgerTombstones: mergeByKey(
+      remote.dividendLedgerTombstones,
+      local.dividendLedgerTombstones,
+      (entry) => canonicalDividendSourceId(entry && entry.sourceId)
+    ),
+    recordTombstones: tombstones
+  };
 }
 
 /* 把 GitHub 的状态码翻成人话。注意 404：Token 看不见私有仓时 GitHub 返回的是
@@ -138,12 +249,21 @@ async function runBackgroundMarketRefreshWait(ctx = {}) {
   try {
     const snap = await waitForDeployedMarketSnapshot(ctx); if (!snap) return false;
     let attempts = 0; while (state.syncing && attempts < SYNC_WAIT_MAX_ATTEMPTS) { attempts++; await delay(SYNC_WAIT_POLL_INTERVAL_MS); }
-    await refreshMarketData({ silent: true }); flashCloudSyncButtonSuccess(); return true;
+    await refreshMarketData({ silent: true });
+    if (ctx.token) {
+      const remote = await loadGithubJsonFile(GITHUB_PRIVATE_PORTFOLIO_CONTENTS_API, ctx.token, { allowMissing: true });
+      const merged = mergePortfolioSnapshots(remote && remote.payload, buildPortfolioSnapshot());
+      importSnapshot(merged);
+      await saveGithubJsonFile(GITHUB_PRIVATE_PORTFOLIO_CONTENTS_API, ctx.token, buildPortfolioSnapshot(), 'sync: settle refreshed private portfolio', { expectedSha: remote && remote.sha });
+    }
+    flashCloudSyncButtonSuccess(); return true;
   } catch (e) { console.warn('background market refresh wait failed', e); return false; }
   finally { setCloudSyncButtonBusy(false); }
 }
 
-async function uploadPrivatePortfolioSnapshot(token) { await saveGithubJsonFile(GITHUB_PRIVATE_PORTFOLIO_CONTENTS_API, token, buildPortfolioSnapshot(), 'sync: update private portfolio snapshot'); }
+async function uploadPrivatePortfolioSnapshot(token, expectedSha) {
+  await saveGithubJsonFile(GITHUB_PRIVATE_PORTFOLIO_CONTENTS_API, token, buildPortfolioSnapshot(), 'sync: update private portfolio snapshot', { expectedSha });
+}
 
 async function dispatchMarketUpdateWorkflow(token) {
   const r = await fetch(GITHUB_MARKET_WORKFLOW_DISPATCH_API, { method: 'POST', headers: createGithubHeaders(token, { 'Content-Type': 'application/json' }), body: JSON.stringify({ ref: 'main' }) });
@@ -156,19 +276,9 @@ async function syncPublicWatchlistFromPortfolio(token) {
   const existing = Array.isArray(payload.symbols) ? payload.symbols.map((s) => normalizeSymbol(s)).filter(Boolean) : [];
   const added = getSyncEligibleSymbols().filter((s) => !existing.includes(s));
   if (!added.length) return { addedSymbols: [], workflowTriggered: false };
-  await saveGithubJsonFile(GITHUB_WATCHLIST_CONTENTS_API, token, { ...payload, symbols: existing.concat(added) }, 'sync: append symbols to public watchlist');
+  await saveGithubJsonFile(GITHUB_WATCHLIST_CONTENTS_API, token, { ...payload, symbols: existing.concat(added) }, 'sync: append symbols to public watchlist', { expectedSha: file && file.sha });
   let wt = false; try { await dispatchMarketUpdateWorkflow(token); wt = true; } catch (e) { console.warn('market update workflow dispatch failed', e); }
   return { addedSymbols: added, workflowTriggered: wt };
-}
-
-async function restoreFromCloud(token) {
-  try {
-    const file = await loadGithubJsonFile(GITHUB_PRIVATE_PORTFOLIO_CONTENTS_API, token, { allowMissing: true });
-    if (!file) return { restored: false, reason: 'missing' };
-    const src = normalizeImportedSnapshotSource(file.payload);
-    if (!src || !Array.isArray(src.holdings) || !src.holdings.length) return { restored: false, reason: 'missing' };
-    importSnapshot(src); return { restored: true };
-  } catch (e) { console.warn('private portfolio restore failed', e); return { restored: false, reason: 'error', error: e }; }
 }
 
 export async function syncPortfolioToCloud() {
@@ -178,14 +288,20 @@ export async function syncPortfolioToCloud() {
   const localIsTemplate = isLocalPortfolioTemplateState();
   let restored = false, keepBusy = false, shouldFlash = false;
   try {
-    if (localIsTemplate) { const rr = await restoreFromCloud(token); if (rr.reason === 'error') { showToast(describeSyncFailure(rr.error), { type: 'error' }); return; } if (!rr.restored) { showToast(LABELS.syncNoPrivateSnapshot, { type: 'error' }); return; } restored = true; }
-    else { await uploadPrivatePortfolioSnapshot(token); }
+    const remote = await loadGithubJsonFile(GITHUB_PRIVATE_PORTFOLIO_CONTENTS_API, token, { allowMissing: true });
+    if (localIsTemplate && !remote) { showToast(LABELS.syncNoPrivateSnapshot, { type: 'error' }); return; }
+    const remoteSource = remote ? normalizeImportedSnapshotSource(remote.payload) : null;
+    if (remote && (!remoteSource || !Array.isArray(remoteSource.holdings))) throw new Error('invalid private portfolio snapshot');
+    const merged = localIsTemplate ? remoteSource : mergePortfolioSnapshots(remoteSource, buildPortfolioSnapshot());
+    importSnapshot(merged);
+    restored = localIsTemplate;
     const baseline = state.lastUpdatedAt;
     let wlResult = { addedSymbols: [], workflowTriggered: false }, wlFailed = false;
     try { wlResult = await syncPublicWatchlistFromPortfolio(token); } catch (e) { wlFailed = true; console.warn('public watchlist sync failed', e); }
     await refreshMarketData({ silent: true });
+    await uploadPrivatePortfolioSnapshot(token, remote && remote.sha);
     showToast(buildSyncSuccessMessage({ restored, addedCount: wlResult.addedSymbols.length, workflowTriggered: wlResult.workflowTriggered, watchlistUpdateFailed: wlFailed }), { type: wlFailed ? 'error' : 'success' });
-    if (wlResult.workflowTriggered && wlResult.addedSymbols.length) { keepBusy = true; void runBackgroundMarketRefreshWait({ baselineUpdatedAt: baseline, requiredSymbols: wlResult.addedSymbols.slice() }); }
+    if (wlResult.workflowTriggered && wlResult.addedSymbols.length) { keepBusy = true; void runBackgroundMarketRefreshWait({ baselineUpdatedAt: baseline, requiredSymbols: wlResult.addedSymbols.slice(), token }); }
     else { shouldFlash = true; }
   } catch (e) { console.warn('cloud sync failed', e); showToast(describeSyncFailure(e), { type: 'error' }); }
   finally { if (!keepBusy) { setCloudSyncButtonBusy(false); if (shouldFlash) flashCloudSyncButtonSuccess(); } }

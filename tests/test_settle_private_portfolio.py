@@ -19,13 +19,14 @@ _spec.loader.exec_module(settle)
 def make_portfolio(ledger=None, ignored=None):
     return {
         "type": "portfolio-snapshot",
-        "version": 4,
+        "version": 5,
         "holdings": [{"localId": 1, "symbol": "TEST.HK", "quantity": 10, "shares": 10, "bucket": "income"}],
         "rates": {"CNY": 1, "USD": 7, "HKD": 1},
         "dividendLedger": ledger or [],
         "dailySnapshots": [],
         "cashFlows": [],
         "trades": [],
+        "positionOpeningDate": "2020-01-01",
         "yearlyManual": [],
         "yearlyArchives": [],
         "yearlyHoldings": [],
@@ -129,6 +130,92 @@ class SettleLedgerTest(unittest.TestCase):
             make_portfolio(ignored=["TEST.HK|2026-06-02|1|HKD"]), market, "2027-07-10")
         ex_dates = [e["exDate"] for e in out["dividendLedger"]]
         self.assertEqual(ex_dates, ["2027-06-02"], "删除某一年不得连带挡住以后年份")
+
+
+class AuditBoundaryTest(unittest.TestCase):
+    def test_rounding_is_symmetric_and_date_is_real(self):
+        self.assertEqual(settle.round_money(1.005), 1.01)
+        self.assertEqual(settle.round_money(-1.005), -1.01)
+        self.assertEqual(settle.round_money(10.075), 10.08)
+        self.assertEqual(settle.round_money(-10.075), -10.08)
+        self.assertEqual(settle.round_decimal(1.2345675, 6), 1.234568)
+        self.assertEqual(settle.round_decimal(-1.2345675, 6), -1.234568)
+        self.assertEqual(settle.normalize_date("2026-02-30"), "")
+        self.assertEqual(settle.normalize_date("2026-12-31T23:30:00-08:00"), "2026-12-31")
+
+    def test_aggregate_and_components_are_one_economic_event(self):
+        entries = [
+            {**make_entry("TEST.HK|2026-06-02|3|HKD"), "amountPerShare": 3, "grossCny": 30, "netCny": 30, "confirmed": False, "eventSource": "yahoo"},
+            {**make_entry("TEST.HK|2026-06-02|1|HKD"), "grossCny": 10, "netCny": 10, "confirmed": False, "eventSource": "etnet"},
+            {**make_entry("TEST.HK|2026-06-02|2|HKD"), "amountPerShare": 2, "grossCny": 20, "netCny": 20, "confirmed": False, "eventSource": "etnet"},
+        ]
+        normalized = settle.normalize_economic_entries(entries, {"HKD": 1})
+        self.assertEqual(len(normalized), 1)
+        self.assertEqual(normalized[0]["grossCny"], 30)
+
+        revised = [{**entries[0], "sourceId": "TEST.HK|2026-06-02|3.01|HKD", "grossCny": 30.1}, *entries[1:]]
+        self.assertEqual(len(settle.normalize_economic_entries(revised, {"HKD": 1})), 1)
+
+        same_source = [{**entry, "eventSource": "etnet"} for entry in entries]
+        self.assertEqual(len(settle.normalize_economic_entries(same_source, {"HKD": 1})), 3)
+
+    def test_snapshot_replays_pre_ex_trade_but_ex_date_trade_is_excluded(self):
+        portfolio = make_portfolio()
+        portfolio["dailySnapshots"] = [{
+            "date": "2026-05-31", "netCny": 90, "totalMarketValueCny": 90,
+            "rates": {"CNY": 1, "USD": 7, "HKD": 0.9},
+            "holdings": [{"symbol": "TEST.HK", "shares": 100, "bucket": "income", "taxRate": 0.2}],
+        }]
+        portfolio["trades"] = [
+            {"id": "b1", "date": "2026-06-01", "symbol": "TEST.HK", "side": "buy", "shares": 50, "price": 10, "fxRate": 0.9},
+            {"id": "b2", "date": "2026-06-02", "symbol": "TEST.HK", "side": "buy", "shares": 25, "price": 10, "fxRate": 0.9},
+        ]
+        context = settle.dividend_context(portfolio, "TEST.HK", "2026-06-02", "HKD")
+        self.assertEqual(context["shares"], 150)
+        self.assertEqual(context["fxRate"], 0.9)
+        self.assertEqual(context["taxRate"], 0.2)
+
+    def test_missing_history_does_not_backfill_from_current_position(self):
+        portfolio = make_portfolio()
+        portfolio["positionOpeningDate"] = ""
+        context = settle.dividend_context(portfolio, "TEST.HK", "2025-06-02", "HKD")
+        self.assertIsNone(context)
+
+    def test_same_day_snapshot_is_replaced_and_contains_cash_scope(self):
+        portfolio = make_portfolio()
+        portfolio["currentCashCny"] = 100
+        portfolio["currentCashAsOfDate"] = "2026-07-10"
+        out, _, _ = settle.settle_portfolio(portfolio, make_market(), "2026-07-10")
+        out["currentCashCny"] = 250
+        out2, _, _ = settle.settle_portfolio(out, make_market(), "2026-07-10")
+        rows = [item for item in out2["dailySnapshots"] if item["date"] == "2026-07-10"]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["cashCny"], 250)
+        self.assertTrue(rows[0]["cashModelActive"])
+
+    def test_manual_pay_date_is_not_overwritten(self):
+        entry = make_entry("TEST.HK|2026-06-02|1|HKD")
+        entry.update({"confirmed": False, "confidence": "snapshot", "payDate": "2026-07-09", "payDateSource": "manual"})
+        market = make_market()
+        market["quotes"]["TEST.HK"]["dividends"][0]["payDate"] = "2026-07-12"
+        out, _, _ = settle.settle_portfolio(make_portfolio([entry]), market, "2026-07-10")
+        self.assertEqual(out["dividendLedger"][0]["payDate"], "2026-07-09")
+
+    def test_cross_year_archive_uses_received_date_and_net_value_chain(self):
+        portfolio = make_portfolio([{
+            **make_entry("TEST.HK|2025-12-30|1|HKD"),
+            "exDate": "2025-12-30", "payDate": "2026-01-02", "receivedDate": "2026-01-02",
+            "confirmed": True, "grossCny": 10, "netCny": 10,
+        }])
+        portfolio["dailySnapshots"] = [
+            {"date": "2025-12-31", "netCny": 1000, "rates": {"CNY": 1, "USD": 7, "HKD": 1}, "holdings": []},
+            {"date": "2026-12-31", "netCny": 1110, "rates": {"CNY": 1, "USD": 7, "HKD": 1}, "holdings": []},
+        ]
+        changed = settle.rebuild_completed_year_archives(portfolio, "2027-01-02")
+        self.assertTrue(changed)
+        row = next(item for item in portfolio["yearlyArchives"] if item["year"] == 2026)
+        self.assertEqual(row["dividendCny"], 10)
+        self.assertEqual(row["capitalReturnCny"], 110)
 
 
 if __name__ == "__main__":

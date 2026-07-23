@@ -1,6 +1,6 @@
 import {
-  state, refs, saveState, showToast, setCurrentCashBalance, adjustCurrentCashBalance,
-  ignoreDividendLedgerEntry
+  state, refs, saveState, showToast, setCurrentCashBalance,
+  ignoreDividendLedgerEntry, addRecordTombstone, removeRecordTombstone, adjustCashForRecordChange
 } from './state.js';
 import {
   safeNumber, escapeHtml, normalizeSymbol, sanitizePerShareOverrideInput,
@@ -10,12 +10,13 @@ import {
 import { LABELS } from './constants.js';
 import { renderSavedStateQuietly, buildDividendMonthDetail, formatDisplayMoney } from './render.js';
 import {
-  inferQuote, isCashModelActive, computeHoldings, computeIncomeSummary,
-  getDividendCashImpactCny, getCashFlowCashImpactCny, getTradeCashImpactCny
+  inferQuote, computeHoldings, computeIncomeSummary,
+  getDividendCashImpactCny, getCashFlowCashImpactCny, getTradeCashImpactCny, validateTradeInventory
 } from './compute.js';
 import { getFundamentalsPickerModel } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
 import { getPortfolioDiagnostics } from './diagnostics.js';
+import { archiveCompletedYears } from './revenue.js';
 
 let _keydownHandler = null;
 
@@ -84,30 +85,6 @@ function getTodayLabel() {
 
 function getDividendCashDate(entry) {
   return formatDateLabel(entry && (entry.receivedDate || entry.payDate || entry.exDate));
-}
-
-// 删除已归档年度的股息时，同步把该年度归档里的股息总额扣掉，避免统计退回旧值。
-function reduceArchivedDividendForYear(dateLabel, netCny) {
-  const year = Math.floor(safeNumber(String(formatDateLabel(dateLabel) || '').slice(0, 4), 0));
-  if (!year || !netCny) return;
-  const index = state.yearlyArchives.findIndex((item) => item && item.year === year);
-  if (index < 0) return;
-  const archived = state.yearlyArchives[index];
-  if (archived.dividendCny === null || archived.dividendCny === undefined) return;
-  const next = Math.max(0, safeNumber(archived.dividendCny, 0) - netCny);
-  state.yearlyArchives[index] = { ...archived, dividendCny: Number(next.toFixed(2)) };
-}
-
-function getTrackedCashImpact(entry, impact, dateValue) {
-  if (!entry || !isCashModelActive()) return 0;
-  const date = formatDateLabel(dateValue);
-  return date && date > state.currentCashAsOfDate ? impact : 0;
-}
-
-function adjustCashForRecordChange(previousEntry, previousImpact, previousDate, nextEntry, nextImpact, nextDate) {
-  const oldTracked = getTrackedCashImpact(previousEntry, previousImpact, previousDate);
-  const nextTracked = getTrackedCashImpact(nextEntry, nextImpact, nextDate);
-  adjustCurrentCashBalance(nextTracked - oldTracked);
 }
 
 function createRecordId(prefix) {
@@ -210,10 +187,10 @@ function renderModal() {
       <button class="quick-add-option" type="button" data-modal-action="holding-diagnostics"><strong>持仓诊断</strong><span>查看仓位、股息与数据异常</span></button>
     </div>`;
   } else if (state.modal === 'quantity') {
-    title = LABELS.quantityTitle; note = state.modalPayload.name || '';
+    title = '基准股数'; note = `${state.modalPayload.name || ''} · 交易起点的持股，当前持股还会叠加之后的交易`;
     fields = `<input id="modalQuantityInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.quantityPlaceholder}">`;
   } else if (state.modal === 'tax') {
-    title = LABELS.taxTitle; note = state.modalPayload.name || '';
+    title = LABELS.taxTitle; note = `${state.modalPayload.name || ''} · 留空表示未知，计算时暂按 0% 估算`;
     fields = `<input id="modalTaxInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.taxPlaceholder}">`;
   } else if (state.modal === 'dividend') {
     title = LABELS.dividendPerShareTitle;
@@ -226,7 +203,9 @@ function renderModal() {
     title = '当前现金余额';
     note = '填写券商此刻的实际现金；保存不会重算历史交易，也不会改变持股数量';
     fields = `<label class="modal-field"><span>当前现金（CNY，可为负数）</span><input id="modalCurrentCashInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(state.currentCashCny === null ? '' : String(state.currentCashCny))}" placeholder="0.00"></label>
-      <p class="modal-quote-line">截至 ${escapeHtml(state.currentCashAsOfDate || getTodayLabel())} · 此后到账股息、交易和出入金会自动更新</p>`;
+      <label class="modal-field"><span>现金基准日</span><input id="modalCurrentCashDateInput" class="modal-input" type="date" value="${escapeHtml(state.currentCashAsOfDate || getTodayLabel())}"></label>
+      <label class="modal-field"><span>交易持仓起点</span><input id="modalPositionOpeningDateInput" class="modal-input" type="date" value="${escapeHtml(state.positionOpeningDate || getTodayLabel())}"></label>
+      <p class="modal-quote-line">基准日之后的新记录才调整现金；持仓股数从交易起点的基准股数开始回放</p>`;
   } else if (state.modal === 'dividendLedger') {
     const entry = getDividendLedgerEntryBySourceId(state.modalPayload && state.modalPayload.sourceId);
     const quote = entry ? inferQuote(entry.symbol) : {};
@@ -551,7 +530,6 @@ function renderYearAnnalsModal() {
   const metrics = [
     buildAnnalsMetric('股息收入', formatAnnalsMoney(row.dividendCny)),
     buildAnnalsMetric('资金收益', formatAnnalsSigned(row.capitalReturnCny), annalsReturnTone(row.capitalReturnCny)),
-    buildAnnalsMetric('合计参考', formatAnnalsSigned(row.totalReferenceCny), annalsReturnTone(row.totalReferenceCny)),
     buildAnnalsMetric(`XIRR${annals.xirrScope ? `（${annals.xirrScope}）` : ''}`, rate(annals.xirr), annalsReturnTone(annals.xirr)),
     buildAnnalsMetric('净注入', formatAnnalsSigned(row.netInflowCny)),
     buildAnnalsMetric('年末净值', formatAnnalsMoney(row.yearEndNetCny))
@@ -596,6 +574,7 @@ export function toggleDividendConfirm(sourceId) {
     nextEntry, getDividendCashImpactCny(nextEntry), getDividendCashDate(nextEntry)
   );
   state.dividendLedger[index] = nextEntry;
+  archiveCompletedYears(getTodayLabel());
   saveState();
   renderSavedStateQuietly({ animateHoldingReflow: false });
   if (state.modal === 'monthDetail') renderMonthDetailModal();
@@ -619,6 +598,7 @@ function saveDividendLedgerEdit() {
   const nextEntry = {
     ...entry,
     payDate,
+    payDateSource: payDate !== formatDateLabel(entry.payDate) ? 'manual' : entry.payDateSource,
     receivedDate,
     netCny,
     receiptStatus,
@@ -638,12 +618,15 @@ function saveDividendLedgerEdit() {
 function saveCashFlowEdit() {
   const previousId = state.modalPayload && state.modalPayload.id;
   const previousEntry = state.cashFlows.find((item) => item.id === previousId) || null;
+  const now = new Date().toISOString();
   const entry = sanitizeCashFlowEntry({
     id: previousId || createRecordId('cf'),
     date: document.getElementById('modalCashFlowDateInput').value,
     amountCny: safeNumber(document.getElementById('modalCashFlowAmountInput').value, 0),
     type: document.getElementById('modalCashFlowTypeInput').value,
-    note: document.getElementById('modalCashFlowNoteInput').value.trim()
+    note: document.getElementById('modalCashFlowNoteInput').value.trim(),
+    createdAt: previousEntry && previousEntry.createdAt || now,
+    updatedAt: now
   });
   if (!entry || entry.amountCny <= 0) { showToast('请输入有效出入金', { type: 'error' }); return false; }
   adjustCashForRecordChange(
@@ -664,6 +647,7 @@ function saveTradeEdit() {
   const selectedSide = document.querySelector('[data-trade-side][aria-pressed="true"]')?.dataset.tradeSide;
   // 币种按代码自动识别；汇率按当天行情自动换算。
   const currency = detectTradeCurrency(symbolValue);
+  const now = new Date().toISOString();
   const entry = sanitizeTradeEntry({
     id: previousId || createRecordId('tr'),
     date: document.getElementById('modalTradeDateInput').value,
@@ -675,25 +659,29 @@ function saveTradeEdit() {
     fxRate: resolveFxRate(currency, state.rates),
     feeCny: safeNumber(document.getElementById('modalTradeFeeInput').value, 0),
     bucket: document.getElementById('modalBucketInput').value,
-    note: document.getElementById('modalTradeNoteInput').value.trim()
+    note: document.getElementById('modalTradeNoteInput').value.trim(),
+    createdAt: previousEntry && previousEntry.createdAt || now,
+    updatedAt: now
   });
   if (!entry) { showToast('请输入有效交易', { type: 'error' }); return false; }
+  const proposedTrades = state.trades.filter((item) => item.id !== previousId && item.id !== entry.id).concat(entry);
+  if (!validateTradeInventory(proposedTrades).valid) { showToast('卖出股数超过该时点可用持仓，请检查交易日期与顺序', { type: 'error' }); return false; }
   adjustCashForRecordChange(
     previousEntry, getTradeCashImpactCny(previousEntry), previousEntry && previousEntry.date,
     entry, getTradeCashImpactCny(entry), entry.date
   );
   if (!state.positionOpeningDate) state.positionOpeningDate = entry.date;
-  state.trades = state.trades
-    .filter((item) => item.id !== previousId && item.id !== entry.id)
-    .concat(entry)
+  state.trades = proposedTrades
     .sort((a, b) => `${b.date}|${b.id}`.localeCompare(`${a.date}|${a.id}`));
   state.quotes = mergeQuotes(state.quotes, { [entry.symbol]: inferQuote(entry.symbol) });
   // 买入一只尚未持有的股票时，自动建一条基准股数为 0 的持仓；现金是否设置不再影响持股推算。
   if (!state.holdings.some((h) => h.symbol === entry.symbol)) {
     state.holdings = state.holdings.concat({
       localId: state.nextId, symbol: entry.symbol, quantity: 0, bucket: entry.bucket === 'income' ? 'income' : 'core',
-      taxRateOverride: '', dividendPerShareTtmOverride: '', dividendPerShareTtmOverrideTouched: false
+      taxRateOverride: '', dividendPerShareTtmOverride: '', dividendPerShareTtmOverrideTouched: false,
+      createdAt: now, updatedAt: now
     });
+    removeRecordTombstone('holding', entry.symbol);
     state.nextId += 1;
   }
   return true;
@@ -705,17 +693,25 @@ export function handleModalSave() {
   let returnMonth = 0;
   if (state.modal === 'quantity') {
     const v = Math.max(0, safeNumber(document.getElementById('modalQuantityInput').value, 0));
-    state.holdings = state.holdings.map((i) => i.localId === state.modalPayload.localId ? { ...i, quantity: v } : i);
+    state.holdings = state.holdings.map((i) => i.localId === state.modalPayload.localId ? { ...i, quantity: v, updatedAt: new Date().toISOString() } : i);
   } else if (state.modal === 'tax') {
-    const v = document.getElementById('modalTaxInput').value.trim();
-    state.holdings = state.holdings.map((i) => i.localId === state.modalPayload.localId ? { ...i, taxRateOverride: v } : i);
+    const raw = document.getElementById('modalTaxInput').value.trim();
+    const v = raw === '' ? '' : String(Math.min(100, Math.max(0, safeNumber(raw, 0))));
+    state.holdings = state.holdings.map((i) => i.localId === state.modalPayload.localId ? { ...i, taxRateOverride: v, updatedAt: new Date().toISOString() } : i);
   } else if (state.modal === 'dividend') {
     const v = sanitizePerShareOverrideInput(document.getElementById('modalDividendInput').value.trim());
-    state.holdings = state.holdings.map((i) => i.localId === state.modalPayload.localId ? { ...i, dividendPerShareTtmOverride: v, dividendPerShareTtmOverrideTouched: v !== '' } : i);
+    state.holdings = state.holdings.map((i) => i.localId === state.modalPayload.localId ? { ...i, dividendPerShareTtmOverride: v, dividendPerShareTtmOverrideTouched: v !== '', updatedAt: new Date().toISOString() } : i);
   } else if (state.modal === 'liability') {
     state.liabilityCny = Math.max(0, safeNumber(document.getElementById('modalLiabilityInput').value, 0));
   } else if (state.modal === 'openingCash') {
-    setCurrentCashBalance(safeNumber(document.getElementById('modalCurrentCashInput').value, 0), getTodayLabel());
+    const cashDate = formatDateLabel(document.getElementById('modalCurrentCashDateInput').value) || getTodayLabel();
+    const positionDate = formatDateLabel(document.getElementById('modalPositionOpeningDateInput').value);
+    const earliestTrade = state.trades.map((entry) => formatDateLabel(entry.date)).filter(Boolean).sort()[0] || '';
+    if (earliestTrade && positionDate && positionDate > earliestTrade) {
+      showToast('交易持仓起点不能晚于已有最早交易', { type: 'error' }); return;
+    }
+    state.positionOpeningDate = positionDate;
+    setCurrentCashBalance(safeNumber(document.getElementById('modalCurrentCashInput').value, 0), cashDate);
   } else if (state.modal === 'dividendLedger') {
     returnMonth = Math.floor(safeNumber(state.modalPayload && state.modalPayload.returnMonth, 0));
     if (!saveDividendLedgerEdit()) return;
@@ -739,7 +735,7 @@ export function handleModalSave() {
       year,
       dividendCny: nullable('modalManualDividendInput', { nonNegative: true }),
       dividendYieldRate: nullable('modalManualDividendRateInput', { nonNegative: true }) === null ? null : nullable('modalManualDividendRateInput', { nonNegative: true }) / 100,
-      yearEndNetCny: nullable('modalManualYearEndInput', { nonNegative: true }),
+      yearEndNetCny: nullable('modalManualYearEndInput'),
       netInflowCny: nullable('modalManualNetInflowInput'),
       capitalReturnCny: capitalRaw === '' ? null : safeNumber(capitalRaw, 0),
       capitalReturnRate: capitalRateRaw === '' ? null : safeNumber(capitalRateRaw, 0) / 100,
@@ -757,10 +753,13 @@ export function handleModalSave() {
     const bucket = document.getElementById('modalBucketInput').value === 'income' ? 'income' : 'core';
     if (!symbol) { showToast(LABELS.missingSymbol, { type: 'error' }); return; }
     if (state.holdings.some((i) => normalizeSymbol(i.symbol) === symbol)) { showToast(`${symbol} ${LABELS.duplicateHolding}`, { type: 'error' }); return; }
-    state.holdings = state.holdings.concat({ localId: state.nextId, symbol, quantity, bucket, taxRateOverride: '', dividendPerShareTtmOverride: '', dividendPerShareTtmOverrideTouched: false });
+    const now = new Date().toISOString();
+    state.holdings = state.holdings.concat({ localId: state.nextId, symbol, quantity, bucket, taxRateOverride: '', dividendPerShareTtmOverride: '', dividendPerShareTtmOverrideTouched: false, createdAt: now, updatedAt: now });
+    removeRecordTombstone('holding', symbol);
     state.quotes = mergeQuotes(state.quotes, { [symbol]: inferQuote(symbol) });
     state.nextId += 1;
   }
+  archiveCompletedYears(getTodayLabel());
   saveState();
   if (returnMonth >= 1 && returnMonth <= 12) {
     renderSavedStateQuietly({ animateHoldingReflow: false });
@@ -790,10 +789,12 @@ function renderHoldingDetailModal() {
       </section>`;
     return;
   }
-  const taxPercent = Math.max(0, safeNumber(item.taxRateOverride, 0));
+  const taxPercent = Math.min(100, Math.max(0, safeNumber(item.taxRateOverride, 0)));
   const bucketLabel = item.bucket === 'income' ? LABELS.income : LABELS.core;
   const sourceLabel = item.dividendPerShareTtmOverrideTouched === true ? '手动每股股息' : '自动行情';
   const quantity = formatHoldingQuantity(item.quantity);
+  const baselineHolding = state.holdings.find((holding) => holding.localId === localId);
+  const baselineQuantity = formatHoldingQuantity(baselineHolding && baselineHolding.quantity);
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
     <section class="modal-sheet holding-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="holdingDetailTitle">
       <header class="holding-detail-head">
@@ -806,7 +807,8 @@ function renderHoldingDetailModal() {
       <dl class="holding-detail-ledger">
         <div><dt>现价</dt><dd>${escapeHtml(state.showAmounts ? formatDisplayMoney(item.price, item.currency) : '••••')}</dd></div>
         <div><dt>持仓市值</dt><dd>${escapeHtml(formatDisplayMoney(item.marketValueCny, 'CNY'))}</dd></div>
-        <div><dt>股息税率</dt><dd>${escapeHtml(`${taxPercent}%`)}</dd></div>
+        <div><dt>交易起点基准股数</dt><dd>${escapeHtml(baselineQuantity)}</dd></div>
+        <div><dt>股息税率</dt><dd>${escapeHtml(item.taxRateKnown ? `${taxPercent}%` : '未设置（按 0% 估算）')}</dd></div>
         <div><dt>每股 TTM 股息</dt><dd>${escapeHtml(state.showAmounts ? formatDisplayMoney(item.effectiveDividendPerShareTtm, item.currency) : '••••')}</dd></div>
         <div><dt>税前年化股息</dt><dd>${escapeHtml(formatDisplayMoney(item.grossAnnualDividendCny, 'CNY'))}</dd></div>
         <div><dt>税后年化股息</dt><dd>${escapeHtml(formatDisplayMoney(item.netAnnualDividendCny, 'CNY'))}</dd></div>
@@ -826,6 +828,8 @@ export function handleModalDelete() {
       null, 0, ''
     );
     state.cashFlows = state.cashFlows.filter((item) => item.id !== id);
+    addRecordTombstone('cashFlow', id);
+    archiveCompletedYears(getTodayLabel());
     saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
     return;
   }
@@ -838,6 +842,8 @@ export function handleModalDelete() {
       null, 0, ''
     );
     state.trades = state.trades.filter((item) => item.id !== id);
+    addRecordTombstone('trade', id);
+    archiveCompletedYears(getTodayLabel());
     saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
     return;
   }
@@ -852,9 +858,7 @@ export function handleModalDelete() {
       null, 0, ''
     );
     ignoreDividendLedgerEntry(sourceId);
-    /* 已归档年度的股息总额是当年冻结下来的自动口径，不会随台账变化。
-       删掉该年度的记录后若不同步扣减，年度统计会在台账清空时退回旧的 archive 值。 */
-    reduceArchivedDividendForYear(entry.exDate, safeNumber(entry.netCny, 0));
+    archiveCompletedYears(getTodayLabel());
     saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
     showToast('已删除这笔股息，不会再自动生成', { type: 'success' });
     return;

@@ -1,9 +1,9 @@
 import { state, DEFAULT_QUOTES, invalidateComputeCache, getComputeCache, setComputeCache } from './state.js';
 import {
-  safeNumber, inferQuoteFromMap, resolveQuoteCurrency, resolveFxRate,
+  safeNumber, roundMoney, inferQuoteFromMap, resolveQuoteCurrency, resolveFxRate,
   parsePercentOverride, resolveManualDividendPerShareOverride,
   normalizeDividendSource, normalizeDividendStatus, formatDateLabel,
-  buildDividendSourceId, resolveEffectivePayDate
+  buildDividendSourceId, canonicalDividendSourceId, resolveEffectivePayDate
 } from './utils.js';
 import { COMPANY_COLORS, BUCKET_COLORS, LABELS, DIVIDEND_FILTER_KEYS, INCOME_START_YEAR } from './constants.js';
 
@@ -24,16 +24,24 @@ function isOnOrAfterPositionOpening(dateValue) {
 }
 
 // 每只股票在期初日之后的买卖净股数（买 +、卖 −）。
-function getNetTradeSharesBySymbol() {
+function getNetTradeSharesBySymbol(limitDate = '') {
   const map = new Map();
   if (!state.positionOpeningDate) return map;
   state.trades.forEach((trade) => {
     if (!trade || !isOnOrAfterPositionOpening(trade.date)) return;
+    if (limitDate && formatDateLabel(trade.date) > limitDate) return;
     const shares = Math.max(0, safeNumber(trade.shares, 0));
     const delta = trade.side === 'sell' ? -shares : shares;
     map.set(trade.symbol, safeNumber(map.get(trade.symbol), 0) + delta);
   });
   return map;
+}
+
+export function getEffectiveHoldingQuantityAtDate(symbol, date = '') {
+  const holding = state.holdings.find((item) => item && item.symbol === symbol);
+  if (!holding) return 0;
+  const deltas = getNetTradeSharesBySymbol(formatDateLabel(date));
+  return Math.max(0, safeNumber(holding.quantity, 0) + safeNumber(deltas.get(symbol), 0));
 }
 
 /* 当前现金是用户对券商余额的直接快照。历史记录用于复盘，不再回放污染该值。 */
@@ -59,6 +67,7 @@ export function computeHoldings() {
       holding.dividendPerShareTtmOverride, holding.dividendPerShareTtmOverrideTouched === true
     );
     const effectiveTax = taxOverridePercent === null ? 0 : taxOverridePercent / 100;
+    const taxRateKnown = taxOverridePercent !== null;
     const baseDps = Math.max(0, safeNumber(quote.dividendPerShareTtm, 0));
     const effectiveDps = dividendPerShareOverride === null ? baseDps : dividendPerShareOverride;
     const currentYield = price > 0 ? effectiveDps / price : 0;
@@ -74,6 +83,7 @@ export function computeHoldings() {
     const dailyPnlCny = previousClose > 0 ? (price - previousClose) * quantity * fxRate : 0;
     return {
       ...holding, ...quote, currency, quantity, fxRate, dividendSource, dividendStatus,
+      taxRateKnown, effectiveTaxRate: effectiveTax,
       effectiveDividendPerShareTtm: effectiveDps, currentYield, effectiveYield: currentYield,
       marketValueCny, grossAnnualDividendCny: grossDividendCny, netAnnualDividendCny,
       annualDividendCny: netAnnualDividendCny, dailyPnlCny
@@ -90,14 +100,24 @@ export function computeHoldings() {
   const totalMarketValueCny = holdings.reduce((s, i) => s + safeNumber(i.marketValueCny, 0), 0);
   const totalDividendCny = holdings.reduce((s, i) => s + safeNumber(i.netAnnualDividendCny, 0), 0);
   const totalDailyPnlCny = holdings.reduce((s, i) => s + safeNumber(i.dailyPnlCny, 0), 0);
+  const dailyPnlBaseCny = holdings.reduce((sum, item) => {
+    const previousClose = safeNumber(item.previousClose, 0);
+    return previousClose > 0 ? sum + previousClose * safeNumber(item.quantity, 0) * safeNumber(item.fxRate, 1) : sum;
+  }, 0);
   const divisor = totalMarketValueCny || 1;
   const cashBalanceCny = computeCashBalance();
+  const totalAssetCny = totalMarketValueCny + cashBalanceCny;
   const result = {
-    holdings: holdings.map((i) => ({ ...i, holdingWeight: safeNumber(i.marketValueCny, 0) / divisor })),
-    totalMarketValueCny, totalDividendCny, totalDailyPnlCny,
+    holdings: holdings.map((i) => ({
+      ...i,
+      holdingWeight: safeNumber(i.marketValueCny, 0) / divisor,
+      totalAssetWeight: totalAssetCny > 0 ? safeNumber(i.marketValueCny, 0) / totalAssetCny : null
+    })),
+    totalMarketValueCny, totalDividendCny, totalDailyPnlCny, dailyPnlBaseCny,
+    unknownTaxCount: holdings.filter((item) => !item.taxRateKnown && safeNumber(item.quantity, 0) > 0).length,
     cashBalanceCny,
-    totalAssetCny: totalMarketValueCny + cashBalanceCny,
-    netMarketValueCny: totalMarketValueCny + cashBalanceCny - state.liabilityCny
+    totalAssetCny,
+    netMarketValueCny: totalAssetCny - state.liabilityCny
   };
   setComputeCache(result);
   return result;
@@ -160,10 +180,6 @@ function formatDateParts(year, month, day) {
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
-function roundMoney(value) {
-  return Math.round((safeNumber(value, 0) + Number.EPSILON) * 100) / 100;
-}
-
 function roundQuantity(value) {
   return Math.round((safeNumber(value, 0) + Number.EPSILON) * 1000000) / 1000000;
 }
@@ -176,12 +192,12 @@ function matchesDividendFilter(item, filterKey) {
   return filterKey === 'all' || item.bucket === filterKey;
 }
 
-function getLedgerNetCny(entry) {
+export function getLedgerNetCny(entry) {
   const net = safeNumber(entry && entry.netCny, 0);
   if (net > 0) return net;
   const gross = safeNumber(entry && entry.grossCny, 0)
     || safeNumber(entry && entry.amountPerShare, 0) * safeNumber(entry && entry.shares, 0) * safeNumber(entry && entry.fxRate, 1);
-  return roundMoney(gross * (1 - Math.max(0, safeNumber(entry && entry.taxRate, 0))));
+  return roundMoney(gross * (1 - Math.min(1, Math.max(0, safeNumber(entry && entry.taxRate, 0)))));
 }
 
 export function getDividendCashImpactCny(entry) {
@@ -198,7 +214,7 @@ function getLedgerEffectivePayDate(entry) {
   return resolveEffectivePayDate(entry && entry.exDate, entry && entry.payDate, entry && entry.symbol);
 }
 
-function getLedgerCalendarDate(entry) {
+export function getLedgerCalendarDate(entry) {
   const receivedDate = formatDateLabel(entry && entry.receivedDate);
   if (receivedDate) return { date: receivedDate, source: 'received', estimated: false };
   return getLedgerEffectivePayDate(entry);
@@ -439,18 +455,165 @@ function dividendEntryPriority(entry) {
   return 1;
 }
 
+function economicEntryPriority(entry) {
+  if (entry && entry.confirmed === true) return 100;
+  if (entry && entry.confidence === 'manual') return 90;
+  if (entry && entry.sharesSource === 'manual') return 80;
+  return dividendEntryPriority(entry) * 10
+    + (entry && ['snapshot', 'replayed'].includes(entry.confidence) ? 3
+      : entry && entry.confidence === 'carryForward' ? 2 : 0);
+}
+
+function economicComparableCny(entry) {
+  const gross = safeNumber(entry && entry.grossCny, 0);
+  return gross > 0 ? gross : Math.max(0, safeNumber(entry && entry.netCny, 0));
+}
+
+function economicEntrySource(entry) {
+  return String(entry && (entry.eventSource || entry.source) || '').trim().toLowerCase();
+}
+
+function economicEntryCurrency(entry) {
+  return String(entry && entry.currency || '').trim().toUpperCase();
+}
+
+/* 每股金额折 CNY（按当前汇率）。存量条目的 grossCny/fxRate 可能被写入时的
+   错误汇率污染（如结算脚本默认 HKD 0.92），每股金额×统一汇率才是稳定的经济身份。 */
+function economicPerShareCny(entry) {
+  const amount = safeNumber(entry && entry.amountPerShare, 0);
+  if (amount <= 0) return 0;
+  return amount * resolveFxRate(economicEntryCurrency(entry), state.rates);
+}
+
+/* 等值判定分三档：同币种 0.5%；跨币种按当前汇率折算比 1.5%（吸收汇率漂移）；
+   跨数据源+同币种再放宽到 3.5%（REIT 分派等两源申报值常差几个百分点）。
+   与 update_market_data.py 的容差档位保持一致。 */
+function economicAmountsMatch(left, right) {
+  const leftAmount = safeNumber(left && left.amountPerShare, 0);
+  const rightAmount = safeNumber(right && right.amountPerShare, 0);
+  if (leftAmount > 0 && rightAmount > 0) {
+    const leftCurrency = economicEntryCurrency(left);
+    const rightCurrency = economicEntryCurrency(right);
+    if (leftCurrency && leftCurrency === rightCurrency) {
+      if (Math.abs(leftAmount - rightAmount) <= Math.max(1e-6, Math.min(leftAmount, rightAmount) * 0.005)) return true;
+      const leftSource = economicEntrySource(left);
+      const rightSource = economicEntrySource(right);
+      return Boolean(leftSource && rightSource && leftSource !== rightSource)
+        && Math.abs(leftAmount - rightAmount) <= Math.min(leftAmount, rightAmount) * 0.035;
+    }
+    const leftCny = economicPerShareCny(left);
+    const rightCny = economicPerShareCny(right);
+    if (leftCny <= 0 || rightCny <= 0) return false;
+    return Math.abs(leftCny - rightCny) <= Math.max(0.005, Math.min(leftCny, rightCny) * 0.015);
+  }
+  // 老数据缺每股金额时退回按存量总额比对。
+  const a = economicComparableCny(left);
+  const b = economicComparableCny(right);
+  if (a <= 0 || b <= 0) return false;
+  return Math.abs(a - b) <= Math.max(0.02, Math.min(a, b) * 0.005);
+}
+
+function findEconomicComponentSubset(entries, target) {
+  // 分量求和也按「每股金额折 CNY」比对：与股数、存量汇率污染解耦（0.93 = 0.56 + 0.37）。
+  const targetAmount = economicPerShareCny(target) || economicComparableCny(target);
+  const valueOf = (entry) => economicPerShareCny(entry) || economicComparableCny(entry);
+  const maxMask = 1 << Math.min(entries.length, 12);
+  let best = null;
+  for (let mask = 1; mask < maxMask; mask += 1) {
+    const indexes = [];
+    let total = 0;
+    for (let index = 0; index < Math.min(entries.length, 12); index += 1) {
+      if ((mask & (1 << index)) === 0) continue;
+      indexes.push(index);
+      total += valueOf(entries[index]);
+    }
+    if (indexes.length < 2) continue;
+    const tolerance = Math.max(1e-4, Math.min(targetAmount, total) * 0.015);
+    if (Math.abs(total - targetAmount) > tolerance) continue;
+    if (!best || indexes.length < best.length) best = indexes;
+  }
+  return best;
+}
+
+/* Normalize economic dividend events without collapsing legitimate regular and
+   special dividends. Equal representations are reduced first; an aggregate is
+   collapsed with components only when the component amounts add back to it. */
+export function normalizeEconomicDividendEntries(entries) {
+  const exact = new Map();
+  (Array.isArray(entries) ? entries : []).filter(Boolean).forEach((entry) => {
+    const sourceKey = canonicalDividendSourceId(entry.sourceId);
+    const key = sourceKey || `${entry.symbol}|${entry.exDate}|${entry.id || ''}`;
+    const previous = exact.get(key);
+    if (!previous || economicEntryPriority(entry) > economicEntryPriority(previous)) exact.set(key, entry);
+  });
+  const groups = new Map();
+  exact.forEach((entry) => {
+    const key = `${entry.symbol || ''}|${formatDateLabel(entry.exDate)}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(entry);
+  });
+  const result = [];
+  groups.forEach((rawGroup) => {
+    const uniqueAmounts = [];
+    rawGroup.slice().sort((a, b) => economicEntryPriority(b) - economicEntryPriority(a)).forEach((entry) => {
+      const sameIndex = uniqueAmounts.findIndex((item) => economicAmountsMatch(item, entry));
+      if (sameIndex < 0) uniqueAmounts.push(entry);
+      else if (economicEntryPriority(entry) > economicEntryPriority(uniqueAmounts[sameIndex])) uniqueAmounts[sameIndex] = entry;
+    });
+    const pending = uniqueAmounts.slice().sort((a, b) => economicComparableCny(b) - economicComparableCny(a));
+    while (pending.length) {
+      const aggregate = pending.shift();
+      const subset = findEconomicComponentSubset(pending, aggregate);
+      const aggregateSource = economicEntrySource(aggregate);
+      /* 聚合来源允许缺失（用户确认/手改的条目常常没有 eventSource）：
+         只要每个分量都有已知来源、且不与聚合来源相同，就视为跨源重复表示。
+         分量缺来源时保持保守不折叠——那可能是同源的真实多笔派息。 */
+      const isCrossSourceRepresentation = subset
+        && subset.every((index) => {
+          const componentSource = economicEntrySource(pending[index]);
+          return componentSource && componentSource !== aggregateSource;
+        });
+      if (!subset || !isCrossSourceRepresentation) {
+        result.push(aggregate);
+        continue;
+      }
+      const components = subset.map((index) => pending[index]);
+      const confirmedComponents = components.filter((entry) => entry.confirmed === true);
+      if (aggregate.confirmed === true || !confirmedComponents.length) result.push(aggregate);
+      else result.push(...components);
+      const removed = new Set(subset);
+      for (let index = pending.length - 1; index >= 0; index -= 1) {
+        if (removed.has(index)) pending.splice(index, 1);
+      }
+    }
+  });
+  return result;
+}
+
+function getDividendHistoryStartDate() {
+  const snapshotStart = state.dailySnapshots.map((entry) => formatDateLabel(entry && entry.date)).filter(Boolean).sort()[0] || '';
+  const opening = formatDateLabel(state.positionOpeningDate);
+  if (snapshotStart && opening) return snapshotStart < opening ? snapshotStart : opening;
+  return snapshotStart || opening;
+}
+
+export function isUnverifiedHistoricalDividend(entry) {
+  if (!entry || entry.confirmed === true || entry.confidence === 'manual' || entry.sharesSource === 'manual') return false;
+  const historyStart = getDividendHistoryStartDate();
+  const exDate = formatDateLabel(entry.exDate);
+  return entry.sharesSource === 'current' && (!historyStart || (exDate && exDate < historyStart));
+}
+
+export function getNormalizedDividendLedgerEntries(options = {}) {
+  const includeUnverified = options.includeUnverified === true;
+  return normalizeEconomicDividendEntries(state.dividendLedger)
+    .filter((entry) => includeUnverified || !isUnverifiedHistoricalDividend(entry));
+}
+
 // 以（标的 + 除息日）作为一笔派息的经济身份，折叠账本/公告/预估之间以及账本内部的重复条目，
 // 避免同一只股票在同一月份重复计数（例如 5 月重复出现的京东集团）。
 function dedupeDividendEntries(entries) {
-  const byKey = new Map();
-  entries.forEach((entry) => {
-    const key = `${entry.symbol}|${entry.exDate}`;
-    const prev = byKey.get(key);
-    if (!prev || dividendEntryPriority(entry) > dividendEntryPriority(prev)) {
-      byKey.set(key, entry);
-    }
-  });
-  return Array.from(byKey.values());
+  return normalizeEconomicDividendEntries(entries);
 }
 
 export function computeDividendCalendar(today = new Date(), filterKeyOverride = null) {
@@ -459,7 +622,10 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
   const year = todayParts ? todayParts.year : new Date().getFullYear();
   const filterKey = DIVIDEND_FILTER_KEYS.has(filterKeyOverride) ? filterKeyOverride : getDividendFilterKey();
   const summary = computeHoldings();
-  const ledgerEntries = state.dividendLedger
+  const normalizedLedger = getNormalizedDividendLedgerEntries();
+  const excludedHistoricalEstimateCount = normalizeEconomicDividendEntries(state.dividendLedger)
+    .filter(isUnverifiedHistoricalDividend).length;
+  const ledgerEntries = normalizedLedger
     .map((entry) => buildLedgerDividendEntry(entry, year, todayLabel))
     .filter(Boolean);
   const announcedEntries = buildAnnouncedDividendEntries(summary, year, todayLabel);
@@ -486,15 +652,29 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
      due 是「到账日已过但没勾确认」的钱，早先被排除在 upcoming 之外，导致日历页
      「已到账 + 即将到账」永远比「全年预计」少一截，对不上账。 */
   const upcomingCny = dueCny + pendingCny + announcedCny + forecastCny;
+  const committedCny = receivedCny + dueCny + pendingCny + announcedCny;
   const projectedCny = receivedCny + upcomingCny;
-  // 同比：今年「预计全年」对比上一年实际到账总额（同口径筛选）。
+  // 同比：今年「预计全年」对比上一年实际到账总额（同口径筛选），只认已确认。
   const lastYear = year - 1;
-  const lastYearTotalCny = roundMoney(state.dividendLedger.reduce((sum, entry) => {
+  let lastYearTotalCny = roundMoney(normalizedLedger.reduce((sum, entry) => {
+    if (!entry || entry.confirmed !== true) return sum;
     const payYear = getIncomeYear(getLedgerCalendarDate(entry).date || (entry && entry.exDate));
     if (payYear !== lastYear) return sum;
     if (!matchesDividendFilter({ bucket: entry.bucket === 'income' ? 'income' : 'core' }, filterKey)) return sum;
     return sum + getLedgerNetCny(entry);
   }, 0));
+  /* 上一年早于记账起点时台账没有已确认记录（本账本从 2026 年才开始记录），
+     回退到收益页同一基准：用户手工回填 > 年度归档。这两个都是全仓口径，
+     只在「全部」筛选下使用，避免与核心仓/打工仓筛选口径错配。 */
+  if (lastYearTotalCny <= 0 && filterKey === 'all') {
+    const manualBaseline = state.yearlyManual.find((entry) => entry && entry.year === lastYear);
+    const archiveBaseline = state.yearlyArchives.find((entry) => entry && entry.year === lastYear);
+    const baselineCny = manualBaseline && manualBaseline.dividendCny !== null && manualBaseline.dividendCny !== undefined
+      ? manualBaseline.dividendCny
+      : (archiveBaseline && archiveBaseline.dividendCny !== null && archiveBaseline.dividendCny !== undefined
+        ? archiveBaseline.dividendCny : null);
+    if (baselineCny !== null && baselineCny > 0) lastYearTotalCny = roundMoney(baselineCny);
+  }
   const projectedYoy = lastYearTotalCny > 0 ? (projectedCny - lastYearTotalCny) / lastYearTotalCny : null;
   const currentMonth = todayParts ? todayParts.month : new Date().getMonth() + 1;
   return {
@@ -508,18 +688,20 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
       dueCny: roundMoney(dueCny),
       announcedCny: roundMoney(announcedCny),
       forecastCny: roundMoney(forecastCny),
+      committedCny: roundMoney(committedCny),
       upcomingCny: roundMoney(upcomingCny),
       projectedCny: roundMoney(projectedCny),
       lastYearTotalCny,
       projectedYoy
     },
+    excludedHistoricalEstimateCount,
     months: buildDividendMonthItems(entries, currentMonth),
     allDetails: entries
   };
 }
 
 /* 首页用：当前自然年「预计全年」股息（全部仓位，不受日历筛选影响）。
-   = 已到账 + 在途 + 已公告 + 节奏预估，按每笔派息除息日当天真实持股计算。 */
+   = 已到账 + 待核对 + 在途 + 已公告 + 节奏预估；历史事件按除息日前的权利股数冻结。 */
 export function computeCurrentYearDividendCny() {
   return computeDividendCalendar(new Date(), 'all').metrics.projectedCny;
 }
@@ -554,7 +736,7 @@ function getArchiveByYear() {
 
 function getDividendEntriesByYear() {
   const map = new Map();
-  state.dividendLedger.forEach((entry) => {
+  getNormalizedDividendLedgerEntries().forEach((entry) => {
     // 年度「股息收入」只认明确确认到账的现金；应到账/在途仍留在股息日历预测口径。
     if (!entry || entry.confirmed !== true) return;
     const year = getIncomeYear(getLedgerCalendarDate(entry).date || (entry && entry.exDate));
@@ -575,7 +757,7 @@ function getSnapshotsByYear() {
     const year = getIncomeYear(snapshot && snapshot.date);
     const date = formatDateLabel(snapshot && snapshot.date);
     const netCny = safeNumber(snapshot && snapshot.netCny, 0);
-    if (!year || netCny <= 0) return;
+    if (!year || !Number.isFinite(netCny)) return;
     const previous = map.get(year);
     if (!previous || formatDateLabel(previous.date) < date) {
       map.set(year, { date, netCny: roundMoney(netCny), source: 'snapshot' });
@@ -596,8 +778,9 @@ export function getCashFlowCashImpactCny(entry) {
   return roundMoney(getCashFlowNetAmount(entry));
 }
 
-export function computeCashFlowRecords() {
+export function computeCashFlowRecords(year = null) {
   const records = state.cashFlows
+    .filter((entry) => !year || formatDateLabel(entry && entry.date).startsWith(String(year)))
     .map((entry) => {
       const signedCny = roundMoney(getCashFlowNetAmount(entry));
       return {
@@ -619,8 +802,8 @@ export function computeCashFlowRecords() {
 
 // 已确认股息本身就是一类资金记录。这里从股息账本投影视图，不复制到 cashFlows，
 // 避免现金余额把同一笔收入计算两次。
-export function computeDividendRecords() {
-  const records = state.dividendLedger
+export function computeDividendRecords(year = null) {
+  const records = getNormalizedDividendLedgerEntries()
     .filter((entry) => entry && entry.confirmed === true)
     .map((entry) => {
       const quote = inferQuote(entry.symbol);
@@ -632,6 +815,7 @@ export function computeDividendRecords() {
         amountCny: roundMoney(getLedgerNetCny(entry))
       };
     })
+    .filter((entry) => !year || entry.date.startsWith(String(year)))
     .sort((a, b) => `${b.date}|${b.id}`.localeCompare(`${a.date}|${a.id}`));
   return {
     records,
@@ -641,7 +825,24 @@ export function computeDividendRecords() {
 }
 
 function getTradeSortKey(entry) {
-  return `${entry && entry.date || ''}|${entry && entry.id || ''}`;
+  return `${entry && entry.date || ''}|${entry && entry.createdAt || ''}|${entry && entry.id || ''}`;
+}
+
+export function validateTradeInventory(trades = state.trades, holdings = state.holdings, openingDate = state.positionOpeningDate) {
+  const inventory = new Map((Array.isArray(holdings) ? holdings : [])
+    .map((item) => [item.symbol, Math.max(0, safeNumber(item.quantity, 0))]));
+  const ordered = (Array.isArray(trades) ? trades : [])
+    .filter((item) => !openingDate || formatDateLabel(item && item.date) >= formatDateLabel(openingDate))
+    .slice()
+    .sort((a, b) => getTradeSortKey(a).localeCompare(getTradeSortKey(b)));
+  for (const item of ordered) {
+    const before = safeNumber(inventory.get(item.symbol), 0);
+    const delta = Math.max(0, safeNumber(item.shares, 0)) * (item.side === 'sell' ? -1 : 1);
+    const after = before + delta;
+    if (after < -0.000001) return { valid: false, entry: item, before, after };
+    inventory.set(item.symbol, after);
+  }
+  return { valid: true, inventory };
 }
 
 function getTradeValueCny(entry) {
@@ -669,16 +870,24 @@ function buildTradePosition(symbol, raw) {
   const holding = getTradeHolding(symbol);
   const taxRate = getHoldingTaxRate(holding);
   const annualDividendCny = roundMoney(safeNumber(quote.dividendPerShareTtm, 0) * shares * quoteFxRate * (1 - taxRate));
+  /* 浮盈只对「有成本基准的股数」有意义：期初基准股无成本记录，
+     其市值减 0 会伪装成巨额浮盈。未知成本部分不计入 unrealizedPnl。 */
+  const unknownShares = Math.max(0, Math.min(shares, safeNumber(raw.unknownCostShares, 0)));
+  const knownShares = Math.max(0, shares - unknownShares);
+  const knownValueCny = roundMoney(safeNumber(quote.price, 0) * knownShares * quoteFxRate);
   return {
     symbol,
     name: quote.name || symbol,
     bucket: raw.bucket === 'income' ? 'income' : 'core',
     shares: roundQuantity(shares),
     costCny,
-    averageCostCny: shares > 0 ? roundMoney(costCny / shares) : 0,
+    averageCostCny: knownShares > 0 ? roundMoney(costCny / knownShares) : 0,
     currentValueCny,
-    unrealizedPnlCny: roundMoney(currentValueCny - costCny),
+    unrealizedPnlCny: knownShares > 0 ? roundMoney(knownValueCny - costCny) : 0,
     realizedPnlCny: roundMoney(raw.realizedPnlCny),
+    costBasisComplete: safeNumber(raw.unknownCostShares, 0) <= 0.000001,
+    realizedPnlComplete: raw.realizedPnlComplete !== false,
+    unknownCostShares: roundQuantity(raw.unknownCostShares),
     feeCny: roundMoney(raw.feeCny),
     annualDividendCny,
     yieldOnCost: costCny > 0 ? annualDividendCny / costCny : null,
@@ -686,7 +895,7 @@ function buildTradePosition(symbol, raw) {
   };
 }
 
-export function computeTradeSummary() {
+export function computeTradeSummary(year = null) {
   const recordsAsc = state.trades
     .slice()
     .sort((a, b) => getTradeSortKey(a).localeCompare(getTradeSortKey(b)));
@@ -695,10 +904,13 @@ export function computeTradeSummary() {
   recordsAsc.forEach((entry) => {
     const symbol = entry.symbol;
     if (!positions.has(symbol)) {
+      const baselineShares = Math.max(0, safeNumber(getTradeHolding(symbol)?.quantity, 0));
       positions.set(symbol, {
-        shares: 0,
+        shares: baselineShares,
+        unknownCostShares: baselineShares,
         costCny: 0,
         realizedPnlCny: 0,
+        realizedPnlComplete: true,
         feeCny: 0,
         bucket: entry.bucket === 'income' ? 'income' : 'core'
       });
@@ -711,11 +923,17 @@ export function computeTradeSummary() {
     position.feeCny += feeCny;
 
     if (entry.side === 'sell') {
-      const averageCost = position.shares > 0 ? position.costCny / position.shares : 0;
-      const costOut = averageCost * shares;
-      const proceeds = valueCny - feeCny;
-      position.realizedPnlCny += proceeds - costOut;
+      const unknownOut = Math.min(shares, Math.max(0, position.unknownCostShares));
+      const knownOut = Math.max(0, shares - unknownOut);
+      const knownShares = Math.max(0, position.shares - position.unknownCostShares);
+      const averageKnownCost = knownShares > 0 ? position.costCny / knownShares : 0;
+      const costOut = averageKnownCost * knownOut;
+      const knownRatio = shares > 0 ? knownOut / shares : 0;
+      const knownProceeds = (valueCny - feeCny) * knownRatio;
+      if (unknownOut > 0) position.realizedPnlComplete = false;
+      position.realizedPnlCny += knownProceeds - costOut;
       position.shares -= shares;
+      position.unknownCostShares = Math.max(0, position.unknownCostShares - unknownOut);
       position.costCny -= costOut;
       if (position.shares <= 0.000001) {
         position.shares = 0;
@@ -747,6 +965,7 @@ export function computeTradeSummary() {
         cashImpactCny: roundMoney(entry.side === 'sell' ? valueCny - feeCny : -(valueCny + feeCny))
       };
     })
+    .filter((entry) => !year || formatDateLabel(entry.date).startsWith(String(year)))
     .sort((a, b) => getTradeSortKey(b).localeCompare(getTradeSortKey(a)));
 
   return {
@@ -755,8 +974,11 @@ export function computeTradeSummary() {
     count: records.length,
     totalCostCny: roundMoney(positionRows.reduce((sum, row) => sum + row.costCny, 0)),
     totalCurrentValueCny: roundMoney(positionRows.reduce((sum, row) => sum + row.currentValueCny, 0)),
+    // 仅含有成本基准的部分；期初基准股的浮盈不可知，不参与合计。
     totalUnrealizedPnlCny: roundMoney(positionRows.reduce((sum, row) => sum + row.unrealizedPnlCny, 0)),
+    totalUnrealizedPnlComplete: positionRows.every((row) => row.costBasisComplete),
     totalRealizedPnlCny: roundMoney(positionRows.reduce((sum, row) => sum + row.realizedPnlCny, 0)),
+    totalRealizedPnlComplete: positionRows.every((row) => row.realizedPnlComplete),
     totalAnnualDividendCny: roundMoney(positionRows.reduce((sum, row) => sum + row.annualDividendCny, 0))
   };
 }
@@ -782,7 +1004,7 @@ function getYearEndNetCny(year, snapshotsByYear, manualByYear, archiveByYear, cu
   // 现金模式下，当年优先用实时净值（含现金），避免被定时脚本写入的「仅股票」当年快照盖掉、把现金漏掉。
   if (year === currentYear && isCashModelActive()) {
     const summary = computeHoldings();
-    if (summary.netMarketValueCny > 0) {
+    if (Number.isFinite(summary.netMarketValueCny)) {
       return { date: formatLocalDate(), netCny: roundMoney(summary.netMarketValueCny), source: 'current' };
     }
   }
@@ -797,7 +1019,7 @@ function getYearEndNetCny(year, snapshotsByYear, manualByYear, archiveByYear, cu
 
   if (year === currentYear) {
     const summary = computeHoldings();
-    if (summary.netMarketValueCny > 0) {
+    if (Number.isFinite(summary.netMarketValueCny)) {
       return { date: formatLocalDate(), netCny: roundMoney(summary.netMarketValueCny), source: 'current' };
     }
   }
@@ -811,23 +1033,6 @@ function getIncomeYoy(currentValue, previousValue) {
   return (currentValue - previousValue) / Math.abs(previousValue);
 }
 
-function getIncomeCompare(row) {
-  if (row.totalReferenceYoy !== null) return { value: row.totalReferenceYoy, basis: 'total' };
-  if (row.dividendYoy !== null) return { value: row.dividendYoy, basis: 'dividend' };
-  return { value: null, basis: '' };
-}
-
-function getCoreGrowthStreak(rowsAsc) {
-  let streak = 0;
-  for (let index = rowsAsc.length - 1; index > 0; index -= 1) {
-    const current = rowsAsc[index].coreDividendCny;
-    const previous = rowsAsc[index - 1].coreDividendCny;
-    if (previous <= 0 || current <= previous) break;
-    streak += 1;
-  }
-  return streak;
-}
-
 export function computeIncomeSummary(today = new Date(), options = {}) {
   const todayLabel = typeof today === 'string' ? formatDateLabel(today) : formatLocalDate(today);
   const todayParts = getDateParts(todayLabel) || getDateParts(formatLocalDate());
@@ -835,7 +1040,7 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
   // filterKey 可被覆盖：年度归档等后台口径必须用 'all'，不能跟随日历页当前筛选。
   const filterKey = DIVIDEND_FILTER_KEYS.has(options.filterKey) ? options.filterKey : getDividendFilterKey();
   const manualByYear = options.ignoreManual === true ? new Map() : getManualByYear();
-  const archiveByYear = getArchiveByYear();
+  const archiveByYear = options.ignoreArchive === true ? new Map() : getArchiveByYear();
   const dividendEntriesByYear = getDividendEntriesByYear();
   const snapshotsByYear = getSnapshotsByYear();
   const netInflowByYear = getNetInflowByYear();
@@ -872,7 +1077,7 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
     const yearStart = previousRow && previousRow.yearEndNetCny !== null
       ? { date: previousRow.yearEndDate, netCny: previousRow.yearEndNetCny, source: 'previousYear' }
       : getYearEndNetCny(year - 1, snapshotsByYear, manualByYear, archiveByYear, currentYear);
-    const startNetCny = yearStart.netCny !== null && yearStart.netCny > 0 ? yearStart.netCny : null;
+    const startNetCny = yearStart.netCny !== null && Number.isFinite(Number(yearStart.netCny)) ? yearStart.netCny : null;
 
     const manualDividend = manual && manual.dividendCny !== null && manual.dividendCny !== undefined
       ? roundMoney(manual.dividendCny) : null;
@@ -885,7 +1090,7 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
 
     /* 比率换算基数：优先真实年初净值；缺失时用手填的「金额 + 率」对反推一个基数，
        只用于金额↔比率互推，不参与净值链推算（避免污染年末净值/资金收益的推导）。 */
-    let rateBaseNetCny = startNetCny;
+    let rateBaseNetCny = startNetCny !== null && startNetCny > 0 ? startNetCny : null;
     if (rateBaseNetCny === null && manualCapitalCny !== null && manualCapitalRate) {
       rateBaseNetCny = Math.abs(manualCapitalCny / manualCapitalRate);
     }
@@ -955,8 +1160,14 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
       && Math.abs(manualCapitalCny - manualCapitalRate * startNetCny) > Math.max(1, Math.abs(manualCapitalCny) * 0.01)) {
       manualConflicts.push('资金收益与收益率不一致');
     }
-    const totalReferenceCny = capitalReturnCny === null ? null : roundMoney(dividendCny + capitalReturnCny);
-
+    const yearCashIncluded = year === currentYear
+      ? isCashModelActive()
+      : state.dailySnapshots.some((snapshot) => {
+          const date = formatDateLabel(snapshot && snapshot.date);
+          if (!date.startsWith(String(year))) return false;
+          if (snapshot.cashModelActive === true || snapshot.cashCny !== null && snapshot.cashCny !== undefined) return true;
+          return state.currentCashCny !== null && state.currentCashAsOfDate && date >= state.currentCashAsOfDate;
+        });
     rowMap.set(year, {
       year,
       filterKey,
@@ -967,7 +1178,7 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
       capitalReturnCny,
       capitalReturnRate,
       dividendYieldRate,
-      totalReferenceCny,
+      capitalReturnIncludesDividend: yearCashIncluded,
       netInflowCny,
       yearEndNetCny: yearEnd.netCny,
       yearEndSource: yearEnd.source,
@@ -984,9 +1195,7 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
       manualConflicts,
       capitalReturnAvailable: capitalReturnCny !== null,
       dividendYoy: null,
-      capitalReturnYoy: null,
-      totalReferenceYoy: null,
-      compare: { value: null, basis: '' }
+      capitalReturnYoy: null
     });
   });
 
@@ -995,13 +1204,9 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
     const previous = rowMap.get(row.year - 1);
     row.dividendYoy = getIncomeYoy(row.dividendCny, previous && previous.dividendCny);
     row.capitalReturnYoy = getIncomeYoy(row.capitalReturnCny, previous && previous.capitalReturnCny);
-    row.totalReferenceYoy = getIncomeYoy(row.totalReferenceCny, previous && previous.totalReferenceCny);
-    row.compare = getIncomeCompare(row);
   });
 
   const current = rowMap.get(currentYear) || rowsAsc[rowsAsc.length - 1] || null;
-  const previousCurrent = rowMap.get(currentYear - 1) || null;
-  const coreYoy = current ? getIncomeYoy(current.coreDividendCny, previousCurrent && previousCurrent.coreDividendCny) : null;
   // 展示从 INCOME_START_YEAR 起；更早年份仍留在 rowMap 里参与净值链与同比计算。
   const visibleRowsAsc = rowsAsc.filter((row) => row.year >= INCOME_START_YEAR);
 
@@ -1012,12 +1217,6 @@ export function computeIncomeSummary(today = new Date(), options = {}) {
     rows: visibleRowsAsc.slice().sort((a, b) => b.year - a.year),
     trendRows: visibleRowsAsc,
     current,
-    northStar: {
-      year: currentYear,
-      coreDividendCny: current ? current.coreDividendCny : 0,
-      yoy: coreYoy,
-      growthStreak: getCoreGrowthStreak(rowsAsc)
-    },
     notes: {
       dividendBasis: 'payDate',
       capitalReturnScope: filterKey === 'all' ? 'all' : 'account'

@@ -9,7 +9,10 @@
      增速近似拆成「EPS 增长」与「估值变动」，覆盖不到的按未拆分披露。 */
 import { state } from './state.js';
 import { safeNumber, formatDateLabel, resolveFxRate } from './utils.js';
-import { computeIncomeSummary, inferQuote, isCashModelActive } from './compute.js';
+import {
+  computeIncomeSummary, inferQuote, getLedgerCalendarDate, getLedgerNetCny,
+  getNormalizedDividendLedgerEntries
+} from './compute.js';
 import { getCompanyFundamentals } from './fundamentals.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -119,7 +122,10 @@ function computeAttribution(row, year, currentYear) {
     coveredStartValue += startValueCny;
   });
 
-  const priceCny = row.capitalReturnCny - fxCny;
+  // 现金已进入净值链时，资本收益已经包含股息，价格项必须先扣掉股息，
+  // 否则归因条会把同一笔股息同时算进价格与股息。
+  const priceCny = row.capitalReturnCny - fxCny
+    - (row.capitalReturnIncludesDividend ? row.dividendCny : 0);
   return {
     available: true,
     dividendCny: row.dividendCny,
@@ -142,13 +148,21 @@ function getYearTrades(year) {
       const shares = Math.max(0, safeNumber(trade.shares, 0));
       const valueCny = shares * safeNumber(trade.price, 0) * Math.max(safeNumber(trade.fxRate, 1), 0);
       const feeCny = Math.max(0, safeNumber(trade.feeCny, 0));
-      const position = positions.get(trade.symbol) || { shares: 0, costCny: 0 };
-      let realizedPnlCny = 0;
+      const baselineHolding = state.holdings.find((holding) => holding && holding.symbol === trade.symbol);
+      const baselineShares = Math.max(0, safeNumber(baselineHolding && baselineHolding.quantity, 0));
+      const position = positions.get(trade.symbol) || { shares: baselineShares, unknownCostShares: baselineShares, costCny: 0 };
+      let realizedPnlCny = null;
+      let realizedPnlComplete = true;
       if (trade.side === 'sell') {
-        const averageCost = position.shares > 0 ? position.costCny / position.shares : 0;
-        const costOut = averageCost * shares;
-        realizedPnlCny = valueCny - feeCny - costOut;
+        const unknownOut = Math.min(shares, Math.max(0, position.unknownCostShares));
+        const knownOut = Math.max(0, shares - unknownOut);
+        const knownShares = Math.max(0, position.shares - position.unknownCostShares);
+        const averageCost = knownShares > 0 ? position.costCny / knownShares : 0;
+        const costOut = averageCost * knownOut;
+        realizedPnlComplete = unknownOut <= 0.000001;
+        realizedPnlCny = realizedPnlComplete ? valueCny - feeCny - costOut : null;
         position.shares = Math.max(0, position.shares - shares);
+        position.unknownCostShares = Math.max(0, position.unknownCostShares - unknownOut);
         position.costCny = Math.max(0, position.costCny - costOut);
       } else {
         position.shares += shares;
@@ -166,7 +180,8 @@ function getYearTrades(year) {
         currency: trade.currency || 'CNY',
         valueCny,
         cashImpactCny: trade.side === 'sell' ? valueCny - feeCny : -(valueCny + feeCny),
-        realizedPnlCny
+        realizedPnlCny,
+        realizedPnlComplete
       };
     });
   return rows.filter((trade) => trade.date.startsWith(String(year)));
@@ -174,12 +189,12 @@ function getYearTrades(year) {
 
 function getYearDividendMonths(year) {
   const months = Array.from({ length: 12 }, () => 0);
-  state.dividendLedger.forEach((entry) => {
+  getNormalizedDividendLedgerEntries().forEach((entry) => {
     if (!entry || entry.confirmed !== true) return;
-    const date = formatDateLabel(entry.receivedDate || entry.payDate || entry.exDate);
+    const date = getLedgerCalendarDate(entry).date;
     if (!date.startsWith(String(year))) return;
     const month = Number(date.slice(5, 7));
-    if (month >= 1 && month <= 12) months[month - 1] += safeNumber(entry.netCny, 0);
+    if (month >= 1 && month <= 12) months[month - 1] += getLedgerNetCny(entry);
   });
   return months;
 }
@@ -208,8 +223,14 @@ export function computeYearAnnals(year) {
     if (flows.length === 1 && row.netInflowCny) {
       flows.push({ date: `${year}-07-01`, amountCny: -row.netInflowCny });
     }
-    if (!isCashModelActive() && row.dividendCny > 0) {
-      flows.push({ date: year === currentYear ? summary.today : `${year}-07-01`, amountCny: row.dividendCny });
+    if (!row.capitalReturnIncludesDividend && row.dividendCny > 0) {
+      getNormalizedDividendLedgerEntries().forEach((entry) => {
+        if (!entry || entry.confirmed !== true) return;
+        const date = getLedgerCalendarDate(entry).date;
+        if (!date.startsWith(prefix)) return;
+        const amountCny = getLedgerNetCny(entry);
+        if (amountCny > 0) flows.push({ date, amountCny });
+      });
       xirrScope = '股息+资金';
     } else {
       xirrScope = '净值链';
