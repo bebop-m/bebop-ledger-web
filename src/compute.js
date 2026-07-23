@@ -858,15 +858,20 @@ function buildTradePosition(symbol, raw) {
   const holding = getTradeHolding(symbol);
   const taxRate = getHoldingTaxRate(holding);
   const annualDividendCny = roundMoney(safeNumber(quote.dividendPerShareTtm, 0) * shares * quoteFxRate * (1 - taxRate));
+  /* 浮盈只对「有成本基准的股数」有意义：期初基准股无成本记录，
+     其市值减 0 会伪装成巨额浮盈。未知成本部分不计入 unrealizedPnl。 */
+  const unknownShares = Math.max(0, Math.min(shares, safeNumber(raw.unknownCostShares, 0)));
+  const knownShares = Math.max(0, shares - unknownShares);
+  const knownValueCny = roundMoney(safeNumber(quote.price, 0) * knownShares * quoteFxRate);
   return {
     symbol,
     name: quote.name || symbol,
     bucket: raw.bucket === 'income' ? 'income' : 'core',
     shares: roundQuantity(shares),
     costCny,
-    averageCostCny: shares > 0 ? roundMoney(costCny / shares) : 0,
+    averageCostCny: knownShares > 0 ? roundMoney(costCny / knownShares) : 0,
     currentValueCny,
-    unrealizedPnlCny: roundMoney(currentValueCny - costCny),
+    unrealizedPnlCny: knownShares > 0 ? roundMoney(knownValueCny - costCny) : 0,
     realizedPnlCny: roundMoney(raw.realizedPnlCny),
     costBasisComplete: safeNumber(raw.unknownCostShares, 0) <= 0.000001,
     realizedPnlComplete: raw.realizedPnlComplete !== false,
@@ -957,8 +962,11 @@ export function computeTradeSummary(year = null) {
     count: records.length,
     totalCostCny: roundMoney(positionRows.reduce((sum, row) => sum + row.costCny, 0)),
     totalCurrentValueCny: roundMoney(positionRows.reduce((sum, row) => sum + row.currentValueCny, 0)),
+    // 仅含有成本基准的部分；期初基准股的浮盈不可知，不参与合计。
     totalUnrealizedPnlCny: roundMoney(positionRows.reduce((sum, row) => sum + row.unrealizedPnlCny, 0)),
+    totalUnrealizedPnlComplete: positionRows.every((row) => row.costBasisComplete),
     totalRealizedPnlCny: roundMoney(positionRows.reduce((sum, row) => sum + row.realizedPnlCny, 0)),
+    totalRealizedPnlComplete: positionRows.every((row) => row.realizedPnlComplete),
     totalAnnualDividendCny: roundMoney(positionRows.reduce((sum, row) => sum + row.annualDividendCny, 0))
   };
 }

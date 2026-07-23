@@ -262,6 +262,37 @@ test('trade chronology rejects oversell and unknown opening cost is never report
   assert.equal(getEffectiveHoldingQuantityAtDate('TEST.HK', '2026-07-01'), 5);
 });
 
+test('unrealized pnl covers only cost-basis shares; baseline shares never masquerade as profit', () => {
+  applyBase({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 100, bucket: 'core' }],
+    quotes: { 'TEST.HK': { name: 'Test', price: 12, currency: 'HKD', dividendPerShareTtm: 0 } },
+    trades: [
+      { id: 'tr_1', date: '2026-02-01', symbol: 'TEST.HK', side: 'buy', shares: 50, price: 10, currency: 'HKD', fxRate: 0.9, feeCny: 5, bucket: 'core' }
+    ]
+  });
+  const summary = computeTradeSummary();
+  const position = summary.positions[0];
+  // 基准 100 股无成本记录：浮盈只对已录入成本的 50 股计算（50×12×0.9 − 455）。
+  assert.equal(position.shares, 150);
+  assert.equal(position.costCny, 455);
+  assert.equal(position.unrealizedPnlCny, 50 * 12 * 0.9 - 455);
+  assert.equal(position.averageCostCny, 9.1, '平均成本按有成本基准的股数分摊');
+  assert.equal(position.costBasisComplete, false);
+  assert.equal(summary.totalUnrealizedPnlCny, 85);
+  assert.equal(summary.totalUnrealizedPnlComplete, false);
+  // 纯基准仓（没有任何交易成本）浮盈必须为 0 而不是全额市值。
+  applyBase({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 100, bucket: 'core' }],
+    quotes: { 'TEST.HK': { name: 'Test', price: 12, currency: 'HKD', dividendPerShareTtm: 0 } },
+    trades: [
+      { id: 'tr_s', date: '2026-03-01', symbol: 'TEST.HK', side: 'sell', shares: 10, price: 12, currency: 'HKD', fxRate: 0.9, feeCny: 0, bucket: 'core' }
+    ]
+  });
+  const sellOnly = computeTradeSummary();
+  assert.equal(sellOnly.positions[0].unrealizedPnlCny, 0);
+  assert.equal(sellOnly.totalRealizedPnlComplete, false, '卖出无成本基准股不得报为已实现盈亏');
+});
+
 test('cross-year dividend uses received date and completed archives are rebuilt after changes', () => {
   applyBase({
     dailySnapshots: [
