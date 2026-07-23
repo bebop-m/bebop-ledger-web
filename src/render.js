@@ -79,7 +79,8 @@ export function renderHomePage(summary) {
 }
 
 /* 今年收益 = 当前净值 − 年初净值 − 净注入（净值链口径，已含股息与汇率）。
-   作为「收益明细」入口的 HUD 摘要展示：首页每个入口后面都带该子页面的关键信息。 */
+   作为「收益明细」入口的 HUD 摘要展示；正负号已携带方向，导航列表保持纯灰度，
+   色彩只留给 hero 与 focus card 的实时状态。 */
 function getIncomeNavSummaryHtml(incomeModel) {
   const row = incomeModel && incomeModel.current;
   const year = incomeModel ? incomeModel.currentYear : new Date().getFullYear();
@@ -87,12 +88,11 @@ function getIncomeNavSummaryHtml(incomeModel) {
   if (!available) return `${year} · 待回填年初净值`;
   const value = row.capitalReturnCny;
   const rate = row.capitalReturnRate;
-  const tone = value > 0 ? 'is-market-up' : value < 0 ? 'is-market-down' : 'is-flat';
   const sign = value > 0 ? '+' : value < 0 ? '-' : '';
   const amountText = state.showAmounts ? `${sign}¥${Math.round(Math.abs(value)).toLocaleString('en-US')}` : MASK_AMOUNT;
   const rateText = rate === null || rate === undefined
     ? '' : ` (${rate > 0 ? '+' : rate < 0 ? '-' : ''}${formatPercent(Math.abs(rate))})`;
-  return `${year} · <b class="${tone}">${escapeHtml(amountText)}${escapeHtml(rateText)}</b>`;
+  return `${year} · ${escapeHtml(amountText)}${escapeHtml(rateText)}`;
 }
 
 function renderHomeHero(summary) {
@@ -194,20 +194,65 @@ function renderHomeMetrics(calendarModel, summary) {
     </section>`;
 }
 
+/* 入口 HUD 的金额统一取整，保持单行长度可控。 */
+function formatHudAmount(value) {
+  if (!state.showAmounts) return MASK_AMOUNT;
+  return `¥${Math.round(Math.abs(safeNumber(value, 0))).toLocaleString('en-US')}`;
+}
+
+function formatHudDate(label) {
+  const parts = String(label || '').split('-');
+  return parts.length >= 3 ? `${Number(parts[1])}月${Number(parts[2])}日` : '';
+}
+
+/* 股息日历入口：优先呈现行动项（到账日已过但未勾确认的 due 条目），
+   没有待确认时退回展示下一笔在途派息。 */
+function getDividendNavSummary(calendarModel) {
+  const dueEntries = calendarModel.allDetails.filter((entry) => entry.status === 'due');
+  if (dueEntries.length) {
+    const dueCny = dueEntries.reduce((sum, entry) => sum + safeNumber(entry.netCny, 0), 0);
+    return `待确认 ${dueEntries.length} 笔 · ${escapeHtml(formatHudAmount(dueCny))}`;
+  }
+  const next = getNextHomeDividend(calendarModel);
+  if (!next) return '暂无在途股息';
+  return `下一笔 ${formatHudDate(next.payDate || next.exDate)} ${escapeHtml(next.symbol)}`;
+}
+
+/* 基本面入口：公式仪表盘的核心结论——组合加权经营回报（仅中高置信度公司）。 */
+function getFundamentalsNavSummary() {
+  if (getFundamentalsCompanyCount() === 0) return '股息 / EPS · 年报口径';
+  const model = getPortfolioReturnSummary();
+  if (model.all === null) return `${getFundamentalsCompanyCount()} 家 · 股息 / EPS`;
+  return `经营回报 ${(model.all * 100).toFixed(1)}%/年 · 覆盖 ${Math.round(model.coverage * 100)}%`;
+}
+
+/* 资金与交易入口：三类流水（出入金 / 交易 / 已确认股息）里最近的一笔。 */
+function getRecordsNavSummary(cash, dividends, trades) {
+  const cashEntry = cash.records[0] || null;
+  const tradeEntry = trades.records[0] || null;
+  const dividendEntry = dividends.records[0] || null;
+  const candidates = [
+    cashEntry && { date: String(cashEntry.date || ''), text: `${cashEntry.isWithdrawal ? '出金' : '入金'} ${escapeHtml(formatHudAmount(cashEntry.signedCny))}` },
+    tradeEntry && { date: String(tradeEntry.date || ''), text: `${tradeEntry.side === 'sell' ? '卖出' : '买入'} ${escapeHtml(tradeEntry.symbol)}` },
+    dividendEntry && { date: String(dividendEntry.date || ''), text: `股息 ${escapeHtml(dividendEntry.symbol)}` }
+  ].filter(Boolean).sort((a, b) => b.date.localeCompare(a.date));
+  if (!candidates.length) return '暂无记录';
+  return `${formatHudDate(candidates[0].date)} ${candidates[0].text}`;
+}
+
 function renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv, incomeModel) {
   const cash = computeCashFlowRecords();
   const dividends = computeDividendRecords();
   const trades = computeTradeSummary();
-  const monthItem = calendarModel.months[new Date().getMonth()] || null;
   const coreItem = bucketItems.find((item) => item.key === 'core');
   const summaries = {
     holdings: `${summary.holdings.length} \u9879${coreItem ? ` \u00b7 ${LABELS.core} ${((coreItem.marketValueCny / totalMv) * 100).toFixed(1)}%` : ''}`,
-    dividends: monthItem ? `${monthItem.label} ${formatDisplayMoney(monthItem.totalCny, 'CNY')} · 已到账 ${formatDisplayMoney(monthItem.receivedCny, 'CNY')}` : '',
+    dividends: getDividendNavSummary(calendarModel),
     income: getIncomeNavSummaryHtml(incomeModel),
-    fundamentals: getFundamentalsCompanyCount() > 0 ? `${getFundamentalsCompanyCount()} \u5bb6 \u00b7 \u80a1\u606f / EPS` : '\u80a1\u606f / EPS \u00b7 \u5e74\u62a5\u53e3\u5f84',
-    records: `${cash.count} \u51fa\u5165\u91d1 \u00b7 ${trades.count} \u4ea4\u6613 \u00b7 ${dividends.count} \u80a1\u606f`
+    fundamentals: getFundamentalsNavSummary(),
+    records: getRecordsNavSummary(cash, dividends, trades)
   };
-  // 摘要允许携带涨跌色的 <b> 片段；所有动态文本均已转义或由格式化函数生成。
+  // 摘要统一为纯灰度文本；所有动态片段均已转义或由格式化函数生成。
   refs.homeNavList.querySelectorAll('[data-nav-summary]').forEach((el) => {
     el.innerHTML = summaries[el.dataset.navSummary] || '';
   });

@@ -7820,20 +7820,6 @@ body[data-active-page="home"] .home-ledger-period {
   font-variant-numeric: tabular-nums;
 }
 
-/* 导航入口的 HUD 摘要：每个入口后面展示该子页面的关键信息。
-   收益明细的摘要携带涨跌色金额，数字用等宽字保持与其他 meta 行一致。 */
-body[data-active-page="home"] .home-nav-summary b {
-  font-family: ui-monospace, "SFMono-Regular", "SF Mono", monospace;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: var(--home-ink);
-  font-variant-numeric: tabular-nums lining-nums;
-}
-
-body[data-active-page="home"] .home-nav-summary b.is-market-up { color: var(--ledger-gain); }
-body[data-active-page="home"] .home-nav-summary b.is-market-down { color: var(--ledger-loss); }
-
 body[data-active-page="home"] .home-cashflow {
   padding: 17px 0 13px;
 }
