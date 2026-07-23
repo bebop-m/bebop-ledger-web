@@ -1,8 +1,11 @@
 import { state } from './state.js';
-import { computeHoldings, computeIncomeSummary, inferQuote } from './compute.js';
 import {
-  buildDividendSourceId, canonicalDividendSourceId, dividendIgnoreKey, formatDateLabel, normalizeQuoteDividendEvent,
-  parsePercentOverride, resolveEffectivePayDate, resolveFxRate, resolveQuoteCurrency, safeNumber,
+  computeHoldings, computeIncomeSummary, getEffectiveHoldingQuantityAtDate, inferQuote,
+  getLedgerCalendarDate, isCashModelActive, normalizeEconomicDividendEntries
+} from './compute.js';
+import {
+  addDaysToDateLabel, buildDividendSourceId, canonicalDividendSourceId, dividendIgnoreKey, formatDateLabel, normalizeQuoteDividendEvent,
+  parsePercentOverride, resolveEffectivePayDate, resolveFxRate, roundMoney, safeNumber,
   sanitizeDailySnapshotEntry, sanitizeDividendLedgerEntry, sanitizeYearlyArchiveEntry,
   sanitizeYearlyHoldingsEntry
 } from './utils.js';
@@ -14,10 +17,6 @@ function formatLocalDate(date = new Date()) {
 function isDateOnOrBefore(value, limit) {
   const date = formatDateLabel(value);
   return Boolean(date && limit && date <= limit);
-}
-
-function roundMoney(value) {
-  return Math.round((safeNumber(value, 0) + Number.EPSILON) * 100) / 100;
 }
 
 function getHoldingTaxRate(holding) {
@@ -33,6 +32,8 @@ function buildTodaySnapshot(today = formatLocalDate()) {
     netCny: summary.netMarketValueCny,
     totalMarketValueCny: summary.totalMarketValueCny,
     liabilityCny: state.liabilityCny,
+    cashCny: isCashModelActive() ? summary.cashBalanceCny : null,
+    cashModelActive: isCashModelActive(),
     holdings: summary.holdings.map((holding) => ({
       symbol: holding.symbol,
       shares: Math.max(0, safeNumber(holding.quantity, 0)),
@@ -43,21 +44,22 @@ function buildTodaySnapshot(today = formatLocalDate()) {
 }
 
 function ensureTodaySnapshot(today = formatLocalDate()) {
-  if (state.dailySnapshots.some((snapshot) => formatDateLabel(snapshot && snapshot.date) === today)) {
-    return false;
-  }
   const snapshot = buildTodaySnapshot(today);
   if (!snapshot || !snapshot.date) return false;
-  state.dailySnapshots = [...state.dailySnapshots, snapshot]
+  const previous = state.dailySnapshots.find((entry) => formatDateLabel(entry && entry.date) === today);
+  if (previous && JSON.stringify(previous) === JSON.stringify(snapshot)) return false;
+  state.dailySnapshots = state.dailySnapshots
+    .filter((entry) => formatDateLabel(entry && entry.date) !== today)
+    .concat(snapshot)
     .sort((a, b) => formatDateLabel(a.date).localeCompare(formatDateLabel(b.date)));
   return true;
 }
 
-function findSnapshotOnOrBefore(date) {
+function findSnapshotBefore(date) {
   const target = formatDateLabel(date);
   if (!target) return null;
   return state.dailySnapshots
-    .filter((snapshot) => snapshot && formatDateLabel(snapshot.date) <= target)
+    .filter((snapshot) => snapshot && formatDateLabel(snapshot.date) < target)
     .sort((a, b) => formatDateLabel(b.date).localeCompare(formatDateLabel(a.date)))[0] || null;
 }
 
@@ -66,30 +68,39 @@ function findCurrentHolding(symbol) {
 }
 
 function getFrozenDividendContext(symbol, exDate, currency) {
-  const snapshot = findSnapshotOnOrBefore(exDate);
+  // 除息权利在除息日前一交易日收盘冻结；除息日当天的买卖不改变本次股息股数。
+  const snapshot = findSnapshotBefore(exDate);
   if (snapshot) {
     const holding = Array.isArray(snapshot.holdings)
       ? snapshot.holdings.find((item) => item && item.symbol === symbol)
       : null;
+    let shares = holding ? Math.max(0, safeNumber(holding.shares, 0)) : 0;
+    state.trades.forEach((trade) => {
+      const tradeDate = formatDateLabel(trade && trade.date);
+      if (!trade || trade.symbol !== symbol || tradeDate <= formatDateLabel(snapshot.date) || tradeDate >= exDate) return;
+      const delta = Math.max(0, safeNumber(trade.shares, 0));
+      shares += trade.side === 'sell' ? -delta : delta;
+    });
     return {
-      shares: holding ? Math.max(0, safeNumber(holding.shares, 0)) : 0,
-      sharesSource: 'snapshot',
+      shares: Math.max(0, shares),
+      sharesSource: 'snapshotReplay',
       fxRate: resolveFxRate(currency, snapshot.rates),
-      taxRate: holding ? Math.max(0, safeNumber(holding.taxRate, 0)) : 0,
+      taxRate: holding ? Math.min(1, Math.max(0, safeNumber(holding.taxRate, 0))) : 0,
       bucket: holding && holding.bucket === 'income' ? 'income' : 'core',
-      confidence: formatDateLabel(snapshot.date) === formatDateLabel(exDate) ? 'snapshot' : 'carryForward'
+      confidence: addDaysToDateLabel(snapshot.date, 1) === formatDateLabel(exDate) ? 'snapshot' : 'replayed'
     };
   }
 
   const currentHolding = findCurrentHolding(symbol);
-  if (!currentHolding) return null;
+  const openingDate = formatDateLabel(state.positionOpeningDate);
+  if (!currentHolding || !openingDate || exDate < openingDate) return null;
   return {
-    shares: Math.max(0, safeNumber(currentHolding.quantity, 0)),
-    sharesSource: 'current',
+    shares: getEffectiveHoldingQuantityAtDate(symbol, addDaysToDateLabel(exDate, -1)),
+    sharesSource: 'positionLedger',
     fxRate: resolveFxRate(currency, state.rates),
     taxRate: getHoldingTaxRate(currentHolding),
     bucket: currentHolding.bucket === 'income' ? 'income' : 'core',
-    confidence: 'estimated'
+    confidence: 'replayed'
   };
 }
 
@@ -146,7 +157,7 @@ function updateExistingLedgerEntry(symbol, dividend, today) {
   if (index < 0) return false;
   const existing = state.dividendLedger[index];
   const nextPayDate = event.payDate || existing.payDate || '';
-  const isUserOwned = existing.confidence === 'manual';
+  const isUserOwned = existing.confidence === 'manual' || existing.payDateSource === 'manual';
   const effectivePay = resolveEffectivePayDate(existing.exDate, nextPayDate, existing.symbol);
   const nextReceiptStatus = existing.confirmed === true
     ? 'received'
@@ -217,6 +228,7 @@ function generateDividendLedgerEntries(today = formatLocalDate()) {
   relevantSymbols.forEach((symbol) => {
     const quote = state.quotes[symbol];
     const dividends = Array.isArray(quote && quote.dividends) ? quote.dividends : [];
+    const candidates = [];
     dividends.forEach((dividend) => {
       const event = normalizeQuoteDividendEvent(dividend, symbol);
       const sourceId = event && buildDividendSourceId(event);
@@ -231,6 +243,9 @@ function generateDividendLedgerEntries(today = formatLocalDate()) {
       }
       const entry = buildLedgerEntry(symbol, dividend, today);
       if (!entry) return;
+      candidates.push(entry);
+    });
+    normalizeEconomicDividendEntries(candidates).forEach((entry) => {
       state.dividendLedger.push(entry);
       additions.push(entry);
     });
@@ -244,30 +259,66 @@ function generateDividendLedgerEntries(today = formatLocalDate()) {
 }
 
 /* 年度归档与用户覆盖分开保存：归档只冻结自动口径，用户清空覆盖后仍能回到自动结果。 */
-function archiveCompletedYears(today) {
+export function archiveCompletedYears(today) {
   const currentYear = Math.floor(safeNumber(String(today).slice(0, 4), 0));
   if (!currentYear) return false;
-  const archivedYears = new Set(state.yearlyArchives.map((entry) => entry.year));
-  const additions = [];
-  computeIncomeSummary(today, { filterKey: 'all', ignoreManual: true }).trendRows.forEach((row) => {
-    if (row.year >= currentYear || archivedYears.has(row.year)) return;
-    const hasData = row.dividendCny > 0 || safeNumber(row.yearEndNetCny, 0) > 0 || row.netInflowCny !== 0;
+  const archivedAt = new Date().toISOString();
+  const existingByYear = new Map(state.yearlyArchives.map((entry) => [entry.year, entry]));
+  const rowByYear = new Map(computeIncomeSummary(today, {
+    filterKey: 'all', ignoreManual: true, ignoreArchive: true
+  }).trendRows.map((row) => [row.year, row]));
+  const ledgerYears = new Set(normalizeEconomicDividendEntries(state.dividendLedger)
+    .map((entry) => Math.floor(safeNumber(getLedgerCalendarDate(entry).date.slice(0, 4), 0))).filter(Boolean));
+  const tombstonedSources = new Set(state.dividendLedgerTombstones.map((item) => String(item && item.sourceId || '')));
+  const ignoredYears = new Set([
+    ...state.dividendLedgerTombstones
+      .map((item) => Math.floor(safeNumber(formatDateLabel(item && item.incomeDate).slice(0, 4), 0))).filter(Boolean),
+    ...state.dividendLedgerIgnored
+      .filter((sourceId) => !tombstonedSources.has(String(sourceId || '')))
+      .map((sourceId) => Math.floor(safeNumber(String(sourceId || '').split('|')[1]?.slice(0, 4), 0))).filter(Boolean)
+  ]);
+  const cashFlowYears = new Set(state.cashFlows
+    .map((entry) => Math.floor(safeNumber(formatDateLabel(entry && entry.date).slice(0, 4), 0))).filter(Boolean));
+  const snapshotYears = new Set(state.dailySnapshots
+    .map((entry) => Math.floor(safeNumber(formatDateLabel(entry && entry.date).slice(0, 4), 0))).filter(Boolean));
+  const years = new Set([...existingByYear.keys(), ...rowByYear.keys()]);
+  const rebuilt = [];
+  years.forEach((year) => {
+    if (year >= currentYear) return;
+    const row = rowByYear.get(year) || null;
+    const previous = existingByYear.get(year) || null;
+    const dividendHasSource = ledgerYears.has(year) || ignoredYears.has(year);
+    const dividendCny = dividendHasSource ? safeNumber(row && row.dividendCny, 0)
+      : (previous && previous.dividendCny !== null ? previous.dividendCny : safeNumber(row && row.dividendCny, 0));
+    const yearEndNetCny = snapshotYears.has(year) ? row && row.yearEndNetCny
+      : (previous && previous.yearEndNetCny !== null ? previous.yearEndNetCny : row && row.yearEndNetCny);
+    const netInflowCny = cashFlowYears.has(year) ? safeNumber(row && row.netInflowCny, 0)
+      : (previous && previous.netInflowCny !== null ? previous.netInflowCny : safeNumber(row && row.netInflowCny, 0));
+    const capitalHasSource = row && row.fieldSources && row.fieldSources.capitalReturnCny === 'netValueChain';
+    const capitalReturnCny = capitalHasSource ? row.capitalReturnCny
+      : (previous && previous.capitalReturnCny !== null ? previous.capitalReturnCny : row && row.capitalReturnCny);
+    const capitalReturnRate = capitalHasSource ? row.capitalReturnRate
+      : (previous && previous.capitalReturnRate !== null ? previous.capitalReturnRate : row && row.capitalReturnRate);
+    const dividendYieldRate = dividendHasSource && row ? row.dividendYieldRate
+      : (previous && previous.dividendYieldRate !== null ? previous.dividendYieldRate : row && row.dividendYieldRate);
+    const hasData = dividendCny > 0 || yearEndNetCny !== null && yearEndNetCny !== undefined || netInflowCny !== 0;
     if (!hasData) return;
-    additions.push(sanitizeYearlyArchiveEntry({
-      year: row.year,
-      dividendCny: row.dividendCny,
-      dividendYieldRate: row.dividendYieldRate,
-      yearEndNetCny: safeNumber(row.yearEndNetCny, 0),
-      netInflowCny: row.netInflowCny,
-      capitalReturnCny: row.capitalReturnCny,
-      capitalReturnRate: row.capitalReturnRate,
+    const candidate = sanitizeYearlyArchiveEntry({
+      year,
+      dividendCny,
+      dividendYieldRate,
+      yearEndNetCny,
+      netInflowCny,
+      capitalReturnCny,
+      capitalReturnRate,
       source: 'auto',
-      archivedAt: new Date().toISOString()
-    }));
+      archivedAt: previous && previous.archivedAt || archivedAt
+    });
+    if (candidate) rebuilt.push(candidate);
   });
-  const validAdditions = additions.filter(Boolean);
-  if (!validAdditions.length) return false;
-  state.yearlyArchives = state.yearlyArchives.concat(validAdditions).sort((a, b) => b.year - a.year);
+  const next = rebuilt.filter(Boolean).sort((a, b) => b.year - a.year);
+  if (JSON.stringify(next) === JSON.stringify(state.yearlyArchives)) return false;
+  state.yearlyArchives = next;
   return true;
 }
 
@@ -303,50 +354,13 @@ function upsertCurrentYearHoldingsSnapshot(today) {
   return true;
 }
 
-/* 功能上线前已结束的年份：用该年最后一天的日快照补出股数；价格按当前行情估算，仅供结构参考。 */
-function backfillYearlyHoldingsFromDailySnapshots(currentYear) {
-  const existingYears = new Set(state.yearlyHoldings.map((entry) => entry.year));
-  const lastByYear = new Map();
-  state.dailySnapshots.forEach((snapshot) => {
-    const date = formatDateLabel(snapshot && snapshot.date);
-    const year = Math.floor(safeNumber(date.slice(0, 4), 0));
-    if (!year || year >= currentYear || existingYears.has(year)) return;
-    const previous = lastByYear.get(year);
-    if (!previous || formatDateLabel(previous.date) < date) lastByYear.set(year, snapshot);
-  });
-  let changed = false;
-  lastByYear.forEach((snapshot, year) => {
-    const rates = snapshot.rates && typeof snapshot.rates === 'object' ? snapshot.rates : state.rates;
-    const holdings = (Array.isArray(snapshot.holdings) ? snapshot.holdings : [])
-      .filter((holding) => holding && safeNumber(holding.shares, 0) > 0)
-      .map((holding) => {
-        const quote = inferQuote(holding.symbol);
-        const currency = resolveQuoteCurrency(quote, holding.symbol);
-        const price = safeNumber(quote.price, 0);
-        const shares = safeNumber(holding.shares, 0);
-        return {
-          symbol: holding.symbol,
-          name: quote.name || holding.symbol,
-          shares,
-          bucket: holding.bucket,
-          currency,
-          price,
-          marketValueCny: roundMoney(price * shares * resolveFxRate(currency, rates))
-        };
-      });
-    const entry = sanitizeYearlyHoldingsEntry({
-      year,
-      date: formatDateLabel(snapshot.date),
-      source: 'backfill',
-      totalMarketValueCny: roundMoney(holdings.reduce((sum, item) => sum + item.marketValueCny, 0)),
-      holdings
-    });
-    if (!entry) return;
-    state.yearlyHoldings = state.yearlyHoldings.concat(entry);
-    changed = true;
-  });
-  if (changed) state.yearlyHoldings = state.yearlyHoldings.slice().sort((a, b) => b.year - a.year);
-  return changed;
+/* 旧版曾用“今天的价格 × 历史股数”伪造历史年末持仓市值；这会随当前行情改写过去。
+   无历史价格时不生成金额快照，并清除这种旧的 backfill 条目。 */
+function removeUnsafeYearlyHoldingsBackfills() {
+  const next = state.yearlyHoldings.filter((entry) => entry && entry.source !== 'backfill');
+  if (next.length === state.yearlyHoldings.length) return false;
+  state.yearlyHoldings = next;
+  return true;
 }
 
 export function settleRevenueData(date = new Date()) {
@@ -354,8 +368,7 @@ export function settleRevenueData(date = new Date()) {
   const snapshotAdded = ensureTodaySnapshot(today);
   const ledgerAddedCount = generateDividendLedgerEntries(today);
   const yearsArchived = archiveCompletedYears(today);
-  const currentYear = Math.floor(safeNumber(today.slice(0, 4), 0));
-  const holdingsBackfilled = backfillYearlyHoldingsFromDailySnapshots(currentYear);
+  const holdingsBackfilled = removeUnsafeYearlyHoldingsBackfills();
   const holdingsSnapshotUpdated = upsertCurrentYearHoldingsSnapshot(today);
   return {
     changed: snapshotAdded || ledgerAddedCount > 0 || yearsArchived || holdingsBackfilled || holdingsSnapshotUpdated,

@@ -1,5 +1,5 @@
 /* ── BOPUP LEDGER — Entry Point ── */
-import { state, refs, mutable, saveState, createDefaultSnapshot, applySnapshot, restoreState, showConfirm } from './state.js';
+import { state, refs, mutable, saveState, createDefaultSnapshot, applySnapshot, restoreState, showConfirm, addRecordTombstone } from './state.js';
 import { safeNumber } from './utils.js';
 import {
   UI_TEXT, LABELS, HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD,
@@ -254,10 +254,10 @@ refs.stockList.addEventListener('click', (event) => {
         const prev = captureHoldingPositions(localId);
         animateHoldingRemoval(w, () => {
           if (mutable.activeDividendTooltipButton && w.contains(mutable.activeDividendTooltipButton)) mutable.activeDividendTooltipButton = null;
-          w.remove(); state.holdings = state.holdings.filter((i) => i.localId !== localId); saveState();
+          w.remove(); state.holdings = state.holdings.filter((i) => i.localId !== localId); addRecordTombstone('holding', holding.symbol); saveState();
           renderApp({ animateLegend: false, animateBucketDetail: false, animateHoldings: false, renderHoldingsList: false }); animateHoldingReflow(prev);
         });
-      } else { state.holdings = state.holdings.filter((i) => i.localId !== localId); saveState(); renderApp({ animateLegend: false, animateBucketDetail: false, animateHoldings: false, renderHoldingsList: false }); }
+      } else { state.holdings = state.holdings.filter((i) => i.localId !== localId); addRecordTombstone('holding', holding.symbol); saveState(); renderApp({ animateLegend: false, animateBucketDetail: false, animateHoldings: false, renderHoldingsList: false }); }
     });
     return;
   }

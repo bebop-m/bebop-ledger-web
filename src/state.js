@@ -4,11 +4,11 @@ import {
   PORTFOLIO_SNAPSHOT_VERSION, PAGE_KEYS, LEGACY_PAGE_MAP, DIVIDEND_FILTER_KEYS
 } from './constants.js';
 import {
-  safeNumber, clone, escapeHtml, normalizeSeedQuoteMap, mergeQuotes,
+  safeNumber, roundMoney, clone, escapeHtml, normalizeSeedQuoteMap, mergeQuotes,
   sanitizeHolding, sanitizePerShareOverrideInput, normalizeSymbol,
   sanitizeDividendLedgerEntry, sanitizeDailySnapshotEntry,
   sanitizeCashFlowEntry, sanitizeYearlyManualEntry, sanitizeTradeEntry,
-  sanitizeYearlyHoldingsEntry, sanitizeYearlyArchiveEntry, formatDateLabel
+  sanitizeYearlyHoldingsEntry, sanitizeYearlyArchiveEntry, formatDateLabel, resolveEffectivePayDate
 } from './utils.js';
 
 /* ── Default Quotes (normalized from seed data) ── */
@@ -52,6 +52,8 @@ export const state = {
   /* 用户手动删掉的股息 sourceId。台账是按行情派息事件自动生成的，
      不记下来的话下次结算会照原样再长回来。客户端与 Actions 结算脚本都要认这份名单。 */
   dividendLedgerIgnored: [],
+  dividendLedgerTombstones: [],
+  recordTombstones: { cashFlowIds: [], tradeIds: [], holdingSymbols: [], holdingDeletes: [] },
   lastUpdatedAt: '',
   modal: null,
   modalPayload: null,
@@ -233,6 +235,8 @@ export function createDefaultSnapshot() {
     yearlyArchives: [],
     yearlyHoldings: [],
     dividendLedgerIgnored: [],
+    dividendLedgerTombstones: [],
+    recordTombstones: { cashFlowIds: [], tradeIds: [], holdingSymbols: [], holdingDeletes: [] },
     lastUpdatedAt: ''
   };
 }
@@ -270,7 +274,52 @@ export function createDemoSnapshot() {
 }
 
 function roundCash(value) {
-  return Math.round((safeNumber(value, 0) + Number.EPSILON) * 100) / 100;
+  return roundMoney(value);
+}
+
+function normalizeRecordTombstones(value) {
+  const source = value && typeof value === 'object' ? value : {};
+  const normalize = (items) => Array.from(new Set((Array.isArray(items) ? items : [])
+    .map((id) => String(id || '').trim()).filter(Boolean)));
+  return {
+    cashFlowIds: normalize(source.cashFlowIds),
+    tradeIds: normalize(source.tradeIds),
+    holdingSymbols: normalize(source.holdingSymbols).map(normalizeSymbol).filter(Boolean),
+    holdingDeletes: Array.from((Array.isArray(source.holdingDeletes) ? source.holdingDeletes : [])
+      .reduce((map, item) => {
+        const symbol = normalizeSymbol(item && item.symbol);
+        if (!symbol) return map;
+        const deletedAt = typeof item.deletedAt === 'string' ? item.deletedAt : '';
+        const previous = map.get(symbol);
+        if (!previous || deletedAt > previous.deletedAt) map.set(symbol, { symbol, deletedAt });
+        return map;
+      }, new Map()).values())
+  };
+}
+
+export function addRecordTombstone(type, id) {
+  const key = type === 'trade' ? 'tradeIds' : type === 'holding' ? 'holdingSymbols' : 'cashFlowIds';
+  const value = type === 'holding' ? normalizeSymbol(id) : String(id || '').trim();
+  if (!value) return false;
+  if (!state.recordTombstones[key].includes(value)) state.recordTombstones[key].push(value);
+  if (type === 'holding') {
+    state.recordTombstones.holdingDeletes = state.recordTombstones.holdingDeletes
+      .filter((item) => item.symbol !== value)
+      .concat({ symbol: value, deletedAt: new Date().toISOString() });
+  }
+  return true;
+}
+
+export function removeRecordTombstone(type, id) {
+  const key = type === 'trade' ? 'tradeIds' : type === 'holding' ? 'holdingSymbols' : 'cashFlowIds';
+  const value = type === 'holding' ? normalizeSymbol(id) : String(id || '').trim();
+  if (!value) return false;
+  const before = state.recordTombstones[key].length;
+  state.recordTombstones[key] = state.recordTombstones[key].filter((item) => item !== value);
+  if (type === 'holding') {
+    state.recordTombstones.holdingDeletes = state.recordTombstones.holdingDeletes.filter((item) => item.symbol !== value);
+  }
+  return state.recordTombstones[key].length !== before;
 }
 
 function getLegacyCashFlowImpact(entry) {
@@ -308,11 +357,31 @@ function normalizeIgnoredDividendIds(value) {
   return Array.from(new Set(value.map((id) => String(id || '').trim()).filter(Boolean)));
 }
 
+function normalizeDividendTombstones(value) {
+  if (!Array.isArray(value)) return [];
+  const bySource = new Map();
+  value.forEach((item) => {
+    if (!item || typeof item !== 'object') return;
+    const sourceId = String(item.sourceId || '').trim();
+    if (!sourceId) return;
+    bySource.set(sourceId, { sourceId, incomeDate: formatDateLabel(item.incomeDate) });
+  });
+  return Array.from(bySource.values());
+}
+
 /* 删除一笔自动生成的股息：既要移出台账，也要把 sourceId 记进忽略名单，
    否则下一次 settleRevenueData 会按行情派息事件把它原样重建。 */
 export function ignoreDividendLedgerEntry(sourceId) {
   const id = String(sourceId || '').trim();
   if (!id) return false;
+  const deleted = state.dividendLedger.find((entry) => entry && entry.sourceId === id) || null;
+  if (deleted) {
+    const incomeDate = formatDateLabel(deleted.receivedDate)
+      || resolveEffectivePayDate(deleted.exDate, deleted.payDate, deleted.symbol).date;
+    state.dividendLedgerTombstones = state.dividendLedgerTombstones
+      .filter((item) => item.sourceId !== id)
+      .concat({ sourceId: id, incomeDate });
+  }
   const before = state.dividendLedger.length;
   state.dividendLedger = state.dividendLedger.filter((entry) => entry && entry.sourceId !== id);
   if (!state.dividendLedgerIgnored.includes(id)) state.dividendLedgerIgnored.push(id);
@@ -324,6 +393,13 @@ export function setCurrentCashBalance(value, asOfDate = '') {
   state.currentCashCny = value === null || value === undefined ? null : roundCash(value);
   state.currentCashAsOfDate = state.currentCashCny === null
     ? '' : (formatDateLabel(asOfDate) || formatDateLabel(new Date()));
+  // 余额校准是新的现金基准：当时已经存在的记录都已包含在用户输入的实际余额里，
+  // 后续撤销/编辑不能再把这些旧影响重复冲回。新建或新确认的记录会单独写入 tracked 金额。
+  if (state.currentCashCny !== null) {
+    state.cashFlows = state.cashFlows.map((entry) => ({ ...entry, cashTrackedCny: 0 }));
+    state.trades = state.trades.map((entry) => ({ ...entry, cashTrackedCny: 0 }));
+    state.dividendLedger = state.dividendLedger.map((entry) => ({ ...entry, cashTrackedCny: 0 }));
+  }
 }
 
 export function adjustCurrentCashBalance(delta) {
@@ -331,15 +407,63 @@ export function adjustCurrentCashBalance(delta) {
   state.currentCashCny = roundCash(safeNumber(state.currentCashCny, 0) + safeNumber(delta, 0));
 }
 
+function getTrackedCashImpact(entry, impact, dateValue) {
+  if (!entry || state.currentCashCny === null) return 0;
+  if (entry.cashTrackedCny !== null && entry.cashTrackedCny !== undefined
+    && Number.isFinite(Number(entry.cashTrackedCny))) return safeNumber(entry.cashTrackedCny, 0);
+  const date = formatDateLabel(dateValue);
+  return date && date >= state.currentCashAsOfDate ? impact : 0;
+}
+
+export function adjustCashForRecordChange(previousEntry, previousImpact, previousDate, nextEntry, nextImpact, nextDate) {
+  const oldTracked = getTrackedCashImpact(previousEntry, previousImpact, previousDate);
+  let nextTracked = 0;
+  if (nextEntry && state.currentCashCny !== null) {
+    const previousLabel = formatDateLabel(previousDate);
+    const nextLabel = formatDateLabel(nextDate);
+    const previousWasActive = Math.abs(safeNumber(previousImpact, 0)) > 0;
+    const previousTrackingFrozen = previousEntry && previousEntry.cashTrackedCny !== null
+      && previousEntry.cashTrackedCny !== undefined && Number.isFinite(Number(previousEntry.cashTrackedCny));
+    if (previousEntry && previousWasActive && previousTrackingFrozen) {
+      nextTracked = Math.abs(oldTracked) > 0 ? nextImpact : 0;
+    } else if (previousEntry && previousLabel === nextLabel && previousWasActive) {
+      nextTracked = Math.abs(oldTracked) > 0 ? nextImpact : 0;
+    } else {
+      nextTracked = nextLabel && nextLabel >= state.currentCashAsOfDate ? nextImpact : 0;
+    }
+    nextEntry.cashTrackedCny = roundCash(nextTracked);
+  }
+  adjustCurrentCashBalance(nextTracked - oldTracked);
+  return roundCash(nextTracked - oldTracked);
+}
+
 export function applySnapshot(snapshot) {
   invalidateComputeCache();
   const defaults = createDefaultSnapshot();
   const mergedQuotes = mergeQuotes(clone(defaults.quotes), snapshot && snapshot.quotes);
-  const sanitizedHoldings = Array.isArray(snapshot && snapshot.holdings)
+  const sanitizedHoldingsRaw = Array.isArray(snapshot && snapshot.holdings)
     ? snapshot.holdings.map((item, index) => sanitizeHolding(item, index, mergedQuotes)).filter(Boolean)
     : defaults.holdings;
+  const sanitizedHoldings = Array.from(sanitizedHoldingsRaw.reduce((map, holding) => {
+    const existing = map.get(holding.symbol);
+    if (!existing) {
+      map.set(holding.symbol, holding);
+      return map;
+    }
+    map.set(holding.symbol, {
+      ...existing,
+      quantity: safeNumber(existing.quantity, 0) + safeNumber(holding.quantity, 0),
+      bucket: existing.bucket === 'income' || holding.bucket === 'income' ? 'income' : 'core',
+      taxRateOverride: holding.taxRateOverride !== '' ? holding.taxRateOverride : existing.taxRateOverride,
+      dividendPerShareTtmOverride: holding.dividendPerShareTtmOverride !== ''
+        ? holding.dividendPerShareTtmOverride : existing.dividendPerShareTtmOverride,
+      dividendPerShareTtmOverrideTouched: existing.dividendPerShareTtmOverrideTouched === true
+        || holding.dividendPerShareTtmOverrideTouched === true
+    });
+    return map;
+  }, new Map()).values());
   const maxLocalId = sanitizedHoldings.reduce((max, item) => Math.max(max, item.localId), 0);
-  state.holdings = sanitizedHoldings.length ? sanitizedHoldings : clone(defaults.holdings);
+  state.holdings = Array.isArray(snapshot && snapshot.holdings) ? sanitizedHoldings : clone(defaults.holdings);
   state.quotes = mergedQuotes;
   state.rates = { ...DEFAULT_RATES, ...((snapshot && snapshot.rates) || {}) };
   state.nextId = Math.max(maxLocalId + 1, Math.floor(safeNumber(snapshot && snapshot.nextId, defaults.nextId)));
@@ -400,6 +524,8 @@ export function applySnapshot(snapshot) {
     ? snapshot.yearlyHoldings.map(sanitizeYearlyHoldingsEntry).filter(Boolean)
     : [];
   state.dividendLedgerIgnored = normalizeIgnoredDividendIds(snapshot && snapshot.dividendLedgerIgnored);
+  state.dividendLedgerTombstones = normalizeDividendTombstones(snapshot && snapshot.dividendLedgerTombstones);
+  state.recordTombstones = normalizeRecordTombstones(snapshot && snapshot.recordTombstones);
   state.lastUpdatedAt = typeof (snapshot && snapshot.lastUpdatedAt) === 'string' ? snapshot.lastUpdatedAt : '';
 }
 
@@ -419,6 +545,8 @@ export function getPersistedSnapshot() {
     trades: state.trades, yearlyManual: state.yearlyManual, yearlyArchives: state.yearlyArchives,
     yearlyHoldings: state.yearlyHoldings,
     dividendLedgerIgnored: state.dividendLedgerIgnored,
+    dividendLedgerTombstones: state.dividendLedgerTombstones,
+    recordTombstones: state.recordTombstones,
     lastUpdatedAt: state.lastUpdatedAt
   };
 }
@@ -457,7 +585,9 @@ export function buildPortfolioSnapshotHolding(holding) {
     bucket: holding && holding.bucket === 'income' ? 'income' : 'core',
     taxRateOverride: holding && holding.taxRateOverride != null ? String(holding.taxRateOverride) : '',
     dividendPerShareTtmOverride: dpsOverride,
-    dividendPerShareTtmOverrideTouched: holding && holding.dividendPerShareTtmOverrideTouched === true && dpsOverride !== ''
+    dividendPerShareTtmOverrideTouched: holding && holding.dividendPerShareTtmOverrideTouched === true && dpsOverride !== '',
+    createdAt: holding && typeof holding.createdAt === 'string' ? holding.createdAt : '',
+    updatedAt: holding && typeof holding.updatedAt === 'string' ? holding.updatedAt : ''
   };
 }
 
@@ -471,6 +601,7 @@ export function buildPortfolioSnapshot() {
     version: PORTFOLIO_SNAPSHOT_VERSION,
     updatedAt: new Date().toISOString(),
     holdings,
+    rates: { CNY: 1, USD: safeNumber(persisted.rates && persisted.rates.USD, DEFAULT_RATES.USD), HKD: safeNumber(persisted.rates && persisted.rates.HKD, DEFAULT_RATES.HKD) },
     dividendLedger: Array.isArray(persisted.dividendLedger)
       ? persisted.dividendLedger.map(sanitizeDividendLedgerEntry).filter(Boolean)
       : [],
@@ -493,6 +624,8 @@ export function buildPortfolioSnapshot() {
       ? persisted.yearlyHoldings.map(sanitizeYearlyHoldingsEntry).filter(Boolean)
       : [],
     dividendLedgerIgnored: normalizeIgnoredDividendIds(persisted.dividendLedgerIgnored),
+    dividendLedgerTombstones: normalizeDividendTombstones(persisted.dividendLedgerTombstones),
+    recordTombstones: normalizeRecordTombstones(persisted.recordTombstones),
     nextId: Math.max(holdings.reduce((max, item) => Math.max(max, item.localId), 0) + 1, Math.floor(safeNumber(persisted.nextId, 1))),
     showAmounts: persisted.showAmounts !== false,
     sortField: ['effectiveYield', 'netAnnualDividendCny'].includes(persisted.sortField) ? persisted.sortField : 'marketValueCny',
