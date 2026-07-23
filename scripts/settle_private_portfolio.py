@@ -347,6 +347,15 @@ def _economic_amount_cny(item, rates=None):
     return safe_float(item.get("amountPerShare"), 0.0) * resolve_fx(item.get("currency"), rates or DEFAULT_RATES)
 
 
+def _economic_per_share_cny(item, rates=None):
+    """每股金额折 CNY。存量条目的 grossCny/fxRate 可能被写入时的错误汇率污染
+    （本脚本历史上无快照时用默认 HKD 0.92 结算），每股金额×统一汇率才是稳定的经济身份。"""
+    amount = safe_float(item.get("amountPerShare"), 0.0)
+    if amount <= 0:
+        return 0.0
+    return amount * resolve_fx(item.get("currency"), rates or DEFAULT_RATES)
+
+
 def _economic_source(item):
     return str(item.get("eventSource") or item.get("source") or "").strip().lower()
 
@@ -355,18 +364,49 @@ def _economic_tolerance(left, right):
     return max(0.02, min(abs(left), abs(right)) * 0.005)
 
 
+def _economic_amounts_match(left, right, rates=None):
+    """等值判定三档：同币种 0.5%；跨币种折算 1.5%；跨源同币种 3.5%。
+    与前端 economicAmountsMatch / 行情脚本 same_dividend_event 保持一致。"""
+    left_amount = safe_float(left.get("amountPerShare"), 0.0)
+    right_amount = safe_float(right.get("amountPerShare"), 0.0)
+    if left_amount > 0 and right_amount > 0:
+        left_currency = normalize_currency(left.get("currency"), "")
+        right_currency = normalize_currency(right.get("currency"), "")
+        if left_currency and left_currency == right_currency:
+            if abs(left_amount - right_amount) <= max(1e-6, min(left_amount, right_amount) * 0.005):
+                return True
+            left_source = _economic_source(left)
+            right_source = _economic_source(right)
+            return bool(left_source and right_source and left_source != right_source) \
+                and abs(left_amount - right_amount) <= min(left_amount, right_amount) * 0.035
+        left_cny = _economic_per_share_cny(left, rates)
+        right_cny = _economic_per_share_cny(right, rates)
+        if left_cny <= 0 or right_cny <= 0:
+            return False
+        return abs(left_cny - right_cny) <= max(0.005, min(left_cny, right_cny) * 0.015)
+    left_total = _economic_amount_cny(left, rates)
+    right_total = _economic_amount_cny(right, rates)
+    if left_total <= 0 or right_total <= 0:
+        return False
+    return abs(left_total - right_total) <= _economic_tolerance(left_total, right_total)
+
+
+def _economic_subset_value(item, rates=None):
+    return _economic_per_share_cny(item, rates) or _economic_amount_cny(item, rates)
+
+
 def _find_component_subset(items, target, rates):
     candidates = items[:12]
     if len(candidates) < 2:
         return None
-    amounts = [_economic_amount_cny(item, rates) for item in candidates]
+    amounts = [_economic_subset_value(item, rates) for item in candidates]
     best = None
     for mask in range(1, 1 << len(candidates)):
         indexes = [index for index in range(len(candidates)) if mask & (1 << index)]
         if len(indexes) < 2:
             continue
         total = sum(amounts[index] for index in indexes)
-        if abs(total - target) > _economic_tolerance(total, target):
+        if abs(total - target) > max(1e-4, min(total, target) * 0.015):
             continue
         if best is None or len(indexes) < len(best):
             best = indexes
@@ -395,20 +435,19 @@ def normalize_economic_entries(items, rates=None):
     for group in groups.values():
         unique = []
         for item in group:
-            amount = _economic_amount_cny(item, rates)
             same_index = next((i for i, other in enumerate(unique)
-                               if abs(_economic_amount_cny(other, rates) - amount)
-                               <= _economic_tolerance(_economic_amount_cny(other, rates), amount)), None)
+                               if _economic_amounts_match(other, item, rates)), None)
             if same_index is None:
                 unique.append(item)
             elif _economic_priority(item) > _economic_priority(unique[same_index]):
                 unique[same_index] = item
-        pending = sorted(unique, key=lambda item: _economic_amount_cny(item, rates), reverse=True)
+        pending = sorted(unique, key=lambda item: _economic_subset_value(item, rates), reverse=True)
         while pending:
             aggregate = pending.pop(0)
-            subset = _find_component_subset(pending, _economic_amount_cny(aggregate, rates), rates)
+            subset = _find_component_subset(pending, _economic_subset_value(aggregate, rates), rates)
             aggregate_source = _economic_source(aggregate)
-            cross_source = subset is not None and aggregate_source and all(
+            # 聚合来源允许缺失（用户确认件常无 eventSource）；分量缺来源保持保守。
+            cross_source = subset is not None and all(
                 _economic_source(pending[index]) and _economic_source(pending[index]) != aggregate_source
                 for index in subset)
             if subset is None or not cross_source:
