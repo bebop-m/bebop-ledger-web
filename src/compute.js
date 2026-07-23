@@ -473,7 +473,40 @@ function economicEntrySource(entry) {
   return String(entry && (entry.eventSource || entry.source) || '').trim().toLowerCase();
 }
 
+function economicEntryCurrency(entry) {
+  return String(entry && entry.currency || '').trim().toUpperCase();
+}
+
+/* 每股金额折 CNY（按当前汇率）。存量条目的 grossCny/fxRate 可能被写入时的
+   错误汇率污染（如结算脚本默认 HKD 0.92），每股金额×统一汇率才是稳定的经济身份。 */
+function economicPerShareCny(entry) {
+  const amount = safeNumber(entry && entry.amountPerShare, 0);
+  if (amount <= 0) return 0;
+  return amount * resolveFxRate(economicEntryCurrency(entry), state.rates);
+}
+
+/* 等值判定分三档：同币种 0.5%；跨币种按当前汇率折算比 1.5%（吸收汇率漂移）；
+   跨数据源+同币种再放宽到 3.5%（REIT 分派等两源申报值常差几个百分点）。
+   与 update_market_data.py 的容差档位保持一致。 */
 function economicAmountsMatch(left, right) {
+  const leftAmount = safeNumber(left && left.amountPerShare, 0);
+  const rightAmount = safeNumber(right && right.amountPerShare, 0);
+  if (leftAmount > 0 && rightAmount > 0) {
+    const leftCurrency = economicEntryCurrency(left);
+    const rightCurrency = economicEntryCurrency(right);
+    if (leftCurrency && leftCurrency === rightCurrency) {
+      if (Math.abs(leftAmount - rightAmount) <= Math.max(1e-6, Math.min(leftAmount, rightAmount) * 0.005)) return true;
+      const leftSource = economicEntrySource(left);
+      const rightSource = economicEntrySource(right);
+      return Boolean(leftSource && rightSource && leftSource !== rightSource)
+        && Math.abs(leftAmount - rightAmount) <= Math.min(leftAmount, rightAmount) * 0.035;
+    }
+    const leftCny = economicPerShareCny(left);
+    const rightCny = economicPerShareCny(right);
+    if (leftCny <= 0 || rightCny <= 0) return false;
+    return Math.abs(leftCny - rightCny) <= Math.max(0.005, Math.min(leftCny, rightCny) * 0.015);
+  }
+  // 老数据缺每股金额时退回按存量总额比对。
   const a = economicComparableCny(left);
   const b = economicComparableCny(right);
   if (a <= 0 || b <= 0) return false;
@@ -481,7 +514,9 @@ function economicAmountsMatch(left, right) {
 }
 
 function findEconomicComponentSubset(entries, target) {
-  const targetAmount = economicComparableCny(target);
+  // 分量求和也按「每股金额折 CNY」比对：与股数、存量汇率污染解耦（0.93 = 0.56 + 0.37）。
+  const targetAmount = economicPerShareCny(target) || economicComparableCny(target);
+  const valueOf = (entry) => economicPerShareCny(entry) || economicComparableCny(entry);
   const maxMask = 1 << Math.min(entries.length, 12);
   let best = null;
   for (let mask = 1; mask < maxMask; mask += 1) {
@@ -490,10 +525,10 @@ function findEconomicComponentSubset(entries, target) {
     for (let index = 0; index < Math.min(entries.length, 12); index += 1) {
       if ((mask & (1 << index)) === 0) continue;
       indexes.push(index);
-      total += economicComparableCny(entries[index]);
+      total += valueOf(entries[index]);
     }
     if (indexes.length < 2) continue;
-    const tolerance = Math.max(0.02, Math.min(targetAmount, total) * 0.005);
+    const tolerance = Math.max(1e-4, Math.min(targetAmount, total) * 0.015);
     if (Math.abs(total - targetAmount) > tolerance) continue;
     if (!best || indexes.length < best.length) best = indexes;
   }
@@ -530,7 +565,10 @@ export function normalizeEconomicDividendEntries(entries) {
       const aggregate = pending.shift();
       const subset = findEconomicComponentSubset(pending, aggregate);
       const aggregateSource = economicEntrySource(aggregate);
-      const isCrossSourceRepresentation = subset && aggregateSource
+      /* 聚合来源允许缺失（用户确认/手改的条目常常没有 eventSource）：
+         只要每个分量都有已知来源、且不与聚合来源相同，就视为跨源重复表示。
+         分量缺来源时保持保守不折叠——那可能是同源的真实多笔派息。 */
+      const isCrossSourceRepresentation = subset
         && subset.every((index) => {
           const componentSource = economicEntrySource(pending[index]);
           return componentSource && componentSource !== aggregateSource;

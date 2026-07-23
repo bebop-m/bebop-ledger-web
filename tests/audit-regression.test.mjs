@@ -112,6 +112,49 @@ test('economic dividend identity collapses aggregate/components but preserves tw
     'small cross-source revisions must use the same 0.5% tolerance as private settlement');
 });
 
+test('economic identity survives polluted stored FX, cross-currency reporting and missing aggregate source', () => {
+  applyBase({});
+  /* 真实事故（09618.HK 2026-04-08）：同一笔派息三种表示——
+     用户确认的 HKD 条目（无 eventSource）、etnet 的 USD 申报、
+     结算脚本用默认汇率 0.92 写出的 HKD 条目（grossCny 被污染）。
+     等值判定必须按「每股金额 × 当前汇率」而不是存量 grossCny。 */
+  const confirmedHkd = ledgerEntry(3.921255, 33.97, {
+    id: 'jd-confirmed', sourceId: 'TEST.HK|2026-06-02|3.921255|HKD',
+    confirmed: true, eventSource: ''
+  });
+  const usdVariant = ledgerEntry(0.5, 35, {
+    id: 'jd-usd', sourceId: 'TEST.HK|2026-06-02|0.5|USD',
+    currency: 'USD', fxRate: 7, eventSource: 'etnet'
+  });
+  const pollutedFxVariant = ledgerEntry(3.92006, 36.06, {
+    id: 'jd-polluted', sourceId: 'TEST.HK|2026-06-02|3.92006|HKD',
+    fxRate: 0.92, eventSource: 'yahoo'
+  });
+  const folded = normalizeEconomicDividendEntries([confirmedHkd, usdVariant, pollutedFxVariant]);
+  assert.equal(folded.length, 1, '三种表示必须折叠成一笔');
+  assert.equal(folded[0].id, 'jd-confirmed', '已确认表示优先保留');
+
+  // 聚合条目来源缺失（用户确认/手改常见）不阻碍「聚合 = 分量之和」折叠。
+  const aggregateNoSource = ledgerEntry(3, 30, { id: 'agg', eventSource: '' });
+  const partA = ledgerEntry(1, 10, { id: 'pa', sourceId: 'TEST.HK|2026-06-02|1|HKD', eventSource: 'etnet' });
+  const partB = ledgerEntry(2, 20, { id: 'pb', sourceId: 'TEST.HK|2026-06-02|2|HKD', eventSource: 'etnet' });
+  assert.equal(normalizeEconomicDividendEntries([aggregateNoSource, partA, partB]).length, 1,
+    '聚合缺 eventSource 时仍应识别跨源重复表示');
+
+  // 分量缺来源保持保守：无法与「同源真实多笔派息」区分，不折叠。
+  const blindA = { ...partA, eventSource: '' };
+  const blindB = { ...partB, eventSource: '' };
+  assert.equal(normalizeEconomicDividendEntries([aggregateNoSource, blindA, blindB]).length, 3,
+    '分量来源未知时不得推断折叠');
+
+  // REIT 分派：跨源同币种申报差 2.9%（1.5959 vs 1.550903）按 3.5% 档折叠；同源不适用。
+  const etnetReit = ledgerEntry(1.5959, 15.96, { id: 'reit-etnet', sourceId: 'TEST.HK|2026-06-02|1.5959|HKD', eventSource: 'etnet' });
+  const yahooReit = ledgerEntry(1.550903, 15.51, { id: 'reit-yahoo', sourceId: 'TEST.HK|2026-06-02|1.550903|HKD', eventSource: 'yahoo' });
+  assert.equal(normalizeEconomicDividendEntries([etnetReit, yahooReit]).length, 1);
+  assert.equal(normalizeEconomicDividendEntries([etnetReit, { ...yahooReit, eventSource: 'etnet' }]).length, 2,
+    '同源相近金额是数据源刻意列出的两笔，必须保留');
+});
+
 test('dividend freezes prior-day shares, FX and tax; an ex-date trade does not change entitlement', () => {
   applyBase({
     holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 100, bucket: 'income', taxRateOverride: '0' }],
