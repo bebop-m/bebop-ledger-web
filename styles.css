@@ -10687,6 +10687,156 @@ body[data-active-page="home"] .home-quick-add:active {
   font-weight: 700;
 }
 
+/* ── 年度回顾：四指标 / pp 拆分 / 年度持仓饼图 ── */
+.annual-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 20px;
+}
+.annual-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.annual-metric small {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--label);
+}
+.annual-metric b {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.annual-metric b.is-gain { color: var(--up); }
+.annual-metric b.is-loss { color: var(--down); }
+
+.annual-pp-bar {
+  display: flex;
+  height: 2px;
+  margin: 4px 0 16px;
+  background: var(--track);
+  overflow: hidden;
+}
+.annual-pp-bar i { height: 100%; }
+.annual-pp-bar i.is-gold { background: var(--gold); }
+.annual-pp-bar i.is-ink { background: var(--ink); }
+.annual-pp-bar i.is-soft { background: var(--line-soft); }
+.annual-pp-bar i.is-track { background: var(--hint); }
+.annual-pp-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.annual-pp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.annual-pp-row > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.annual-pp-row i {
+  width: 8px;
+  height: 8px;
+  flex: none;
+}
+.annual-pp-row i.is-gold { background: var(--gold); }
+.annual-pp-row i.is-ink { background: var(--ink); }
+.annual-pp-row i.is-soft { background: var(--line-soft); }
+.annual-pp-row i.is-track { background: var(--hint); }
+.annual-pp-side {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.annual-pp-side b {
+  font-size: 13px;
+  font-weight: 700;
+}
+.annual-pp-side b.is-gain { color: var(--up); }
+.annual-pp-side b.is-loss { color: var(--down); }
+.annual-pp-side small {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--hint);
+}
+
+.annual-donut {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 6px;
+}
+.annual-donut-svg {
+  width: 120px;
+  height: 120px;
+  flex: none;
+}
+.annual-donut-center-year {
+  fill: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+.annual-donut-center-count {
+  fill: var(--muted);
+  font-size: 9px;
+  font-weight: 600;
+}
+.annual-donut-legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+.annual-donut-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.annual-donut-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex: none;
+}
+.annual-donut-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+.annual-donut-pct {
+  font-weight: 700;
+  color: var(--ink);
+}
+.annual-donut-delta {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.income-year-return {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 700;
+}
+.income-year-return.is-gain { color: var(--up); }
+.income-year-return.is-loss { color: var(--down); }
+
 /* 到账抽屉：币种三选 + 折算行 */
 .modal-field--currency {
   display: flex;

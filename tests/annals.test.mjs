@@ -13,7 +13,7 @@ const fundamentalsModule = await import('../src/fundamentals.js');
 const annalsModule = await import('../src/annals.js');
 const { state, applySnapshot, invalidateComputeCache } = stateModule;
 const { loadFundamentals } = fundamentalsModule;
-const { computeXirr, computeYearAnnals } = annalsModule;
+const { computeYearAnnals } = annalsModule;
 
 function applyTestSnapshot(overrides = {}) {
   applySnapshot({
@@ -36,35 +36,7 @@ function applyTestSnapshot(overrides = {}) {
   invalidateComputeCache();
 }
 
-test('computeXirr matches closed-form single-period return', () => {
-  // 整整 365 天：(11000/10000)^1 - 1 = 10%
-  const rate = computeXirr([
-    { date: '2025-01-01', amountCny: -10000 },
-    { date: '2026-01-01', amountCny: 11000 }
-  ]);
-  assert.ok(Math.abs(rate - 0.1) < 1e-6);
-});
-
-test('computeXirr handles mid-year contribution and losses', () => {
-  const gain = computeXirr([
-    { date: '2025-01-01', amountCny: -10000 },
-    { date: '2025-07-01', amountCny: -5000 },
-    { date: '2025-12-31', amountCny: 16000 }
-  ]);
-  assert.ok(gain > 0.07 && gain < 0.09);
-  const loss = computeXirr([
-    { date: '2025-01-01', amountCny: -10000 },
-    { date: '2025-12-31', amountCny: 8500 }
-  ]);
-  assert.ok(loss < -0.14 && loss > -0.16);
-  // 同号现金流无解
-  assert.equal(computeXirr([
-    { date: '2025-01-01', amountCny: -1 },
-    { date: '2025-12-31', amountCny: -1 }
-  ]), null);
-});
-
-test('year annals: xirr from net value chain and fx/eps/valuation attribution', async () => {
+test('year annals: 本年收益率 from interval simple method and fx/eps/valuation attribution', async () => {
   applyTestSnapshot({
     dailySnapshots: [
       { date: '2024-12-31', netCny: 510000, totalMarketValueCny: 510000, liabilityCny: 0, holdings: [], rates: { CNY: 1, USD: 7.1, HKD: 0.90 } },
@@ -108,9 +80,9 @@ test('year annals: xirr from net value chain and fx/eps/valuation attribution', 
   // 资金收益 = 620000 − 510000 − 0 = 110000
   assert.equal(annals.row.capitalReturnCny, 110000);
 
-  // XIRR ≈ (620/510)^(365/364) − 1 ≈ 21.6%
-  assert.ok(annals.xirr > 0.21 && annals.xirr < 0.225);
-  assert.equal(annals.xirrScope, '净值链');
+  // 本年收益率（区间简单法）= 110000 ÷ 510000 ≈ 21.57%
+  assert.equal(annals.yearStartNetCny, 510000);
+  assert.ok(annals.returnRate > 0.2156 && annals.returnRate < 0.2158);
 
   const att = annals.attribution;
   assert.equal(att.available, true);
@@ -124,7 +96,7 @@ test('year annals: xirr from net value chain and fx/eps/valuation attribution', 
   assert.ok(Math.abs(att.epsSplitCoverage - 1) < 1e-9);
 });
 
-test('year annals uses confirmed dividend calendar dates for monthly totals and XIRR', () => {
+test('year annals uses confirmed dividend calendar dates for monthly totals and 本年收益率', () => {
   applyTestSnapshot({
     dailySnapshots: [
       { date: '2024-12-31', netCny: 1000, totalMarketValueCny: 1000, holdings: [], rates: { CNY: 1, USD: 7.2, HKD: 0.92 } },
@@ -141,6 +113,7 @@ test('year annals uses confirmed dividend calendar dates for monthly totals and 
   const annals = computeYearAnnals(2025);
   assert.ok(annals);
   assert.equal(annals.dividendMonths[5], 10);
-  assert.equal(annals.xirrScope, '股息+资金');
-  assert.ok(Number.isFinite(annals.xirr));
+  // 本年收益率仍取区间简单法：资金收益 ÷ 年初净值，且为有限值。
+  assert.equal(annals.yearStartNetCny, 1000);
+  assert.ok(Number.isFinite(annals.returnRate));
 });

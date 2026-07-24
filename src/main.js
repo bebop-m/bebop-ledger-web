@@ -149,24 +149,12 @@ if (refs.incomeOverviewGrid) refs.incomeOverviewGrid.addEventListener('click', (
 
 refs.incomeYearList.addEventListener('click', (event) => {
   const annualTarget = event.target.closest('[data-annual-year]');
-  if (annualTarget && !event.target.closest('[data-year-holdings], [data-year-annals], [data-income-manual-year]')) {
+  if (annualTarget && !event.target.closest('[data-income-manual-year]')) {
     const year = Math.floor(safeNumber(annualTarget.dataset.annualYear, 0));
     if (year) {
       state.activeAnnualYear = year;
       navigateTo('annual');
     }
-    return;
-  }
-  const yearHoldingsButton = event.target.closest('[data-year-holdings]');
-  if (yearHoldingsButton) {
-    const year = Math.floor(safeNumber(yearHoldingsButton.dataset.yearHoldings, 0));
-    if (year) openModal('yearHoldings', { year });
-    return;
-  }
-  const annalsButton = event.target.closest('[data-year-annals]');
-  if (annalsButton) {
-    const year = Math.floor(safeNumber(annalsButton.dataset.yearAnnals, 0));
-    if (year) openModal('yearAnnals', { year });
     return;
   }
   const btn = event.target.closest('[data-income-manual-year]');

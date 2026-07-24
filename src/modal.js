@@ -14,7 +14,6 @@ import {
   getDividendCashImpactCny, getCashFlowCashImpactCny, getTradeCashImpactCny, validateTradeInventory
 } from './compute.js';
 import { getFundamentalsPickerModel } from './fundamentals.js';
-import { computeYearAnnals } from './annals.js';
 import { getPortfolioDiagnostics } from './diagnostics.js';
 import { archiveCompletedYears } from './revenue.js';
 
@@ -189,8 +188,6 @@ function renderModal() {
   if (!state.modal) { refs.modalRoot.innerHTML = ''; return; }
   if (state.modal === 'monthDetail') { renderMonthDetailModal(); return; }
   if (state.modal === 'holdingDetail') { renderHoldingDetailModal(); return; }
-  if (state.modal === 'yearHoldings') { renderYearHoldingsModal(); return; }
-  if (state.modal === 'yearAnnals') { renderYearAnnalsModal(); return; }
   if (state.modal === 'diagnostics') { renderDiagnosticsModal(); return; }
   if (state.modal === 'fundPicker') { renderFundPickerModal(); return; }
   let title = '', note = '', fields = '';
@@ -409,187 +406,6 @@ function renderFundPickerModal() {
     </section>`;
 }
 
-function formatSnapshotShares(value) {
-  return safeNumber(value, 0).toLocaleString('en-US', { maximumFractionDigits: 6 });
-}
-
-// 与上一份快照（最近的更早年份）逐只对比：新增 / 清仓 / 加减仓。
-function buildYearHoldingsDiff(entry, previous) {
-  const previousBySymbol = new Map((previous ? previous.holdings : []).map((item) => [item.symbol, item]));
-  const rows = entry.holdings.map((item) => {
-    const before = previousBySymbol.get(item.symbol);
-    previousBySymbol.delete(item.symbol);
-    if (!previous) return { ...item, change: '' };
-    if (!before) return { ...item, change: '新增' };
-    const delta = safeNumber(item.shares, 0) - safeNumber(before.shares, 0);
-    if (Math.abs(delta) < 0.000001) return { ...item, change: '' };
-    return { ...item, change: `${delta > 0 ? '+' : '−'}${formatSnapshotShares(Math.abs(delta))}` };
-  });
-  const removed = Array.from(previousBySymbol.values());
-  return { rows, removed };
-}
-
-// 年度持仓快照弹窗：该年逐只持仓 + 权重，附与上一份快照的增减仓对比。
-function renderYearHoldingsModal() {
-  const year = Math.floor(safeNumber(state.modalPayload && state.modalPayload.year, 0));
-  const entry = state.yearlyHoldings.find((item) => item && item.year === year) || null;
-  if (!entry) {
-    refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-      <section class="modal-sheet modal-sheet--detail" role="dialog" aria-modal="true">
-        <h3 class="modal-title">${year} 年持仓</h3>
-        <div class="month-detail-empty">该年暂无持仓快照</div>
-        <div class="modal-actions"><button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button></div>
-      </section>`;
-    return;
-  }
-  const previous = state.yearlyHoldings
-    .filter((item) => item && item.year < year)
-    .sort((a, b) => b.year - a.year)[0] || null;
-  const diff = buildYearHoldingsDiff(entry, previous);
-  const total = entry.holdings.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0) || 1;
-  const isCurrentYear = year === new Date().getFullYear();
-  const noteParts = [`截至 ${entry.date || `${year}-12-31`}`];
-  if (isCurrentYear) noteParts.push('当年快照随行情结算持续更新，跨年后自动冻结');
-  if (entry.source === 'backfill') noteParts.push('由历史日快照补出，市值按当前价估算');
-  if (previous) noteParts.push(`增减仓对比 ${previous.year} 年`);
-  const rowsHtml = diff.rows
-    .slice()
-    .sort((a, b) => safeNumber(b.marketValueCny, 0) - safeNumber(a.marketValueCny, 0))
-    .map((item) => `<div class="year-holdings-row">
-      <span class="yh-name"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.symbol)} · ${item.bucket === 'income' ? LABELS.income : LABELS.core}</small></span>
-      <span class="yh-shares"><strong>${escapeHtml(formatSnapshotShares(item.shares))}</strong>${item.change ? `<small class="yh-change${item.change === '新增' ? ' is-new' : ''}">${escapeHtml(item.change)}</small>` : '<small>&nbsp;</small>'}</span>
-      <span class="yh-value"><strong>${escapeHtml(formatDisplayMoney(item.marketValueCny, 'CNY'))}</strong><small>${((safeNumber(item.marketValueCny, 0) / total) * 100).toFixed(1)}%</small></span>
-    </div>`).join('');
-  const removedHtml = diff.removed.length
-    ? `<div class="year-holdings-removed">
-        <span class="yh-removed-label">已清仓（${previous.year} 年持有）</span>
-        ${diff.removed.map((item) => `<span class="yh-removed-item">${escapeHtml(item.name)} · ${escapeHtml(formatSnapshotShares(item.shares))}</span>`).join('')}
-      </div>`
-    : '';
-  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-    <section class="modal-sheet modal-sheet--detail" role="dialog" aria-modal="true">
-      <header class="month-detail-head">
-        <div class="month-detail-title">
-          <h3>${year} 年持仓 · ${entry.holdings.length} 项</h3>
-          <strong>${escapeHtml(formatDisplayMoney(entry.totalMarketValueCny, 'CNY'))}</strong>
-        </div>
-        <p class="month-detail-summary">${escapeHtml(noteParts.join(' · '))}</p>
-      </header>
-      <div class="month-detail-list year-holdings-list">${rowsHtml}</div>
-      ${removedHtml}
-      <div class="modal-actions">
-        <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button>
-      </div>
-    </section>`;
-}
-
-function formatAnnalsMoney(value) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
-  return formatDisplayMoney(value, 'CNY');
-}
-
-function formatAnnalsSigned(value) {
-  if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
-  const numeric = Number(value);
-  return `${numeric >= 0 ? '+' : '−'}${formatDisplayMoney(Math.abs(numeric), 'CNY')}`;
-}
-
-function annalsReturnTone(value) {
-  const numeric = safeNumber(value, 0);
-  return numeric > 0 ? 'is-gain' : numeric < 0 ? 'is-loss' : 'is-flat';
-}
-
-function buildAnnalsMetric(label, value, toneClass = '') {
-  return `<span class="annals-metric"><small>${escapeHtml(label)}</small><strong${toneClass ? ` class="${toneClass}"` : ''}>${escapeHtml(value)}</strong></span>`;
-}
-
-/* 归因区：股息 / 汇率 / 价格三行；价格行下按覆盖度附 EPS/估值 拆分。 */
-function buildAnnalsAttribution(annals) {
-  const attribution = annals.attribution;
-  const rows = [];
-  rows.push(`<div class="annals-attr-row"><span>股息收入</span><strong class="${annalsReturnTone(attribution.dividendCny)}">${escapeHtml(formatAnnalsSigned(attribution.dividendCny))}</strong></div>`);
-  if (!attribution.available) {
-    return `<div class="annals-block">
-      <p class="annals-block-title">收益归因</p>
-      ${rows.join('')}
-      <p class="annals-note">缺少该年的年初持仓快照或汇率，汇率与价格归因暂不可算。</p>
-    </div>`;
-  }
-  rows.push(`<div class="annals-attr-row"><span>汇率变动</span><strong class="${annalsReturnTone(attribution.fxCny)}">${escapeHtml(formatAnnalsSigned(attribution.fxCny))}</strong></div>`);
-  rows.push(`<div class="annals-attr-row"><span>价格变动</span><strong class="${annalsReturnTone(attribution.priceCny)}">${escapeHtml(formatAnnalsSigned(attribution.priceCny))}</strong></div>`);
-  const coverage = Math.round(safeNumber(attribution.epsSplitCoverage, 0) * 100);
-  const split = coverage > 0
-    ? `<div class="annals-attr-sub">
-        <span>其中（按年初持仓 ${coverage}% 市值近似）</span>
-        <span>EPS 增长 <strong class="${annalsReturnTone(attribution.epsCny)}">${escapeHtml(formatAnnalsSigned(attribution.epsCny))}</strong> · 估值变动 <strong class="${annalsReturnTone(attribution.valuationCny)}">${escapeHtml(formatAnnalsSigned(attribution.valuationCny))}</strong></span>
-      </div>`
-    : '';
-  return `<div class="annals-block">
-    <p class="annals-block-title">收益归因</p>
-    ${rows.join('')}
-    ${split}
-    <p class="annals-note">合计 = 股息 + 汇率 + 价格；汇率按年初持仓与年界汇率近似，不含年内调仓影响。</p>
-  </div>`;
-}
-
-function buildAnnalsTrades(annals) {
-  if (!annals.trades.length) {
-    return `<div class="annals-block"><p class="annals-block-title">当年交易</p><p class="annals-empty">暂无交易记录，无法判断年内调仓情况。</p></div>`;
-  }
-  const rows = annals.trades.map((trade) => `<div class="annals-trade-row">
-    <span class="annals-trade-date">${escapeHtml(trade.date.slice(5))}</span>
-    <span class="annals-trade-side ${trade.side === 'sell' ? 'is-income' : 'is-core'}">${trade.side === 'sell' ? '卖出' : '买入'}</span>
-    <span class="annals-trade-name">${escapeHtml(trade.name)}</span>
-    <span class="annals-trade-value">${escapeHtml(formatAnnalsMoney(trade.valueCny))}</span>
-  </div>`).join('');
-  return `<div class="annals-block">
-    <p class="annals-block-title">当年交易<span class="annals-block-count">${annals.trades.length} 笔</span></p>
-    ${rows}
-  </div>`;
-}
-
-/* 年度年鉴弹窗：数字 → 归因 → 交易，全部只读、全自动。 */
-function renderYearAnnalsModal() {
-  const year = Math.floor(safeNumber(state.modalPayload && state.modalPayload.year, 0));
-  const annals = year ? computeYearAnnals(year) : null;
-  if (!annals) {
-    refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-      <section class="modal-sheet modal-sheet--detail" role="dialog" aria-modal="true">
-        <h3 class="modal-title">${year} 年鉴</h3>
-        <div class="month-detail-empty">该年暂无数据</div>
-        <div class="modal-actions"><button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button></div>
-      </section>`;
-    return;
-  }
-  const row = annals.row;
-  const rate = (value) => (value === null || value === undefined || !Number.isFinite(Number(value)) ? '—' : `${(Number(value) * 100).toFixed(1)}%`);
-  const metrics = [
-    buildAnnalsMetric('股息收入', formatAnnalsMoney(row.dividendCny)),
-    buildAnnalsMetric('资金收益', formatAnnalsSigned(row.capitalReturnCny), annalsReturnTone(row.capitalReturnCny)),
-    buildAnnalsMetric(`XIRR${annals.xirrScope ? `（${annals.xirrScope}）` : ''}`, rate(annals.xirr), annalsReturnTone(annals.xirr)),
-    buildAnnalsMetric('净注入', formatAnnalsSigned(row.netInflowCny)),
-    buildAnnalsMetric('年末净值', formatAnnalsMoney(row.yearEndNetCny))
-  ].join('');
-  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-    <section class="modal-sheet modal-sheet--detail" role="dialog" aria-modal="true">
-      <header class="month-detail-head">
-        <div class="month-detail-title">
-          <h3>${year} 年鉴</h3>
-          ${annals.isCurrentYear ? '<strong class="annals-live">进行中</strong>' : ''}
-        </div>
-        <p class="month-detail-summary">${annals.isCurrentYear ? '当年数据随结算滚动，跨年后自动冻结' : '已冻结的年度复盘'}</p>
-      </header>
-      <div class="month-detail-list annals-body">
-        <div class="annals-metric-grid">${metrics}</div>
-        ${buildAnnalsAttribution(annals)}
-        ${buildAnnalsTrades(annals)}
-      </div>
-      <div class="modal-actions">
-        <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button>
-      </div>
-    </section>`;
-}
-
 // 切换某笔股息的「已到账确认」。确认=锁定为已到账(绿点，且对账不再清理)；取消=回到自动判定(黄点)。
 export function toggleDividendConfirm(sourceId) {
   if (!sourceId) return;
@@ -728,7 +544,7 @@ function saveTradeEdit() {
 }
 
 export function handleModalSave() {
-  if (state.modal === 'monthDetail' || state.modal === 'holdingDetail' || state.modal === 'yearHoldings' || state.modal === 'yearAnnals' || state.modal === 'diagnostics' || state.modal === 'fundPicker' || state.modal === 'holdingsMenu') { closeModal(); return; }
+  if (state.modal === 'monthDetail' || state.modal === 'holdingDetail' || state.modal === 'diagnostics' || state.modal === 'fundPicker' || state.modal === 'holdingsMenu') { closeModal(); return; }
   if (state.modal === 'quickAdd') return;
   let returnMonth = 0;
   if (state.modal === 'quantity') {
