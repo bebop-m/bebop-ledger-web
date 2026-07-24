@@ -74,6 +74,11 @@ export function getFundamentalsPickerModel() {
   return { holdings: holdings.map(toItem), others: others.map(toItem) };
 }
 
+// 当前选中的基本面公司 symbol，供财报日历高亮「自家」。
+export function getSelectedFundamentalsSymbol() {
+  return _selectedSymbol;
+}
+
 export function getFundamentalsCompanyCount() {
   return _data ? Object.keys(_data.companies).length : 0;
 }
@@ -342,6 +347,37 @@ function buildMetricChartSvg(rows, metric) {
   </svg>`;
 }
 
+/* 分红 / EPS 线图：y 轴 min–max 自适应量程（非零基线，每点标值不构成误导，
+   与收益率趋势的零轴规则不同，勿混用）。 */
+function buildMinMaxChartSvg(rows, key, kind, label) {
+  const points = [];
+  rows.forEach((row, index) => { if (isFiniteValue(row[key])) points.push({ index, value: Number(row[key]) }); });
+  if (points.length < 2) return '';
+  const values = points.map((point) => point.value);
+  let minValue = Math.min(...values);
+  let maxValue = Math.max(...values);
+  if (minValue === maxValue) { const bump = Math.abs(minValue) * 0.1 || 1; minValue -= bump; maxValue += bump; }
+  const pad = (maxValue - minValue) * 0.16;
+  minValue -= pad; maxValue += pad;
+  const range = maxValue - minValue || 1;
+  const innerW = CHART_W - CHART_PAD_X * 2;
+  const innerH = CHART_H - CHART_PAD_TOP - CHART_PAD_BOTTOM;
+  const total = rows.length;
+  const toX = (index) => (total <= 1 ? CHART_W / 2 : CHART_PAD_X + (innerW * index) / (total - 1));
+  const toY = (value) => CHART_PAD_TOP + ((maxValue - value) / range) * innerH;
+  const coords = points.map((point) => ({ x: roundSvg(toX(point.index)), y: roundSvg(toY(point.value)), value: point.value }));
+  const polyline = coords.map((coord) => `${coord.x},${coord.y}`).join(' ');
+  const circles = coords.map((coord, i) => `<circle cx="${coord.x}" cy="${coord.y}" r="${i === coords.length - 1 ? 4 : 3}"></circle>`).join('');
+  const labels = coords.map((coord, i) => {
+    const anchor = coord.x < CHART_PAD_X + 20 ? 'start' : coord.x > CHART_W - CHART_PAD_X - 20 ? 'end' : 'middle';
+    return `<text x="${coord.x}" y="${Math.max(11, coord.y - 9)}" text-anchor="${anchor}"${i === coords.length - 1 ? ' class="is-latest"' : ''}>${escapeHtml(formatMetricValue(coord.value, kind))}</text>`;
+  }).join('');
+  return `<svg class="fund-chart-svg fund-line-svg" viewBox="0 0 ${CHART_W} ${CHART_H}" role="img" aria-label="${escapeHtml(label)}历年走势">
+    <g class="fund-chart-series"><polyline points="${polyline}"></polyline>${circles}</g>
+    <g class="fund-chart-labels">${labels}</g>
+  </svg>`;
+}
+
 function getLatestPair(rows, key) {
   const values = rows
     .map((row) => ({ year: row.year, value: row[key] }))
@@ -510,11 +546,8 @@ function buildDividendBars(company, visible) {
   const growthStreak = getGrowthStreak(visible, 'dividendPerShare');
   return `<section class="fund-eps-section fund-dividend-section">
     <div class="fund-eps-head"><p class="ledger-eyebrow">每股分红</p><strong class="fund-bar-latest">${escapeHtml(formatMetricValue(latest.dividendPerShare, 'money'))} ${escapeHtml(company.currency)}<small>股息率 ${escapeHtml(formatMetricValue(latest.dividendYield, 'percent'))}</small></strong></div>
-    <div class="fund-eps-bars">${visible.map((row, index) => {
-      const hasValue = row.dividendPerShare !== null && row.dividendPerShare !== undefined;
-      const height = hasValue ? Math.max(4, Math.abs(safeNumber(row.dividendPerShare, 0)) / max * 72) : 0;
-      return `<span><b>${hasValue ? escapeHtml(formatMetricValue(row.dividendPerShare, 'money')) : '—'}</b><span class="fund-bar-column"><i style="height:${height.toFixed(1)}px" class="${index === visible.length - 1 && hasValue ? 'is-current' : ''}${hasValue ? '' : ' is-empty'}"></i></span><small>${row.year}</small></span>`;
-    }).join('')}</div>
+    ${buildMinMaxChartSvg(visible, 'dividendPerShare', 'money', '每股分红')}
+    <div class="fund-chart-years">${visible.map((row) => `<span>${row.year}</span>`).join('')}</div>
     <div class="fund-eps-stats fund-eps-stats--dividend">
       <div><span>特别股息</span><strong>${escapeHtml(formatMetricValue(latest.specialDividendPerShare, 'money'))}</strong></div>
       <div><span>连续增长</span><strong>${growthStreak > 0 ? `${growthStreak} 年` : '—'}</strong></div>
@@ -535,11 +568,8 @@ function buildEpsLedger(company, visible) {
   const growthText = latestGrowth === null ? '' : `${latestGrowth > 0 ? '+' : latestGrowth < 0 ? '−' : ''}${Math.abs(latestGrowth * 100).toFixed(1)}%`;
   return `<section class="fund-eps-section">
     <div class="fund-eps-head"><p class="ledger-eyebrow">EPS 每股收益</p><strong class="fund-bar-latest ${growthTone}">${growthText ? escapeHtml(growthText) : '—'}<small>EPS ${escapeHtml(formatMetricValue(latest.eps, 'money'))} ${escapeHtml(company.statementCurrency || company.currency)}</small></strong></div>
-    <div class="fund-eps-bars">${visible.map((row, index) => {
-      const hasValue = row.eps !== null && row.eps !== undefined;
-      const height = hasValue ? Math.max(4, Math.abs(safeNumber(row.eps, 0)) / max * 72) : 0;
-      return `<span><b>${hasValue ? escapeHtml(formatMetricValue(row.eps, 'money')) : '—'}</b><span class="fund-bar-column"><i style="height:${height.toFixed(1)}px" class="${index === visible.length - 1 && hasValue ? 'is-current' : ''}${hasValue ? '' : ' is-empty'}"></i></span><small>${row.year}</small></span>`;
-    }).join('')}</div>
+    ${buildMinMaxChartSvg(visible, 'eps', 'money', 'EPS')}
+    <div class="fund-chart-years">${visible.map((row) => `<span>${row.year}</span>`).join('')}</div>
     <div class="fund-eps-stats">
       <div><span>分红率</span><strong>${escapeHtml(formatMetricValue(latest.payoutRatio, 'percent'))}</strong></div>
       <div><span>负债率</span><strong>${escapeHtml(formatMetricValue(latest.debtRatio, 'percent'))}</strong></div>

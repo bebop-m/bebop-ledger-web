@@ -11148,3 +11148,7 @@ body[data-active-page="home"] .home-quick-add:active {
   background: transparent;
   color: var(--ink);
 }
+
+/* 财报日历：自家（当前选中公司）金色高亮 */
+.report-event-row.is-self .report-event-company strong { color: var(--gold); }
+.report-event-row.is-self .report-event-date strong { color: var(--gold); }
