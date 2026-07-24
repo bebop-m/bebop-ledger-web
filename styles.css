@@ -11152,3 +11152,14 @@ body[data-active-page="home"] .home-quick-add:active {
 /* 财报日历：自家（当前选中公司）金色高亮 */
 .report-event-row.is-self .report-event-company strong { color: var(--gold); }
 .report-event-row.is-self .report-event-date strong { color: var(--gold); }
+
+/* ── 验收修正：仓位结构条按 zen 规格改墨/金两段 2px 细线 ── */
+.ledger-structure-bar { height: 2px; gap: 0; margin-top: 14px; background: var(--track); border: none; }
+.ledger-structure-bar i { background: var(--ink); }
+.ledger-structure-bar span { flex: 1; background: var(--gold); }
+
+/* ── 验收修正：诊断入口常驻右上；仅隐藏旧圆钮（排序/刷新/新增已由文字按钮承接） ── */
+#holdingsPage .icon-actions.holdings-primary-actions { display: flex !important; justify-self: end; }
+.holdings-primary-actions .circle-button { display: none; }
+.diagnostics-button { display: inline-block; font-size: 11px; font-weight: 700; color: var(--muted); background: none; border: none; }
+.diagnostics-button strong { color: var(--up); font-weight: 800; }

@@ -402,6 +402,8 @@ export function renderDiagnosticsButton() {
   if (!refs.diagnosticsButton) return;
   const model = getPortfolioDiagnostics();
   const count = model.actionableCount;
+  // zen 规格：诊断入口常驻右上，计数>0 时数字用涨色提醒
+  refs.diagnosticsButton.hidden = false;
   refs.diagnosticsButton.innerHTML = `诊断${count > 0 ? ` <strong>${count}</strong>` : ''}`;
   refs.diagnosticsButton.classList.toggle('has-issues', count > 0);
   refs.diagnosticsButton.setAttribute('aria-label', count > 0 ? `持仓诊断，${count} 项需要关注` : '持仓诊断，无需处理');
