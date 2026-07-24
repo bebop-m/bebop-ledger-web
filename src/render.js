@@ -1078,15 +1078,31 @@ function getHoldingViewModel(item, index = 0) {
   };
 }
 
-function getHoldingMarkup(item, index, opts = {}) {
+/* 从股息日历模型组装「有在途/已公告条目」的 symbol 集合，用于持仓行名后缀金点。 */
+function getPendingDividendSymbols() {
+  try {
+    const set = new Set();
+    computeDividendCalendar().allDetails.forEach((entry) => {
+      if (entry.status === 'announced' || entry.status === 'pending' || entry.status === 'due') {
+        set.add(String(entry.symbol));
+      }
+    });
+    return set;
+  } catch (err) {
+    return new Set();
+  }
+}
+
+function getHoldingMarkup(item, index, opts = {}, pendingSymbols = null) {
   const { animate = true } = opts, v = getHoldingViewModel(item, index);
   const marketValueFocus = state.sortField === 'marketValueCny' ? ' is-sort-focus' : '';
   const dividendFocus = state.sortField === 'netAnnualDividendCny' ? ' is-sort-focus' : '';
   const yieldFocus = state.sortField === 'effectiveYield' ? ' is-sort-focus' : '';
+  const hasPending = pendingSymbols instanceof Set && pendingSymbols.has(String(item.symbol));
   return `<div class="holding-swipe${animate ? ' is-entering' : ''}" data-id="${item.localId}" style="--holding-swipe-offset:0px;animation-delay:${v.staggerDelay}ms;">
     <article class="holding-card" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
       <div class="holding-row-main">
-        <div class="holding-main"><div class="holding-title-line"><button class="holding-name holding-name-button" type="button" data-action="view-holding" aria-label="查看 ${escapeHtml(item.name)} 持仓详情">${escapeHtml(item.name)}</button><span class="holding-code">${escapeHtml(item.symbol)}</span></div>
+        <div class="holding-main"><div class="holding-title-line"><button class="holding-name holding-name-button${hasPending ? ' has-pending-dividend' : ''}" type="button" data-action="view-holding" aria-label="查看 ${escapeHtml(item.name)} 持仓详情${hasPending ? '（有在途或已公告股息）' : ''}">${escapeHtml(item.name)}</button><span class="holding-code">${escapeHtml(item.symbol)}</span></div>
           <div class="holding-meta-row"><span class="holding-price" data-holding-field="price">${escapeHtml(v.priceText)}</span><span>· ${escapeHtml(v.annualDividendLabel)} </span><button class="${dividendFocus.trim()}" type="button" data-action="edit-tax" data-holding-field="annualDividend">${escapeHtml(v.annualDividendText)}</button><span> · </span><button class="${yieldFocus.trim()}" type="button" data-action="edit-dividend" data-holding-field="effectiveYieldValue">${escapeHtml(v.yieldText)}</button></div>
         </div>
         <button class="holding-side" type="button" data-action="edit-quantity"><strong class="${marketValueFocus.trim()}" data-holding-field="marketValue">${escapeHtml(v.marketValueText)}</strong><span data-holding-field="weight">${escapeHtml(v.weightText)}</span></button>
@@ -1098,7 +1114,8 @@ export function renderHoldingsView(holdings, opts = {}) {
   mutable.activeDividendTooltipButton = null;
   if (!holdings.length) { refs.stockList.innerHTML = '<article class="holding-card empty-card"></article>'; return; }
   const visible = state.legendExpanded ? holdings : holdings.slice(0, LEGEND_COLLAPSED_COUNT);
-  refs.stockList.innerHTML = visible.map((item, i) => getHoldingMarkup(item, i, opts)).join('');
+  const pendingSymbols = getPendingDividendSymbols();
+  refs.stockList.innerHTML = visible.map((item, i) => getHoldingMarkup(item, i, opts, pendingSymbols)).join('');
   refs.legendToggle.hidden = holdings.length <= LEGEND_COLLAPSED_COUNT;
   refs.legendToggle.textContent = state.legendExpanded ? '收起' : `展开全部 ${holdings.length} 项`;
 }

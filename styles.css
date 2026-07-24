@@ -10533,3 +10533,16 @@ body[data-active-page="home"] .home-quick-add {
 body[data-active-page="home"] .home-quick-add:active {
   opacity: 0.55;
 }
+
+/* ── 持仓行：有在途/已公告股息，名称后缀 4px 金点 ── */
+.holding-name-button.has-pending-dividend::after {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: var(--glow);
+  vertical-align: middle;
+}
