@@ -10858,6 +10858,52 @@ body[data-active-page="home"] .home-quick-add:active {
 }
 .annual-share-button:active { opacity: 0.55; }
 
+/* ── 资金与交易：现金余额次级焦点 + 流水折叠 ── */
+.records-cash-focus {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin-top: 20px;
+  padding: 0;
+  background: none;
+  border: none;
+  text-align: left;
+}
+.records-cash-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: var(--label);
+}
+.records-cash-value {
+  font-size: 26px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.records-cash-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.records-cash-calibrate {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--gold);
+}
+.records-cash-focus:active { opacity: 0.6; }
+.income-record-expand {
+  display: block;
+  margin-top: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+
 /* 到账抽屉：币种三选 + 折算行 */
 .modal-field--currency {
   display: flex;

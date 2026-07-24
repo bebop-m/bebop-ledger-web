@@ -701,12 +701,9 @@ function formatIncomeRate(value) {
 // 年初净值、净注入和现金余额属于计算口径，折叠下沉，避免首屏同时争夺注意力。
 function renderIncomeOverview(model) {
   const row = model.current;
-  const holdingSummary = computeHoldings();
-  const cashActive = isCashModelActive();
-  const cashText = cashActive ? formatDisplayMoney(holdingSummary.cashBalanceCny, 'CNY') : '未设置';
-  const cashMarkup = `<button class="income-cash-context" type="button" data-income-cash-settings aria-label="${cashActive ? '编辑当前现金余额' : '设置当前现金余额'}"><small>现金余额</small><strong class="income-amount ${cashActive ? getSignedTone(holdingSummary.cashBalanceCny) : 'is-flat'}">${escapeHtml(cashText)}</strong><em>${cashActive ? '当前余额' : '点击设置'}</em></button>`;
+  // 现金余额入口已迁至「资金与交易」页；收益页不再重复呈现。
   if (!row || !row.capitalReturnAvailable) {
-    refs.incomeOverviewGrid.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无资金收益数据</p><p class="empty-state-note">回填或生成 ${model.currentYear - 1} 年末净值后，这里会展示今年至今的资金收益。</p></div><div class="income-cash-standalone">${cashMarkup}</div>`;
+    refs.incomeOverviewGrid.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无资金收益数据</p><p class="empty-state-note">回填或生成 ${model.currentYear - 1} 年末净值后，这里会展示今年至今的资金收益。</p></div>`;
     return;
   }
   refs.incomeOverviewGrid.innerHTML = `
@@ -720,7 +717,6 @@ function renderIncomeOverview(model) {
         <span><small>当前净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</strong></span>
         <span><small>年初净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearStartNetCny))}</strong></span>
         <span><small>净注入</small><strong class="income-amount">${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</strong></span>
-        ${cashMarkup}
       </div>
     </article>`;
 }
@@ -927,6 +923,29 @@ function renderDividendRecordRows(records) {
   `).join('');
 }
 
+const RECORDS_COLLAPSED_COUNT = 3;
+const recordsExpanded = { trades: false, cash: false, dividends: false };
+
+export function toggleRecordsExpand(key) {
+  if (Object.prototype.hasOwnProperty.call(recordsExpanded, key)) recordsExpanded[key] = !recordsExpanded[key];
+  renderIncomeRecords();
+}
+
+// 单段流水：默认 3 行，超过给「展开全部 N 笔」；行点击进对应编辑。
+function renderRecordBlock(title, countLabel, records, rowsFn, key) {
+  const total = records.length;
+  const expanded = recordsExpanded[key];
+  const visible = expanded ? records : records.slice(0, RECORDS_COLLAPSED_COUNT);
+  const toggle = total > RECORDS_COLLAPSED_COUNT
+    ? `<button class="income-record-expand text-button" type="button" data-records-expand="${key}">${expanded ? '收起' : `展开全部 ${total} 笔`}</button>`
+    : '';
+  return `<section class="income-record-block ledger-record-block">
+      <div class="income-record-head"><h3>${title}</h3><span>${countLabel}</span></div>
+      <div class="income-record-list">${rowsFn(visible)}</div>
+      ${toggle}
+    </section>`;
+}
+
 export function renderIncomeRecords() {
   if (!refs.incomeRecordsList) return;
   const recordsYear = new Date().getFullYear();
@@ -935,30 +954,31 @@ export function renderIncomeRecords() {
   const trades = computeTradeSummary(recordsYear);
   const buyCount = trades.records.filter((entry) => entry.side === 'buy').length;
   const sellCount = trades.records.filter((entry) => entry.side === 'sell').length;
+  // 现金余额入口的新家：hero 下的次级焦点，点击进 openingCash 校准。
+  const cashActive = isCashModelActive();
+  const holdingSummary = computeHoldings();
+  const cashText = cashActive ? formatDisplayMoney(holdingSummary.cashBalanceCny, 'CNY') : '未设置';
+  const cashMeta = cashActive && state.currentCashAsOfDate ? `基准 ${state.currentCashAsOfDate}` : '尚未校准';
   refs.incomeRecordsList.innerHTML = `
     <section class="record-focus">
       <span class="ledger-eyebrow">${recordsYear} · 净注入</span>
       <strong class="income-amount ${getSignedTone(cash.netInflowCny)}">${escapeHtml(formatIncomeSignedMoney(cash.netInflowCny))}</strong>
       <p>累计入金减去出金 · ${cash.count} 笔资金记录</p>
     </section>
+    <button class="records-cash-focus" type="button" data-income-cash-settings aria-label="${cashActive ? '校准当前现金余额' : '设置当前现金余额'}">
+      <span class="records-cash-label">现金余额</span>
+      <strong class="records-cash-value income-amount ${cashActive ? getSignedTone(holdingSummary.cashBalanceCny) : 'is-flat'}">${escapeHtml(cashText)}</strong>
+      <span class="records-cash-meta"><small>${escapeHtml(cashMeta)}</small><em class="records-cash-calibrate">点击校准</em></span>
+    </button>
     <div class="income-record-overview ledger-record-stats">
       <article><span>买入</span><strong>${buyCount} 笔</strong></article>
       <article><span>卖出</span><strong>${sellCount} 笔</strong></article>
       <article><span>出入金</span><strong>${cash.count} 笔</strong></article>
       <article><span>股息</span><strong>${dividends.count} 笔</strong></article>
     </div>
-    <section class="income-record-block ledger-record-block">
-      <div class="income-record-head"><h3>买卖流水</h3><span>${trades.count} 笔</span></div>
-      <div class="income-record-list">${renderTradeRows(trades.records)}</div>
-    </section>
-    <section class="income-record-block ledger-record-block">
-      <div class="income-record-head"><h3>出入金流水</h3><span>${cash.count} 笔</span></div>
-      <div class="income-record-list">${renderCashFlowRows(cash.records)}</div>
-    </section>
-    <section class="income-record-block ledger-record-block">
-      <div class="income-record-head"><h3>股息入账</h3><span>${dividends.count} 笔 · ${escapeHtml(formatIncomeMoney(dividends.totalCny))}</span></div>
-      <div class="income-record-list">${renderDividendRecordRows(dividends.records)}</div>
-    </section>`;
+    ${renderRecordBlock('买卖流水', `${trades.count} 笔`, trades.records, renderTradeRows, 'trades')}
+    ${renderRecordBlock('出入金流水', `${cash.count} 笔`, cash.records, renderCashFlowRows, 'cash')}
+    ${renderRecordBlock('股息入账', `${dividends.count} 笔 · ${escapeHtml(formatIncomeMoney(dividends.totalCny))}`, dividends.records, renderDividendRecordRows, 'dividends')}`;
 }
 
 export function renderIncomeSummaryPage() {

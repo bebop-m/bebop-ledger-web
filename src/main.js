@@ -13,7 +13,7 @@ import {
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
   isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, toggleDividendPastMonths,
-  generateAnnualShareCard
+  generateAnnualShareCard, toggleRecordsExpand
 } from './render.js';
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
@@ -189,6 +189,9 @@ if (refs.annualReviewContent) refs.annualReviewContent.addEventListener('click',
 });
 
 if (refs.incomeRecordsList) refs.incomeRecordsList.addEventListener('click', (event) => {
+  if (event.target.closest('[data-income-cash-settings]')) { openModal('openingCash'); return; }
+  const expandButton = event.target.closest('[data-records-expand]');
+  if (expandButton) { toggleRecordsExpand(expandButton.dataset.recordsExpand); return; }
   const cashButton = event.target.closest('[data-cash-flow-id]');
   if (cashButton) {
     const entry = state.cashFlows.find((item) => item && item.id === cashButton.dataset.cashFlowId);
