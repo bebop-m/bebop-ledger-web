@@ -14,3 +14,7 @@ data/portfolio.json
 data/portfolio_snapshot.json
 
 __pycache__/
+
+# 截图验收产物与其专用 Chrome profile（本地临时，勿入仓库）
+screenshots/
+.chrome-shot-profile/
