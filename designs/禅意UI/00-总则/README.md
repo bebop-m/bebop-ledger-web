@@ -112,6 +112,34 @@ zen 层写在文件末尾靠后来居上取胜，但**只写"想改的属性"不
 
 ---
 
+## 施工环境（新会话先看这段，都是踩过的）
+
+- **dev server 用 `dev-alt`(5180)**，不要用默认的 5173——它常被并发会话占着。
+  截图脚本默认就打 `http://localhost:5180`，端口对不上会截到空白页。
+  launch.json 两个配置都加了 `--strictPort`，端口被占会直接报错而不是静默漂移
+  （漂移正是此前预览面板截不到图的原因之一）。
+
+- **源码全是 CRLF**（styles.css / src/*.js / index.html）。
+  用 Edit 工具做**跨行**匹配几乎必然失败（old_string 里的 `\n` 对不上文件里的 `\r\n`），
+  报错却看不出原因。跨行改动一律写个 node 脚本按行处理：
+  ```js
+  const s = readFileSync(F, 'utf8');
+  const EOL = s.includes('\r\n') ? '\r\n' : '\n';
+  const L = s.split(EOL);            // 按行定位、splice 替换，再 join(EOL) 写回
+  ```
+  单行替换用 Edit 没问题。
+
+- **zen 层写在 styles.css 末尾**，靠后来居上压过前面一万行历史层。
+  首页那段（`01-首页 · 按 designs/…/定稿图.html 重排`）是已验收的样板，
+  新界面照它的写法：每个元素显式声明 display/flex/height/min-height/padding/
+  margin/border/font-size，伪元素显式 `content: none; display: none`。
+
+- **抽屉遮罩要去掉模糊**：现有 `.modal-mask` 一类带 `backdrop-filter: blur(...)`，
+  而定稿图要求「背景页保持原位**被压暗**」——只有 `rgba` 遮罩，没有毛玻璃。
+  03/04/05 及所有抽屉界面施工时一并清掉（styles.css 里搜 `backdrop-filter`）。
+
+- **改完先跑 `npm run test:js`**（38 项）。渲染层改动一般不影响，但删算法/改口径时会。
+
 ## 施工流程
 1. 在 `zen-redesign` 分支施工；**一界面一 commit**（中文信息循仓库风格）；测试全绿（`npm run test:js` / `test:py`；删 XIRR 时同步改 tests/annals.test.mjs 断言到本年收益率口径）。
 2. 不动 data/、scripts/（截图脚本除外）、sync/network 管线。
