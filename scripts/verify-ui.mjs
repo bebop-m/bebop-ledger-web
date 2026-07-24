@@ -62,7 +62,11 @@ if (!(await 探测(CFG.url))) {
 
 /* ── 页内检查：整段在浏览器里跑，返回纯数据 ── */
 function inPageAudit() {
-  const root = document.querySelector('[data-page-view]:not([hidden])') || document.body;
+  /* 抽屉开着时审抽屉本身。此前一律审「当前可见页面」，
+     结果验 xxx@modal 时量的是被压暗的背景页，抽屉里的违规一条都查不出来。 */
+  const root = document.querySelector('.modal-sheet')
+    || document.querySelector('[data-page-view]:not([hidden])')
+    || document.body;
   const rr = root.getBoundingClientRect();
   const rs = getComputedStyle(root);
   const L = rr.left + parseFloat(rs.paddingLeft || 0);
@@ -183,11 +187,28 @@ function inPageAudit() {
     单屏: { 内容高: root.scrollHeight, 视口高: window.innerHeight, 溢出: root.scrollHeight > window.innerHeight + 1 },
     横向溢出: de.scrollWidth > de.clientWidth + 1,
     // 只取当前可见页面内的元素：隐藏页面属于尚未施工的旧版，不该参与等比判定
-    关键字号: ['.home-hero-value', '.home-divi-value', '.home-nav-title', '.hero-value', '.page-name', '.sec-label']
+    关键字号: [
+      '.home-hero-value', '.home-divi-value', '.home-nav-title',
+      '.holdings-hero-value', '.holdings-page-name', '.holdings-sec-label', '.stock-name',
+      '.zen-sheet-title-text', '.zen-detail-qty strong', '.zen-diag-count', '.zen-edit-field'
+    ]
       .map((s) => { const e = root.querySelector(s); return e && vis(e) ? { 选择器: s, 字号: parseFloat(getComputedStyle(e).fontSize) } : null; })
       .filter(Boolean)
   };
 }
+
+/* 抽屉入口表：与 scripts/screenshot.mjs 保持一致。
+   nav 表示这个抽屉只能从某个内页进，出图前先导航过去。 */
+const MODAL_TARGETS = {
+  quickAdd: { sel: '#quickAddButton' },
+  month: { sel: '.home-month' },
+  liability: { sel: '.home-hero-label' },
+  holdingDetail: { nav: 'holdings', sel: '.stock-name-button' },
+  diagnostics: { nav: 'holdings', sel: '#diagnosticsButton' },
+  quantity: { nav: 'holdings', sel: '[data-action="edit-quantity"]' },
+  tax: { nav: 'holdings', sel: '[data-action="edit-tax"]' },
+  dividendEdit: { nav: 'holdings', sel: '[data-action="edit-dividend"]' }
+};
 
 async function 打开(browser, theme, w, h) {
   const ctx = await browser.createBrowserContext();
@@ -203,10 +224,19 @@ async function 打开(browser, theme, w, h) {
   const target = CFG.page;
   if (target.endsWith('@modal')) {
     const n = target.replace('@modal', '');
-    await page.evaluate((name) => {
-      const map = { quickAdd: '#quickAddButton', month: '.home-month', liability: '.home-hero-label' };
-      document.querySelector(map[name] || name)?.click();
-    }, n);
+    const entry = MODAL_TARGETS[n] || { sel: n };
+    // 抽屉挂在内页上时先把宿主页面打开（B 簇四个都长在持仓页上）
+    if (entry.nav) {
+      await page.evaluate((p) => document.querySelector(`[data-page-nav="${p}"]`)?.click(), entry.nav);
+      await new Promise((r) => setTimeout(r, 800));
+    }
+    const opened = await page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return false;
+      el.click();
+      return true;
+    }, entry.sel);
+    if (!opened) throw new Error(`未找到抽屉入口 ${n}（${entry.sel}）`);
     await new Promise((r) => setTimeout(r, 700));
   } else if (target !== 'home') {
     await page.evaluate((n) => document.querySelector(`[data-page-nav="${n}"]`)?.click(), target);

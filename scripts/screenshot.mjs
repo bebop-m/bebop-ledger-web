@@ -74,6 +74,19 @@ try {
   process.exit(3);
 }
 
+/* 抽屉入口表。有的抽屉只能从内页进（B 簇四个都长在持仓页上），
+   所以入口除了选择器还要记它挂在哪一页，出图时先导航再点。 */
+const MODAL_TARGETS = {
+  quickAdd: { sel: '#quickAddButton' },
+  month: { sel: '.home-month' },
+  liability: { sel: '.home-hero-label' },
+  holdingDetail: { nav: 'holdings', sel: '.stock-name-button' },
+  diagnostics: { nav: 'holdings', sel: '#diagnosticsButton' },
+  quantity: { nav: 'holdings', sel: '[data-action="edit-quantity"]' },
+  tax: { nav: 'holdings', sel: '[data-action="edit-tax"]' },
+  dividendEdit: { nav: 'holdings', sel: '[data-action="edit-dividend"]' }
+};
+
 async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
   // 每张图用独立上下文：应用会记住上次停留的页面，
   // 共用 profile 时后一张的背景会是前一张的页面
@@ -95,6 +108,9 @@ async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
     { timeout: 15000 }
   ).catch(() => console.warn('  ! 首屏数据等待超时，仍继续截图'));
 
+  // 抽屉挂在内页上时，先把宿主页面打开
+  if (!nav && modal && MODAL_TARGETS[modal] && MODAL_TARGETS[modal].nav) nav = MODAL_TARGETS[modal].nav;
+
   if (nav) {
     // 用 DOM 直接派发：page.click 要先算元素的可点击几何，
     // 无头模式下会因遮挡/视口判定间歇性抛 "not clickable"
@@ -108,14 +124,14 @@ async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
     await new Promise((r) => setTimeout(r, 700));
   }
   if (modal) {
-    await page.evaluate((name) => {
-      const map = {
-        quickAdd: '#quickAddButton',
-        month: '.home-month',
-        liability: '.home-hero-label'
-      };
-      document.querySelector(map[name] || name)?.click();
-    }, modal);
+    const opened = await page.evaluate((name, targets) => {
+      const sel = (targets[name] && targets[name].sel) || name;
+      const el = document.querySelector(sel);
+      if (!el) return false;
+      el.click();
+      return true;
+    }, modal, MODAL_TARGETS);
+    if (!opened) throw new Error(`未找到抽屉入口 ${modal}`);
     await new Promise((r) => setTimeout(r, 600));
   }
   await new Promise((r) => setTimeout(r, 400)); // 让入场动画落定
