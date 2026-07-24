@@ -142,7 +142,7 @@ export const LABELS = {
   dividendPayDateActual: '\u6d3e\u606f',
   dividendExDateLabel: '\u9664\u606f',
   dividendPayDateEstimated: '\u4f30',
-  dividendVsLastYear: '\u5bf9\u6bd4\u4e0a\u5e74',
+  dividendVsLastYear: '\u8f83\u53bb\u5e74',
   dividendNoCompare: '\u4e0a\u5e74\u65e0\u6570\u636e',
   dividendMonthSuffix: '\u6708',
   dividendConfirmHint: '\u70b9\u6309\u4e00\u7b14\u7f16\u8f91\u5230\u8d26\u65e5\u3001\u5b9e\u6536\u91d1\u989d\u4e0e\u5907\u6ce8\uff08\u7eff=\u5df2\u786e\u8ba4 \u00b7 \u9ec4=\u5f85\u786e\u8ba4 \u00b7 \u84dd=\u5df2\u516c\u544a \u00b7 \u7070=\u9884\u4f30\uff09',

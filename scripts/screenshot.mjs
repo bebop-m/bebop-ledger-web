@@ -84,7 +84,9 @@ const MODAL_TARGETS = {
   diagnostics: { nav: 'holdings', sel: '#diagnosticsButton' },
   quantity: { nav: 'holdings', sel: '[data-action="edit-quantity"]' },
   tax: { nav: 'holdings', sel: '[data-action="edit-tax"]' },
-  dividendEdit: { nav: 'holdings', sel: '[data-action="edit-dividend"]' }
+  dividendEdit: { nav: 'holdings', sel: '[data-action="edit-dividend"]' },
+  monthDetail: { nav: 'dividends', sel: '.divi-ym.has-pay' },
+  dividendReceipt: { nav: 'dividends', sel: '.divi-ym.has-pay', then: '.zen-md-row.is-clickable' }
 };
 
 async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
@@ -133,6 +135,18 @@ async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
     }, modal, MODAL_TARGETS);
     if (!opened) throw new Error(`未找到抽屉入口 ${modal}`);
     await new Promise((r) => setTimeout(r, 600));
+    // then 表示这个抽屉还要再往下钻一层（08-股息到账只能从 07-月明细的可点行进）
+    const then = MODAL_TARGETS[modal] && MODAL_TARGETS[modal].then;
+    if (then) {
+      const deeper = await page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (!el) return false;
+        el.click();
+        return true;
+      }, then);
+      if (!deeper) throw new Error(`未找到二级入口 ${modal}（${then}）`);
+      await new Promise((r) => setTimeout(r, 600));
+    }
   }
   await new Promise((r) => setTimeout(r, 400)); // 让入场动画落定
 

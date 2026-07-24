@@ -134,15 +134,27 @@ function inPageAudit() {
   }
 
   /* 2b) 横贯的细长实心块 —— 用 div/背景做的分隔 rule，border 检查抓不到。
-        金线一类是设计元素（不满宽），所以只报接近满宽的。 */
+        金线一类是设计元素（不满宽），所以只报接近满宽的。
+        但进度/构成线（总则规定的「2px 高、track 底、实色段、端点金点」）本来就可以满宽，
+        与分隔 rule 的机械特征一模一样，靠形状分不开——07-月明细的收款进度线就撞在这。
+        两者的结构差别是确定的：进度线是**带填充段的轨道**（自己有着色的子元素，
+        或本身就是某条轨道的子元素），分隔 rule 是没有子元素的孤立细条。 */
   const 分隔线 = [];
   const 内容宽 = R - L;
+  const 是轨道 = (el) => {
+    if ([...el.children].some((k) => !透明(getComputedStyle(k).backgroundColor))) return true;
+    const p = el.parentElement;
+    if (!p) return false;
+    const pr = p.getBoundingClientRect();
+    return pr.height >= 0.5 && pr.height <= 4 && !透明(getComputedStyle(p).backgroundColor);
+  };
   for (const el of all) {
     const r = el.getBoundingClientRect();
     const g = getComputedStyle(el);
     if (r.height > 4 || r.height < 0.5) continue;
     if (r.width < 内容宽 * 0.9) continue;
     if (透明(g.backgroundColor)) continue;
+    if (是轨道(el)) continue;
     分隔线.push({ 元素: name(el), 尺寸: `${Math.round(r.width)}×${r.height.toFixed(1)}`, 色: g.backgroundColor });
   }
   for (const el of all) {
@@ -192,7 +204,9 @@ function inPageAudit() {
     关键字号: [
       '.home-hero-value', '.home-divi-value', '.home-nav-title',
       '.holdings-hero-value', '.holdings-page-name', '.holdings-sec-label', '.stock-name',
-      '.zen-sheet-title-text', '.zen-detail-qty strong', '.zen-diag-count', '.zen-edit-field'
+      '.zen-sheet-title-text', '.zen-detail-qty strong', '.zen-diag-count', '.zen-edit-field',
+      '.divi-hero-value', '.divi-page-name', '.divi-sec-label', '.divi-filter',
+      '.zen-md-head h3', '.zen-md-side strong', '.zen-rc-cur', '.zen-rc-confirm'
     ]
       .map((s) => { const e = root.querySelector(s); return e && vis(e) ? { 选择器: s, 字号: parseFloat(getComputedStyle(e).fontSize) } : null; })
       .filter(Boolean)
@@ -209,7 +223,9 @@ const MODAL_TARGETS = {
   diagnostics: { nav: 'holdings', sel: '#diagnosticsButton' },
   quantity: { nav: 'holdings', sel: '[data-action="edit-quantity"]' },
   tax: { nav: 'holdings', sel: '[data-action="edit-tax"]' },
-  dividendEdit: { nav: 'holdings', sel: '[data-action="edit-dividend"]' }
+  dividendEdit: { nav: 'holdings', sel: '[data-action="edit-dividend"]' },
+  monthDetail: { nav: 'dividends', sel: '.divi-ym.has-pay' },
+  dividendReceipt: { nav: 'dividends', sel: '.divi-ym.has-pay', then: '.zen-md-row.is-clickable' }
 };
 
 async function 打开(browser, theme, w, h) {
@@ -240,6 +256,17 @@ async function 打开(browser, theme, w, h) {
     }, entry.sel);
     if (!opened) throw new Error(`未找到抽屉入口 ${n}（${entry.sel}）`);
     await new Promise((r) => setTimeout(r, 700));
+    // then 表示这个抽屉还要再往下钻一层（08-股息到账只能从 07-月明细的可点行进）
+    if (entry.then) {
+      const deeper = await page.evaluate((sel) => {
+        const el = document.querySelector(sel);
+        if (!el) return false;
+        el.click();
+        return true;
+      }, entry.then);
+      if (!deeper) throw new Error(`未找到二级入口 ${n}（${entry.then}）`);
+      await new Promise((r) => setTimeout(r, 700));
+    }
   } else if (target !== 'home') {
     await page.evaluate((n) => document.querySelector(`[data-page-nav="${n}"]`)?.click(), target);
     await new Promise((r) => setTimeout(r, 800));

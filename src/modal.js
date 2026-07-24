@@ -11,7 +11,8 @@ import { LABELS } from './constants.js';
 import { renderSavedStateQuietly, buildDividendMonthDetail, formatDisplayMoney } from './render.js';
 import {
   inferQuote, computeHoldings, computeIncomeSummary,
-  getDividendCashImpactCny, getCashFlowCashImpactCny, getTradeCashImpactCny, validateTradeInventory
+  getDividendCashImpactCny, getCashFlowCashImpactCny, getTradeCashImpactCny, validateTradeInventory,
+  convertReceiptToCny
 } from './compute.js';
 import { getFundamentalsPickerModel } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
@@ -186,7 +187,7 @@ export function getZenEditWidthCh(value) {
 }
 
 export function syncZenEditWidth(input) {
-  if (!input || !input.classList.contains('zen-edit-field')) return;
+  if (!input || !(input.classList.contains('zen-edit-field') || input.classList.contains('zen-rc-amount'))) return;
   input.style.width = `${getZenEditWidthCh(input.value)}ch`;
 }
 
@@ -216,6 +217,7 @@ function renderModal() {
   if (!state.modal) { refs.modalRoot.innerHTML = ''; return; }
   if (FIELD_EDIT_SHEETS[state.modal]) { renderFieldEditModal(); return; }
   if (state.modal === 'monthDetail') { renderMonthDetailModal(); return; }
+  if (state.modal === 'dividendLedger') { renderDividendLedgerModal(); return; }
   if (state.modal === 'holdingDetail') { renderHoldingDetailModal(); return; }
   if (state.modal === 'yearHoldings') { renderYearHoldingsModal(); return; }
   if (state.modal === 'yearAnnals') { renderYearAnnalsModal(); return; }
@@ -246,16 +248,6 @@ function renderModal() {
       <label class="modal-field"><span>现金基准日</span><input id="modalCurrentCashDateInput" class="modal-input" type="date" value="${escapeHtml(state.currentCashAsOfDate || getTodayLabel())}"></label>
       <label class="modal-field"><span>交易持仓起点</span><input id="modalPositionOpeningDateInput" class="modal-input" type="date" value="${escapeHtml(state.positionOpeningDate || getTodayLabel())}"></label>
       <p class="modal-quote-line">基准日之后的新记录才调整现金；持仓股数从交易起点的基准股数开始回放</p>`;
-  } else if (state.modal === 'dividendLedger') {
-    const entry = getDividendLedgerEntryBySourceId(state.modalPayload && state.modalPayload.sourceId);
-    const quote = entry ? inferQuote(entry.symbol) : {};
-    title = '股息到账';
-    note = entry ? `${quote.name || entry.symbol}` : '未找到这笔股息';
-    fields = entry ? `<label class="modal-field"><span>官方派付日（可选）</span><input id="modalDividendPayDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry.payDate))}"></label>
-      <label class="modal-field"><span>实际到账日</span><input id="modalDividendReceivedDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry.receivedDate))}"></label>
-      <label class="modal-field"><span>实收金额（CNY）</span><input id="modalDividendNetInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(safeNumber(entry.netCny, 0)))}" placeholder="0.00"></label>
-      <label class="modal-field"><span>备注</span><input id="modalDividendNoteInput" class="modal-input" type="text" value="${escapeHtml(entry.note || '')}" placeholder="可选"></label>
-      <label class="modal-check"><input id="modalDividendConfirmedInput" type="checkbox"${entry.confirmed === true ? ' checked' : ''}><span>标记已到账</span></label>` : '';
   } else if (state.modal === 'cashFlow') {
     const entry = getCashFlowPayload();
     const type = entry && entry.type === 'withdrawal' ? 'withdrawal' : 'deposit';
@@ -316,37 +308,147 @@ function renderModal() {
         <button class="modal-bucket-button is-income" type="button" data-bucket-option="income" aria-pressed="false">${LABELS.income}</button>
       </div><input id="modalBucketInput" type="hidden" value="core">`;
   }
-  const isReceipt = state.modal === 'dividendLedger';
+
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-    <section class="modal-sheet${isReceipt ? ' dividend-receipt-sheet' : ''}" role="dialog" aria-modal="true">${isReceipt ? '<div class="sheet-handle" aria-hidden="true"></div>' : ''}
+    <section class="modal-sheet" role="dialog" aria-modal="true">
     <div class="modal-title-row"><h3 class="modal-title">${title}</h3>${note ? `<p class="modal-note">${escapeHtml(note)}</p>` : ''}</div>${fields}
     <div class="modal-actions">
     ${state.modal === 'yearlyManual' && state.modalPayload.existing ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-yearly-manual">删除</button>' : ''}
     ${state.modal === 'cashFlow' && state.modalPayload && state.modalPayload.id ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-record">删除</button>' : ''}
     ${state.modal === 'trade' && state.modalPayload && state.modalPayload.id ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-record">删除</button>' : ''}
-    ${state.modal === 'dividendLedger' && state.modalPayload && state.modalPayload.sourceId ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-dividend-ledger">删除</button>' : ''}
+
     <button class="modal-button modal-button--secondary" type="button" data-modal-action="cancel">${LABELS.cancel}</button>
     ${state.modal === 'quickAdd' || state.modal === 'holdingsMenu' ? '' : `<button class="modal-button modal-button--primary" type="button" data-modal-action="save">${LABELS.save}</button>`}</div></section>`;
 }
 
+/* 07-月明细抽屉 · 按 designs/禅意UI/07-月明细/定稿图.html
+   抬头（月份＋当月合计）→ 小结行 → 收款进度金线（端点 7px 金点）→ 逐笔行 → 关闭。
+   逐笔行里非预估、非已公告的可点，进 08-股息到账。 */
 function renderMonthDetailModal() {
   const month = Math.floor(safeNumber(state.modalPayload && state.modalPayload.month, 0));
   const detail = buildDividendMonthDetail(month);
+  const fill = Math.max(0, Math.min(100, safeNumber(detail.receivedRatio, 0) * 100)).toFixed(1);
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-    <section class="modal-sheet modal-sheet--detail is-${escapeHtml(detail.phase)}" role="dialog" aria-modal="true">
-      <header class="month-detail-head">
-        <div class="month-detail-title">
-          <div><small>股息月份</small><h3>${escapeHtml(detail.title)}</h3></div>
-          <div class="month-detail-total"><small>应收合计</small><strong>${escapeHtml(detail.total)}</strong></div>
-        </div>
-        ${detail.stats.length ? `<div class="month-detail-stats">${detail.stats.map((item) => `<span><small>${escapeHtml(item.label)}</small><strong>${escapeHtml(item.value)}</strong></span>`).join('')}</div>` : ''}
-        ${detail.hasConfirmable ? '<p class="month-detail-hint">点按待核对项目，确认到账</p>' : ''}
+    <section class="modal-sheet zen-sheet zen-sheet--month" role="dialog" aria-modal="true" aria-labelledby="monthDetailTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <header class="zen-md-head">
+        <h3 id="monthDetailTitle">${escapeHtml(detail.title)}${detail.phase === 'current' ? '<small>当月</small>' : ''}</h3>
+        <strong>${escapeHtml(detail.total)}</strong>
       </header>
-      <div class="month-detail-list">${detail.body}</div>
-      <div class="modal-actions">
-        <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">${LABELS.cancel === '取消' ? '关闭' : LABELS.cancel}</button>
+      <p class="zen-md-summary">${escapeHtml(detail.summary)}</p>
+      <div class="zen-md-thread" role="img" aria-label="收款进度 ${escapeHtml(detail.receivedPercentText)}">
+        <i style="width:${fill}%"></i><b style="left:${fill}%"></b>
+      </div>
+      <p class="zen-md-caption"><span>收款进度</span><strong>${escapeHtml(detail.receivedPercentText)}</strong></p>
+      <div class="zen-md-rows">${detail.body}</div>
+      <div class="zen-sheet-actions">
+        <button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button>
       </div>
     </section>`;
+}
+
+/* 08-股息到账抽屉 · 按 designs/禅意UI/08-股息到账/定稿图.html
+   两个日期 → 入账币种三选（金点选中）→ 实收金额（金线托底）→ 折算行 → 备注
+   → 金点确认行 → 删除/取消/保存。
+   入账币种与外币金额只活在这个抽屉里：账本仍只存 netCny（硬约束），
+   所以每次打开都从人民币起手，金额取台账里的 netCny。 */
+const RECEIPT_CURRENCIES = [
+  { code: 'CNY', label: '人民币', symbol: '¥' },
+  { code: 'HKD', label: '港币', symbol: 'HK$' },
+  { code: 'USD', label: '美元', symbol: 'US$' }
+];
+
+function getReceiptCurrency() {
+  const code = String(state.modalPayload && state.modalPayload.receiptCurrency || 'CNY').toUpperCase();
+  return RECEIPT_CURRENCIES.find((item) => item.code === code) || RECEIPT_CURRENCIES[0];
+}
+
+function getReceiptAmountInput() {
+  return document.getElementById('modalDividendNetInput');
+}
+
+// 折算行：人民币时整行隐藏；外币时明示所用汇率与日期，避免读者误以为是历史汇率。
+export function updateReceiptConversion() {
+  const line = document.getElementById('modalDividendConvLine');
+  const input = getReceiptAmountInput();
+  if (!line || !input) return;
+  const currency = getReceiptCurrency();
+  const symbol = document.getElementById('modalDividendCurrencySymbol');
+  if (symbol) symbol.textContent = currency.symbol;
+  syncZenEditWidth(input);
+  if (currency.code === 'CNY') { line.hidden = true; line.innerHTML = ''; return; }
+  const { rate, cny } = convertReceiptToCny(input.value, currency.code);
+  line.hidden = false;
+  line.innerHTML = `按 ${escapeHtml(getShortToday())} 汇率 ${rate.toFixed(4)} · 入账 <strong>${escapeHtml(formatDisplayMoney(cny, 'CNY'))}</strong>`;
+}
+
+function getShortToday() {
+  const today = getTodayLabel();
+  return today.length >= 10 ? today.slice(5) : today;
+}
+
+export function setReceiptCurrency(code) {
+  if (state.modal !== 'dividendLedger') return;
+  const next = RECEIPT_CURRENCIES.find((item) => item.code === String(code || '').toUpperCase());
+  if (!next) return;
+  state.modalPayload = { ...(state.modalPayload || {}), receiptCurrency: next.code };
+  refs.modalRoot.querySelectorAll('[data-dividend-currency]').forEach((button) => {
+    const on = button.dataset.dividendCurrency === next.code;
+    button.classList.toggle('is-active', on);
+    button.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+  updateReceiptConversion();
+}
+
+export function toggleReceiptConfirmed() {
+  const box = document.getElementById('modalDividendConfirmedInput');
+  const button = refs.modalRoot.querySelector('.zen-rc-confirm');
+  if (!box || !button) return;
+  box.checked = !box.checked;
+  button.classList.toggle('is-on', box.checked);
+  button.setAttribute('aria-pressed', box.checked ? 'true' : 'false');
+}
+
+function renderDividendLedgerModal() {
+  const entry = getDividendLedgerEntryBySourceId(state.modalPayload && state.modalPayload.sourceId);
+  if (!entry) {
+    refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+      <section class="modal-sheet zen-sheet zen-sheet--receipt" role="dialog" aria-modal="true">
+        <div class="zen-sheet-handle" aria-hidden="true"></div>
+        <div class="zen-sheet-title"><span class="zen-sheet-title-text">股息到账</span><p class="zen-sheet-note">未找到这笔股息</p></div>
+        <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
+      </section>`;
+    return;
+  }
+  const quote = inferQuote(entry.symbol);
+  const currency = getReceiptCurrency();
+  const amount = String(safeNumber(entry.netCny, 0));
+  const confirmed = entry.confirmed === true;
+  const currencyOptions = RECEIPT_CURRENCIES.map((item) => `<button class="zen-rc-cur${item.code === currency.code ? ' is-active' : ''}" type="button" data-dividend-currency="${item.code}" aria-pressed="${item.code === currency.code ? 'true' : 'false'}">${escapeHtml(item.label)}<i aria-hidden="true"></i></button>`).join('');
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet zen-sheet zen-sheet--receipt" role="dialog" aria-modal="true" aria-labelledby="dividendReceiptTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <div class="zen-sheet-title">
+        <span class="zen-sheet-title-text" id="dividendReceiptTitle">股息到账</span>
+        <p class="zen-sheet-note">${escapeHtml(quote.name || entry.symbol)} · ${escapeHtml(entry.symbol)}</p>
+      </div>
+      <div class="zen-rc-fields">
+        <label class="zen-rc-field"><span>官方派付日</span><input id="modalDividendPayDateInput" class="zen-rc-input" type="date" value="${escapeHtml(formatDateLabel(entry.payDate))}"></label>
+        <label class="zen-rc-field"><span>实际到账日</span><input id="modalDividendReceivedDateInput" class="zen-rc-input" type="date" value="${escapeHtml(formatDateLabel(entry.receivedDate))}"></label>
+        <div class="zen-rc-field"><span>入账币种</span><span class="zen-rc-currency">${currencyOptions}</span></div>
+        <label class="zen-rc-field"><span>实收金额</span><span class="zen-rc-money"><em id="modalDividendCurrencySymbol">${escapeHtml(currency.symbol)}</em><input id="modalDividendNetInput" class="zen-rc-amount" type="number" inputmode="decimal" value="${escapeHtml(amount)}" style="width:${getZenEditWidthCh(amount)}ch" aria-label="实收金额"><i class="zen-rc-line" aria-hidden="true"></i></span></label>
+        <p class="zen-rc-conv" id="modalDividendConvLine" hidden></p>
+        <label class="zen-rc-field"><span>备注</span><input id="modalDividendNoteInput" class="zen-rc-input zen-rc-note" type="text" value="${escapeHtml(entry.note || '')}" placeholder="可选"></label>
+      </div>
+      <input id="modalDividendConfirmedInput" type="checkbox" hidden${confirmed ? ' checked' : ''}>
+      <button class="zen-rc-confirm${confirmed ? ' is-on' : ''}" type="button" data-modal-action="toggle-dividend-received" aria-pressed="${confirmed ? 'true' : 'false'}"><b aria-hidden="true"></b>标记已到账</button>
+      <div class="zen-sheet-actions">
+        <button class="zen-key zen-key--delete" type="button" data-modal-action="delete-dividend-ledger">删 除</button>
+        <button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">取 消</button>
+        <button class="zen-key zen-key--save" type="button" data-modal-action="save">保 存<i class="zen-key-dot" aria-hidden="true"></i></button>
+      </div>
+    </section>`;
+  updateReceiptConversion();
 }
 
 /* 04-持仓诊断抽屉 · 按 designs/禅意UI/04-持仓诊断/定稿图.html
@@ -627,7 +729,8 @@ function saveDividendLedgerEdit() {
   const entry = state.dividendLedger[index];
   const payDate = formatDateLabel(document.getElementById('modalDividendPayDateInput').value);
   const receivedDateRaw = formatDateLabel(document.getElementById('modalDividendReceivedDateInput').value);
-  const netCny = safeNumber(document.getElementById('modalDividendNetInput').value, 0);
+  /* 实收按所选币种输入，账本只存折算后的 netCny（口径不变）。*/
+  const netCny = convertReceiptToCny(document.getElementById('modalDividendNetInput').value, getReceiptCurrency().code).cny;
   if (netCny <= 0) { showToast('请输入有效实收金额', { type: 'error' }); return false; }
   const confirmed = document.getElementById('modalDividendConfirmedInput').checked === true;
   const receivedDate = confirmed ? (receivedDateRaw || getTodayLabel()) : receivedDateRaw;

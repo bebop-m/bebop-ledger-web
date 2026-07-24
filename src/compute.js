@@ -204,6 +204,14 @@ export function getDividendCashImpactCny(entry) {
   return entry && entry.confirmed === true ? roundMoney(getLedgerNetCny(entry)) : 0;
 }
 
+/* 08-股息到账：把「实收金额 + 入账币种」按当前汇率折成入账人民币。
+   账本仍只存 netCny，这里只负责折算，并把所用汇率交给界面明示。
+   历史汇率为后续增强，当前一律用 state.rates（即今日汇率）。 */
+export function convertReceiptToCny(amount, currency) {
+  const rate = resolveFxRate(currency, state.rates);
+  return { rate, cny: roundMoney(Math.max(0, safeNumber(amount, 0)) * rate) };
+}
+
 function getHoldingTaxRate(holding) {
   const taxOverridePercent = parsePercentOverride(holding && holding.taxRateOverride);
   return taxOverridePercent === null ? 0 : taxOverridePercent / 100;

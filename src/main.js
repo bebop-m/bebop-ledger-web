@@ -11,12 +11,13 @@ import {
   applyLegendExpandState, cycleHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
-  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, toggleDividendPastMonths
+  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset
 } from './render.js';
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
   setModalBucketSelection, setModalCashFlowTypeSelection,
-  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo, syncZenEditWidth
+  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo, syncZenEditWidth,
+  setReceiptCurrency, toggleReceiptConfirmed, updateReceiptConversion
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
@@ -115,7 +116,6 @@ refs.dividendFilterGroup.addEventListener('click', (event) => {
 });
 
 refs.dividendMonthGrid.addEventListener('click', (event) => {
-  if (event.target.closest('[data-dividend-past-toggle]')) { toggleDividendPastMonths(); return; }
   const btn = event.target.closest('[data-dividend-month]');
   if (!btn) return;
   const month = Math.floor(safeNumber(btn.dataset.dividendMonth, 0));
@@ -454,8 +454,10 @@ refs.modalRoot.addEventListener('click', (event) => {
   const bb = event.target.closest('[data-bucket-option]'); if (bb) { setModalBucketSelection(bb.dataset.bucketOption); return; }
   const cf = event.target.closest('[data-cash-flow-type]'); if (cf) { setModalCashFlowTypeSelection(cf.dataset.cashFlowType); return; }
   const ts = event.target.closest('[data-trade-side]'); if (ts) { setModalTradeSideSelection(ts.dataset.tradeSide); return; }
+  const dc = event.target.closest('[data-dividend-currency]'); if (dc) { setReceiptCurrency(dc.dataset.dividendCurrency); return; }
   const a = event.target.closest('[data-modal-action]'); if (!a) return;
   const t = a.dataset.modalAction;
+  if (t === 'toggle-dividend-received') { toggleReceiptConfirmed(); return; }
   if (t === 'confirm-dividend') { toggleDividendConfirm(a.dataset.sourceId); return; }
   if (t === 'pick-fund-symbol') { selectFundamentalsSymbol(a.dataset.symbol); closeModal(); return; }
   if (t === 'edit-dividend-ledger') {
@@ -479,6 +481,8 @@ refs.modalRoot.addEventListener('click', (event) => {
 
 refs.modalRoot.addEventListener('input', (event) => {
   if (event.target && event.target.id === 'modalTradeSymbolInput') updateTradeQuoteInfo();
+  // 实收金额边打边折算，让读者当场看见入账人民币是多少
+  if (event.target && event.target.id === 'modalDividendNetInput') updateReceiptConversion();
   syncZenEditWidth(event.target);
 });
 

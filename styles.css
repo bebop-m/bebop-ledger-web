@@ -11662,3 +11662,813 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }
   margin: 0;
   background: var(--gold);
 }
+/* ══════════════════════════════════════════════════════════════════
+   C 簇 · 06-股息日历 / 07-月明细 / 08-股息到账
+   按 designs/禅意UI/ 下 06–08 三个文件夹的 定稿图.html 重排。
+   尺寸一律按总则折算：定稿值 N（390 画布）→ clamp(N*.92, N/3.9 vw, N*1.35)。
+   顶部留白取定稿值的一半（真机状态栏已提供呼吸），与首页/持仓页同规。
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 06-股息日历 ── */
+body[data-active-page="dividends"] {
+  padding: 0;
+}
+body[data-active-page="dividends"] .app-shell {
+  width: 100%;
+  max-width: none;
+}
+body[data-active-page="dividends"] #dividendCalendarPage {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
+  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
+  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
+  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  min-height: 100dvh;
+}
+/* 分区只靠留白：清掉历史层留在本页元素上的所有描边与伪元素装饰 */
+body[data-active-page="dividends"] #dividendCalendarPage,
+body[data-active-page="dividends"] #dividendCalendarPage * {
+  border: 0;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="dividends"] #dividendCalendarPage *::before,
+body[data-active-page="dividends"] #dividendCalendarPage *::after {
+  content: none;
+  display: none;
+}
+body[data-active-page="dividends"] #dividendCalendarListView {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* 页头：grid(56/1fr/56)，左裸箭头、中页名、右留空，下方无 rule */
+body[data-active-page="dividends"] .divi-pagebar {
+  display: grid;
+  grid-template-columns: clamp(51.52px, 14.359vw, 75.6px) 1fr clamp(51.52px, 14.359vw, 75.6px);
+  align-items: center;
+  gap: 0;
+  height: auto;
+  min-height: clamp(19.32px, 5.3846vw, 28.35px);
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+body[data-active-page="dividends"] .divi-pagebar .back-button {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  text-align: left;
+}
+body[data-active-page="dividends"] .divi-pagebar .back-button svg {
+  width: clamp(16.56px, 4.6154vw, 24.3px);
+  height: clamp(16.56px, 4.6154vw, 24.3px);
+}
+body[data-active-page="dividends"] .divi-page-name {
+  display: block;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--label);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  text-align: center;
+}
+body[data-active-page="dividends"] .divi-pagebar-side {
+  display: block;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+
+/* 三仓筛选：居中纯文字，选中＝ink＋4px 金点下划 */
+body[data-active-page="dividends"] #dividendCalendarListView #dividendFilterGroup.divi-filters {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(23.92px, 6.6667vw, 35.1px);
+  width: auto;
+  height: auto;
+  min-height: 0;
+  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+body[data-active-page="dividends"] #dividendCalendarListView #dividendFilterGroup .divi-filter {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--hint);
+  font-family: inherit;
+  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  letter-spacing: 0;
+  text-align: center;
+}
+body[data-active-page="dividends"] #dividendCalendarListView #dividendFilterGroup .divi-filter.is-active {
+  color: var(--ink);
+  font-weight: 700;
+}
+/* 三个都留位，只有选中的那颗着色，切换时不跳行 */
+body[data-active-page="dividends"] #dividendCalendarListView #dividendFilterGroup .divi-filter-dot {
+  display: block;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  margin: clamp(3.68px, 1.0256vw, 5.4px) auto 0;
+  border-radius: 50%;
+  background: transparent;
+}
+body[data-active-page="dividends"] #dividendCalendarListView #dividendFilterGroup .divi-filter.is-active .divi-filter-dot { background: var(--gold); }
+
+/* 居中 hero：预计全年 + 同比 */
+body[data-active-page="dividends"] #dividendMetricGrid {
+  display: block;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+body[data-active-page="dividends"] .divi-hero {
+  display: block;
+  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  padding: 0;
+  text-align: center;
+}
+body[data-active-page="dividends"] .divi-hero-label {
+  display: block;
+  margin: 0;
+  padding: 0;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  /* 定稿图里这是 inline span，行盒被容器 16px 字号的 strut 撑到 21px */
+  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  font-weight: 600;
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+}
+body[data-active-page="dividends"] .divi-hero-value {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--ink);
+  font-size: clamp(34.96px, 9.7436vw, 51.3px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+}
+body[data-active-page="dividends"] .divi-yoy {
+  display: block;
+  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+}
+/* 同比百分比与叙述文字分色：涨红跌绿覆盖到百分比 */
+body[data-active-page="dividends"] .divi-yoy strong { font-weight: 700; }
+body[data-active-page="dividends"] .divi-yoy strong.is-up { color: var(--up); }
+body[data-active-page="dividends"] .divi-yoy strong.is-down { color: var(--down); }
+
+/* 三段互斥构成线：金=已到账 / 墨=在途 / 纸=预估，段宽即金额占比 */
+body[data-active-page="dividends"] .divi-stack {
+  display: flex;
+  width: clamp(257.6px, 71.7949vw, 378px);
+  height: clamp(1.84px, 0.5128vw, 2.7px);
+  margin: clamp(18.4px, 5.1282vw, 27px) auto 0;
+  padding: 0;
+  background: none;
+}
+body[data-active-page="dividends"] .divi-stack i {
+  display: block;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+body[data-active-page="dividends"] .divi-stack i.is-received { background: var(--gold); }
+body[data-active-page="dividends"] .divi-stack i.is-pipeline { background: var(--ink); }
+body[data-active-page="dividends"] .divi-stack i.is-forecast { background: var(--track); }
+
+body[data-active-page="dividends"] .divi-legend {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  width: clamp(257.6px, 71.7949vw, 378px);
+  margin: clamp(12.88px, 3.5897vw, 18.9px) auto 0;
+  padding: 0;
+}
+body[data-active-page="dividends"] .divi-legend-row {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+body[data-active-page="dividends"] .divi-legend-row b {
+  display: block;
+  flex: none;
+  align-self: center;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  margin: 0;
+  border-radius: 50%;
+}
+body[data-active-page="dividends"] .divi-legend-row b.is-received { background: var(--gold); }
+body[data-active-page="dividends"] .divi-legend-row b.is-pipeline { background: var(--ink); }
+body[data-active-page="dividends"] .divi-legend-row b.is-forecast { background: var(--track); }
+body[data-active-page="dividends"] .divi-legend-row small {
+  flex: 1;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+}
+body[data-active-page="dividends"] .divi-legend-row strong {
+  flex: none;
+  color: var(--ink);
+  font-weight: 700;
+}
+body[data-active-page="dividends"] .divi-legend-note {
+  display: block;
+  width: clamp(257.6px, 71.7949vw, 378px);
+  margin: clamp(9.2px, 2.5641vw, 13.5px) auto 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* 12 月点阵：6 列 2 行，三态＝已过淡化 / 当月加粗 / 未到正常 */
+body[data-active-page="dividends"] #dividendMonthGrid {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+body[data-active-page="dividends"] .divi-year {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(14.72px, 4.1026vw, 21.6px) clamp(5.52px, 1.5385vw, 8.1px);
+  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  padding: 0;
+}
+body[data-active-page="dividends"] .divi-ym {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(3.68px, 1.0256vw, 5.4px);
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--hint);
+  font-family: inherit;
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  letter-spacing: 0;
+  text-align: center;
+}
+body[data-active-page="dividends"] .divi-ym i {
+  display: block;
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-style: normal;
+  font-weight: 600;
+  line-height: clamp(11.96px, 3.3333vw, 17.55px);
+}
+body[data-active-page="dividends"] .divi-ym b {
+  display: block;
+  width: clamp(3.22px, 0.8974vw, 4.725px);
+  height: clamp(3.22px, 0.8974vw, 4.725px);
+  margin: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+body[data-active-page="dividends"] .divi-ym.has-pay b { background: var(--gold); }
+body[data-active-page="dividends"] .divi-ym.is-past { opacity: .42; }
+body[data-active-page="dividends"] .divi-ym.is-current { color: var(--ink); font-weight: 800; }
+body[data-active-page="dividends"] .divi-ym.is-current i { color: var(--ink); font-weight: 700; }
+body[data-active-page="dividends"] .divi-ym.is-current b {
+  width: clamp(4.6px, 1.2821vw, 6.75px);
+  height: clamp(4.6px, 1.2821vw, 6.75px);
+}
+body[data-active-page="dividends"] .divi-grid-hint {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  text-align: center;
+}
+
+/* 待确认 / 近期 两段列表 */
+body[data-active-page="dividends"] .divi-list {
+  display: block;
+  flex: 1;
+  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  padding: 0;
+}
+body[data-active-page="dividends"] .divi-sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  margin: 0;
+  padding: 0;
+}
+body[data-active-page="dividends"] .divi-sec-head.is-later { margin-top: clamp(23.92px, 6.6667vw, 35.1px); }
+body[data-active-page="dividends"] .divi-sec-label {
+  display: block;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+}
+body[data-active-page="dividends"] .divi-sec-aside {
+  display: block;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+body[data-active-page="dividends"] .divi-rows {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(13.8px, 3.8462vw, 20.25px);
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  padding: 0;
+}
+body[data-active-page="dividends"] .divi-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+}
+body[data-active-page="dividends"] .divi-row strong {
+  color: var(--ink);
+  font-size: clamp(11.5px, 3.2051vw, 16.875px);
+  font-weight: 700;
+}
+body[data-active-page="dividends"] .divi-st {
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 700;
+}
+body[data-active-page="dividends"] .divi-st.is-due { color: var(--up); }
+body[data-active-page="dividends"] .divi-st.is-paid { color: var(--gold); }
+body[data-active-page="dividends"] .divi-st.is-transit { color: var(--hint); }
+body[data-active-page="dividends"] .divi-list-empty {
+  display: block;
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 600;
+  line-height: 1.65;
+  text-align: center;
+}
+
+/* 矮屏收紧竖向留白，股息日历仍要一屏放得下 */
+@media (max-height: 800px) {
+  body[data-active-page="dividends"] .divi-hero { margin-top: clamp(18.4px, 5.1282vw, 27px); }
+  body[data-active-page="dividends"] .divi-year { margin-top: clamp(18.4px, 5.1282vw, 27px); }
+  body[data-active-page="dividends"] .divi-list { margin-top: clamp(20.24px, 5.641vw, 29.7px); }
+  body[data-active-page="dividends"] .divi-rows { gap: clamp(11.04px, 3.0769vw, 16.2px); }
+}
+
+/* ── 07-月明细抽屉 ── */
+.zen-sheet--month .zen-md-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(14.72px, 4.1026vw, 21.6px);
+  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  padding: 0;
+}
+.zen-sheet--month .zen-md-head h3 {
+  display: block;
+  margin: 0;
+  padding: 0;
+  color: var(--ink);
+  font-size: clamp(16.56px, 4.6154vw, 24.3px);
+  font-weight: 800;
+  line-height: clamp(22.08px, 6.1538vw, 32.4px);
+  letter-spacing: clamp(0.92px, 0.2564vw, 1.35px);
+}
+.zen-sheet--month .zen-md-head h3 small {
+  margin-left: clamp(7.36px, 2.0513vw, 10.8px);
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  letter-spacing: clamp(1.84px, 0.5128vw, 2.7px);
+}
+.zen-sheet--month .zen-md-head strong {
+  flex: none;
+  color: var(--ink);
+  font-size: clamp(16.56px, 4.6154vw, 24.3px);
+  font-weight: 700;
+  line-height: clamp(22.08px, 6.1538vw, 32.4px);
+  white-space: nowrap;
+}
+.zen-sheet--month .zen-md-summary {
+  display: block;
+  margin: clamp(7.36px, 2.0513vw, 10.8px) 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+/* 收款进度金线：track 底 + 实色段 + 端点 7px 金点 */
+.zen-sheet--month .zen-md-thread {
+  position: relative;
+  display: block;
+  height: clamp(1.84px, 0.5128vw, 2.7px);
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  padding: 0;
+  background: var(--track);
+}
+.zen-sheet--month .zen-md-thread i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  background: var(--gold);
+  box-shadow: var(--glow);
+}
+.zen-sheet--month .zen-md-thread b {
+  position: absolute;
+  top: 50%;
+  display: block;
+  width: clamp(6.44px, 1.7949vw, 9.45px);
+  height: clamp(6.44px, 1.7949vw, 9.45px);
+  border-radius: 50%;
+  background: var(--gold);
+  transform: translate(-50%, -50%);
+}
+.zen-sheet--month .zen-md-caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: clamp(8.28px, 2.3077vw, 12.15px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+}
+.zen-sheet--month .zen-md-caption strong { color: var(--gold); font-weight: 700; }
+.zen-sheet--month .zen-md-rows {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14.72px, 4.1026vw, 21.6px);
+  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  padding: 0;
+}
+.zen-sheet--month .zen-md-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-family: inherit;
+  letter-spacing: 0;
+  text-align: left;
+}
+.zen-sheet--month .zen-md-co { display: block; min-width: 0; }
+.zen-sheet--month .zen-md-co strong {
+  display: block;
+  color: var(--ink);
+  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-weight: 700;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+}
+.zen-sheet--month .zen-md-co strong small {
+  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+}
+.zen-sheet--month .zen-md-co > span {
+  display: block;
+  margin-top: clamp(1.84px, 0.5128vw, 2.7px);
+  color: var(--muted);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+}
+.zen-sheet--month .zen-md-side { display: block; flex: none; text-align: right; }
+.zen-sheet--month .zen-md-side strong {
+  display: block;
+  color: var(--ink);
+  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-weight: 700;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+}
+.zen-sheet--month .zen-md-side > span {
+  display: block;
+  margin-top: clamp(1.84px, 0.5128vw, 2.7px);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 700;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+}
+/* 五态状态词 */
+.zen-sheet--month .zen-md-side .is-paid { color: var(--gold); }
+.zen-sheet--month .zen-md-side .is-due { color: var(--up); }
+.zen-sheet--month .zen-md-side .is-transit { color: var(--muted); }
+.zen-sheet--month .zen-md-side .is-announced { color: var(--ink); }
+.zen-sheet--month .zen-md-side .is-forecast { color: var(--hint); }
+.zen-sheet--month .zen-md-empty {
+  display: block;
+  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 600;
+  line-height: 1.65;
+  text-align: center;
+}
+/* 逐笔可多可少，列表自己滚，「关 闭」钉在底部 */
+.zen-sheet--month {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.zen-sheet--month .zen-md-rows {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.zen-sheet--month .zen-sheet-handle,
+.zen-sheet--month .zen-md-head,
+.zen-sheet--month .zen-md-summary,
+.zen-sheet--month .zen-md-thread,
+.zen-sheet--month .zen-md-caption,
+.zen-sheet--month .zen-sheet-actions { flex: none; }
+
+/* ── 08-股息到账抽屉 ── */
+.zen-sheet--receipt .zen-rc-fields {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(13.8px, 3.8462vw, 20.25px);
+  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  padding: 0;
+}
+.zen-sheet--receipt .zen-rc-field {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(11.04px, 3.0769vw, 16.2px);
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 600;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+}
+.zen-sheet--receipt .zen-rc-field > span:first-child { flex: none; }
+/* 日期与备注：输入框裸置成右对齐的正文，无框无底 */
+.zen-sheet--receipt .zen-rc-input {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 700;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  letter-spacing: 0;
+  text-align: right;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.zen-sheet--receipt .zen-rc-input:focus,
+.zen-sheet--receipt .zen-rc-input:focus-visible {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+/* 日期用系统选择器，但不要它的小日历图标——本套设计里没有图标 */
+.zen-sheet--receipt .zen-rc-input::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+.zen-sheet--receipt .zen-rc-note { font-weight: 600; }
+.zen-sheet--receipt .zen-rc-note::placeholder { color: var(--hint); font-weight: 600; }
+
+/* 入账币种三选：文字 + 4px 金点选中，与全局选中记号同一套 */
+.zen-sheet--receipt .zen-rc-currency {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: clamp(14.72px, 4.1026vw, 21.6px);
+  margin: 0;
+  padding: 0;
+}
+.zen-sheet--receipt .zen-rc-cur {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--hint);
+  font-family: inherit;
+  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  letter-spacing: 0;
+  text-align: center;
+}
+.zen-sheet--receipt .zen-rc-cur.is-active { color: var(--ink); font-weight: 700; }
+.zen-sheet--receipt .zen-rc-cur i {
+  display: block;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  margin: clamp(2.76px, 0.7692vw, 4.05px) auto 0;
+  border-radius: 50%;
+  background: transparent;
+}
+.zen-sheet--receipt .zen-rc-cur.is-active i { background: var(--gold); }
+
+/* 实收金额：按内容收宽，金线托底（实心块，不用 border） */
+.zen-sheet--receipt .zen-rc-money {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  justify-content: flex-end;
+  max-width: 60%;
+  margin: 0;
+  padding: 0 clamp(7.36px, 2.0513vw, 10.8px) clamp(3.68px, 1.0256vw, 5.4px);
+}
+.zen-sheet--receipt .zen-rc-money em {
+  flex: none;
+  color: var(--ink);
+  font-size: clamp(12.88px, 3.5897vw, 18.9px);
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.zen-sheet--receipt .zen-rc-amount {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: clamp(18.4px, 5.1282vw, 27px);
+  font-weight: 700;
+  line-height: clamp(24.84px, 6.9231vw, 36.45px);
+  letter-spacing: 0;
+  text-align: right;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+.zen-sheet--receipt .zen-rc-amount:focus,
+.zen-sheet--receipt .zen-rc-amount:focus-visible {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+.zen-sheet--receipt .zen-rc-amount::-webkit-outer-spin-button,
+.zen-sheet--receipt .zen-rc-amount::-webkit-inner-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+.zen-sheet--receipt .zen-rc-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: block;
+  height: clamp(1.84px, 0.5128vw, 2.7px);
+  margin: 0;
+  background: var(--gold);
+}
+/* 折算行：人民币时整行隐藏（hidden 属性），外币时明示汇率与日期 */
+.zen-sheet--receipt .zen-rc-conv {
+  display: block;
+  margin: clamp(-1.84px, -0.5128vw, -1.24px) 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  text-align: center;
+}
+.zen-sheet--receipt .zen-rc-conv[hidden] { display: none; }
+.zen-sheet--receipt .zen-rc-conv strong { color: var(--ink); font-weight: 700; }
+
+/* 金点确认行：实心＝已确认，未确认留 track 色占位 */
+.zen-sheet--receipt .zen-rc-confirm {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 700;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  letter-spacing: 0;
+  text-align: center;
+}
+.zen-sheet--receipt .zen-rc-confirm.is-on { color: var(--ink); }
+.zen-sheet--receipt .zen-rc-confirm b {
+  display: inline-block;
+  width: clamp(8.28px, 2.3077vw, 12.15px);
+  height: clamp(8.28px, 2.3077vw, 12.15px);
+  margin-right: clamp(7.36px, 2.0513vw, 10.8px);
+  border-radius: 50%;
+  background: var(--track);
+  vertical-align: -1px;
+}
+.zen-sheet--receipt .zen-rc-confirm.is-on b { background: var(--gold); }
+

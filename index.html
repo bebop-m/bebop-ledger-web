@@ -157,35 +157,22 @@
 
         <div id="dividendCalendarPage" class="page-view page-stack" data-page-view="dividends" hidden>
           <div id="dividendCalendarListView">
-          <header class="top-bar ledger-page-head">
+          <header class="top-bar ledger-page-head divi-pagebar">
             <button class="back-button" type="button" data-page-back aria-label="返回首页">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </button>
-            <div class="top-bar-heading">
-              <h2 class="top-bar-title">股息日历</h2>
-              <p id="dividendCalendarYear" class="panel-note"></p>
-            </div>
+            <h2 class="top-bar-title divi-page-name">股息日历</h2>
+            <span class="divi-pagebar-side" aria-hidden="true"></span>
           </header>
 
-          <div id="dividendFilterGroup" class="segmented-control" aria-label="股息日历筛选">
-            <button class="segment-button" type="button" data-dividend-filter="all">全部</button>
-            <button class="segment-button" type="button" data-dividend-filter="core">核心仓</button>
-            <button class="segment-button" type="button" data-dividend-filter="income">打工仓</button>
+          <div id="dividendFilterGroup" class="segmented-control divi-filters" aria-label="股息日历筛选">
+            <button class="segment-button divi-filter" type="button" data-dividend-filter="all">全部<i class="divi-filter-dot" aria-hidden="true"></i></button>
+            <button class="segment-button divi-filter" type="button" data-dividend-filter="core">核心仓<i class="divi-filter-dot" aria-hidden="true"></i></button>
+            <button class="segment-button divi-filter" type="button" data-dividend-filter="income">打工仓<i class="divi-filter-dot" aria-hidden="true"></i></button>
           </div>
 
-          <section class="panel dividend-overview-panel">
-            <div id="dividendMetricGrid" class="dividend-metric-grid"></div>
-          </section>
-
-          <section class="panel dividend-months-panel">
-            <header class="panel-bar">
-              <div>
-                <h2 class="panel-title">按月分布</h2>
-                <p class="panel-note">点按某月查看明细。</p>
-              </div>
-            </header>
-            <div id="dividendMonthGrid" class="dividend-month-grid"></div>
-          </section>
+          <section id="dividendMetricGrid" class="dividend-metric-grid" aria-label="全年股息构成"></section>
+          <section id="dividendMonthGrid" class="dividend-month-grid" aria-label="按月分布与近期股息"></section>
           </div>
           <div id="dividendMonthDetailView" hidden></div>
         </div>
