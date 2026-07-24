@@ -10837,6 +10837,27 @@ body[data-active-page="home"] .home-quick-add:active {
 .income-year-return.is-gain { color: var(--up); }
 .income-year-return.is-loss { color: var(--down); }
 
+.income-trend-summary {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.income-trend-summary strong { font-weight: 700; }
+.income-trend-summary strong.is-gain { color: var(--up); }
+.income-trend-summary strong.is-loss { color: var(--down); }
+
+.annual-share-button {
+  justify-self: end;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+.annual-share-button:active { opacity: 0.55; }
+
 /* 到账抽屉：币种三选 + 折算行 */
 .modal-field--currency {
   display: flex;

@@ -806,6 +806,18 @@ function renderIncomeTrend(model) {
   const minValue = Math.min(0, ...values);
   const maxValue = Math.max(0, ...values);
   const zeroPoint = getTrendPoint({ rate: 0 }, 0, 1, 'rate', minValue, maxValue);
+  // 累计年化 = 各年资金收益率复利后折算年化（几何均值）；最深一年取区间最低。
+  const capRows = rows.map((row) => ({ year: row.year, rate: getTrendValue(row, 'capitalReturnRate') }))
+    .filter((entry) => entry.rate !== null);
+  let summaryLine = '';
+  if (capRows.length) {
+    const worst = Math.min(...capRows.map((entry) => entry.rate));
+    const product = capRows.reduce((acc, entry) => acc * (1 + entry.rate), 1);
+    const cumAnnualized = product > 0 ? Math.pow(product, 1 / capRows.length) - 1 : null;
+    const startYear = capRows[0].year;
+    const signed = (value) => value === null ? '—' : `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value * 100).toFixed(1)}%`;
+    summaryLine = `<p class="income-trend-summary num">自 ${startYear} 累计年化 <strong class="${getReturnTone(cumAnnualized)}">${signed(cumAnnualized)}</strong> · 最深一年 <strong class="${getReturnTone(worst)}">${signed(worst)}</strong></p>`;
+  }
   refs.incomeTrend.innerHTML = `<div class="income-trend-combined">
     <svg class="income-trend-svg" viewBox="0 0 720 170" role="img" aria-label="历年资金收益率与股息收益率">
       <line class="income-trend-zero" x1="28" x2="692" y1="${zeroPoint.y}" y2="${zeroPoint.y}"></line>
@@ -814,6 +826,7 @@ function renderIncomeTrend(model) {
     </svg>
     <div class="income-trend-years">${rows.map((row) => `<span>${row.year}</span>`).join('')}</div>
     <div class="income-trend-legend"><span class="is-capital"><i></i>资金收益率</span><span class="is-dividend"><i></i>股息收益率</span></div>
+    ${summaryLine}
   </div>`;
 }
 
@@ -997,6 +1010,118 @@ function getAnnualDonutMarkup(holdings) {
     </svg>
     <div class="annual-donut-legend">${legend}</div>
   </div>`;
+}
+
+/* 年度分享卡：canvas 导出 PNG，全卡只出现比例与收益率，禁止任何 ¥ 与绝对金额。
+   内容＝本年收益率大字 + 股息收益率 + 累计年化 + 归因 pp 拆分 + 持仓占比 mini 环与前三。 */
+export function generateAnnualShareCard() {
+  const year = state.activeAnnualYear;
+  const annals = computeYearAnnals(year);
+  if (!annals) return;
+  const row = annals.row;
+  const att = annals.attribution || { available: false };
+  const startNet = safeNumber(annals.yearStartNetCny, 0);
+  const cap = safeNumber(row.capitalReturnCny, 0);
+  const pct = (value) => value === null || value === undefined || !Number.isFinite(Number(value))
+    ? '—' : `${Number(value) > 0 ? '+' : Number(value) < 0 ? '−' : ''}${Math.abs(Number(value) * 100).toFixed(1)}%`;
+  const pp = (amount) => startNet > 0 ? `${amount >= 0 ? '+' : '−'}${Math.abs(amount / startNet * 100).toFixed(1)}pp` : '—';
+  // 累计年化（组合口径，与趋势一致）。
+  const capRates = computeIncomeSummary().trendRows
+    .map((item) => getTrendValue(item, 'capitalReturnRate')).filter((value) => value !== null);
+  const cumAnnualized = capRates.length && capRates.reduce((acc, value) => acc * (1 + value), 1) > 0
+    ? Math.pow(capRates.reduce((acc, value) => acc * (1 + value), 1), 1 / capRates.length) - 1 : null;
+  const ppItems = att.available && startNet > 0 ? [
+    { label: '股息', amount: safeNumber(att.dividendCny, 0) },
+    { label: '汇率', amount: safeNumber(att.fxCny, 0) },
+    { label: 'EPS 增长', amount: safeNumber(att.epsCny, 0) },
+    { label: '估值及其他', amount: cap - safeNumber(att.dividendCny, 0) - safeNumber(att.fxCny, 0) - safeNumber(att.epsCny, 0) }
+  ] : [];
+  const holdings = annals.holdings && annals.holdings.hasData ? annals.holdings.items : [];
+
+  const C = { bg: '#faf8f3', ink: '#3b362e', gold: '#c19a45', up: '#bf5a42', down: '#6a8b74', muted: '#a89d86', track: '#eae4d4', label: '#b0a78f' };
+  const donutColors = ['#c9a558', '#dcc492', '#b3a68c', '#cfc4ad', '#e2d9c4', '#efe9da'];
+  const W = 750, H = 1000;
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const font = (size, weight = 600) => `${weight} ${size}px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif`;
+  ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
+  ctx.textBaseline = 'alphabetic';
+
+  // 页眉
+  ctx.fillStyle = C.label; ctx.font = font(20, 600); ctx.textAlign = 'left';
+  ctx.fillText(`波普账本 · ${year} 年度回顾`, 64, 90);
+  // 本年收益率大字
+  ctx.fillStyle = C.label; ctx.font = font(22, 600);
+  ctx.fillText('本年收益率', 64, 180);
+  const rrColor = safeNumber(annals.returnRate, 0) > 0 ? C.up : safeNumber(annals.returnRate, 0) < 0 ? C.down : C.ink;
+  ctx.fillStyle = rrColor; ctx.font = font(96, 700);
+  ctx.fillText(pct(annals.returnRate), 60, 280);
+  // 股息收益率 + 累计年化
+  ctx.fillStyle = C.muted; ctx.font = font(22, 600);
+  ctx.fillText(`股息收益率 ${pct(row.dividendYieldRate)}`, 64, 340);
+  ctx.fillText(`累计年化 ${pct(cumAnnualized)}`, 64, 378);
+
+  // 归因 pp 拆分
+  let py = 460;
+  ctx.fillStyle = C.label; ctx.font = font(20, 600);
+  ctx.fillText('收益归因 · pp 拆分', 64, py); py += 40;
+  ctx.font = font(26, 600);
+  ppItems.forEach((item) => {
+    ctx.fillStyle = C.ink; ctx.textAlign = 'left'; ctx.fillText(item.label, 64, py);
+    ctx.fillStyle = item.amount >= 0 ? C.up : C.down; ctx.textAlign = 'right';
+    ctx.fillText(pp(item.amount), 380, py);
+    py += 44;
+  });
+
+  // 持仓占比 mini 环 + 前三
+  const cx = 560, cy = 500, rOuter = 90, rInner = 58;
+  let start = -Math.PI / 2;
+  const top = holdings.slice(0, 5);
+  const restPct = holdings.slice(5).reduce((sum, item) => sum + item.pct, 0);
+  const segs = top.map((item, i) => ({ pct: item.pct, color: donutColors[i] }));
+  if (restPct > 0.0001) segs.push({ pct: restPct, color: donutColors[5] });
+  segs.forEach((seg) => {
+    const end = start + seg.pct * Math.PI * 2;
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, rOuter, start, end); ctx.closePath();
+    ctx.fillStyle = seg.color; ctx.fill();
+    start = end;
+  });
+  ctx.beginPath(); ctx.arc(cx, cy, rInner, 0, Math.PI * 2); ctx.fillStyle = C.bg; ctx.fill();
+  ctx.fillStyle = C.ink; ctx.textAlign = 'center'; ctx.font = font(26, 700);
+  ctx.fillText(String(year), cx, cy + 2);
+  ctx.fillStyle = C.muted; ctx.font = font(15, 600);
+  ctx.fillText(`${holdings.length} 项`, cx, cy + 26);
+  // 前三名
+  ctx.textAlign = 'left';
+  top.slice(0, 3).forEach((item, i) => {
+    const ty = 640 + i * 40;
+    ctx.fillStyle = donutColors[i]; ctx.fillRect(460, ty - 14, 16, 16);
+    ctx.fillStyle = C.ink; ctx.font = font(20, 600);
+    const name = item.name.length > 6 ? `${item.name.slice(0, 6)}…` : item.name;
+    ctx.fillText(name, 486, ty);
+    ctx.textAlign = 'right'; ctx.fillStyle = C.ink;
+    ctx.fillText(`${(item.pct * 100).toFixed(1)}%`, 690, ty);
+    ctx.textAlign = 'left';
+  });
+
+  // 水印
+  ctx.fillStyle = C.label; ctx.font = font(18, 600); ctx.textAlign = 'center';
+  ctx.fillText('波普账本 · 比例已脱敏 · 无金额', W / 2, H - 60);
+
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `波普账本-${year}-年度回顾.png`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
 }
 
 export function renderAnnualReviewPage() {

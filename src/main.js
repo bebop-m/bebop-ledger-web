@@ -12,7 +12,8 @@ import {
   applyLegendExpandState, applyHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
-  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, toggleDividendPastMonths
+  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, toggleDividendPastMonths,
+  generateAnnualShareCard
 } from './render.js';
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
@@ -173,6 +174,9 @@ refs.incomeYearList.addEventListener('click', (event) => {
     existing: Boolean(existing)
   });
 });
+
+const annualShareButton = document.getElementById('annualShareButton');
+if (annualShareButton) annualShareButton.addEventListener('click', () => generateAnnualShareCard());
 
 if (refs.annualReviewContent) refs.annualReviewContent.addEventListener('click', (event) => {
   const button = event.target.closest('[data-annual-select]');
