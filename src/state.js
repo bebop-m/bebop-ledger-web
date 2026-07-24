@@ -509,7 +509,10 @@ export function adjustCashForRecordChange(previousEntry, previousImpact, previou
 export function applySnapshot(snapshot) {
   invalidateComputeCache();
   const defaults = createDefaultSnapshot();
-  const mergedQuotes = mergeQuotes(clone(defaults.quotes), snapshot && snapshot.quotes);
+  // 报价是行情缓存，不属于账本快照（buildPortfolioSnapshot 不导出它）。
+  // 以内存里现有报价为底，避免同步/导入时先渲染出一屏 0 价市值；快照自带报价仍然覆盖。
+  const baseQuotes = mergeQuotes(clone(defaults.quotes), state.quotes);
+  const mergedQuotes = mergeQuotes(baseQuotes, snapshot && snapshot.quotes);
   const sanitizedHoldingsRaw = Array.isArray(snapshot && snapshot.holdings)
     ? snapshot.holdings.map((item, index) => sanitizeHolding(item, index, mergedQuotes)).filter(Boolean)
     : defaults.holdings;
