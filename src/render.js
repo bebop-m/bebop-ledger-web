@@ -900,7 +900,11 @@ function getRecordDetailMarkup(text) {
 
 function renderTradeFlowRow(entry) {
   const isSell = entry.side === 'sell';
-  const detail = `${formatRecordQuantity(entry.shares)} 股 @ ${safeNumber(entry.price, 0)} ${entry.currency || ''}`.trim();
+  /* 股数×成交价能把上面已掩码的金额反推出来，所以掩码开启时这一行也要一起掩上
+     （与 03-持仓详情里「当前持股」掩码同一套口径）。 */
+  const detail = state.showAmounts
+    ? `${formatRecordQuantity(entry.shares)} 股 @ ${safeNumber(entry.price, 0)} ${entry.currency || ''}`.trim()
+    : `${MASK_PRICE} 股 @ ${MASK_PRICE} ${entry.currency || ''}`.trim();
   return `<button class="rec-row" type="button" data-trade-id="${escapeHtml(entry.id)}">
       <span class="rec-row-main">${escapeHtml(getRecordDayLabel(entry.date))} <em class="${isSell ? 'is-sell' : 'is-buy'}">${isSell ? '卖出' : '买入'}</em> <strong>${escapeHtml(entry.name || entry.symbol)}</strong>${getRecordDetailMarkup(detail)}</span>
       <span class="rec-row-amt">${escapeHtml(formatIncomeSignedMoney(entry.cashImpactCny))}</span>

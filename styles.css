@@ -14151,7 +14151,8 @@ body[data-active-page="records"] .rec-empty {
 .zen-sheet--form .zen-form-amount {
   flex: 0 1 auto;
   width: auto;
-  min-width: 0;
+  /* 空值时 style 里的宽度只有 3ch，会把 0.00 这个 placeholder 截成 0.0( */
+  min-width: 4ch;
   height: auto;
   min-height: 0;
   margin: 0;

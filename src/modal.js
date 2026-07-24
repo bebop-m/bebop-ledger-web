@@ -139,6 +139,12 @@ function buildTradeQuoteInfoText(symbol) {
   return `${name} · ${currency} · 现价 ${price} · 汇率 ${resolveFxRate(currency, state.rates).toFixed(4)}`;
 }
 
+// 代码还没填时不硬编一个币种，标签退回「成交价」
+function getTradePriceLabel(symbol) {
+  const s = normalizeSymbol(symbol);
+  return s ? `成交价（${detectTradeCurrency(s)}）` : '成交价';
+}
+
 /* 成交额折算行：股数 × 成交价 按当天汇率折人民币。
    定稿图把费用写进括号里的「含费用」，但费用并不含在折算额内，
    这里分成两段如实说，免得读者以为 ¥ 数已经把手续费算进去了。 */
@@ -148,7 +154,7 @@ export function updateTradeAmountInfo() {
   const symbolInput = document.getElementById('modalTradeSymbolInput');
   const currency = detectTradeCurrency(symbolInput ? symbolInput.value : '');
   const label = document.getElementById('modalTradePriceLabel');
-  if (label) label.textContent = `成交价（${currency}）`;
+  if (label) label.textContent = getTradePriceLabel(symbolInput ? symbolInput.value : '');
   const shares = Math.max(0, safeNumber(document.getElementById('modalTradeSharesInput').value, 0));
   const price = Math.max(0, safeNumber(document.getElementById('modalTradePriceInput').value, 0));
   const fee = Math.max(0, safeNumber(document.getElementById('modalTradeFeeInput').value, 0));
@@ -344,7 +350,7 @@ function renderTradeModal() {
           { value: 'sell', label: '卖出', dataAttr: 'data-trade-side' }
         ])}</div>
         <label class="zen-form-row"><span>股数</span><input id="modalTradeSharesInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.shares, 0)) : '')}" placeholder="0"></label>
-        <label class="zen-form-row"><span id="modalTradePriceLabel">成交价（${escapeHtml(detectTradeCurrency(symbol))}）</span><span class="zen-form-money"><input id="modalTradePriceInput" class="zen-form-amount" type="number" inputmode="decimal" style="width:${getZenEditWidthCh(price)}ch" value="${escapeHtml(price)}" placeholder="0.00" aria-label="成交价"><i class="zen-form-line" aria-hidden="true"></i></span></label>
+        <label class="zen-form-row"><span id="modalTradePriceLabel">${escapeHtml(getTradePriceLabel(symbol))}</span><span class="zen-form-money"><input id="modalTradePriceInput" class="zen-form-amount" type="number" inputmode="decimal" style="width:${getZenEditWidthCh(price)}ch" value="${escapeHtml(price)}" placeholder="0.00" aria-label="成交价"><i class="zen-form-line" aria-hidden="true"></i></span></label>
         <p class="zen-form-hint" id="modalTradeAmountInfo"></p>
         <label class="zen-form-row"><span>费用（CNY，可选）</span><input id="modalTradeFeeInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.feeCny, 0)) : '')}" placeholder="0.00"></label>
         <div class="zen-form-row"><span>归入</span>${renderZenSeg('modalBucketInput', bucket, [
