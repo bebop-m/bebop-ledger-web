@@ -373,7 +373,8 @@ export function getFundamentalsRankModel() {
 /* 市盈率与历史分位：现价 ÷ 最新完整年度 EPS。
    股价与财报常不同币种（如港股报价 HKD、财报 CNY），两端各自折成人民币后再相除；
    历史序列用「当年均价 ÷ 当年 EPS」同一折算因子，分位可比。
-   少于 5 个完整年度就只显值不画尺（口径与股息率分位一致）。 */
+   门槛取 4 个完整年度：股息率分位那套 5 年门槛在这里画不出尺——行情源只给到近四年财报，
+   全部 29 家公司的 EPS 序列都只有 4 个点，股价序列反而有十来年。少于 4 年只显值不画尺。 */
 export function getPeValuation(symbol) {
   const company = _data && _data.companies ? _data.companies[symbol] : null;
   if (!company || !Array.isArray(company.years)) return null;
@@ -396,7 +397,7 @@ export function getPeValuation(symbol) {
     .filter((row) => safeNumber(row.avgPrice, 0) > 0)
     .map((row) => (safeNumber(row.avgPrice, 0) * priceFx) / (safeNumber(row.eps, 0) * epsFx))
     .filter((value) => Number.isFinite(value) && value > 0);
-  if (series.length < 5) return { symbol, pe, percentile: null, years: series.length };
+  if (series.length < 4) return { symbol, pe, percentile: null, years: series.length };
   const below = series.filter((value) => value < pe).length;
   return { symbol, pe, percentile: below / series.length, years: series.length };
 }
@@ -462,13 +463,15 @@ function buildFormulaSection(company, rank) {
 
 /* ── 估值节：两根「贵 ⇄ 便宜」标尺 ──
    两个指标方向已统一为「点越靠右越便宜」：股息率高＝便宜，市盈率低＝便宜，
-   所以 PE 的点位取 100 − 分位。端点半径占 3.5px，落位夹在 [3%, 97%] 免得压出边界。 */
+   所以 PE 的点位取 100 − 分位。金点半径占 3.5px，落位夹在 [3%, 97%] 免得压出边界。
+   两行的历史序列长度不一定相同（股价十来年、EPS 只有四年），节标右侧按长的报，
+   短的那行在自己的分位前补「N 年内」，免得读者以为都是同一段历史。 */
 function buildScaleRow(label, valueText, model) {
   const scale = model.percentile === null ? '' : `<div class="fu-val-scale"><i style="left:${model.position.toFixed(1)}%"></i></div>
       <div class="fu-val-ends"><span>贵</span><span>便宜</span></div>`;
   const aside = model.percentile === null
     ? `<span class="fu-val-p">${escapeHtml(model.emptyNote)}</span>`
-    : `<span class="fu-val-p">${Math.round(model.percentile * 100)}% 分位 · <strong class="${model.cheap ? 'is-cheap' : ''}">${escapeHtml(model.word)}</strong></span>`;
+    : `<span class="fu-val-p">${escapeHtml(model.spanPrefix)}${Math.round(model.percentile * 100)}% 分位 · <strong class="${model.cheap ? 'is-cheap' : ''}">${escapeHtml(model.word)}</strong></span>`;
   return `<div class="fu-val-row">
       <div class="fu-val-main"><span>${escapeHtml(label)} <span class="fu-val-v">${escapeHtml(valueText)}</span></span>${aside}</div>
       ${scale}
@@ -476,8 +479,13 @@ function buildScaleRow(label, valueText, model) {
 }
 
 function buildValuationSection(company) {
-  const rows = [];
   const pe = getPeValuation(company.symbol);
+  const yieldRank = getDividendYieldPercentile(company.symbol);
+  const spans = [];
+  if (pe && pe.percentile !== null) spans.push(pe.years);
+  if (yieldRank) spans.push(yieldRank.years);
+  const headYears = spans.length ? Math.max(...spans) : 0;
+  const rows = [];
   if (pe) {
     const percentile = pe.percentile;
     rows.push(buildScaleRow('市盈率', `${pe.pe.toFixed(1)} 倍`, {
@@ -485,10 +493,10 @@ function buildValuationSection(company) {
       position: percentile === null ? 50 : Math.min(97, Math.max(3, (1 - percentile) * 100)),
       cheap: percentile !== null && percentile <= 0.3,
       word: percentile === null ? '' : percentile <= 0.3 ? '偏低' : percentile >= 0.7 ? '偏高' : '居中',
-      emptyNote: '历史价序列不足，暂不排分位'
+      spanPrefix: percentile !== null && pe.years < headYears ? `${pe.years} 年内 ` : '',
+      emptyNote: '年报序列不足，暂不排分位'
     }));
   }
-  const yieldRank = getDividendYieldPercentile(company.symbol);
   if (yieldRank) {
     const percentile = yieldRank.percentile;
     rows.push(buildScaleRow('股息率', formatPercentValue(yieldRank.currentYield), {
@@ -496,13 +504,13 @@ function buildValuationSection(company) {
       position: Math.min(97, Math.max(3, percentile * 100)),
       cheap: percentile >= 0.7,
       word: percentile >= 0.7 ? '偏便宜' : percentile <= 0.3 ? '偏贵' : '居中',
+      spanPrefix: yieldRank.years < headYears ? `${yieldRank.years} 年内 ` : '',
       emptyNote: ''
     }));
   }
   if (!rows.length) return '';
-  const years = Math.max(pe ? pe.years : 0, yieldRank ? yieldRank.years : 0);
   return `<section class="fu-val">
-      <div class="fu-sec-head"><span class="fu-sec-label">估值</span><span class="fu-sec-aside">近 ${years} 年分位 · 点越靠右越便宜</span></div>
+      <div class="fu-sec-head"><span class="fu-sec-label">估值</span><span class="fu-sec-aside">${headYears ? `近 ${headYears} 年分位 · ` : ''}点越靠右越便宜</span></div>
       <div class="fu-val-rows">${rows.join('')}</div>
     </section>`;
 }

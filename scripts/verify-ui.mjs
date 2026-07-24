@@ -240,7 +240,9 @@ const MODAL_TARGETS = {
   trade: { sel: '#quickAddButton', then: '[data-modal-action="open-trade"]' },
   cashFlow: { sel: '#quickAddButton', then: '[data-modal-action="open-cash-flow"]' },
   openingCash: { nav: 'records', sel: '.rec-cash' },
-  fundPicker: { nav: 'fundamentals', sel: '.fu-co-name' }
+  fundPicker: { nav: 'fundamentals', sel: '.fu-co-name' },
+  // 不是抽屉，借这条通道点开「年度数据明细」折叠行出图
+  fundFold: { nav: 'fundamentals', sel: '.fu-fold > summary' }
 };
 
 async function 打开(browser, theme, w, h) {
