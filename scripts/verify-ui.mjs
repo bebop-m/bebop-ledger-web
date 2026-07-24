@@ -183,6 +183,8 @@ function inPageAudit() {
   const de = document.documentElement;
   return {
     视口: [window.innerWidth, window.innerHeight],
+    底色: (() => { const bg = getComputedStyle(document.body).backgroundColor;
+      return 透明(bg) ? getComputedStyle(document.documentElement).backgroundColor : bg; })(),
     居中失效, 描边, 分隔线, 伪元素装饰, 按钮底托, 紫色, 非等宽数字,
     单屏: { 内容高: root.scrollHeight, 视口高: window.innerHeight, 溢出: root.scrollHeight > window.innerHeight + 1 },
     横向溢出: de.scrollWidth > de.clientWidth + 1,
@@ -307,8 +309,11 @@ const 比值 = d.关键字号.map((x) => {
 const 期望比 = CFG.device[0] / CFG.base;
 const 未等比 = 比值.filter((x) => Math.abs(x.比值 - 期望比) > 0.02);
 
+const 亮度 = (c) => { const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c || ''); return m ? +m[1] * 0.299 + +m[2] * 0.587 + +m[3] * 0.114 : NaN; };
+const 夜间切换 = Boolean(d.底色 && n.底色) && d.底色 !== n.底色 && 亮度(n.底色) < 亮度(d.底色);
+
 const 结果 = [
-  ['水平居中', 高危居中.length === 0, 高危居中.length ? 高危居中.map((x) => `${x.元素} 偏 ${x.偏移}px（父级 ${x.父级display}）`) : []],
+  ['水平居中', 高危居中.length === 0, 高危居中.length ? 高危居中.map((x) => `${x.元素} 偏 ${x.偏移}px（父级 ${x.父级}）`) : []],
   ['无描边', d.描边.length === 0, d.描边.map((x) => `${x.元素} border-${x.边} ${x.宽} ${x.色}`)],
   ['无横贯分隔线', d.分隔线.length === 0, d.分隔线.map((x) => `${x.元素} ${x.尺寸} ${x.色}`)],
   ['无伪元素装饰', d.伪元素装饰.length === 0, d.伪元素装饰.map((x) => `${x.元素} ${x.尺寸}`)],
@@ -317,9 +322,11 @@ const 结果 = [
   ['数字等宽', d.非等宽数字.length === 0, d.非等宽数字.slice(0, 6).map((x) => `${x.元素} "${x.文本}"`)],
   ['单屏不滚动', !d.单屏.溢出, d.单屏.溢出 ? [`内容 ${d.单屏.内容高} > 视口 ${d.单屏.视口高}`] : []],
   ['无横向溢出', !d.横向溢出, []],
-  ['尺寸等比缩放', 未等比.length === 0, 未等比.map((x) => `${x.选择器} ${x.基准}→${x.设备} 比值 ${x.比值}（应约 ${期望比.toFixed(3)}）`)],
+  ['尺寸等比缩放', 比值.length > 0 && 未等比.length === 0,
+    比值.length === 0 ? ['本页在 关键字号 列表里没有采样点——给 verify-ui.mjs 的 关键字号 加本页 2-3 个代表性选择器']
+      : 未等比.map((x) => `${x.选择器} ${x.基准}→${x.设备} 比值 ${x.比值}（应约 ${期望比.toFixed(3)}）`)],
   ['掩码不破版', !报告.掩码.可测 || (!报告.掩码.破版 && 报告.掩码.溢出行.length === 0), (报告.掩码.溢出行 || []).slice(0, 5)],
-  ['夜间底色切换', n.视口 && d.视口 ? true : true, []]
+  ['夜间底色切换', 夜间切换, 夜间切换 ? [] : [`日间 ${d.底色} / 夜间 ${n.底色}——夜间应自动切到更深的底色`]]
 ];
 
 if (CFG.json) {
