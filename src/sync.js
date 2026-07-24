@@ -12,17 +12,20 @@ import { renderSavedStateQuietly } from './render.js';
 import { refreshMarketData, decodeBase64Utf8 } from './network.js';
 
 /* ── GitHub Token ── */
+/* token 长期保存在 localStorage：这是自用 PWA，iOS 回收进程会清空 sessionStorage，
+   若只存会话级则每次冷启动都要在手机上重新粘贴 PAT。 */
 function getGithubToken() {
+  const stored = (localStorage.getItem(GITHUB_TOKEN_STORAGE_KEY) || '').trim();
+  if (stored) return stored;
+  // 回收 2026-07 期间存进 sessionStorage 的 token，避免刚输过的人再输一次
   const sessionToken = (sessionStorage.getItem(GITHUB_TOKEN_STORAGE_KEY) || '').trim();
-  if (sessionToken) return sessionToken;
-  const legacyToken = (localStorage.getItem(GITHUB_TOKEN_STORAGE_KEY) || '').trim();
-  if (legacyToken) {
-    sessionStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, legacyToken);
-    localStorage.removeItem(GITHUB_TOKEN_STORAGE_KEY);
+  if (sessionToken) {
+    localStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, sessionToken);
+    sessionStorage.removeItem(GITHUB_TOKEN_STORAGE_KEY);
   }
-  return legacyToken;
+  return sessionToken;
 }
-function saveGithubToken(token) { sessionStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, token.trim()); }
+function saveGithubToken(token) { localStorage.setItem(GITHUB_TOKEN_STORAGE_KEY, token.trim()); }
 function promptGithubToken() { const t = window.prompt(LABELS.syncTokenPrompt); if (!t || !t.trim()) return null; saveGithubToken(t); return t.trim(); }
 function createGithubHeaders(token, extra = {}) { return { Accept: 'application/vnd.github+json', Authorization: `Bearer ${token}`, ...extra }; }
 
