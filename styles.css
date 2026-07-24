@@ -10445,11 +10445,23 @@ button:focus-visible,
    整页居中轴：brand 弱化 → 净资产 hero → 本年股息金线 → 两行待办
    → 五行纯文字导航 → ＋记一笔。分区只靠留白，无一条分隔线。
    ══════════════════════════════════════════════════════════════════ */
+body[data-active-page="home"] {
+  padding: 0;
+}
+body[data-active-page="home"] .app-shell {
+  width: 100%;
+  max-width: none;
+}
 body[data-active-page="home"] #homePage {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 30px 26px 34px;
+  /* 竖向留白取「定稿值」与「设备安全区」的较大者：
+     普通浏览器仍是 30/34，装成 PWA 后自动让开灵动岛与 Home 指示条 */
+  padding-top: max(30px, env(safe-area-inset-top, 0px));
+  padding-right: max(26px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(34px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(26px, env(safe-area-inset-left, 0px));
   min-height: 100dvh;
 }
 /* 分区只靠留白：清掉此前各层留在首页元素上的所有描边 */
@@ -10494,6 +10506,7 @@ body[data-active-page="home"] .home-top-actions .summary-action-button svg {
 
 /* 净资产 hero：整区居中 */
 body[data-active-page="home"] .home-hero {
+  display: block;
   margin-top: 58px;
   padding: 0;
   text-align: center;
@@ -10663,6 +10676,7 @@ body[data-active-page="home"] .home-nav-list {
 }
 body[data-active-page="home"] .home-nav-item {
   display: flex;
+  flex: none;
   align-items: baseline;
   justify-content: space-between;
   min-height: 0;
