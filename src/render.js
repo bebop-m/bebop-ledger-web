@@ -83,16 +83,16 @@ export function renderHomePage(summary) {
    色彩只留给 hero 与 focus card 的实时状态。 */
 function getIncomeNavSummaryHtml(incomeModel) {
   const row = incomeModel && incomeModel.current;
-  const year = incomeModel ? incomeModel.currentYear : new Date().getFullYear();
   const available = Boolean(row && row.capitalReturnAvailable && row.capitalReturnCny !== null);
-  if (!available) return `${year} · 待回填年初净值`;
+  if (!available) return '\u5f85\u56de\u586b\u5e74\u521d\u51c0\u503c';
   const value = row.capitalReturnCny;
   const rate = row.capitalReturnRate;
   const sign = value > 0 ? '+' : value < 0 ? '-' : '';
-  const amountText = state.showAmounts ? `${sign}¥${Math.round(Math.abs(value)).toLocaleString('en-US')}` : MASK_AMOUNT;
+  const amountText = state.showAmounts ? `${sign}\u00a5${Math.round(Math.abs(value)).toLocaleString('en-US')}` : MASK_AMOUNT;
   const rateText = rate === null || rate === undefined
     ? '' : ` (${rate > 0 ? '+' : rate < 0 ? '-' : ''}${formatPercent(Math.abs(rate))})`;
-  return `${year} · ${escapeHtml(amountText)}${escapeHtml(rateText)}`;
+  const tone = value > 0 ? 'is-market-up' : value < 0 ? 'is-market-down' : '';
+  return `<span class="${tone}">${escapeHtml(amountText)}${escapeHtml(rateText)}</span>`;
 }
 
 function renderHomeHero(summary) {
