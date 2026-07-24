@@ -63,6 +63,17 @@ if (!chrome) {
 
 if (!existsSync(CFG.outDir)) mkdirSync(CFG.outDir, { recursive: true });
 
+/* dev server 没起时直说，别让它卡到 goto 超时 */
+try {
+  const r = await fetch(CFG.url, { signal: AbortSignal.timeout(3000) });
+  if (!r.ok) throw new Error(String(r.status));
+} catch {
+  console.error(`\n✗ dev server 未在 ${CFG.url} 运行。`);
+  console.error('   preview_start 选 "dev-alt"（5180），或 npm run dev -- --port 5180 --strictPort');
+  console.error('   跑在别的端口就加 --url=http://localhost:<端口>\n');
+  process.exit(3);
+}
+
 async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
   // 每张图用独立上下文：应用会记住上次停留的页面，
   // 共用 profile 时后一张的背景会是前一张的页面

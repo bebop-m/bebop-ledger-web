@@ -44,6 +44,22 @@ const CFG = {
 if (!CHROME) { console.error('未找到 Chrome/Edge'); process.exit(1); }
 if (!existsSync(CFG.outDir)) mkdirSync(CFG.outDir, { recursive: true });
 
+/* dev server 没起时给出可直接照做的指引，而不是卡到 goto 超时 */
+async function 探测(url) {
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(3000) });
+    return r.ok;
+  } catch { return false; }
+}
+if (!(await 探测(CFG.url))) {
+  console.error(`\n✗ dev server 未在 ${CFG.url} 运行，先把它起起来：`);
+  console.error('   · 有 preview 工具时：preview_start 选配置 "dev-alt"（端口 5180）');
+  console.error('   · 或直接命令行：npm run dev -- --port 5180 --strictPort');
+  console.error('   · 已在别的端口跑：node scripts/verify-ui.mjs --url=http://localhost:<端口>');
+  console.error('   注意默认 5173 常被并发会话占用，本项目统一用 5180。\n');
+  process.exit(3);
+}
+
 /* ── 页内检查：整段在浏览器里跑，返回纯数据 ── */
 function inPageAudit() {
   const root = document.querySelector('[data-page-view]:not([hidden])') || document.body;
