@@ -10302,3 +10302,423 @@ body[data-active-page="home"] .home-nav-list { margin-top: clamp(11px, 1.6vh, 16
   body[data-active-page="home"] .home-nav-list { margin-top: 8px; }
   body[data-active-page="home"] .home-nav-item { padding: 7px 0; }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   素禅 / 墨禅 —— 唯一权威 token 层（覆盖以上全部 Swiss / Ledger 层）
+   结构靠排版：无框体、无卡片、无图标底托、无 chevron、无发丝分隔；
+   金色仅表股息与选中；红涨绿跌保留。夜间由 prefers-color-scheme 自动切换。
+   色值与 designs/禅意UI/00-总则/README.md 逐字对应。
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+  color-scheme: light;
+  /* 素禅（日间，默认） */
+  --bg: #faf8f3;
+  --ink: #3b362e;
+  --muted: #a89d86;
+  --hint: #c2b9a6;
+  --label: #b0a78f;
+  --gold: #c19a45;
+  --gold-soft: #dcc492;
+  --track: #eae4d4;
+  --up: #bf5a42;
+  --down: #6a8b74;
+  --mask: rgba(59, 54, 46, 0.28);
+  --glow: none;
+  --frame: #efece4;
+  --divi-ink: var(--ink);
+  /* 图表色：定稿图里写死的 hex 一律走这层，夜间值见 00-总则/夜间色板.html */
+  --chart-line: #b5a88f;
+  --chart-gold: #dcc492;
+  --chart-line-soft: #cfc4ad;
+  --chart-gold-dot: #c9a558;
+  --chart-ink-dot: #8a7d69;
+  --chart-growth: #b3a68c;
+  --donut-1: #c9a558;
+  --donut-2: #dcc492;
+  --donut-3: #b3a68c;
+  --donut-4: #cfc4ad;
+  --donut-5: #e2d9c4;
+  --donut-6: #efe9da;
+
+  /* ledger 家族重映射（内页统一走 zen） */
+  --ledger-paper: var(--bg);
+  --ledger-surface: var(--bg);
+  --ledger-ink: var(--ink);
+  --ledger-muted: var(--muted);
+  --ledger-soft: var(--hint);
+  --ledger-line: transparent;
+  --ledger-line-strong: var(--ink);
+  --ledger-iris: var(--gold);
+  --ledger-iris-dark: var(--gold);
+  --ledger-iris-light: var(--gold-soft);
+  --ledger-iris-soft: var(--track);
+  --ledger-iris-pale: var(--track);
+  --ledger-gain: var(--up);
+  --ledger-loss: var(--down);
+  --ledger-warning: var(--gold);
+  --ledger-due: var(--up);
+  --ledger-announced: var(--muted);
+
+  /* color 家族重映射（首页 / 弹窗 / 通用） */
+  --color-bg: var(--bg);
+  --color-bg-muted: var(--track);
+  --color-frame-bg: var(--frame);
+  --color-ink: var(--ink);
+  --color-ink-strong: var(--ink);
+  --color-primary: var(--up);
+  --color-loss: var(--down);
+  --color-hairline: transparent;
+  --color-text-secondary: var(--muted);
+  --color-text-hint: var(--hint);
+  --accent: var(--gold);
+  --panel: transparent;
+  --surface: var(--bg);
+  --shadow: none;
+  --text: var(--ink);
+  --brand: var(--ink);
+  --brand-soft: var(--track);
+  --line: transparent;
+  --line-soft: transparent;
+  --tint-primary: rgba(193, 90, 66, 0.08);
+  --ring-primary: 0 0 0 2px rgba(193, 154, 69, 0.32);
+  --bg-top: var(--bg);
+  --bg-bottom: var(--bg);
+  --radius-card: 0px;
+  --radius-control: 10px;
+  --radius-chip: 999px;
+  --radius-pill: 999px;
+  --radius-xl: 0px;
+  --radius-lg: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    /* 墨禅（夜间） */
+    --bg: #23201b;
+    --ink: #ece6d8;
+    --muted: #8f887a;
+    --hint: #5f594c;
+    --label: #8f887a;
+    --gold: #d3a84f;
+    --gold-soft: #b9974a;
+    --track: #3a352c;
+    --up: #e07a5f;
+    --down: #7fae8e;
+    --mask: rgba(0, 0, 0, 0.45);
+    --glow: 0 0 12px rgba(211, 168, 79, 0.45);
+    --frame: #1a1712;
+    --divi-ink: var(--gold);
+    --chart-line: #8f8266;
+    --chart-gold: #a98e50;
+    --chart-line-soft: #8a7f66;
+    --chart-gold-dot: #d3a84f;
+    --chart-ink-dot: #b3a68c;
+    --chart-growth: #7d7360;
+    --donut-1: #d3a84f;
+    --donut-2: #b9974a;
+    --donut-3: #8f8262;
+    --donut-4: #6f6653;
+    --donut-5: #514b3d;
+    --donut-6: #3a352c;
+    --tint-primary: rgba(224, 122, 95, 0.14);
+  }
+}
+
+html { background: var(--frame); }
+body { background: var(--bg); color: var(--ink); }
+
+/* zen 纪律补强：图标裸置、焦点描边转金 */
+.circle-button,
+.summary-action-button,
+.back-button,
+.diagnostics-button {
+  background: none;
+  box-shadow: none;
+  border: 0;
+}
+button:focus-visible,
+[tabindex]:focus-visible { outline-color: var(--gold); }
+
+/* ══════════════════════════════════════════════════════════════════
+   01-首页 · 按 designs/禅意UI/01-首页/定稿图.html 重排
+   整页居中轴：brand 弱化 → 净资产 hero → 本年股息金线 → 两行待办
+   → 五行纯文字导航 → ＋记一笔。分区只靠留白，无一条分隔线。
+   ══════════════════════════════════════════════════════════════════ */
+body[data-active-page="home"] {
+  padding: 0;
+}
+body[data-active-page="home"] .app-shell {
+  width: 100%;
+  max-width: none;
+}
+body[data-active-page="home"] #homePage {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  /* 竖向留白取「定稿值」与「设备安全区」的较大者：
+     普通浏览器仍是 30/34，装成 PWA 后自动让开灵动岛与 Home 指示条 */
+  padding-top: max(30px, env(safe-area-inset-top, 0px));
+  padding-right: max(26px, env(safe-area-inset-right, 0px));
+  padding-bottom: max(34px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(26px, env(safe-area-inset-left, 0px));
+  min-height: 100dvh;
+}
+/* 分区只靠留白：清掉此前各层留在首页元素上的所有描边 */
+body[data-active-page="home"] #homePage,
+body[data-active-page="home"] #homePage * {
+  border: 0;
+}
+
+/* 顶行：品牌退成记号，右侧两个裸图标 */
+body[data-active-page="home"] .home-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 0;
+  padding: 0;
+}
+body[data-active-page="home"] .home-brand {
+  display: block;
+  color: var(--hint);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+body[data-active-page="home"] .home-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--muted);
+}
+body[data-active-page="home"] .home-top-actions .summary-action-button {
+  width: 17px;
+  height: 17px;
+  min-height: 0;
+  padding: 0;
+  color: var(--muted);
+}
+body[data-active-page="home"] .home-top-actions .summary-action-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* 净资产 hero：整区居中 */
+body[data-active-page="home"] .home-hero {
+  display: block;
+  margin-top: 58px;
+  padding: 0;
+  text-align: center;
+}
+body[data-active-page="home"] .home-hero-label {
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--label);
+  font-size: 10px;
+  line-height: 23px;
+  font-weight: 600;
+  letter-spacing: 5px;
+}
+body[data-active-page="home"] .home-hero-value {
+  display: block;
+  margin-top: 14px;
+  color: var(--ink);
+  font-size: 47px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="home"] .home-hero-value .home-hero-fraction {
+  color: var(--label);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+body[data-active-page="home"] .home-hero-meta {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="home"] .home-hero-meta strong { font-weight: 700; }
+body[data-active-page="home"] .home-hero-meta strong.is-market-up { color: var(--up); }
+body[data-active-page="home"] .home-hero-meta strong.is-market-down { color: var(--down); }
+body[data-active-page="home"] .home-hero-meta strong.is-flat { color: var(--muted); }
+
+/* 本年股息：金线是全页唯一的进度记号 */
+body[data-active-page="home"] .home-metrics {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+body[data-active-page="home"] .home-divi {
+  display: block;
+  width: 100%;
+  margin-top: 54px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: center;
+}
+body[data-active-page="home"] .home-divi-label {
+  display: block;
+  color: var(--label);
+  font-size: 10px;
+  line-height: 23px;
+  font-weight: 600;
+  letter-spacing: 5px;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="home"] .home-divi-value {
+  display: block;
+  margin-top: 10px;
+  color: var(--divi-ink);
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="home"] .home-divi-thread {
+  position: relative;
+  display: block;
+  width: 214px;
+  height: 2px;
+  margin: 18px auto 0;
+  background: var(--track);
+}
+body[data-active-page="home"] .home-divi-thread i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  background: var(--gold);
+  box-shadow: var(--glow);
+}
+
+/* 六个月点：数字在上、金点在下，有派息才点亮 */
+body[data-active-page="home"] .home-month-track {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 14px;
+}
+body[data-active-page="home"] .home-month {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--hint);
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="home"] .home-month i {
+  display: block;
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: transparent;
+}
+body[data-active-page="home"] .home-month.has-pay i { background: var(--gold); }
+body[data-active-page="home"] .home-month.is-current {
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 800;
+}
+body[data-active-page="home"] .home-month.is-current i {
+  width: 4.5px;
+  height: 4.5px;
+  box-shadow: var(--glow);
+}
+/* 旧月份轴的 1×4px 刻度线与选中横杠：定稿图只保留数字与金点 */
+body[data-active-page="home"] .home-month::before,
+body[data-active-page="home"] .home-month::after {
+  content: none;
+  display: none;
+}
+
+/* 两行待办：关键词加重，其余退成叙述 */
+body[data-active-page="home"] .home-todo {
+  margin-top: 46px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 2.1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="home"] .home-todo p { margin: 0; }
+body[data-active-page="home"] .home-todo strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* 五行导航：纯文字，无箭头无边框 */
+body[data-active-page="home"] .home-nav-list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 19px;
+  margin-top: 42px;
+  padding: 0;
+  border: 0;
+}
+body[data-active-page="home"] .home-nav-item {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  justify-content: space-between;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+body[data-active-page="home"] .home-nav-item:active { background: none; }
+body[data-active-page="home"] .home-nav-title {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+body[data-active-page="home"] .home-nav-side {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ＋记一笔：涨色文字键，全页唯一的动作 */
+body[data-active-page="home"] .home-quick-add {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--up);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-align: center;
+}
+
+/* 矮屏收紧竖向留白，首页仍要一屏放得下 */
+@media (max-height: 760px) {
+  body[data-active-page="home"] .home-hero { margin-top: 34px; }
+  body[data-active-page="home"] .home-divi { margin-top: 32px; }
+  body[data-active-page="home"] .home-todo { margin-top: 26px; }
+  body[data-active-page="home"] .home-nav-list { margin-top: 26px; gap: 15px; }
+}

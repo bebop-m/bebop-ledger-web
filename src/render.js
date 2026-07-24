@@ -7,7 +7,7 @@ import {
 import { renderFundamentalsPage, getFundamentalsCompanyCount, getPortfolioReturnSummary } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
 import { getPortfolioDiagnostics } from './diagnostics.js';
-import { getUpcomingReportEvents, renderReportCalendarPanel } from './report-calendar.js';
+import { renderReportCalendarPanel } from './report-calendar.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
   formatTimestamp, normalizeDividendStatus, getDividendStatusLabel,
@@ -100,13 +100,12 @@ function renderHomeHero(summary) {
   const hasPnl = summary.holdings.some((h) => safeNumber(h.previousClose, 0) > 0);
   const pnlText = hasPnl && state.showAmounts ? formatDailyPnl(pnl, summary.dailyPnlBaseCny) : '';
   const pnlArrow = pnl > 0 ? '\u25b2' : pnl < 0 ? '\u25bc' : '';
+  const pnlClass = pnl > 0 ? 'is-market-up' : pnl < 0 ? 'is-market-down' : 'is-flat';
+  const fxText = `USD ${safeNumber(state.rates.USD, 0).toFixed(2)} \u00b7 HKD ${safeNumber(state.rates.HKD, 0).toFixed(4)}`;
   refs.homeHero.innerHTML = `
-    <div class="home-hero-label-row">
-      <button class="home-hero-label" type="button" data-summary-action="liability" aria-label="编辑负债">净资产</button>
-      ${pnlText ? `<span class="home-hero-pnl"><strong class="${pnl > 0 ? 'is-market-up' : pnl < 0 ? 'is-market-down' : 'is-flat'}">${pnlArrow} ${escapeHtml(pnlText)}</strong></span>` : ''}
-    </div>
+    <button class="home-hero-label" type="button" data-summary-action="liability" aria-label="\u7f16\u8f91\u8d1f\u503a">\u51c0\u8d44\u4ea7</button>
     <strong class="home-hero-value">${formatLedgerMoney(summary.netMarketValueCny, 'CNY', 'home-hero-fraction')}</strong>
-    <p class="home-hero-fx">USD/CNY ${safeNumber(state.rates.USD, 0).toFixed(2)} · HKD/CNY ${safeNumber(state.rates.HKD, 0).toFixed(4)}</p>`;
+    <p class="home-hero-meta">${pnlText ? `<strong class="${pnlClass}">${pnlArrow} ${escapeHtml(pnlText)}</strong> \u00b7 ` : ''}${escapeHtml(fxText)}</p>`;
 }
 
 function getHomeMonthWindow(months, currentMonth) {
@@ -134,64 +133,49 @@ function getHomeDividendDateParts(entry) {
   };
 }
 
-function getHomeEventDateParts(value) {
-  const parts = String(value || '').split('-');
-  const month = Math.max(1, Math.min(12, Number(parts[1]) || 1));
-  return {
-    day: parts[2] ? String(Number(parts[2])).padStart(2, '0') : '\u2014',
-    month: parts[1] ? `${month}月` : ''
-  };
-}
-
-// \u9996\u9875\u73b0\u91d1\u6536\u5165\u8f74\uff1a\u5f53\u6708\u80a1\u606f -> \u4e0b\u6b21\u5230\u8d26 -> \u6708\u4efd\u8f74 -> \u5168\u5e74\u9884\u8ba1\u3002
+/* 本年股息区：金线进度 + 六月点 + 两行待办，构图见 designs/禅意UI/01-首页/定稿图.html。 */
 function renderHomeMetrics(calendarModel, summary) {
   const annual = getAnnualDividendOverview(calendarModel, summary);
   const annualProjected = annual.projectedCny;
   const annualRatio = annual.receivedRatio;
-  const annualYield = annual.annualYield;
-  const nextDividend = getNextHomeDividend(calendarModel);
-  const nextDate = getHomeDividendDateParts(nextDividend);
-  const nextReport = getUpcomingReportEvents()[0] || null;
-  const nextReportDate = getHomeEventDateParts(nextReport && nextReport.reportDate);
+  const ratioPct = Math.round(Math.max(0, Math.min(1, annualRatio)) * 100);
   const monthWindow = getHomeMonthWindow(calendarModel.months, calendarModel.currentMonth);
   const monthButtons = monthWindow.map((item) => {
-    const progress = item.totalCny > 0 ? Math.min(100, Math.max(0, item.receivedCny / item.totalCny * 100)) : 0;
+    const hasPay = safeNumber(item.totalCny, 0) > 0;
+    const isCurrent = item.month === calendarModel.currentMonth;
     return `
-    <button class="home-month${item.month === calendarModel.currentMonth ? ' is-current' : ''}" type="button" data-home-dividend-month="${item.month}" aria-label="查看 ${item.month} 月股息">
-      <i aria-hidden="true"></i>
+    <button class="home-month${hasPay ? ' has-pay' : ''}${isCurrent ? ' is-current' : ''}" type="button" data-home-dividend-month="${item.month}" aria-label="\u67e5\u770b ${item.month} \u6708\u80a1\u606f">
       <span>${String(item.month).padStart(2, '0')}</span>
-      ${item.month === calendarModel.currentMonth ? `<b aria-hidden="true" style="--home-month-progress:${progress.toFixed(1)}%"></b>` : ''}
+      <i aria-hidden="true"></i>
     </button>`;
   }).join('');
+
+  // \u4e24\u884c\u5f85\u529e\uff1a\u4e0b\u4e00\u7b14\u5728\u9014\u80a1\u606f\u3001\u5f85\u786e\u8ba4\u7b14\u6570\uff08\u5747\u4e3a\u5df2\u6709\u53e3\u5f84\uff09
+  const nextDividend = getNextHomeDividend(calendarModel);
+  const nextDate = getHomeDividendDateParts(nextDividend);
   const nextName = nextDividend ? (nextDividend.name || nextDividend.symbol) : '';
-  const nextReportName = nextReport ? (nextReport.name || nextReport.symbol) : '';
+  const nextLine = nextDividend
+    ? `${nextDate.month}${nextDate.day}\u65e5 ${escapeHtml(nextName)} <strong>${escapeHtml(formatDisplayMoney(nextDividend.netCny, 'CNY'))}</strong> \u5230\u8d26`
+    : '\u8fd1\u671f\u6682\u65e0\u5728\u9014\u80a1\u606f';
+  const dueEntries = calendarModel.allDetails.filter((entry) => entry.status === 'due');
+  const dueCny = dueEntries.reduce((sum, entry) => sum + safeNumber(entry.netCny, 0), 0);
+  const dueLine = dueEntries.length
+    ? `\u5f85\u786e\u8ba4 <strong>${dueEntries.length} \u7b14 \u00b7 ${escapeHtml(formatHudAmount(dueCny))}</strong>`
+    : '\u6682\u65e0\u5f85\u786e\u8ba4\u5230\u8d26';
 
   refs.homeFocusCard.innerHTML = `
-    <button class="home-cashflow" type="button" data-page-nav="dividends" aria-label="打开本年股息">
-      <div class="home-ledger-head">
-        <span class="home-ledger-label">本年预计股息</span>
-        <span class="home-ledger-period">${calendarModel.year} · 年度股息率 ${escapeHtml(formatPercent(annualYield))}</span>
-      </div>
-      <strong class="home-cashflow-value">${formatLedgerMoney(annualProjected, 'CNY')}</strong>
-      <div class="home-cashflow-progress" aria-label="本年股息到账进度 ${Math.round(annualRatio * 100)}%">
+    <button class="home-divi" type="button" data-page-nav="dividends" aria-label="\u6253\u5f00\u672c\u5e74\u80a1\u606f">
+      <span class="home-divi-label">\u672c\u5e74\u80a1\u606f \u00b7 ${ratioPct}%</span>
+      <strong class="home-divi-value">${escapeHtml(formatHudAmount(annualProjected))}</strong>
+      <span class="home-divi-thread" aria-label="\u672c\u5e74\u80a1\u606f\u5230\u8d26\u8fdb\u5ea6 ${ratioPct}%">
         <i style="width:${Math.max(annualRatio * 100, annualProjected > 0 ? 0.6 : 0).toFixed(1)}%"></i>
-        <b style="left:${Math.min(98.8, Math.max(1.2, annualRatio * 100)).toFixed(1)}%"></b>
-      </div>
+      </span>
     </button>
-    <section class="home-month-ledger">
-      <div class="home-month-track">${monthButtons}</div>
-    </section>
-    <section class="home-event-strip" aria-label="快捷操作与近期事件">
-      <button class="home-event-cell" type="button" data-page-nav="dividends" aria-label="查看下一笔股息">
-        <span>下次到账</span><strong>${nextDate.day}<em>${nextDate.month}</em></strong><small>${nextName ? escapeHtml(nextName) : '待更新'}${nextDividend ? ` · ${escapeHtml(formatDisplayMoney(nextDividend.netCny, 'CNY'))}` : ''}</small>
-      </button>
-      <button class="home-event-cell" type="button" data-page-nav="fundamentals" aria-label="查看下一场财报">
-        <span>下一场财报</span><strong>${nextReportDate.day}<em>${nextReportDate.month}</em></strong><small>${nextReportName ? escapeHtml(nextReportName) : '待更新'}${nextReport ? ` · ${escapeHtml(nextReport.reportType)}` : ''}</small>
-      </button>
-      <button id="quickAddButton" class="home-event-cell is-action" type="button" data-home-action="quick-add" aria-label="记一笔交易或出入金">
-        <span>记一笔</span><strong>＋</strong><small>交易 / 出入金</small>
-      </button>
-    </section>`;
+    <div class="home-month-track">${monthButtons}</div>
+    <div class="home-todo" aria-label="\u8fd1\u671f\u80a1\u606f\u5f85\u529e">
+      <p>${nextLine}</p>
+      <p>${dueLine}</p>
+    </div>`;
 }
 
 /* 入口 HUD 的金额统一取整，保持单行长度可控。 */

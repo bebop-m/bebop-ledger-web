@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>禅意UI · 墨禅夜间色板 · 图表硬编码色对照</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 900px; margin: 0 auto 28px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; line-height: 1.7; }
+.canvas-head b { color: #333; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 900px; margin: 0 auto 34px; }
+.option { flex: 0 0 390px; }
+.option-label { font-size: 13px; font-weight: 800; letter-spacing: .5px; }
+.option-label small { font-weight: 600; color: #999; margin-left: 6px; letter-spacing: 1px; }
+.option-note { margin: 4px 0 12px; font-size: 11.5px; line-height: 1.6; color: #888; min-height: 34px; }
+.phone { width: 390px; border-radius: 24px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); }
+
+/* ── token 成对：与 00-总则 README 完全一致 ── */
+[data-theme="day"] {
+  --bg: #faf8f3; --ink: #3b362e; --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --gold-soft: #dcc492; --track: #eae4d4; --up: #bf5a42; --down: #6a8b74;
+  --chart-line: #b5a88f; --chart-gold: #dcc492; --chart-line-soft: #cfc4ad;
+  --chart-gold-dot: #c9a558; --chart-ink-dot: #8a7d69; --chart-growth: #b3a68c;
+  --donut-1: #c9a558; --donut-2: #dcc492; --donut-3: #b3a68c;
+  --donut-4: #cfc4ad; --donut-5: #e2d9c4; --donut-6: #efe9da;
+  --glow: none;
+}
+[data-theme="night"] {
+  --bg: #23201b; --ink: #ece6d8; --muted: #8f887a; --hint: #5f594c; --label: #8f887a;
+  --gold: #d3a84f; --gold-soft: #b9974a; --track: #3a352c; --up: #e07a5f; --down: #7fae8e;
+  --chart-line: #8f8266; --chart-gold: #a98e50; --chart-line-soft: #8a7f66;
+  --chart-gold-dot: #d3a84f; --chart-ink-dot: #b3a68c; --chart-growth: #7d7360;
+  --donut-1: #d3a84f; --donut-2: #b9974a; --donut-3: #8f8262;
+  --donut-4: #6f6653; --donut-5: #514b3d; --donut-6: #3a352c;
+  --glow: 0 0 12px rgba(211, 168, 79, .45);
+}
+
+.screen { display: flex; flex-direction: column; padding: 26px 26px 30px; background: var(--bg); color: var(--ink); }
+.num { font-variant-numeric: tabular-nums; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.sec-note { margin-top: 4px; font-size: 9.5px; font-weight: 600; color: var(--hint); }
+.block + .block { margin-top: 30px; }
+
+/* 双线趋势（09-收益明细） */
+.trend svg { width: 100%; height: auto; display: block; margin-top: 12px; }
+.trend .zero { stroke: var(--track); stroke-width: 1; }
+.trend .cap-line { fill: none; stroke: var(--chart-line); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.trend .div-line { fill: none; stroke: var(--chart-gold); stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.trend circle.cap { fill: var(--chart-ink-dot); }
+.trend circle.div { fill: var(--chart-gold-dot); }
+.trend text { font-family: inherit; font-size: 9.5px; font-weight: 700; font-variant-numeric: tabular-nums; fill: var(--muted); }
+.trend text.yr { fill: var(--hint); font-weight: 600; }
+.trend text.is-current { fill: var(--ink); }
+
+/* 饼图六阶（10-年度回顾 / 11-分享卡） */
+.donut-wrap { display: flex; gap: 18px; align-items: center; margin-top: 12px; }
+.donut { flex: none; position: relative; width: 118px; height: 118px; }
+.donut svg { transform: rotate(-90deg); }
+.donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.donut-center small { font-size: 9px; font-weight: 600; color: var(--hint); letter-spacing: 1px; }
+.donut-center strong { font-size: 13px; font-weight: 700; }
+.donut-legend { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+.donut-legend > div { display: flex; align-items: baseline; gap: 7px; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.donut-legend b { width: 4px; height: 4px; border-radius: 50%; flex: none; align-self: center; }
+.donut-legend .co { flex: 1; color: var(--ink); font-weight: 700; }
+.donut-legend .pc { font-variant-numeric: tabular-nums; }
+
+/* 分红线图（17-公司基本面） */
+.fline { margin-top: 12px; }
+.fline svg { width: 100%; height: auto; display: block; }
+.fline polyline { fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.fline.gold polyline { stroke: var(--chart-gold); }
+.fline.gold circle { fill: var(--chart-gold-dot); }
+.fline.inkish polyline { stroke: var(--chart-line-soft); }
+.fline.inkish circle { fill: var(--chart-ink-dot); }
+.fline text { font-family: inherit; font-size: 9.5px; font-weight: 700; font-variant-numeric: tabular-nums; fill: var(--muted); }
+.fline text.yr { font-weight: 600; fill: var(--hint); }
+.fline text.is-current { fill: var(--ink); font-size: 10.5px; }
+
+/* 三段公式线 + 估值标尺（17） */
+.f-stack { display: flex; height: 2px; margin: 12px 0 0; }
+.f-stack .s-divi { background: var(--gold); box-shadow: var(--glow); }
+.f-stack .s-growth { background: var(--chart-growth); }
+.f-stack .s-buyback { background: var(--track); }
+.f-rows { margin-top: 11px; display: flex; flex-direction: column; gap: 7px; }
+.f-rows > div { display: flex; align-items: baseline; gap: 8px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.f-rows b { width: 4px; height: 4px; border-radius: 50%; flex: none; align-self: center; }
+.f-rows strong { color: var(--ink); font-weight: 700; margin-left: auto; }
+.val-scale { position: relative; height: 2px; background: var(--track); margin-top: 12px; }
+.val-scale i { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: var(--glow); }
+.val-ends { display: flex; justify-content: space-between; margin-top: 7px; font-size: 9px; font-weight: 600; color: var(--hint); }
+
+/* 12 金柱（10） */
+.mini-months { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; align-items: end; height: 50px; margin-top: 12px; }
+.mini-months span { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; }
+.mini-months i { display: block; width: 4px; border-radius: 2px; background: var(--gold); opacity: .55; height: var(--v); }
+.mini-months .is-current i { opacity: 1; box-shadow: var(--glow); }
+.mini-months small { font-size: 8.5px; font-weight: 600; color: var(--hint); }
+
+/* 分享卡：固定素禅日间，两态相同 */
+.share-card {
+  margin-top: 12px; background: #fffdf8; border-radius: 16px; padding: 20px 18px; text-align: center;
+  box-shadow: 0 1px 2px rgba(59,54,46,.05), 0 8px 24px rgba(59,54,46,.08);
+  --ink: #3b362e; --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f; --gold: #c19a45;
+  --donut-1: #c9a558; --donut-2: #dcc492; --donut-3: #b3a68c; --donut-4: #cfc4ad;
+  color: #3b362e;
+}
+.share-card .sc-brand { font-size: 9px; font-weight: 600; letter-spacing: 4px; color: var(--hint); text-transform: uppercase; }
+.share-card .sc-label { display: block; margin-top: 12px; font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.share-card .sc-value { display: block; margin-top: 8px; font-size: 30px; font-weight: 600; letter-spacing: -1px; line-height: 1; color: #bf5a42; }
+.share-card .sc-bar { display: flex; height: 2px; width: 200px; margin: 14px auto 0; }
+.share-card .sc-foot { margin-top: 14px; font-size: 9px; font-weight: 600; letter-spacing: 2px; color: var(--hint); }
+
+/* 色值对照表 */
+.table-wrap { max-width: 900px; margin: 0 auto; overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 12px; background: #fff; }
+caption { text-align: left; font-size: 13px; font-weight: 800; padding: 14px 0 10px; letter-spacing: .5px; }
+th, td { border-bottom: 1px solid #e2e2e4; padding: 8px 10px; text-align: left; white-space: nowrap; }
+th { background: #f4f4f6; font-weight: 700; font-size: 11.5px; color: #555; }
+td.mono { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 11.5px; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; border: 1px solid rgba(0,0,0,.12); }
+td.r { font-variant-numeric: tabular-nums; color: #666; }
+tr.group td { background: #fafafa; font-weight: 700; color: #444; font-size: 11.5px; }
+</style>
+</head>
+<body>
+  <div class="canvas-head">
+    <h1>禅意UI · 墨禅夜间色板 —— 图表硬编码色对照</h1>
+    <p>
+      各页定稿图只画了素禅日间，图表里的折线／圆点／饼图分段是<b>硬编码 hex</b>，墨禅夜间没有对照物。
+      本文件补齐这一层：左右两态渲染同一批图表元素，<b>右列即夜间目检标准</b>。
+      施工 09 / 10 / 11 / 17 四页时对照本文件验收夜间态。<br>
+      夜间色不是日间色的机械反转，而是按<b>对比度反解</b>得到：暗底细线有光晕衰减，故线条类目标对比度取 3.4–5.2:1（高于日间的 1.6–2.3:1），点类取 6.7–7.3:1，饼图六阶保证相邻可辨（≥1.25:1）。
+    </p>
+  </div>
+
+  <div class="board">
+    <section class="option">
+      <h2 class="option-label">素禅 · 日间 <small>DAY（各页定稿图现状）</small></h2>
+      <p class="option-note">纸底 #faf8f3。图表色是「褪色的墨与金」，对比度低即为淡雅。</p>
+      <div class="phone" data-theme="day"></div>
+    </section>
+    <section class="option">
+      <h2 class="option-label">墨禅 · 夜间 <small>NIGHT（本次补齐）</small></h2>
+      <p class="option-note">墨底 #23201b。同一批元素提亮至等效视觉分量，金仍是唯一记号色。</p>
+      <div class="phone" data-theme="night"></div>
+    </section>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <caption>图表硬编码色 · 日夜对照表（施工时一律改用 var()，不再写死 hex）</caption>
+      <thead>
+        <tr><th>token</th><th>用在哪</th><th>素禅日间</th><th>对比度</th><th>墨禅夜间</th><th>对比度</th></tr>
+      </thead>
+      <tbody>
+        <tr class="group"><td colspan="6">折线 / 圆点（09-收益明细、17-公司基本面）</td></tr>
+        <tr><td class="mono">--chart-line</td><td>资金收益率趋势线</td><td class="mono"><i class="sw" style="background:#b5a88f"></i>#b5a88f</td><td class="r">2.21:1</td><td class="mono"><i class="sw" style="background:#8f8266"></i>#8f8266</td><td class="r">4.29:1</td></tr>
+        <tr><td class="mono">--chart-gold</td><td>股息收益率线、每股分红线</td><td class="mono"><i class="sw" style="background:#dcc492"></i>#dcc492</td><td class="r">1.60:1</td><td class="mono"><i class="sw" style="background:#a98e50"></i>#a98e50</td><td class="r">5.16:1</td></tr>
+        <tr><td class="mono">--chart-line-soft</td><td>EPS 线</td><td class="mono"><i class="sw" style="background:#cfc4ad"></i>#cfc4ad</td><td class="r">1.63:1</td><td class="mono"><i class="sw" style="background:#8a7f66"></i>#8a7f66</td><td class="r">4.10:1</td></tr>
+        <tr><td class="mono">--chart-gold-dot</td><td>分红线数据点、股息线点</td><td class="mono"><i class="sw" style="background:#c9a558"></i>#c9a558</td><td class="r">2.20:1</td><td class="mono"><i class="sw" style="background:#d3a84f"></i>#d3a84f</td><td class="r">7.33:1</td></tr>
+        <tr><td class="mono">--chart-ink-dot</td><td>EPS 点、资金收益率点</td><td class="mono"><i class="sw" style="background:#8a7d69"></i>#8a7d69</td><td class="r">3.79:1</td><td class="mono"><i class="sw" style="background:#b3a68c"></i>#b3a68c</td><td class="r">6.76:1</td></tr>
+        <tr><td class="mono">--chart-growth</td><td>公式三段线的「增长」段</td><td class="mono"><i class="sw" style="background:#b3a68c"></i>#b3a68c</td><td class="r">2.26:1</td><td class="mono"><i class="sw" style="background:#7d7360"></i>#7d7360</td><td class="r">3.47:1</td></tr>
+        <tr class="group"><td colspan="6">饼图六阶（10-年度回顾、11-分享卡）· 相邻阶保证可辨</td></tr>
+        <tr><td class="mono">--donut-1</td><td>第 1 大持仓</td><td class="mono"><i class="sw" style="background:#c9a558"></i>#c9a558</td><td class="r">2.20:1</td><td class="mono"><i class="sw" style="background:#d3a84f"></i>#d3a84f</td><td class="r">7.33:1</td></tr>
+        <tr><td class="mono">--donut-2</td><td>第 2 大</td><td class="mono"><i class="sw" style="background:#dcc492"></i>#dcc492</td><td class="r">1.60:1</td><td class="mono"><i class="sw" style="background:#b9974a"></i>#b9974a</td><td class="r">5.86:1</td></tr>
+        <tr><td class="mono">--donut-3</td><td>第 3 大</td><td class="mono"><i class="sw" style="background:#b3a68c"></i>#b3a68c</td><td class="r">2.26:1</td><td class="mono"><i class="sw" style="background:#8f8262"></i>#8f8262</td><td class="r">4.28:1</td></tr>
+        <tr><td class="mono">--donut-4</td><td>第 4 大</td><td class="mono"><i class="sw" style="background:#cfc4ad"></i>#cfc4ad</td><td class="r">1.63:1</td><td class="mono"><i class="sw" style="background:#6f6653"></i>#6f6653</td><td class="r">2.86:1</td></tr>
+        <tr><td class="mono">--donut-5</td><td>第 5 大</td><td class="mono"><i class="sw" style="background:#e2d9c4"></i>#e2d9c4</td><td class="r">1.32:1</td><td class="mono"><i class="sw" style="background:#514b3d"></i>#514b3d</td><td class="r">1.87:1</td></tr>
+        <tr><td class="mono">--donut-6</td><td>其余项兜底 / 环底</td><td class="mono"><i class="sw" style="background:#efe9da"></i>#efe9da</td><td class="r">1.14:1</td><td class="mono"><i class="sw" style="background:#3a352c"></i>#3a352c</td><td class="r">1.33:1</td></tr>
+        <tr class="group"><td colspan="6">不随主题切换的例外</td></tr>
+        <tr><td class="mono">分享卡底 #fffdf8</td><td>11-分享卡（导出 PNG）</td><td class="mono"><i class="sw" style="background:#fffdf8"></i>#fffdf8</td><td class="r">—</td><td class="mono" colspan="2">同日间，<b>不随夜间变色</b>（导出图恒为素禅）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <template id="palette">
+    <div class="screen">
+      <section class="block">
+        <span class="sec-label">双线趋势</span>
+        <p class="sec-note">09-收益明细 · 资金收益率线 + 股息收益率线</p>
+        <div class="trend num">
+          <svg viewBox="0 0 338 118" aria-label="历年趋势示意">
+            <line class="zero" x1="0" y1="78" x2="338" y2="78"></line>
+            <polyline class="cap-line" points="24,58 90,34 156,92 222,44 288,26"></polyline>
+            <polyline class="div-line" points="24,70 90,66 156,68 222,62 288,58"></polyline>
+            <circle class="cap" cx="24" cy="58" r="2.6"></circle>
+            <circle class="cap" cx="90" cy="34" r="2.6"></circle>
+            <circle class="cap" cx="156" cy="92" r="2.6"></circle>
+            <circle class="cap" cx="222" cy="44" r="2.6"></circle>
+            <circle class="cap" cx="288" cy="26" r="3.4"></circle>
+            <circle class="div" cx="24" cy="70" r="2.2"></circle>
+            <circle class="div" cx="90" cy="66" r="2.2"></circle>
+            <circle class="div" cx="156" cy="68" r="2.2"></circle>
+            <circle class="div" cx="222" cy="62" r="2.2"></circle>
+            <circle class="div" cx="288" cy="58" r="2.2"></circle>
+            <text x="24" y="50" text-anchor="middle">+4.1</text>
+            <text x="90" y="26" text-anchor="middle">+9.2</text>
+            <text x="156" y="104" text-anchor="middle">−3.8</text>
+            <text x="222" y="36" text-anchor="middle">+7.4</text>
+            <text x="288" y="18" text-anchor="middle" class="is-current">+5.7</text>
+            <text class="yr" x="24" y="114" text-anchor="middle">2022</text>
+            <text class="yr" x="90" y="114" text-anchor="middle">2023</text>
+            <text class="yr" x="156" y="114" text-anchor="middle">2024</text>
+            <text class="yr" x="222" y="114" text-anchor="middle">2025</text>
+            <text class="yr is-current" x="288" y="114" text-anchor="middle">2026</text>
+          </svg>
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="sec-label">持仓饼图六阶</span>
+        <p class="sec-note">10-年度回顾 · 相邻阶需肉眼可分</p>
+        <div class="donut-wrap">
+          <div class="donut num">
+            <svg viewBox="0 0 118 118" width="118" height="118" aria-label="持仓构成示意">
+              <circle cx="59" cy="59" r="48" fill="none" stroke="var(--donut-6)" stroke-width="10"></circle>
+              <circle cx="59" cy="59" r="48" fill="none" stroke="var(--donut-1)" stroke-width="10" stroke-dasharray="73 302" stroke-dashoffset="0"></circle>
+              <circle cx="59" cy="59" r="48" fill="none" stroke="var(--donut-2)" stroke-width="10" stroke-dasharray="63 302" stroke-dashoffset="-73"></circle>
+              <circle cx="59" cy="59" r="48" fill="none" stroke="var(--donut-3)" stroke-width="10" stroke-dasharray="56 302" stroke-dashoffset="-136"></circle>
+              <circle cx="59" cy="59" r="48" fill="none" stroke="var(--donut-4)" stroke-width="10" stroke-dasharray="43 302" stroke-dashoffset="-192"></circle>
+              <circle cx="59" cy="59" r="48" fill="none" stroke="var(--donut-5)" stroke-width="10" stroke-dasharray="33 302" stroke-dashoffset="-235"></circle>
+            </svg>
+            <div class="donut-center"><small>2026</small><strong>12 项</strong></div>
+          </div>
+          <div class="donut-legend num">
+            <div><b style="background:var(--donut-1)"></b><span class="co">中国海洋石油</span><span class="pc">24.2%</span></div>
+            <div><b style="background:var(--donut-2)"></b><span class="co">长江电力</span><span class="pc">20.9%</span></div>
+            <div><b style="background:var(--donut-3)"></b><span class="co">建设银行</span><span class="pc">18.5%</span></div>
+            <div><b style="background:var(--donut-4)"></b><span class="co">中国神华</span><span class="pc">14.1%</span></div>
+            <div><b style="background:var(--donut-5)"></b><span class="co">陕西煤业</span><span class="pc">11.0%</span></div>
+            <div><b style="background:var(--donut-6)"></b><span class="co" style="color:var(--muted);font-weight:600;">其余 7 项</span><span class="pc">11.3%</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="sec-label">每股分红线</span>
+        <p class="sec-note">17-公司基本面 · min–max 量程，逐点标值</p>
+        <div class="fline gold num">
+          <svg viewBox="0 0 338 76" aria-label="每股分红示意">
+            <polyline points="20,56 84,48 148,40 212,28 276,16"></polyline>
+            <circle cx="20" cy="56" r="2.4"></circle>
+            <circle cx="84" cy="48" r="2.4"></circle>
+            <circle cx="148" cy="40" r="2.4"></circle>
+            <circle cx="212" cy="28" r="2.4"></circle>
+            <circle cx="276" cy="16" r="3.2"></circle>
+            <text x="20" y="48" text-anchor="middle">0.62</text>
+            <text x="84" y="40" text-anchor="middle">0.71</text>
+            <text x="148" y="32" text-anchor="middle">0.80</text>
+            <text x="212" y="20" text-anchor="middle">0.94</text>
+            <text x="276" y="9" text-anchor="middle" class="is-current">1.06</text>
+            <text class="yr" x="20" y="72" text-anchor="middle">2021</text>
+            <text class="yr" x="84" y="72" text-anchor="middle">2022</text>
+            <text class="yr" x="148" y="72" text-anchor="middle">2023</text>
+            <text class="yr" x="212" y="72" text-anchor="middle">2024</text>
+            <text class="yr is-current" x="276" y="72" text-anchor="middle">2025</text>
+          </svg>
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="sec-label">EPS 线</span>
+        <p class="sec-note">17-公司基本面 · 同构、色更沉</p>
+        <div class="fline inkish num">
+          <svg viewBox="0 0 338 76" aria-label="EPS 示意">
+            <polyline points="20,50 84,58 148,36 212,30 276,20"></polyline>
+            <circle cx="20" cy="50" r="2.4"></circle>
+            <circle cx="84" cy="58" r="2.4"></circle>
+            <circle cx="148" cy="36" r="2.4"></circle>
+            <circle cx="212" cy="30" r="2.4"></circle>
+            <circle cx="276" cy="20" r="3.2"></circle>
+            <text x="20" y="42" text-anchor="middle">1.42</text>
+            <text x="84" y="50" text-anchor="middle">1.28</text>
+            <text x="148" y="28" text-anchor="middle">1.66</text>
+            <text x="212" y="22" text-anchor="middle">1.78</text>
+            <text x="276" y="13" text-anchor="middle" class="is-current">1.95</text>
+            <text class="yr" x="20" y="72" text-anchor="middle">2021</text>
+            <text class="yr" x="84" y="72" text-anchor="middle">2022</text>
+            <text class="yr" x="148" y="72" text-anchor="middle">2023</text>
+            <text class="yr" x="212" y="72" text-anchor="middle">2024</text>
+            <text class="yr is-current" x="276" y="72" text-anchor="middle">2025</text>
+          </svg>
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="sec-label">公式三段线 · 估值标尺</span>
+        <p class="sec-note">17-公司基本面 · 金＝股息 / 褐＝增长 / 纸＝净回购</p>
+        <div class="f-stack"><i class="s-divi" style="width:52%"></i><i class="s-growth" style="width:36%"></i><i class="s-buyback" style="width:12%"></i></div>
+        <div class="f-rows num">
+          <div><b style="background:var(--gold)"></b><span>股息率</span><strong>5.1%</strong></div>
+          <div><b style="background:var(--chart-growth)"></b><span>增长</span><strong>3.5%</strong></div>
+          <div><b style="background:var(--track)"></b><span>净回购</span><strong>1.2%</strong></div>
+        </div>
+        <div class="val-scale"><i style="left:72%"></i></div>
+        <div class="val-ends"><span>贵</span><span>便宜</span></div>
+      </section>
+
+      <section class="block">
+        <span class="sec-label">当年股息现金流</span>
+        <p class="sec-note">10-年度回顾 · 12 金柱，当月实色（夜间带微光）</p>
+        <div class="mini-months num">
+          <span><i style="--v:6%"></i><small>1</small></span>
+          <span><i style="--v:22%"></i><small>2</small></span>
+          <span><i style="--v:12%"></i><small>3</small></span>
+          <span><i style="--v:6%"></i><small>4</small></span>
+          <span><i style="--v:54%"></i><small>5</small></span>
+          <span><i style="--v:72%"></i><small>6</small></span>
+          <span class="is-current"><i style="--v:48%"></i><small>7</small></span>
+          <span><i style="--v:6%"></i><small>8</small></span>
+          <span><i style="--v:6%"></i><small>9</small></span>
+          <span><i style="--v:6%"></i><small>10</small></span>
+          <span><i style="--v:6%"></i><small>11</small></span>
+          <span><i style="--v:6%"></i><small>12</small></span>
+        </div>
+      </section>
+
+      <section class="block">
+        <span class="sec-label">分享卡</span>
+        <p class="sec-note">11-分享卡 · 固定素禅导出，两态应完全相同</p>
+        <div class="share-card num">
+          <span class="sc-brand">Bebop Ledger · 2026</span>
+          <span class="sc-label">本年收益率</span>
+          <strong class="sc-value">+5.7%</strong>
+          <div class="sc-bar"><i style="width:42%;background:var(--donut-1)"></i><i style="width:36%;background:var(--donut-3)"></i><i style="width:17%;background:var(--donut-4)"></i><i style="width:5%;background:var(--donut-6)"></i></div>
+          <p class="sc-foot">波普账本 · 比例已脱敏 · 无金额</p>
+        </div>
+      </section>
+    </div>
+  </template>
+
+  <script>
+    var tpl = document.getElementById('palette');
+    document.querySelectorAll('.phone').forEach(function (phone) {
+      phone.appendChild(tpl.content.cloneNode(true));
+    });
+  </script>
+</body>
+</html>

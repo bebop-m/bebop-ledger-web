@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>禅意UI · 公司基本面页 · 定稿图</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 860px; margin: 0 auto 28px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 860px; margin: 0 auto; overflow-x: auto; padding-bottom: 12px; }
+.option { flex: 0 0 390px; }
+.option-label { font-size: 13px; font-weight: 800; letter-spacing: .5px; }
+.option-label small { font-weight: 600; color: #999; margin-left: 6px; letter-spacing: 1px; }
+.option-note { margin: 4px 0 12px; font-size: 11.5px; line-height: 1.6; color: #888; min-height: 68px; }
+.phone { width: 390px; border-radius: 24px; overflow: hidden; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); background: #faf8f3; }
+.phone {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --track: #eae4d4;
+  --up: #bf5a42; --down: #6a8b74;
+}
+.num { font-variant-numeric: tabular-nums; }
+.is-up { color: var(--up); }
+.is-down { color: var(--down); }
+:where(.phone button) { font-family: inherit; border: none; background: none; color: inherit; text-align: inherit; cursor: default; padding: 0; }
+
+.screen { display: flex; flex-direction: column; padding: 28px 26px 34px; background: var(--bg); color: var(--ink); }
+.pagebar { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; }
+.pagebar .back { color: var(--muted); }
+.pagebar .back svg { width: 18px; height: 18px; }
+.pagebar .page-name { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.pagebar-note { margin-top: 7px; text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.sec-aside { font-size: 10.5px; font-weight: 600; color: var(--hint); }
+
+/* 顶部九家速览：目录 + 切换器 */
+.rank-track { display: flex; gap: 20px; margin-top: 22px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.rank-track::-webkit-scrollbar { display: none; }
+.rank-item { flex: none; text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); }
+.rank-item strong { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rank-item.is-active { color: var(--muted); }
+.rank-item.is-active strong { color: var(--ink); }
+.rank-item.is-active::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 4px auto 0; }
+
+/* 公司名 */
+.company { margin-top: 24px; text-align: center; }
+.company .co-name { font-size: 19px; font-weight: 800; letter-spacing: .5px; }
+.company .co-name svg { width: 14px; height: 14px; vertical-align: -2px; margin-left: 5px; color: var(--muted); }
+.company .co-sub { margin-top: 6px; font-size: 10.5px; font-weight: 600; color: var(--hint); }
+
+/* 公式主数块 */
+.formula { margin-top: 24px; text-align: center; }
+.formula .f-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.formula .f-value { display: block; margin-top: 10px; font-size: 34px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+.formula .f-note { margin-top: 9px; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.f-stack { display: flex; height: 2px; margin: 16px auto 0; width: 250px; }
+.f-stack .s-divi { background: var(--gold); }
+.f-stack .s-growth { background: #b3a68c; }
+.f-stack .s-buyback { background: var(--track); }
+.f-rows { margin: 12px auto 0; width: 250px; display: flex; flex-direction: column; gap: 8px; }
+.f-rows > div { display: flex; align-items: baseline; gap: 8px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.f-rows b { width: 4px; height: 4px; border-radius: 50%; flex: none; align-self: center; }
+.f-rows .b-divi { background: var(--gold); }
+.f-rows .b-growth { background: #b3a68c; }
+.f-rows .b-buyback { background: var(--track); }
+.f-rows small { flex: 1; }
+.f-rows strong { color: var(--ink); font-weight: 700; }
+.f-method { margin-top: 12px; text-align: center; font-size: 9.5px; font-weight: 600; color: var(--hint); line-height: 1.7; }
+.f-anchor { margin-top: 14px; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); }
+.f-anchor strong { color: var(--ink); font-weight: 700; }
+
+/* 估值：PE + 股息率分位，统一「贵 ⇄ 便宜」标尺 */
+.val { margin-top: 28px; }
+.val-rows { margin-top: 14px; display: flex; flex-direction: column; gap: 18px; }
+.val-row { display: flex; flex-direction: column; gap: 8px; }
+.val-main { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 600; color: var(--muted); }
+.val-main .vv { color: var(--ink); font-weight: 700; font-size: 13px; }
+.val-main .vp { font-size: 10.5px; }
+.val-main .vp strong { color: var(--gold); font-weight: 700; }
+.val-scale { position: relative; height: 2px; background: var(--track); }
+.val-scale i { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+.val-ends { display: flex; justify-content: space-between; font-size: 9px; font-weight: 600; color: var(--hint); }
+
+/* 分红 / EPS 账页 */
+.bars-section { margin-top: 28px; }
+.bars-head { display: flex; justify-content: space-between; align-items: baseline; }
+.bars-head .latest { font-size: 13px; font-weight: 700; }
+.bars-head .latest small { font-size: 10px; font-weight: 600; color: var(--muted); margin-left: 6px; }
+.bars-head .latest.is-up { color: var(--up); }
+.fline { margin-top: 12px; }
+.fline svg { width: 100%; height: auto; display: block; }
+.fline polyline { fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.fline.gold polyline { stroke: #dcc492; }
+.fline.gold circle { fill: #c9a558; }
+.fline.inkish polyline { stroke: #cfc4ad; }
+.fline.inkish circle { fill: #8a7d69; }
+.fline text { font-family: inherit; font-size: 9.5px; font-weight: 700; font-variant-numeric: tabular-nums; fill: #a89d86; }
+.fline text.yr { font-weight: 600; fill: #c2b9a6; }
+.fline text.is-current { fill: #3b362e; font-size: 10.5px; }
+.bar-stats { margin-top: 12px; display: flex; justify-content: center; gap: 30px; font-size: 10.5px; font-weight: 600; color: var(--hint); }
+.bar-stats strong { color: var(--muted); font-weight: 700; }
+
+/* 折叠明细 + 财报日历 */
+.fold { margin-top: 28px; display: flex; justify-content: space-between; align-items: baseline; }
+.fold .arr { font-size: 11px; color: var(--hint); }
+.calendar { margin-top: 28px; flex: 1; }
+.cal-rows { margin-top: 13px; display: flex; flex-direction: column; gap: 13px; }
+.cal-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.cal-row strong { color: var(--ink); font-weight: 700; }
+.cal-row .tp { font-size: 10.5px; color: var(--hint); }
+.cal-row.is-self strong { color: var(--gold); }
+
+/* ── 选择公司抽屉 ── */
+.bg-page { position: absolute; inset: 0; padding: 28px 26px; color: var(--ink); }
+.bg-page .page-name { display: block; text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.bg-page .hero-value { display: block; margin-top: 46px; text-align: center; font-size: 34px; font-weight: 600; letter-spacing: -1px; }
+.bg-page .line { height: 2px; background: var(--track); margin-top: 40px; }
+.mask { position: absolute; inset: 0; background: rgba(59, 54, 46, .28); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 22px 22px 0 0; padding: 14px 26px 28px; color: var(--ink); }
+.sheet-handle { width: 32px; height: 3px; border-radius: 2px; background: var(--track); margin: 0 auto; }
+.sheet-title { margin-top: 20px; text-align: center; }
+.sheet-title .t { font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.sheet-title .n { margin-top: 7px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.picker-group { margin-top: 20px; font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.picker-rows { margin-top: 12px; display: flex; flex-direction: column; gap: 14px; }
+.picker-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.picker-row .n strong { color: var(--ink); font-weight: 700; font-size: 13px; }
+.picker-row .n small { font-size: 10px; color: var(--hint); margin-left: 6px; }
+.picker-row .v { font-weight: 700; color: var(--ink); }
+.picker-row .v small { display: block; text-align: right; font-size: 9.5px; color: var(--gold); font-weight: 700; }
+.picker-row.is-active .n strong::after { content: ""; display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin-left: 7px; vertical-align: 2.5px; }
+.sheet-actions { display: flex; justify-content: center; margin-top: 24px; }
+.sheet-actions .cancel { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--hint); }
+</style>
+</head>
+<body>
+  <div class="canvas-head">
+    <h1>禅意UI · 公司基本面页 · 定稿图</h1>
+    <p>本文件是该界面唯一视觉标准（在浏览器打开即为目标效果）。数据均为示意，落地一律接真实计算链。</p>
+  </div>
+  <div class="board">
+    <section class="option">
+      <h2 class="option-label">公司基本面 <small>FUNDAMENTALS v3</small></h2>
+      <p class="option-note">按禅意叙事重构：<b>速览置顶</b>横滑选人；新增<b>估值节</b>——市盈率与股息率各配一根「贵⇄便宜」标尺线，金点落位一眼读贵贱（两个指标方向已统一，点越靠右越便宜）。</p>
+      <div class="phone"><div class="screen" style="min-height:1120px;">
+        <header class="pagebar">
+          <button class="back" aria-label="返回首页"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+          <span class="page-name">公司基本面</span>
+          <span></span>
+        </header>
+        <p class="pagebar-note num">年报口径 · 数据更新 07-20 · 按经营回报排序</p>
+        <div class="rank-track num">
+          <button class="rank-item"><span>中国神华</span><strong>13.1%</strong></button>
+          <button class="rank-item is-active"><span>中国海洋石油</span><strong>12.6%</strong></button>
+          <button class="rank-item"><span>陕西煤业</span><strong>11.2%</strong></button>
+          <button class="rank-item"><span>建设银行</span><strong>10.4%</strong></button>
+          <button class="rank-item"><span>中国移动</span><strong>9.6%</strong></button>
+          <button class="rank-item"><span>长江电力</span><strong>7.9%</strong></button>
+        </div>
+        <div class="company">
+          <button class="co-name">中国海洋石油<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5 12 15l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+          <p class="co-sub num">0883.HK · 股息按 HKD/股 · 财报币种 CNY · 全部 9 家</p>
+        </div>
+        <section class="formula">
+          <span class="f-label">历史经营回报参考</span>
+          <strong class="f-value num">≈ 12.6%<span style="font-size:14px; color:var(--label);">/年</span></strong>
+          <p class="f-note">股息 + 增长 + 净回购 · 历史参考，并非未来预测</p>
+          <div class="f-stack"><i class="s-divi" style="width:62.7%"></i><i class="s-growth" style="width:25.4%"></i><i class="s-buyback" style="width:11.9%"></i></div>
+          <div class="f-rows num">
+            <div><b class="b-divi"></b><span>股息率</span><small></small><strong>7.9%</strong></div>
+            <div><b class="b-growth"></b><span>净利润增长</span><small></small><strong>3.2%</strong></div>
+            <div><b class="b-buyback"></b><span>净回购</span><small></small><strong>1.5%</strong></div>
+          </div>
+          <p class="f-method num">股息按 2025 年常规派息 ÷ 现价，已剔除特别股息<br>净利润 5 年年化 · 置信度 高</p>
+          <p class="f-anchor num">组合加权 <strong>9.8%/年</strong> · 本公司列 9 家中第 2</p>
+        </section>
+        <section class="val">
+          <div class="sec-head"><span class="sec-label">估值</span><span class="sec-aside">近十年分位 · 点越靠右越便宜</span></div>
+          <div class="val-rows num">
+            <div class="val-row">
+              <div class="val-main"><span>市盈率 <span class="vv">6.8 倍</span></span><span class="vp">24% 分位 · <strong>偏低</strong></span></div>
+              <div class="val-scale"><i style="left:76%"></i></div>
+              <div class="val-ends"><span>贵</span><span>便宜</span></div>
+            </div>
+            <div class="val-row">
+              <div class="val-main"><span>股息率 <span class="vv">7.9%</span></span><span class="vp">82% 分位 · <strong>偏便宜</strong></span></div>
+              <div class="val-scale"><i style="left:82%"></i></div>
+              <div class="val-ends"><span>贵</span><span>便宜</span></div>
+            </div>
+          </div>
+        </section>
+        <section class="bars-section">
+          <div class="bars-head"><span class="sec-label">每股分红</span><span class="latest num">1.42 HKD<small>股息率 7.9%</small></span></div>
+          <div class="fline gold num">
+            <svg viewBox="0 0 338 92" role="img" aria-label="每股分红四年走势">
+              <polyline points="44,66 128,43.3 212,29.6 296,16"></polyline>
+              <circle cx="44" cy="66" r="2.4"></circle><circle cx="128" cy="43.3" r="2.4"></circle><circle cx="212" cy="29.6" r="2.4"></circle><circle cx="296" cy="16" r="3.2"></circle>
+              <text x="44" y="58" text-anchor="middle">0.98</text>
+              <text x="128" y="35.3" text-anchor="middle">1.18</text>
+              <text x="212" y="21.6" text-anchor="middle">1.30</text>
+              <text x="296" y="9" text-anchor="middle" class="is-current">1.42</text>
+              <text x="44" y="88" text-anchor="middle" class="yr">2022</text>
+              <text x="128" y="88" text-anchor="middle" class="yr">2023</text>
+              <text x="212" y="88" text-anchor="middle" class="yr">2024</text>
+              <text x="296" y="88" text-anchor="middle" class="yr is-current">2025</text>
+            </svg>
+          </div>
+          <p class="bar-stats num"><span>特别股息 <strong>0.30</strong></span><span>连续增长 <strong>4 年</strong></span></p>
+        </section>
+        <section class="bars-section">
+          <div class="bars-head"><span class="sec-label">EPS 每股收益</span><span class="latest num is-up">+6.1%<small>EPS 2.91 CNY</small></span></div>
+          <div class="fline inkish num">
+            <svg viewBox="0 0 338 92" role="img" aria-label="EPS 四年走势">
+              <polyline points="44,66 128,41.8 212,30.2 296,16"></polyline>
+              <circle cx="44" cy="66" r="2.4"></circle><circle cx="128" cy="41.8" r="2.4"></circle><circle cx="212" cy="30.2" r="2.4"></circle><circle cx="296" cy="16" r="3.2"></circle>
+              <text x="44" y="58" text-anchor="middle">2.31</text>
+              <text x="128" y="33.8" text-anchor="middle">2.60</text>
+              <text x="212" y="22.2" text-anchor="middle">2.74</text>
+              <text x="296" y="9" text-anchor="middle" class="is-current">2.91</text>
+              <text x="44" y="88" text-anchor="middle" class="yr">2022</text>
+              <text x="128" y="88" text-anchor="middle" class="yr">2023</text>
+              <text x="212" y="88" text-anchor="middle" class="yr">2024</text>
+              <text x="296" y="88" text-anchor="middle" class="yr is-current">2025</text>
+            </svg>
+          </div>
+          <p class="bar-stats num"><span>分红率 <strong>44%</strong></span><span>负债率 <strong>28%</strong></span></p>
+        </section>
+        <button class="fold"><span class="sec-label">年度数据明细</span><span class="arr num">8 年 ›</span></button>
+        <section class="calendar">
+          <div class="sec-head"><span class="sec-label">财报日历</span><span class="sec-aside">点公司切换</span></div>
+          <div class="cal-rows num">
+            <div class="cal-row"><span>08/05 <strong>建设银行</strong></span><span class="tp">中报</span></div>
+            <div class="cal-row is-self"><span>08/21 <strong>中国海洋石油</strong></span><span class="tp">中报</span></div>
+            <div class="cal-row"><span>08/28 <strong>中国神华</strong></span><span class="tp">中报</span></div>
+            <div class="cal-row"><span>08/29 <strong>陕西煤业</strong></span><span class="tp">中报</span></div>
+          </div>
+        </section>
+      </div></div>
+    </section>
+  </div>
+</body>
+</html>
