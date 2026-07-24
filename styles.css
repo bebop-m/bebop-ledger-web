@@ -13702,3 +13702,558 @@ body[data-active-page="annual"] .ann-empty-line {
   line-height: clamp(11.96px, 3.3333vw, 17.55px);
   letter-spacing: clamp(1.84px, 0.5128vw, 2.7px);
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   E 簇 · 13-资金与交易 / 14-记一笔 / 15-交易 / 16-出入金
+   按 designs/禅意UI/ 下 13–16 四个文件夹的 定稿图.html 重排。
+   尺寸一律按总则折算：定稿值 N（390 画布）→ clamp(N*.92, N/3.9 vw, N*1.35)。
+   顶部留白取定稿值的一半（真机状态栏已提供呼吸），与前四簇同规。
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 13-资金与交易 ── */
+body[data-active-page="records"] {
+  padding: 0;
+}
+body[data-active-page="records"] .app-shell {
+  width: 100%;
+  max-width: none;
+}
+body[data-active-page="records"] #recordsPage {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
+  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
+  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
+  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  min-height: 100dvh;
+}
+/* 分区只靠留白：清掉历史层留在本页元素上的所有描边与伪元素装饰 */
+body[data-active-page="records"] #recordsPage,
+body[data-active-page="records"] #recordsPage * {
+  border: 0;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="records"] #recordsPage *::before,
+body[data-active-page="records"] #recordsPage *::after {
+  content: none;
+  display: none;
+}
+
+/* 页头：grid(56/1fr/56)，左裸箭头、中页名、右留空 */
+body[data-active-page="records"] #recordsPage .ledger-page-head {
+  display: grid;
+  grid-template-columns: clamp(51.52px, 14.359vw, 75.6px) 1fr clamp(51.52px, 14.359vw, 75.6px);
+  align-items: center;
+  gap: 0;
+  height: auto;
+  min-height: clamp(19.32px, 5.3846vw, 28.35px);
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+body[data-active-page="records"] #recordsPage .back-button {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  text-align: left;
+}
+body[data-active-page="records"] #recordsPage .back-button svg {
+  width: clamp(16.56px, 4.6154vw, 24.3px);
+  height: clamp(16.56px, 4.6154vw, 24.3px);
+}
+body[data-active-page="records"] #recordsPage .top-bar-heading {
+  display: block;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+body[data-active-page="records"] #recordsPage .top-bar-title {
+  display: block;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--label);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  text-align: center;
+}
+
+/* 宿主容器交出边距：整页边距由 #recordsPage 一处控制 */
+body[data-active-page="records"] .records-ledger-panel,
+body[data-active-page="records"] #incomeRecordsList {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* 居中 hero：本年净注入 */
+body[data-active-page="records"] .rec-hero {
+  display: block;
+  margin: clamp(27.6px, 7.6923vw, 40.5px) 0 0;
+  padding: 0;
+  text-align: center;
+}
+body[data-active-page="records"] .rec-hero-label {
+  display: block;
+  margin: 0;
+  padding: 0;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  /* 定稿图里是 inline span，行盒被容器 16px 字号的 strut 撑到 21px */
+  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  font-weight: 600;
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+}
+body[data-active-page="records"] .rec-hero-value {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--ink);
+  font-size: clamp(34.96px, 9.7436vw, 51.3px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+}
+body[data-active-page="records"] .rec-hero-meta {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+}
+
+/* 现金余额：hero 下的次级焦点，整块可点开校准 */
+body[data-active-page="records"] .rec-cash {
+  display: block;
+  flex: none;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-family: inherit;
+  text-align: center;
+}
+body[data-active-page="records"] .rec-cash-label {
+  display: block;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+}
+body[data-active-page="records"] .rec-cash-value {
+  display: block;
+  margin: clamp(6.44px, 1.7949vw, 9.45px) 0 0;
+  color: var(--ink);
+  font-size: clamp(18.4px, 5.1282vw, 27px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: clamp(-0.405px, -0.0769vw, -0.276px);
+}
+body[data-active-page="records"] .rec-cash-sub {
+  display: block;
+  margin: clamp(4.6px, 1.2821vw, 6.75px) 0 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+/* 「点击校准」是本页唯一的金色记号（选中/可操作），与股息金保持同一族 */
+body[data-active-page="records"] .rec-cash-sub b { color: var(--gold); font-weight: 700; }
+
+/* 四类计数：一行居中，不做成格子 */
+body[data-active-page="records"] .rec-counts {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: clamp(20.24px, 5.641vw, 29.7px);
+  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+}
+body[data-active-page="records"] .rec-counts strong { color: var(--muted); font-weight: 700; }
+
+/* 三段流水 */
+body[data-active-page="records"] .rec-flow {
+  display: block;
+  margin: clamp(23.92px, 6.6667vw, 35.1px) 0 0;
+  padding: 0;
+}
+/* 末段吃掉剩余高度，底部留白不塌 */
+body[data-active-page="records"] .rec-flow--dividend { flex: 1; }
+body[data-active-page="records"] .rec-sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  margin: 0;
+  padding: 0;
+}
+body[data-active-page="records"] .rec-sec-label {
+  display: block;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+}
+body[data-active-page="records"] .rec-sec-aside {
+  display: block;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+}
+body[data-active-page="records"] .rec-rows {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12.88px, 3.5897vw, 18.9px);
+  margin: clamp(11.96px, 3.3333vw, 17.55px) 0 0;
+  padding: 0;
+}
+body[data-active-page="records"] .rec-row {
+  display: flex;
+  flex: none;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 600;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  text-align: left;
+}
+body[data-active-page="records"] .rec-row-main { display: block; min-width: 0; }
+body[data-active-page="records"] .rec-row-main strong { color: var(--ink); font-weight: 700; }
+/* 只有买/卖两个类型词着色；金额一律墨色 */
+body[data-active-page="records"] .rec-row-main .is-buy { color: var(--up); font-style: normal; font-weight: 700; }
+body[data-active-page="records"] .rec-row-main .is-sell { color: var(--down); font-style: normal; font-weight: 700; }
+body[data-active-page="records"] .rec-row-detail {
+  display: block;
+  margin: clamp(1.84px, 0.5128vw, 2.7px) 0 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+body[data-active-page="records"] .rec-row-amt {
+  display: block;
+  flex: none;
+  color: var(--ink);
+  font-weight: 700;
+  white-space: nowrap;
+}
+body[data-active-page="records"] .rec-more {
+  display: block;
+  flex: none;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--hint);
+  font-family: inherit;
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 700;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  letter-spacing: clamp(0.92px, 0.2564vw, 1.35px);
+  text-align: center;
+}
+body[data-active-page="records"] .rec-empty {
+  display: block;
+  margin: clamp(11.96px, 3.3333vw, 17.55px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+}
+
+/* 矮屏收紧竖向节奏，三段流水仍要一屏放得下 */
+@media (max-height: 820px) and (max-width: 430px) {
+  body[data-active-page="records"] .rec-hero { margin-top: clamp(18.4px, 5.1282vw, 27px); }
+  body[data-active-page="records"] .rec-cash { margin-top: clamp(14.72px, 4.1026vw, 21.6px); }
+  body[data-active-page="records"] .rec-counts { margin-top: clamp(12.88px, 3.5897vw, 18.9px); }
+  body[data-active-page="records"] .rec-flow { margin-top: clamp(16.56px, 4.6154vw, 24.3px); }
+  body[data-active-page="records"] .rec-rows { gap: clamp(10.12px, 2.8205vw, 14.85px); }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   14 / 15 / 16 抽屉
+   通用形制（22px 顶圆角 / 32×3 把手 / 无色块底 / 居中三键）已在
+   「03 / 04 / 05 抽屉通用规格」写过，这里只补三张定稿图各自的内容层。
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 14-记一笔：三个居中选项，首项下缀金点 ── */
+.zen-sheet--quick .zen-qa-options {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20.24px, 5.641vw, 29.7px);
+  margin: clamp(22.08px, 6.1538vw, 32.4px) 0 0;
+  padding: 0;
+}
+.zen-sheet--quick .zen-qa-option {
+  display: block;
+  flex: none;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-family: inherit;
+  text-align: center;
+}
+.zen-sheet--quick .zen-qa-option strong {
+  display: block;
+  color: var(--ink);
+  font-size: clamp(12.88px, 3.5897vw, 18.9px);
+  font-weight: 800;
+  line-height: clamp(18.4px, 5.1282vw, 27px);
+  letter-spacing: clamp(1.84px, 0.5128vw, 2.7px);
+}
+.zen-sheet--quick .zen-qa-option span {
+  display: block;
+  margin: clamp(3.68px, 1.0256vw, 5.4px) 0 0;
+  color: var(--muted);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+.zen-sheet--quick .zen-qa-dot {
+  display: block;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  margin: clamp(4.6px, 1.2821vw, 6.75px) auto 0;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+/* ── 15-交易 / 16-出入金 / 当前现金：同一套字段形制 ── */
+.zen-sheet--form .zen-form {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12.88px, 3.5897vw, 18.9px);
+  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
+  padding: 0;
+}
+.zen-sheet--form .zen-form-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(11.04px, 3.0769vw, 16.2px);
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 600;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+}
+.zen-sheet--form .zen-form-row > span:first-child { flex: none; }
+/* 输入框裸置成右对齐的正文，无框无底 */
+.zen-sheet--form .zen-form-input {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 700;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  letter-spacing: 0;
+  text-align: right;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.zen-sheet--form .zen-form-input:focus,
+.zen-sheet--form .zen-form-input:focus-visible {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+/* 日期用系统选择器，但不要它的小日历图标——本套设计里没有图标 */
+.zen-sheet--form .zen-form-input::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+.zen-sheet--form .zen-form-input::-webkit-outer-spin-button,
+.zen-sheet--form .zen-form-input::-webkit-inner-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+.zen-sheet--form .zen-form-note { font-weight: 600; }
+.zen-sheet--form .zen-form-input::placeholder { color: var(--hint); font-weight: 600; }
+
+/* 主金额：按内容收宽，金线托底（实心块，不用 border） */
+.zen-sheet--form .zen-form-money {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: baseline;
+  justify-content: flex-end;
+  max-width: 60%;
+  margin: 0;
+  padding: 0 clamp(7.36px, 2.0513vw, 10.8px) clamp(3.68px, 1.0256vw, 5.4px);
+}
+.zen-sheet--form .zen-form-amount {
+  flex: 0 1 auto;
+  width: auto;
+  /* 空值时 style 里的宽度只有 3ch，会把 0.00 这个 placeholder 截成 0.0( */
+  min-width: 4ch;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: clamp(18.4px, 5.1282vw, 27px);
+  font-weight: 700;
+  line-height: clamp(24.84px, 6.9231vw, 36.45px);
+  letter-spacing: 0;
+  text-align: right;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+.zen-sheet--form .zen-form-amount:focus,
+.zen-sheet--form .zen-form-amount:focus-visible {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+.zen-sheet--form .zen-form-amount::-webkit-outer-spin-button,
+.zen-sheet--form .zen-form-amount::-webkit-inner-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+.zen-sheet--form .zen-form-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: block;
+  height: clamp(1.84px, 0.5128vw, 2.7px);
+  margin: 0;
+  background: var(--gold);
+}
+
+/* 识别行 / 成交额折算行：居中 10px 小字，紧贴上一行 */
+.zen-sheet--form .zen-form-hint {
+  display: block;
+  margin: clamp(-3.68px, -1.0256vw, -2.5px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  text-align: center;
+}
+.zen-sheet--form .zen-form-hint b { color: var(--muted); font-weight: 700; }
+.zen-sheet--form .zen-form-foot {
+  display: block;
+  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* 二选一：文字 + 4px 金点选中 */
+.zen-sheet--form .zen-seg {
+  display: flex;
+  flex: none;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: clamp(14.72px, 4.1026vw, 21.6px);
+  margin: 0;
+  padding: 0;
+}
+.zen-sheet--form .zen-seg-key {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--hint);
+  font-family: inherit;
+  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  letter-spacing: 0;
+  text-align: center;
+}
+.zen-sheet--form .zen-seg-key.is-active { color: var(--ink); font-weight: 700; }
+.zen-sheet--form .zen-seg-dot {
+  display: block;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  margin: clamp(2.76px, 0.7692vw, 4.05px) auto 0;
+  border-radius: 50%;
+  background: transparent;
+}
+.zen-sheet--form .zen-seg-key.is-active .zen-seg-dot { background: var(--gold); }

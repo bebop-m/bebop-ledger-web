@@ -210,7 +210,9 @@ function inPageAudit() {
       '.zen-md-head h3', '.zen-md-side strong', '.zen-rc-cur', '.zen-rc-confirm',
       '.inc-hero-value', '.income-page-name', '.inc-sec-label', '.inc-year-yy',
       '.ann-hero-value', '.annual-page-name', '.ann-sec-label', '.ann-metrics strong',
-      '.zen-bf-head h3', '.zen-bf-input', '.sc-value', '.sc-label'
+      '.zen-bf-head h3', '.zen-bf-input', '.sc-value', '.sc-label',
+      '.rec-hero-value', '.rec-cash-value', '.rec-sec-label', '.rec-row-amt',
+      '.zen-qa-option strong', '.zen-form-amount', '.zen-form-row > span:first-child'
     ]
       .map((s) => { const e = root.querySelector(s); return e && vis(e) ? { 选择器: s, 字号: parseFloat(getComputedStyle(e).fontSize) } : null; })
       .filter(Boolean)
@@ -233,7 +235,10 @@ const MODAL_TARGETS = {
   annual: { nav: 'income', sel: '.inc-year' },
   annualHoldings: { nav: 'income', sel: '.inc-year', then: '[data-annual-holdings-toggle]' },
   yearlyManual: { nav: 'income', sel: '[data-income-manual-year]' },
-  annualShare: { nav: 'income', sel: '.inc-year', then: '#annualShareButton' }
+  annualShare: { nav: 'income', sel: '.inc-year', then: '#annualShareButton' },
+  trade: { sel: '#quickAddButton', then: '[data-modal-action="open-trade"]' },
+  cashFlow: { sel: '#quickAddButton', then: '[data-modal-action="open-cash-flow"]' },
+  openingCash: { nav: 'records', sel: '.rec-cash' }
 };
 
 async function 打开(browser, theme, w, h) {

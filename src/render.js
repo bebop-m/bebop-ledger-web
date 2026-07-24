@@ -2,7 +2,7 @@ import { state, refs, mutable, saveState, isDemoMode } from './state.js';
 import {
   computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems,
   computeDividendCalendar, computeIncomeSummary,
-  computeCashFlowRecords, computeDividendRecords, computeTradeSummary, isCashModelActive, getAnnualDividendOverview
+  computeCashFlowRecords, computeDividendRecords, computeTradeSummary, isCashModelActive, computeCashBalance, getAnnualDividendOverview
 } from './compute.js';
 import { renderFundamentalsPage, getFundamentalsCompanyCount, getPortfolioReturnSummary } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
@@ -875,13 +875,6 @@ function formatRecordQuantity(value) {
   return safeNumber(value, 0).toLocaleString('en-US', { maximumFractionDigits: 6 });
 }
 
-function getSignedTone(value) {
-  const numeric = safeNumber(value, 0);
-  if (numeric > 0) return 'is-positive';
-  if (numeric < 0) return 'is-negative';
-  return 'is-flat';
-}
-
 // 盈亏配色按 A 股习惯：赚钱=红，亏钱=绿。用于收益/盈亏类数字。
 function getReturnTone(value) {
   const numeric = safeNumber(value, 0);
@@ -890,89 +883,97 @@ function getReturnTone(value) {
   return 'is-flat';
 }
 
-function getCashFlowTypeLabel(entry) {
-  return entry && entry.isWithdrawal ? '出金' : '入金';
+/* ── 13-资金与交易 · 按 designs/禅意UI/13-资金与交易/定稿图.html ──
+   居中 hero（本年净注入）→ 现金余额次级焦点（可点校准）→ 四类计数一行
+   → 三段流水。金额一律墨色带符号，只有买/卖两个类型词着色。 */
+const RECORD_FOLD_LIMIT = 3;
+
+// 07/18 这样的短日期：三段流水都限在当年内，年份没有信息量
+function getRecordDayLabel(date) {
+  const label = String(date || '');
+  return label.length >= 10 ? `${label.slice(5, 7)}/${label.slice(8, 10)}` : label;
 }
 
-function getTradeSideLabel(side) {
-  return side === 'sell' ? '卖出' : '买入';
+function getRecordDetailMarkup(text) {
+  return text ? `<span class="rec-row-detail">${escapeHtml(text)}</span>` : '';
 }
 
-function getRecordEmptyMarkup(title, note) {
-  return `<div class="income-record-empty"><strong>${escapeHtml(title)}</strong><span>${escapeHtml(note)}</span></div>`;
+function renderTradeFlowRow(entry) {
+  const isSell = entry.side === 'sell';
+  /* 股数×成交价能把上面已掩码的金额反推出来，所以掩码开启时这一行也要一起掩上
+     （与 03-持仓详情里「当前持股」掩码同一套口径）。 */
+  const detail = state.showAmounts
+    ? `${formatRecordQuantity(entry.shares)} 股 @ ${safeNumber(entry.price, 0)} ${entry.currency || ''}`.trim()
+    : `${MASK_PRICE} 股 @ ${MASK_PRICE} ${entry.currency || ''}`.trim();
+  return `<button class="rec-row" type="button" data-trade-id="${escapeHtml(entry.id)}">
+      <span class="rec-row-main">${escapeHtml(getRecordDayLabel(entry.date))} <em class="${isSell ? 'is-sell' : 'is-buy'}">${isSell ? '卖出' : '买入'}</em> <strong>${escapeHtml(entry.name || entry.symbol)}</strong>${getRecordDetailMarkup(detail)}</span>
+      <span class="rec-row-amt">${escapeHtml(formatIncomeSignedMoney(entry.cashImpactCny))}</span>
+    </button>`;
 }
 
-function renderCashFlowRows(records) {
-  if (!records.length) return getRecordEmptyMarkup('暂无出入金', '新增记录后会自动进入年度净注入口径。');
-  return records.map((entry) => `
-    <button class="income-record-row" type="button" data-cash-flow-id="${escapeHtml(entry.id)}">
-      <span class="record-main">
-        <strong>${escapeHtml(getCashFlowTypeLabel(entry))}</strong>
-        <small>${escapeHtml(entry.date)}${entry.note ? ` · ${escapeHtml(entry.note)}` : ''}</small>
-      </span>
-      <span class="record-amount income-amount ${getSignedTone(entry.signedCny)}">${escapeHtml(formatIncomeSignedMoney(entry.signedCny))}</span>
-    </button>
-  `).join('');
+function renderCashFlowRow(entry) {
+  return `<button class="rec-row" type="button" data-cash-flow-id="${escapeHtml(entry.id)}">
+      <span class="rec-row-main">${escapeHtml(getRecordDayLabel(entry.date))} <strong>${entry.isWithdrawal ? '出金' : '入金'}</strong>${getRecordDetailMarkup(entry.note)}</span>
+      <span class="rec-row-amt">${escapeHtml(formatIncomeSignedMoney(entry.signedCny))}</span>
+    </button>`;
 }
 
-function renderTradeRows(records) {
-  if (!records.length) return getRecordEmptyMarkup('暂无交易', '新增买入或卖出后，会在这里按时间保留明细。');
-  return records.map((entry) => `
-    <button class="income-record-row income-record-row--trade" type="button" data-trade-id="${escapeHtml(entry.id)}">
-      <span class="record-main">
-        <strong>${escapeHtml(getTradeSideLabel(entry.side))} ${escapeHtml(entry.name || entry.symbol)}</strong>
-        <small>${escapeHtml(entry.date)} · ${escapeHtml(formatRecordQuantity(entry.shares))} 股 @ ${escapeHtml(String(entry.price))} ${escapeHtml(entry.currency || '')}</small>
-      </span>
-      <span class="record-amount income-amount ${getReturnTone(entry.cashImpactCny)}">${escapeHtml(formatIncomeSignedMoney(entry.cashImpactCny))}</span>
-    </button>
-  `).join('');
+function renderDividendFlowRow(entry) {
+  return `<button class="rec-row" type="button" data-dividend-source-id="${escapeHtml(entry.sourceId)}">
+      <span class="rec-row-main">${escapeHtml(getRecordDayLabel(entry.date))} 股息 · <strong>${escapeHtml(entry.name || entry.symbol)}</strong>${getRecordDetailMarkup(entry.note)}</span>
+      <span class="rec-row-amt">${escapeHtml(formatIncomeSignedMoney(entry.amountCny))}</span>
+    </button>`;
 }
 
-function renderDividendRecordRows(records) {
-  if (!records.length) return getRecordEmptyMarkup('暂无股息入账', '在股息日历中确认实收入账后，会在这里保留记录。');
-  return records.map((entry) => `
-    <button class="income-record-row" type="button" data-dividend-source-id="${escapeHtml(entry.sourceId)}">
-      <span class="record-main">
-        <strong>股息 · ${escapeHtml(entry.name || entry.symbol)}</strong>
-        <small>${escapeHtml(entry.date)}${entry.note ? ` · ${escapeHtml(entry.note)}` : ''}</small>
-      </span>
-      <span class="record-amount income-amount ${getSignedTone(entry.amountCny)}">${escapeHtml(formatIncomeSignedMoney(entry.amountCny))}</span>
-    </button>
-  `).join('');
+/* 一段流水：节标 + 右笔数 + 默认 3 行 + 展开键。
+   折叠只是渲染层状态（mutable），不写进快照，也不参与云同步。 */
+function renderRecordFlow(key, label, aside, records, emptyText, rowMarkup) {
+  const expanded = mutable.recordsExpanded[key] === true;
+  const shown = expanded ? records : records.slice(0, RECORD_FOLD_LIMIT);
+  const body = records.length
+    ? `<div class="rec-rows">${shown.map(rowMarkup).join('')}</div>`
+    : `<p class="rec-empty">${escapeHtml(emptyText)}</p>`;
+  const more = records.length > RECORD_FOLD_LIMIT
+    ? `<button class="rec-more" type="button" data-records-expand="${key}">${expanded ? '收 起' : `展开全部 ${records.length} 笔`}</button>`
+    : '';
+  return `<section class="rec-flow rec-flow--${key}">
+      <div class="rec-sec-head"><span class="rec-sec-label">${escapeHtml(label)}</span><span class="rec-sec-aside">${aside}</span></div>
+      ${body}${more}
+    </section>`;
+}
+
+// 现金余额：从收益明细迁到本页作次级焦点，点击开 openingCash 校准
+function renderRecordsCash() {
+  const active = isCashModelActive();
+  const asOf = String(state.currentCashAsOfDate || '');
+  const sub = active && asOf.length >= 10
+    ? `基准日 ${escapeHtml(`${asOf.slice(5, 7)}-${asOf.slice(8, 10)}`)} · <b>点击校准</b>`
+    : '<b>点击校准</b>';
+  return `<button class="rec-cash" type="button" data-records-action="calibrate-cash">
+      <span class="rec-cash-label">现金余额</span>
+      <strong class="rec-cash-value">${escapeHtml(active ? formatDisplayMoney(computeCashBalance(), 'CNY') : '未设置')}</strong>
+      <span class="rec-cash-sub">${sub}</span>
+    </button>`;
 }
 
 export function renderIncomeRecords() {
   if (!refs.incomeRecordsList) return;
-  const recordsYear = new Date().getFullYear();
-  const cash = computeCashFlowRecords(recordsYear);
-  const dividends = computeDividendRecords(recordsYear);
-  const trades = computeTradeSummary(recordsYear);
-  const buyCount = trades.records.filter((entry) => entry.side === 'buy').length;
-  const sellCount = trades.records.filter((entry) => entry.side === 'sell').length;
-  refs.incomeRecordsList.innerHTML = `
-    <section class="record-focus">
-      <span class="ledger-eyebrow">${recordsYear} · 净注入</span>
-      <strong class="income-amount ${getSignedTone(cash.netInflowCny)}">${escapeHtml(formatIncomeSignedMoney(cash.netInflowCny))}</strong>
-      <p>累计入金减去出金 · ${cash.count} 笔资金记录</p>
+  const year = new Date().getFullYear();
+  const cash = computeCashFlowRecords(year);
+  const dividends = computeDividendRecords(year);
+  const trades = computeTradeSummary(year);
+  const buyCount = trades.records.filter((entry) => entry.side !== 'sell').length;
+  const sellCount = trades.records.length - buyCount;
+  refs.incomeRecordsList.innerHTML = `<section class="rec-hero">
+      <span class="rec-hero-label">${year} · 净注入</span>
+      <strong class="rec-hero-value">${escapeHtml(formatIncomeSignedMoney(cash.netInflowCny))}</strong>
+      <p class="rec-hero-meta">入金 ${escapeHtml(formatDisplayMoney(cash.depositCny, 'CNY'))} · 出金 ${escapeHtml(formatDisplayMoney(cash.withdrawalCny, 'CNY'))} · ${cash.count} 笔</p>
     </section>
-    <div class="income-record-overview ledger-record-stats">
-      <article><span>买入</span><strong>${buyCount} 笔</strong></article>
-      <article><span>卖出</span><strong>${sellCount} 笔</strong></article>
-      <article><span>出入金</span><strong>${cash.count} 笔</strong></article>
-      <article><span>股息</span><strong>${dividends.count} 笔</strong></article>
-    </div>
-    <section class="income-record-block ledger-record-block">
-      <div class="income-record-head"><h3>买卖流水</h3><span>${trades.count} 笔</span></div>
-      <div class="income-record-list">${renderTradeRows(trades.records)}</div>
-    </section>
-    <section class="income-record-block ledger-record-block">
-      <div class="income-record-head"><h3>出入金流水</h3><span>${cash.count} 笔</span></div>
-      <div class="income-record-list">${renderCashFlowRows(cash.records)}</div>
-    </section>
-    <section class="income-record-block ledger-record-block">
-      <div class="income-record-head"><h3>股息入账</h3><span>${dividends.count} 笔 · ${escapeHtml(formatIncomeMoney(dividends.totalCny))}</span></div>
-      <div class="income-record-list">${renderDividendRecordRows(dividends.records)}</div>
-    </section>`;
+    ${renderRecordsCash()}
+    <p class="rec-counts"><span>买入 <strong>${buyCount}</strong></span><span>卖出 <strong>${sellCount}</strong></span><span>出入金 <strong>${cash.count}</strong></span><span>股息 <strong>${dividends.count}</strong></span></p>
+    ${renderRecordFlow('trade', '买卖流水', `${trades.count} 笔`, trades.records, '本年还没有买卖记录', renderTradeFlowRow)}
+    ${renderRecordFlow('cash', '出入金流水', `${cash.count} 笔`, cash.records, '本年还没有出入金', renderCashFlowRow)}
+    ${renderRecordFlow('dividend', '股息入账', `${dividends.count} 笔 · ${escapeHtml(formatDisplayMoney(dividends.totalCny, 'CNY'))}`, dividends.records, '本年还没有确认到账的股息', renderDividendFlowRow)}`;
 }
 
 export function renderIncomeSummaryPage() {

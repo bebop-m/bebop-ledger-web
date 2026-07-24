@@ -91,7 +91,10 @@ const MODAL_TARGETS = {
   annual: { nav: 'income', sel: '.inc-year' },
   annualHoldings: { nav: 'income', sel: '.inc-year', then: '[data-annual-holdings-toggle]' },
   yearlyManual: { nav: 'income', sel: '[data-income-manual-year]' },
-  annualShare: { nav: 'income', sel: '.inc-year', then: '#annualShareButton' }
+  annualShare: { nav: 'income', sel: '.inc-year', then: '#annualShareButton' },
+  trade: { sel: '#quickAddButton', then: '[data-modal-action="open-trade"]' },
+  cashFlow: { sel: '#quickAddButton', then: '[data-modal-action="open-cash-flow"]' },
+  openingCash: { nav: 'records', sel: '.rec-cash' }
 };
 
 async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
