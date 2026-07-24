@@ -7,7 +7,7 @@ import {
 import { renderFundamentalsPage, getFundamentalsCompanyCount, getPortfolioReturnSummary } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
 import { getPortfolioDiagnostics } from './diagnostics.js';
-import { renderReportCalendarPanel } from './report-calendar.js';
+import { getUpcomingReportEvents, renderReportCalendarPanel } from './report-calendar.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
   formatTimestamp, normalizeDividendStatus, getDividendStatusLabel,
@@ -90,9 +90,8 @@ function getIncomeNavSummaryHtml(incomeModel) {
   const sign = value > 0 ? '+' : value < 0 ? '-' : '';
   const amountText = state.showAmounts ? `${sign}\u00a5${Math.round(Math.abs(value)).toLocaleString('en-US')}` : MASK_AMOUNT;
   const rateText = rate === null || rate === undefined
-    ? '' : ` (${rate > 0 ? '+' : rate < 0 ? '-' : ''}${formatPercent(Math.abs(rate))})`;
-  const tone = value > 0 ? 'is-market-up' : value < 0 ? 'is-market-down' : '';
-  return `<span class="${tone}">${escapeHtml(amountText)}${escapeHtml(rateText)}</span>`;
+    ? '' : ` \u00b7 ${rate > 0 ? '+' : rate < 0 ? '-' : ''}${formatPercent(Math.abs(rate))}`;
+  return escapeHtml(amountText + rateText);
 }
 
 function renderHomeHero(summary) {
@@ -101,7 +100,7 @@ function renderHomeHero(summary) {
   const pnlText = hasPnl && state.showAmounts ? formatDailyPnl(pnl, summary.dailyPnlBaseCny) : '';
   const pnlArrow = pnl > 0 ? '\u25b2' : pnl < 0 ? '\u25bc' : '';
   const pnlClass = pnl > 0 ? 'is-market-up' : pnl < 0 ? 'is-market-down' : 'is-flat';
-  const fxText = `USD ${safeNumber(state.rates.USD, 0).toFixed(2)} \u00b7 HKD ${safeNumber(state.rates.HKD, 0).toFixed(4)}`;
+  const fxText = `USD ${safeNumber(state.rates.USD, 0).toFixed(2)}`;
   refs.homeHero.innerHTML = `
     <button class="home-hero-label" type="button" data-summary-action="liability" aria-label="\u7f16\u8f91\u8d1f\u503a">\u51c0\u8d44\u4ea7</button>
     <strong class="home-hero-value">${formatLedgerMoney(summary.netMarketValueCny, 'CNY', 'home-hero-fraction')}</strong>
@@ -133,6 +132,15 @@ function getHomeDividendDateParts(entry) {
   };
 }
 
+function getHomeEventDateParts(value) {
+  const parts = String(value || '').split('-');
+  const month = Math.max(1, Math.min(12, Number(parts[1]) || 1));
+  return {
+    day: parts[2] ? String(Number(parts[2])).padStart(2, '0') : '\u2014',
+    month: parts[1] ? `${month}\u6708` : ''
+  };
+}
+
 /* 本年股息区：金线进度 + 六月点 + 两行待办，构图见 designs/禅意UI/01-首页/定稿图.html。 */
 function renderHomeMetrics(calendarModel, summary) {
   const annual = getAnnualDividendOverview(calendarModel, summary);
@@ -157,11 +165,12 @@ function renderHomeMetrics(calendarModel, summary) {
   const nextLine = nextDividend
     ? `${nextDate.month}${nextDate.day}\u65e5 ${escapeHtml(nextName)} <strong>${escapeHtml(formatDisplayMoney(nextDividend.netCny, 'CNY'))}</strong> \u5230\u8d26`
     : '\u8fd1\u671f\u6682\u65e0\u5728\u9014\u80a1\u606f';
-  const dueEntries = calendarModel.allDetails.filter((entry) => entry.status === 'due');
-  const dueCny = dueEntries.reduce((sum, entry) => sum + safeNumber(entry.netCny, 0), 0);
-  const dueLine = dueEntries.length
-    ? `\u5f85\u786e\u8ba4 <strong>${dueEntries.length} \u7b14 \u00b7 ${escapeHtml(formatHudAmount(dueCny))}</strong>`
-    : '\u6682\u65e0\u5f85\u786e\u8ba4\u5230\u8d26';
+  // \u7b2c\u4e8c\u884c\uff1a\u4e0b\u4e00\u573a\u8d22\u62a5\uff08\u5f85\u786e\u8ba4\u7b14\u6570\u5df2\u5728\u80a1\u606f\u65e5\u5386\u5165\u53e3\u6458\u8981\u91cc\uff09
+  const nextReport = getUpcomingReportEvents()[0] || null;
+  const reportDate = getHomeEventDateParts(nextReport && nextReport.reportDate);
+  const reportLine = nextReport
+    ? `${reportDate.month}${reportDate.day}\u65e5 ${escapeHtml(nextReport.name || nextReport.symbol)} <strong>${escapeHtml(nextReport.reportType || '')}</strong>`
+    : '\u8fd1\u671f\u6682\u65e0\u8d22\u62a5';
 
   refs.homeFocusCard.innerHTML = `
     <button class="home-divi" type="button" data-page-nav="dividends" aria-label="\u6253\u5f00\u672c\u5e74\u80a1\u606f">
@@ -174,7 +183,7 @@ function renderHomeMetrics(calendarModel, summary) {
     <div class="home-month-track">${monthButtons}</div>
     <div class="home-todo" aria-label="\u8fd1\u671f\u80a1\u606f\u5f85\u529e">
       <p>${nextLine}</p>
-      <p>${dueLine}</p>
+      <p>${reportLine}</p>
     </div>`;
 }
 

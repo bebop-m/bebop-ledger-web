@@ -10698,9 +10698,6 @@ body[data-active-page="home"] .home-nav-side {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-/* 摘要里的收益额与百分比跟随红涨绿跌，其余摘要保持 muted 叙述色 */
-body[data-active-page="home"] .home-nav-side .is-market-up { color: var(--up); }
-body[data-active-page="home"] .home-nav-side .is-market-down { color: var(--down); }
 
 /* ＋记一笔：涨色文字键，全页唯一的动作 */
 body[data-active-page="home"] .home-quick-add {
