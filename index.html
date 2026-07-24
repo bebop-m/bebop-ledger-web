@@ -178,36 +178,17 @@
         </div>
 
         <div id="incomeSummaryPage" class="page-view page-stack" data-page-view="income" hidden>
-          <header class="top-bar ledger-page-head">
+          <header class="top-bar ledger-page-head income-pagebar">
             <button class="back-button" type="button" data-page-back aria-label="返回首页">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </button>
-            <div class="top-bar-heading">
-              <h2 class="top-bar-title">收益明细</h2>
-            </div>
+            <h2 class="top-bar-title income-page-name">收益明细</h2>
+            <span class="income-pagebar-side" aria-hidden="true"></span>
           </header>
 
-          <section class="panel income-overview-panel">
-            <div id="incomeOverviewGrid" class="income-overview-grid"></div>
-          </section>
-
-          <section class="panel income-trend-panel">
-            <header class="panel-bar">
-              <div>
-                <h2 class="panel-title">历年趋势</h2>
-              </div>
-            </header>
-            <div id="incomeTrend" class="income-trend"></div>
-          </section>
-
-          <section class="panel income-years-panel">
-            <header class="panel-bar">
-              <div>
-                <h2 class="panel-title">年度明细</h2>
-              </div>
-            </header>
-            <div id="incomeYearList" class="income-year-list"></div>
-          </section>
+          <section id="incomeOverviewGrid" class="income-overview-grid" aria-label="本年资金收益"></section>
+          <section id="incomeTrend" class="income-trend" aria-label="历年趋势"></section>
+          <section id="incomeYearList" class="income-year-list" aria-label="年度明细"></section>
         </div>
 
         <div id="fundamentalsPage" class="page-view page-stack" data-page-view="fundamentals" hidden>
@@ -241,11 +222,12 @@
         </div>
 
         <div id="annualReviewPage" class="page-view page-stack" data-page-view="annual" hidden>
-          <header class="top-bar ledger-page-head">
+          <header class="top-bar ledger-page-head annual-pagebar">
             <button class="back-button" type="button" data-page-back aria-label="返回收益明细">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </button>
-            <div class="top-bar-heading"><h2 class="top-bar-title">年度回顾</h2></div>
+            <h2 class="top-bar-title annual-page-name">年度回顾</h2>
+            <button id="annualShareButton" class="annual-share-entry" type="button" aria-label="生成本年分享卡">分享</button>
           </header>
           <div id="annualReviewContent" class="annual-review-content"></div>
         </div>

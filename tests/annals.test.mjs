@@ -13,7 +13,7 @@ const fundamentalsModule = await import('../src/fundamentals.js');
 const annalsModule = await import('../src/annals.js');
 const { state, applySnapshot, invalidateComputeCache } = stateModule;
 const { loadFundamentals } = fundamentalsModule;
-const { computeXirr, computeYearAnnals } = annalsModule;
+const { computeYearAnnals } = annalsModule;
 
 function applyTestSnapshot(overrides = {}) {
   applySnapshot({
@@ -36,35 +36,7 @@ function applyTestSnapshot(overrides = {}) {
   invalidateComputeCache();
 }
 
-test('computeXirr matches closed-form single-period return', () => {
-  // 整整 365 天：(11000/10000)^1 - 1 = 10%
-  const rate = computeXirr([
-    { date: '2025-01-01', amountCny: -10000 },
-    { date: '2026-01-01', amountCny: 11000 }
-  ]);
-  assert.ok(Math.abs(rate - 0.1) < 1e-6);
-});
-
-test('computeXirr handles mid-year contribution and losses', () => {
-  const gain = computeXirr([
-    { date: '2025-01-01', amountCny: -10000 },
-    { date: '2025-07-01', amountCny: -5000 },
-    { date: '2025-12-31', amountCny: 16000 }
-  ]);
-  assert.ok(gain > 0.07 && gain < 0.09);
-  const loss = computeXirr([
-    { date: '2025-01-01', amountCny: -10000 },
-    { date: '2025-12-31', amountCny: 8500 }
-  ]);
-  assert.ok(loss < -0.14 && loss > -0.16);
-  // 同号现金流无解
-  assert.equal(computeXirr([
-    { date: '2025-01-01', amountCny: -1 },
-    { date: '2025-12-31', amountCny: -1 }
-  ]), null);
-});
-
-test('year annals: xirr from net value chain and fx/eps/valuation attribution', async () => {
+test('year annals: 本年收益率走区间简单法，并给出 fx/eps/valuation 归因', async () => {
   applyTestSnapshot({
     dailySnapshots: [
       { date: '2024-12-31', netCny: 510000, totalMarketValueCny: 510000, liabilityCny: 0, holdings: [], rates: { CNY: 1, USD: 7.1, HKD: 0.90 } },
@@ -76,7 +48,7 @@ test('year annals: xirr from net value chain and fx/eps/valuation attribution', 
         { symbol: '600519.SH', name: '贵州茅台', shares: 100, bucket: 'core', currency: 'CNY', price: 1500, marketValueCny: 150000 }
       ] },
       { year: 2025, date: '2025-12-31', source: 'auto', totalMarketValueCny: 620000, holdings: [
-        { symbol: '00700.HK', name: '腾讯控股', shares: 1000, bucket: 'core', currency: 'HKD', price: 500, marketValueCny: 460000 },
+        { symbol: '00700.HK', name: '腾讯控股', shares: 1200, bucket: 'core', currency: 'HKD', price: 500, marketValueCny: 460000 },
         { symbol: '600519.SH', name: '贵州茅台', shares: 100, bucket: 'core', currency: 'CNY', price: 1600, marketValueCny: 160000 }
       ] }
     ]
@@ -108,9 +80,10 @@ test('year annals: xirr from net value chain and fx/eps/valuation attribution', 
   // 资金收益 = 620000 − 510000 − 0 = 110000
   assert.equal(annals.row.capitalReturnCny, 110000);
 
-  // XIRR ≈ (620/510)^(365/364) − 1 ≈ 21.6%
-  assert.ok(annals.xirr > 0.21 && annals.xirr < 0.225);
-  assert.equal(annals.xirrScope, '净值链');
+  // 本年收益率（区间简单法）= 110000 ÷ 510000 ≈ 21.57%
+  assert.equal(annals.yearStartNetCny, 510000);
+  assert.ok(Math.abs(annals.returnRate - 110000 / 510000) < 1e-9);
+  assert.equal(annals.xirr, undefined);
 
   const att = annals.attribution;
   assert.equal(att.available, true);
@@ -124,7 +97,53 @@ test('year annals: xirr from net value chain and fx/eps/valuation attribution', 
   assert.ok(Math.abs(att.epsSplitCoverage - 1) < 1e-9);
 });
 
-test('year annals uses confirmed dividend calendar dates for monthly totals and XIRR', () => {
+test('year annals: 归因四项相加恒等于资金收益（残差进估值变动）', async () => {
+  const annals = computeYearAnnals(2025);
+  const att = annals.attribution;
+  const valuation = annals.row.capitalReturnCny - att.dividendCny - att.fxCny - att.epsCny;
+  const total = att.dividendCny + att.fxCny + att.epsCny + valuation;
+  assert.ok(Math.abs(total - annals.row.capitalReturnCny) < 1e-6);
+  // 四项贡献率相加 = 本年收益率
+  const rateSum = total / annals.yearStartNetCny;
+  assert.ok(Math.abs(rateSum - annals.returnRate) < 1e-9);
+});
+
+test('year annals: 年度持仓分解给出占比、较上年股数增减与已清仓', () => {
+  const annals = computeYearAnnals(2025);
+  const holdings = annals.holdings;
+  assert.equal(holdings.hasData, true);
+  assert.equal(holdings.previousYear, 2024);
+  assert.equal(holdings.count, 2);
+  const tencent = holdings.items.find((item) => item.symbol === '00700.HK');
+  assert.equal(tencent.change, '+200');
+  // 占比按 CNY 市值降序，两项相加为 1
+  assert.ok(Math.abs(holdings.items.reduce((sum, item) => sum + item.pct, 0) - 1) < 1e-9);
+  assert.deepEqual(holdings.removed, []);
+});
+
+test('year annals: 清仓的标的进 removed，供沉底行披露', () => {
+  applyTestSnapshot({
+    dailySnapshots: [
+      { date: '2024-12-31', netCny: 510000, totalMarketValueCny: 510000, holdings: [], rates: { CNY: 1, USD: 7.1, HKD: 0.90 } },
+      { date: '2025-12-31', netCny: 620000, totalMarketValueCny: 620000, holdings: [], rates: { CNY: 1, USD: 7.2, HKD: 0.92 } }
+    ],
+    yearlyHoldings: [
+      { year: 2024, date: '2024-12-31', source: 'auto', totalMarketValueCny: 510000, holdings: [
+        { symbol: '00700.HK', name: '腾讯控股', shares: 1000, bucket: 'core', currency: 'HKD', price: 400, marketValueCny: 360000 },
+        { symbol: '600519.SH', name: '贵州茅台', shares: 100, bucket: 'core', currency: 'CNY', price: 1500, marketValueCny: 150000 }
+      ] },
+      { year: 2025, date: '2025-12-31', source: 'auto', totalMarketValueCny: 460000, holdings: [
+        { symbol: '00700.HK', name: '腾讯控股', shares: 1000, bucket: 'core', currency: 'HKD', price: 500, marketValueCny: 460000 }
+      ] }
+    ]
+  });
+  const holdings = computeYearAnnals(2025).holdings;
+  assert.equal(holdings.removed.length, 1);
+  assert.equal(holdings.removed[0].name, '贵州茅台');
+  assert.equal(holdings.removed[0].shares, 100);
+});
+
+test('year annals uses confirmed dividend calendar dates for monthly totals', () => {
   applyTestSnapshot({
     dailySnapshots: [
       { date: '2024-12-31', netCny: 1000, totalMarketValueCny: 1000, holdings: [], rates: { CNY: 1, USD: 7.2, HKD: 0.92 } },
@@ -141,6 +160,7 @@ test('year annals uses confirmed dividend calendar dates for monthly totals and 
   const annals = computeYearAnnals(2025);
   assert.ok(annals);
   assert.equal(annals.dividendMonths[5], 10);
-  assert.equal(annals.xirrScope, '股息+资金');
-  assert.ok(Number.isFinite(annals.xirr));
+  // 净值链：1100 − 1000 = 100，年初 1000
+  assert.equal(annals.row.capitalReturnCny, 100);
+  assert.ok(Math.abs(annals.returnRate - 0.1) < 1e-9);
 });

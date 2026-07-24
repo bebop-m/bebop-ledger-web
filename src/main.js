@@ -11,7 +11,7 @@ import {
   applyLegendExpandState, cycleHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
-  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset
+  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, generateAnnualShareCard
 } from './render.js';
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
@@ -141,55 +141,62 @@ if (refs.holdingsSortLabel) refs.holdingsSortLabel.addEventListener('click', (ev
 
 if (refs.marketTimestamp) refs.marketTimestamp.addEventListener('click', () => openModal('diagnostics'));
 
-if (refs.incomeOverviewGrid) refs.incomeOverviewGrid.addEventListener('click', (event) => {
-  if (event.target.closest('[data-income-cash-settings]')) openModal('openingCash');
-});
-
-refs.incomeYearList.addEventListener('click', (event) => {
-  const annualTarget = event.target.closest('[data-annual-year]');
-  if (annualTarget && !event.target.closest('[data-year-holdings], [data-year-annals], [data-income-manual-year]')) {
-    const year = Math.floor(safeNumber(annualTarget.dataset.annualYear, 0));
-    if (year) {
-      state.activeAnnualYear = year;
-      navigateTo('annual');
-    }
-    return;
-  }
-  const yearHoldingsButton = event.target.closest('[data-year-holdings]');
-  if (yearHoldingsButton) {
-    const year = Math.floor(safeNumber(yearHoldingsButton.dataset.yearHoldings, 0));
-    if (year) openModal('yearHoldings', { year });
-    return;
-  }
-  const annalsButton = event.target.closest('[data-year-annals]');
-  if (annalsButton) {
-    const year = Math.floor(safeNumber(annalsButton.dataset.yearAnnals, 0));
-    if (year) openModal('yearAnnals', { year });
-    return;
-  }
-  const btn = event.target.closest('[data-income-manual-year]');
-  if (!btn) return;
-  const year = Math.floor(safeNumber(btn.dataset.incomeManualYear, 0));
+// 12-年度回填：年份行右侧「回填」是本抽屉的唯一入口
+function openYearlyBackfill(year) {
   if (!year) return;
   const existing = state.yearlyManual.find((entry) => entry.year === year);
+  const percent = (value) => (value === null || value === undefined ? '' : Math.round(value * 10000) / 100);
   openModal('yearlyManual', {
     year,
     dividendCny: existing ? existing.dividendCny : '',
-    dividendYieldRatePercent: existing && existing.dividendYieldRate !== null && existing.dividendYieldRate !== undefined ? Math.round(existing.dividendYieldRate * 10000) / 100 : '',
+    dividendYieldRatePercent: existing ? percent(existing.dividendYieldRate) : '',
     yearEndNetCny: existing ? existing.yearEndNetCny : '',
     netInflowCny: existing ? existing.netInflowCny : '',
     capitalReturnCny: existing && existing.capitalReturnCny !== null && existing.capitalReturnCny !== undefined ? existing.capitalReturnCny : '',
-    capitalReturnRatePercent: existing && existing.capitalReturnRate !== null && existing.capitalReturnRate !== undefined ? Math.round(existing.capitalReturnRate * 10000) / 100 : '',
+    capitalReturnRatePercent: existing ? percent(existing.capitalReturnRate) : '',
     existing: Boolean(existing)
   });
+}
+
+// 点年份行整行进 10-年度回顾；行内的「回填」自己拦下事件
+function openAnnualReviewForYear(year) {
+  if (!year) return;
+  state.activeAnnualYear = year;
+  navigateTo('annual');
+}
+
+refs.incomeYearList.addEventListener('click', (event) => {
+  const backfill = event.target.closest('[data-income-manual-year]');
+  if (backfill) { openYearlyBackfill(Math.floor(safeNumber(backfill.dataset.incomeManualYear, 0))); return; }
+  const row = event.target.closest('[data-annual-year]');
+  if (row) openAnnualReviewForYear(Math.floor(safeNumber(row.dataset.annualYear, 0)));
 });
 
+refs.incomeYearList.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  const row = event.target.closest('[data-annual-year]');
+  if (!row) return;
+  event.preventDefault();
+  openAnnualReviewForYear(Math.floor(safeNumber(row.dataset.annualYear, 0)));
+});
+
+if (refs.annualShareButton) {
+  refs.annualShareButton.addEventListener('click', () => openModal('annualShare', { year: state.activeAnnualYear }));
+}
+
 if (refs.annualReviewContent) refs.annualReviewContent.addEventListener('click', (event) => {
+  if (event.target.closest('[data-annual-holdings-toggle]')) {
+    mutable.annualHoldingsExpanded = !mutable.annualHoldingsExpanded;
+    renderApp({ incremental: true, animateHoldingReflow: false });
+    return;
+  }
   const button = event.target.closest('[data-annual-select]');
   if (!button) return;
   const year = Math.floor(safeNumber(button.dataset.annualSelect, 0));
   if (!year || year === state.activeAnnualYear) return;
   state.activeAnnualYear = year;
+  // 换一年就是换一份持仓，展开状态不该跟着串过去
+  mutable.annualHoldingsExpanded = false;
   saveState();
   renderApp({ incremental: true, animateHoldingReflow: false });
 });
@@ -472,6 +479,7 @@ refs.modalRoot.addEventListener('click', (event) => {
   if (t === 'holding-diagnostics') { closeModal(); refs.diagnosticsButton.click(); return; }
   if (t === 'holding-refresh') { closeModal(); refs.refreshButton.click(); return; }
   if (t === 'holding-add') { closeModal(); refs.addButton.click(); return; }
+  if (t === 'save-share-card') { generateAnnualShareCard(); return; }
   if (t === 'close' || t === 'cancel') { closeModal(); return; }
   if (t === 'delete-yearly-manual') { handleModalDelete(); return; }
   if (t === 'delete-record') { handleModalDelete(); return; }

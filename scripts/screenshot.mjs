@@ -36,8 +36,9 @@ const CHROME_CANDIDATES = [
 
 const argv = Object.fromEntries(
   process.argv.slice(2).map((a) => {
-    const [k, v] = a.replace(/^--/, '').split('=');
-    return [k, v === undefined ? true : v];
+    const body = a.replace(/^--/, '');
+    const at = body.indexOf('=');
+    return at < 0 ? [body, true] : [body.slice(0, at), body.slice(at + 1)];
   })
 );
 
@@ -86,7 +87,11 @@ const MODAL_TARGETS = {
   tax: { nav: 'holdings', sel: '[data-action="edit-tax"]' },
   dividendEdit: { nav: 'holdings', sel: '[data-action="edit-dividend"]' },
   monthDetail: { nav: 'dividends', sel: '.divi-ym.has-pay' },
-  dividendReceipt: { nav: 'dividends', sel: '.divi-ym.has-pay', then: '.zen-md-row.is-clickable' }
+  dividendReceipt: { nav: 'dividends', sel: '.divi-ym.has-pay', then: '.zen-md-row.is-clickable' },
+  annual: { nav: 'income', sel: '.inc-year' },
+  annualHoldings: { nav: 'income', sel: '.inc-year', then: '[data-annual-holdings-toggle]' },
+  yearlyManual: { nav: 'income', sel: '[data-income-manual-year]' },
+  annualShare: { nav: 'income', sel: '.inc-year', then: '#annualShareButton' }
 };
 
 async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {

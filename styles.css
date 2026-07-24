@@ -12471,4 +12471,1237 @@ body[data-active-page="dividends"] .divi-list-empty {
   vertical-align: -1px;
 }
 .zen-sheet--receipt .zen-rc-confirm.is-on b { background: var(--gold); }
+/* ══════════════════════════════════════════════════════════════════
+   D 簇 · 09-收益明细 / 10-年度回顾 / 11-分享卡 / 12-年度回填
+   按 designs/禅意UI/ 下 09–12 四个文件夹的 定稿图.html 重排。
+   尺寸一律按总则折算：定稿值 N（390 画布）→ clamp(N*.92, N/3.9 vw, N*1.35)。
+   顶部留白取定稿值的一半（真机状态栏已提供呼吸），与前三簇同规。
+   ══════════════════════════════════════════════════════════════════ */
 
+/* ── 09-收益明细 ── */
+body[data-active-page="income"] {
+  padding: 0;
+}
+body[data-active-page="income"] .app-shell {
+  width: 100%;
+  max-width: none;
+}
+body[data-active-page="income"] #incomeSummaryPage {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
+  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
+  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
+  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  min-height: 100dvh;
+}
+/* 分区只靠留白：清掉历史层留在本页元素上的所有描边与伪元素装饰 */
+body[data-active-page="income"] #incomeSummaryPage,
+body[data-active-page="income"] #incomeSummaryPage * {
+  border: 0;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="income"] #incomeSummaryPage *::before,
+body[data-active-page="income"] #incomeSummaryPage *::after {
+  content: none;
+  display: none;
+}
+
+/* 页头：grid(56/1fr/56)，左裸箭头、中页名、右留空 */
+body[data-active-page="income"] .income-pagebar {
+  display: grid;
+  grid-template-columns: clamp(51.52px, 14.359vw, 75.6px) 1fr clamp(51.52px, 14.359vw, 75.6px);
+  align-items: center;
+  gap: 0;
+  height: auto;
+  min-height: clamp(19.32px, 5.3846vw, 28.35px);
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+body[data-active-page="income"] .income-pagebar .back-button {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  text-align: left;
+}
+body[data-active-page="income"] .income-pagebar .back-button svg {
+  width: clamp(16.56px, 4.6154vw, 24.3px);
+  height: clamp(16.56px, 4.6154vw, 24.3px);
+}
+body[data-active-page="income"] .income-page-name {
+  display: block;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--label);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  text-align: center;
+}
+body[data-active-page="income"] .income-pagebar-side {
+  display: block;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+
+/* 居中 hero：一个结论 + 一个比较值 */
+body[data-active-page="income"] #incomeOverviewGrid {
+  display: block;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+}
+body[data-active-page="income"] .inc-hero {
+  display: block;
+  margin: clamp(27.6px, 7.6923vw, 40.5px) 0 0;
+  padding: 0;
+  text-align: center;
+}
+body[data-active-page="income"] .inc-hero-label {
+  display: block;
+  margin: 0;
+  padding: 0;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  /* 定稿图里是 inline span，行盒被容器 16px 字号的 strut 撑到 21px */
+  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  font-weight: 600;
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+}
+body[data-active-page="income"] .inc-hero-value {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--ink);
+  font-size: clamp(34.96px, 9.7436vw, 51.3px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+}
+body[data-active-page="income"] .inc-hero-value.is-gain { color: var(--up); }
+body[data-active-page="income"] .inc-hero-value.is-loss { color: var(--down); }
+body[data-active-page="income"] .inc-hero-meta {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+}
+/* 金额后的百分比与金额同色：红涨绿跌要覆盖到百分比 */
+body[data-active-page="income"] .inc-hero-meta strong { font-weight: 700; }
+body[data-active-page="income"] .inc-hero-meta strong.is-gain { color: var(--up); }
+body[data-active-page="income"] .inc-hero-meta strong.is-loss { color: var(--down); }
+body[data-active-page="income"] .inc-ctx {
+  display: block;
+  margin: clamp(16.56px, 4.6154vw, 24.3px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: 1.8;
+  text-align: center;
+}
+body[data-active-page="income"] .inc-ctx b {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* 节标：左标签、右附注，无分隔线 */
+body[data-active-page="income"] .inc-sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  margin: 0;
+  padding: 0;
+}
+body[data-active-page="income"] .inc-sec-label {
+  display: block;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+}
+body[data-active-page="income"] .inc-sec-aside {
+  display: block;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+}
+
+/* 历年趋势：墨线＝资金收益率（逐点标值），金线＝股息收益率，零轴发丝线 */
+body[data-active-page="income"] #incomeTrend {
+  display: block;
+  gap: 0;
+  margin: clamp(27.6px, 7.6923vw, 40.5px) 0 0;
+  padding: 0;
+  background: none;
+}
+body[data-active-page="income"] .inc-trend-chart {
+  display: block;
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  padding: 0;
+}
+body[data-active-page="income"] .inc-trend-svg,
+body[data-active-page="income"] .inc-trend-years {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+body[data-active-page="income"] .inc-trend-years { margin-top: 2px; }
+body[data-active-page="income"] .inc-trend-svg .inc-zero {
+  stroke: var(--track);
+  stroke-width: 1;
+}
+body[data-active-page="income"] .inc-trend-svg .inc-cap-line {
+  fill: none;
+  stroke: var(--chart-line);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+body[data-active-page="income"] .inc-trend-svg .inc-div-line {
+  fill: none;
+  stroke: var(--chart-gold);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+body[data-active-page="income"] .inc-trend-svg .inc-cap-dot { fill: var(--chart-ink-dot); }
+body[data-active-page="income"] .inc-trend-svg .inc-div-dot { fill: var(--chart-gold-dot); }
+body[data-active-page="income"] .inc-trend-svg text,
+body[data-active-page="income"] .inc-trend-years text {
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="income"] .inc-trend-svg text.is-gain { fill: var(--up); }
+body[data-active-page="income"] .inc-trend-svg text.is-loss { fill: var(--down); }
+body[data-active-page="income"] .inc-trend-svg text.is-flat { fill: var(--muted); }
+body[data-active-page="income"] .inc-trend-svg text.is-latest { font-size: 10.5px; }
+body[data-active-page="income"] .inc-trend-years text.inc-yr {
+  fill: var(--hint);
+  font-weight: 600;
+}
+body[data-active-page="income"] .inc-trend-years text.inc-yr.is-current {
+  fill: var(--ink);
+  font-weight: 800;
+}
+body[data-active-page="income"] .inc-trend-legend {
+  display: block;
+  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  text-align: center;
+}
+body[data-active-page="income"] .inc-trend-legend i,
+body[data-active-page="income"] .inc-trend-legend b {
+  display: inline-block;
+  width: clamp(11.04px, 3.0769vw, 16.2px);
+  height: 2px;
+  vertical-align: 3px;
+}
+body[data-active-page="income"] .inc-trend-legend i {
+  margin: 0 clamp(3.68px, 1.0256vw, 5.4px) 0 0;
+  background: var(--chart-line);
+}
+body[data-active-page="income"] .inc-trend-legend b {
+  margin: 0 clamp(3.68px, 1.0256vw, 5.4px) 0 clamp(11.04px, 3.0769vw, 16.2px);
+  background: var(--chart-gold);
+}
+body[data-active-page="income"] .inc-trend-cagr {
+  display: block;
+  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  text-align: center;
+}
+body[data-active-page="income"] .inc-trend-cagr strong { font-weight: 700; color: var(--ink); }
+body[data-active-page="income"] .inc-trend-cagr strong.is-gain { color: var(--up); }
+body[data-active-page="income"] .inc-trend-cagr strong.is-loss { color: var(--down); }
+body[data-active-page="income"] .inc-trend-empty {
+  display: block;
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* 年度明细：每年两层，右侧只留「回填」，点整行进年度回顾 */
+body[data-active-page="income"] #incomeYearList {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  padding: 0;
+  background: none;
+}
+body[data-active-page="income"] .inc-year-rows {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14.72px, 4.1026vw, 21.6px);
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  padding: 0;
+}
+body[data-active-page="income"] .inc-year {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: clamp(2.76px, 0.7692vw, 4.05px);
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  text-align: left;
+}
+body[data-active-page="income"] .inc-year-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+}
+body[data-active-page="income"] .inc-year-yy {
+  display: block;
+  color: var(--ink);
+  font-size: clamp(12.88px, 3.5897vw, 18.9px);
+  font-weight: 700;
+  line-height: clamp(17.48px, 4.8718vw, 25.65px);
+}
+body[data-active-page="income"] .inc-year-yy small {
+  margin-left: clamp(6.44px, 1.7949vw, 9.45px);
+  color: var(--hint);
+  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-weight: 600;
+  letter-spacing: clamp(0.46px, 0.1282vw, 0.675px);
+}
+body[data-active-page="income"] .inc-year-yv {
+  display: block;
+  color: var(--ink);
+  font-size: clamp(12.42px, 3.4615vw, 18.225px);
+  font-weight: 700;
+  line-height: clamp(17.48px, 4.8718vw, 25.65px);
+  white-space: nowrap;
+}
+body[data-active-page="income"] .inc-year-yv.is-gain { color: var(--up); }
+body[data-active-page="income"] .inc-year-yv.is-loss { color: var(--down); }
+body[data-active-page="income"] .inc-year-yv em {
+  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-style: normal;
+  font-weight: 600;
+}
+body[data-active-page="income"] .inc-year-sub {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  color: var(--muted);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+body[data-active-page="income"] .inc-year-acts {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--hint);
+  font-family: inherit;
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  white-space: nowrap;
+}
+body[data-active-page="income"] .inc-year-foot {
+  display: block;
+  margin: clamp(16.56px, 4.6154vw, 24.3px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* 矮屏收紧竖向留白 */
+@media (max-height: 820px) {
+  body[data-active-page="income"] .inc-hero { margin-top: clamp(18.4px, 5.1282vw, 27px); }
+  body[data-active-page="income"] #incomeTrend { margin-top: clamp(18.4px, 5.1282vw, 27px); }
+  body[data-active-page="income"] #incomeYearList { margin-top: clamp(18.4px, 5.1282vw, 27px); }
+  body[data-active-page="income"] .inc-year-rows { gap: clamp(11.04px, 3.0769vw, 16.2px); }
+}
+
+/* ── 10-年度回顾 ──
+   定稿图本身就是一张 1150px 高的长页（快照+年鉴并入本页），
+   不做单屏约束，纵向滚动是设计本意。 */
+body[data-active-page="annual"] {
+  padding: 0;
+}
+body[data-active-page="annual"] .app-shell {
+  width: 100%;
+  max-width: none;
+}
+body[data-active-page="annual"] #annualReviewPage {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
+  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
+  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
+  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  min-height: 100dvh;
+}
+body[data-active-page="annual"] #annualReviewPage,
+body[data-active-page="annual"] #annualReviewPage * {
+  border: 0;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="annual"] #annualReviewPage *::before,
+body[data-active-page="annual"] #annualReviewPage *::after {
+  content: none;
+  display: none;
+}
+body[data-active-page="annual"] .annual-pagebar {
+  display: grid;
+  grid-template-columns: clamp(51.52px, 14.359vw, 75.6px) 1fr clamp(51.52px, 14.359vw, 75.6px);
+  align-items: center;
+  gap: 0;
+  height: auto;
+  min-height: clamp(19.32px, 5.3846vw, 28.35px);
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+body[data-active-page="annual"] .annual-pagebar .back-button {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  text-align: left;
+}
+body[data-active-page="annual"] .annual-pagebar .back-button svg {
+  width: clamp(16.56px, 4.6154vw, 24.3px);
+  height: clamp(16.56px, 4.6154vw, 24.3px);
+}
+body[data-active-page="annual"] .annual-page-name {
+  display: block;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--label);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  text-align: center;
+}
+body[data-active-page="annual"] .annual-share-entry {
+  display: block;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 700;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  text-align: right;
+}
+body[data-active-page="annual"] .annual-review-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* 年份切换：纯文字，选中＝ink + 4px 金点 */
+body[data-active-page="annual"] .ann-years {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(18.4px, 5.1282vw, 27px);
+  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  padding: 0;
+}
+body[data-active-page="annual"] .ann-years button {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--hint);
+  font-family: inherit;
+  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  text-align: center;
+}
+body[data-active-page="annual"] .ann-years button.is-active {
+  color: var(--ink);
+  font-weight: 800;
+}
+body[data-active-page="annual"] .ann-years button i {
+  display: block;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  margin: clamp(3.68px, 1.0256vw, 5.4px) auto 0;
+  border-radius: 50%;
+  background: transparent;
+}
+body[data-active-page="annual"] .ann-years button.is-active i { background: var(--gold); }
+
+/* 居中 hero：本年收益率 */
+body[data-active-page="annual"] .ann-hero {
+  display: block;
+  margin: clamp(27.6px, 7.6923vw, 40.5px) 0 0;
+  padding: 0;
+  text-align: center;
+}
+body[data-active-page="annual"] .ann-hero-label {
+  display: block;
+  margin: 0;
+  padding: 0;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  font-weight: 600;
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+}
+body[data-active-page="annual"] .ann-hero-value {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--ink);
+  font-size: clamp(34.96px, 9.7436vw, 51.3px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+}
+body[data-active-page="annual"] .ann-hero-value.is-gain { color: var(--up); }
+body[data-active-page="annual"] .ann-hero-value.is-loss { color: var(--down); }
+body[data-active-page="annual"] .ann-hero-meta {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+}
+
+/* 四指标格 */
+body[data-active-page="annual"] .ann-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(9.2px, 2.5641vw, 13.5px) clamp(7.36px, 2.0513vw, 10.8px);
+  margin: clamp(22.08px, 6.1538vw, 32.4px) 0 0;
+  padding: 0;
+  text-align: center;
+}
+body[data-active-page="annual"] .ann-metrics > span {
+  display: block;
+  color: var(--hint);
+  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-weight: 600;
+  line-height: clamp(11.96px, 3.3333vw, 17.55px);
+}
+body[data-active-page="annual"] .ann-metrics strong {
+  display: block;
+  margin-top: clamp(2.76px, 0.7692vw, 4.05px);
+  color: var(--ink);
+  font-size: clamp(11.5px, 3.2051vw, 16.875px);
+  font-weight: 700;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+}
+body[data-active-page="annual"] .ann-metrics strong.is-gain { color: var(--up); }
+body[data-active-page="annual"] .ann-metrics strong.is-loss { color: var(--down); }
+
+body[data-active-page="annual"] .ann-block {
+  display: block;
+  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  padding: 0;
+}
+body[data-active-page="annual"] .ann-sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  margin: 0;
+  padding: 0;
+}
+body[data-active-page="annual"] .ann-sec-label {
+  display: block;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+}
+body[data-active-page="annual"] .ann-sec-aside {
+  display: block;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+}
+
+/* 收益归因：2px 四段线 + 四行 pp 拆分（四项相加 = 本年收益率） */
+body[data-active-page="annual"] .ann-attr-bar {
+  display: flex;
+  width: 100%;
+  height: 2px;
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  padding: 0;
+  background: var(--track);
+}
+body[data-active-page="annual"] .ann-attr-bar i {
+  display: block;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+body[data-active-page="annual"] .ann-attr-bar i.is-divi { background: var(--gold); }
+body[data-active-page="annual"] .ann-attr-bar i.is-eps { background: var(--ink); }
+body[data-active-page="annual"] .ann-attr-bar i.is-val { background: var(--muted); }
+body[data-active-page="annual"] .ann-attr-bar i.is-fx { background: var(--track); }
+body[data-active-page="annual"] .ann-attr-rows {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10.12px, 2.8205vw, 14.85px);
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  padding: 0;
+}
+body[data-active-page="annual"] .ann-attr-row {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+}
+body[data-active-page="annual"] .ann-attr-row b {
+  display: block;
+  flex: none;
+  align-self: center;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  margin: 0;
+  border-radius: 50%;
+}
+body[data-active-page="annual"] .ann-attr-row b.is-divi { background: var(--gold); }
+body[data-active-page="annual"] .ann-attr-row b.is-eps { background: var(--ink); }
+body[data-active-page="annual"] .ann-attr-row b.is-val { background: var(--muted); }
+body[data-active-page="annual"] .ann-attr-row b.is-fx { background: var(--track); }
+body[data-active-page="annual"] .ann-attr-row small {
+  flex: 1;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+}
+body[data-active-page="annual"] .ann-attr-row small.is-gain { color: var(--up); }
+body[data-active-page="annual"] .ann-attr-row small.is-loss { color: var(--down); }
+body[data-active-page="annual"] .ann-attr-row strong {
+  flex: none;
+  color: var(--ink);
+  font-weight: 700;
+}
+body[data-active-page="annual"] .ann-attr-row strong.is-gain { color: var(--up); }
+body[data-active-page="annual"] .ann-attr-row strong.is-loss { color: var(--down); }
+body[data-active-page="annual"] .ann-attr-note {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-weight: 600;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* 年度持仓：128px 圆环 + 图例行（占比 / 较上年股数增减金字） */
+body[data-active-page="annual"] .ann-hold {
+  display: flex;
+  align-items: center;
+  gap: clamp(16.56px, 4.6154vw, 24.3px);
+  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  padding: 0;
+}
+body[data-active-page="annual"] .ann-donut {
+  position: relative;
+  flex: none;
+  width: clamp(117.76px, 32.8205vw, 172.8px);
+  height: clamp(117.76px, 32.8205vw, 172.8px);
+}
+body[data-active-page="annual"] .ann-donut svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+body[data-active-page="annual"] .ann-donut .ann-arc-base { stroke: var(--donut-6); }
+body[data-active-page="annual"] .ann-donut .ann-arc.is-t1 { stroke: var(--donut-1); }
+body[data-active-page="annual"] .ann-donut .ann-arc.is-t2 { stroke: var(--donut-2); }
+body[data-active-page="annual"] .ann-donut .ann-arc.is-t3 { stroke: var(--donut-3); }
+body[data-active-page="annual"] .ann-donut .ann-arc.is-t4 { stroke: var(--donut-4); }
+body[data-active-page="annual"] .ann-donut .ann-arc.is-t5 { stroke: var(--donut-5); }
+body[data-active-page="annual"] .ann-donut .ann-arc.is-t6 { stroke: var(--donut-6); }
+body[data-active-page="annual"] .ann-donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(1.84px, 0.5128vw, 2.7px);
+}
+body[data-active-page="annual"] .ann-donut-center small {
+  color: var(--hint);
+  font-size: clamp(8.28px, 2.3077vw, 12.15px);
+  font-weight: 600;
+  letter-spacing: clamp(0.92px, 0.2564vw, 1.35px);
+}
+body[data-active-page="annual"] .ann-donut-center strong {
+  color: var(--ink);
+  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-weight: 700;
+}
+body[data-active-page="annual"] .ann-hold-legend {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+body[data-active-page="annual"] .ann-hold-row {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(6.44px, 1.7949vw, 9.45px);
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+}
+body[data-active-page="annual"] .ann-hold-row b {
+  display: block;
+  flex: none;
+  align-self: center;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  margin: 0;
+  border-radius: 50%;
+}
+body[data-active-page="annual"] .ann-hold-row b.is-t1 { background: var(--donut-1); }
+body[data-active-page="annual"] .ann-hold-row b.is-t2 { background: var(--donut-2); }
+body[data-active-page="annual"] .ann-hold-row b.is-t3 { background: var(--donut-3); }
+body[data-active-page="annual"] .ann-hold-row b.is-t4 { background: var(--donut-4); }
+body[data-active-page="annual"] .ann-hold-row b.is-t5 { background: var(--donut-5); }
+body[data-active-page="annual"] .ann-hold-row b.is-t6 { background: var(--donut-6); }
+body[data-active-page="annual"] .ann-hold-co {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+body[data-active-page="annual"] .ann-hold-row.is-rest .ann-hold-co {
+  color: var(--muted);
+  font-weight: 600;
+}
+body[data-active-page="annual"] .ann-hold-pc { flex: none; }
+body[data-active-page="annual"] .ann-hold-chg {
+  flex: none;
+  width: clamp(40.48px, 11.2821vw, 59.4px);
+  color: var(--gold);
+  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-weight: 700;
+  text-align: right;
+}
+/* 展开后图例远高于 128px 圆环，居中会把环甩到中段——展开态改顶对齐 */
+body[data-active-page="annual"] .ann-hold.is-expanded { align-items: flex-start; }
+/* 「其余 N 项 / 收起」是纯文字键，与图例行同形，无 chevron 无底托 */
+body[data-active-page="annual"] .ann-hold-row.is-toggle {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-family: inherit;
+  text-align: left;
+}
+body[data-active-page="annual"] .ann-hold-row.is-toggle .ann-hold-co {
+  color: var(--muted);
+  font-weight: 600;
+}
+body[data-active-page="annual"] .ann-hold-note {
+  display: block;
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* 当年股息现金流：12 根 4px 金柱，当月实色 */
+body[data-active-page="annual"] .ann-months {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(4.6px, 1.2821vw, 6.75px);
+  align-items: end;
+  height: clamp(51.52px, 14.359vw, 75.6px);
+  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  padding: 0 clamp(5.52px, 1.5385vw, 8.1px);
+}
+body[data-active-page="annual"] .ann-months span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(3.68px, 1.0256vw, 5.4px);
+  height: 100%;
+}
+body[data-active-page="annual"] .ann-months i {
+  display: block;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: var(--v);
+  border-radius: 2px;
+  background: var(--gold);
+  opacity: .55;
+}
+body[data-active-page="annual"] .ann-months span.is-current i { opacity: 1; }
+body[data-active-page="annual"] .ann-months small {
+  color: var(--hint);
+  font-size: clamp(7.82px, 2.1795vw, 11.475px);
+  font-weight: 600;
+  line-height: clamp(10.12px, 2.8205vw, 14.85px);
+}
+body[data-active-page="annual"] .ann-months-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+body[data-active-page="annual"] .ann-months-total strong { color: var(--ink); font-weight: 700; }
+
+/* 交易复盘：日期 + 买红卖绿 + 公司 + 金额 */
+body[data-active-page="annual"] .ann-trades {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(11.96px, 3.3333vw, 17.55px);
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  padding: 0;
+}
+body[data-active-page="annual"] .ann-trade-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+}
+body[data-active-page="annual"] .ann-trade-row em {
+  font-style: normal;
+  font-weight: 700;
+}
+body[data-active-page="annual"] .ann-trade-row em.is-buy { color: var(--up); }
+body[data-active-page="annual"] .ann-trade-row em.is-sell { color: var(--down); }
+body[data-active-page="annual"] .ann-trade-row strong { color: var(--ink); font-weight: 700; }
+body[data-active-page="annual"] .ann-trade-sum {
+  display: block;
+  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  text-align: center;
+}
+body[data-active-page="annual"] .ann-empty,
+body[data-active-page="annual"] .ann-empty-line {
+  display: block;
+  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: 1.7;
+  text-align: center;
+}
+
+/* ── 12-年度回填抽屉 ── */
+.zen-sheet--backfill .zen-bf-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(11.04px, 3.0769vw, 16.2px);
+  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  padding: 0;
+}
+.zen-sheet--backfill .zen-bf-head h3 {
+  margin: 0;
+  padding: 0;
+  color: var(--ink);
+  font-size: clamp(14.72px, 4.1026vw, 21.6px);
+  font-weight: 800;
+  line-height: clamp(20.24px, 5.641vw, 29.7px);
+  letter-spacing: clamp(0.46px, 0.1282vw, 0.675px);
+}
+.zen-sheet--backfill .zen-bf-tag {
+  flex: none;
+  color: var(--label);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  letter-spacing: clamp(1.84px, 0.5128vw, 2.7px);
+}
+.zen-sheet--backfill .zen-bf-sub {
+  display: block;
+  margin: clamp(6.44px, 1.7949vw, 9.45px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: 1.6;
+}
+.zen-sheet--backfill .zen-bf-fields {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(11.96px, 3.3333vw, 17.55px);
+  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
+  padding: 0;
+}
+.zen-sheet--backfill .zen-bf-field {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+}
+.zen-sheet--backfill .zen-bf-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.zen-sheet--backfill .zen-bf-auto {
+  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
+  color: var(--hint);
+  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-weight: 600;
+}
+/* 托线用实心块而不是 border——边框在本套设计里是红线 */
+.zen-sheet--backfill .zen-bf-value {
+  position: relative;
+  flex: none;
+  display: block;
+  width: clamp(110.4px, 30.7692vw, 162px);
+  margin: 0;
+  padding: 0 clamp(5.52px, 1.5385vw, 8.1px) clamp(2.76px, 0.7692vw, 4.05px);
+}
+.zen-sheet--backfill .zen-bf-input {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 700;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  text-align: right;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+.zen-sheet--backfill .zen-bf-input:focus,
+.zen-sheet--backfill .zen-bf-input:focus-visible {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+.zen-sheet--backfill .zen-bf-input::-webkit-outer-spin-button,
+.zen-sheet--backfill .zen-bf-input::-webkit-inner-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+.zen-sheet--backfill .zen-bf-input::placeholder {
+  color: var(--hint);
+  font-weight: 600;
+}
+.zen-sheet--backfill .zen-bf-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: block;
+  height: 1px;
+  margin: 0;
+  background: var(--track);
+}
+/* 聚焦项转 2px 金线 */
+.zen-sheet--backfill .zen-bf-value:focus-within .zen-bf-line {
+  height: clamp(1.84px, 0.5128vw, 2.7px);
+  background: var(--gold);
+}
+.zen-sheet--backfill .zen-bf-warn {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--up);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+/* ── 11-分享卡抽屉 ──
+   卡片固定素禅日间配色导出，不随夜间模式变色（总则「例外」）。 */
+.zen-sheet--share .zen-share-card {
+  --sc-card: #fffdf8;
+  --sc-ink: #3b362e;
+  --sc-muted: #a89d86;
+  --sc-hint: #c2b9a6;
+  --sc-label: #b0a78f;
+  --sc-gold: #c19a45;
+  --sc-track: #eae4d4;
+  --sc-up: #bf5a42;
+  --sc-down: #6a8b74;
+  /* 全局 .is-gain/.is-loss 带 !important，走的是 --ledger-gain/--ledger-loss（在 zen 层等于会随夜间翻转的 --up/--down）。
+     分享卡要固定素禅日间导出，所以在卡内把这几支变量就地钉死，夜间两态渲染完全一致。 */
+  --ledger-gain: #bf5a42;
+  --ledger-loss: #6a8b74;
+  --up: #bf5a42;
+  --down: #6a8b74;
+  --ink: #3b362e;
+  --muted: #a89d86;
+  --hint: #c2b9a6;
+  --label: #b0a78f;
+  --gold: #c19a45;
+  --track: #eae4d4;
+  display: block;
+  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
+  padding: clamp(22.08px, 6.1538vw, 32.4px) clamp(18.4px, 5.1282vw, 27px);
+  border-radius: clamp(14.72px, 4.1026vw, 21.6px);
+  background: var(--sc-card);
+  box-shadow: 0 1px 2px rgba(59, 54, 46, .05), 0 8px 24px rgba(59, 54, 46, .08);
+  color: var(--sc-ink);
+  text-align: center;
+}
+.zen-sheet--share .sc-brand {
+  display: block;
+  color: var(--sc-hint);
+  font-size: clamp(8.28px, 2.3077vw, 12.15px);
+  font-weight: 600;
+  line-height: clamp(11.96px, 3.3333vw, 17.55px);
+  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  text-transform: uppercase;
+}
+.zen-sheet--share .sc-label {
+  display: block;
+  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  color: var(--sc-label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+}
+.zen-sheet--share .sc-value {
+  display: block;
+  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  color: var(--sc-ink);
+  font-size: clamp(31.28px, 8.7179vw, 45.9px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+}
+.zen-sheet--share .sc-value.is-gain { color: var(--sc-up); }
+.zen-sheet--share .sc-value.is-loss { color: var(--sc-down); }
+.zen-sheet--share .sc-meta {
+  display: block;
+  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  color: var(--sc-muted);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+.zen-sheet--share .sc-bar {
+  display: flex;
+  width: clamp(202.4px, 56.4103vw, 297px);
+  height: 2px;
+  margin: clamp(16.56px, 4.6154vw, 24.3px) auto 0;
+  background: var(--sc-track);
+}
+.zen-sheet--share .sc-bar i { display: block; height: 100%; }
+.zen-sheet--share .sc-bar i.is-divi { background: var(--sc-gold); }
+.zen-sheet--share .sc-bar i.is-eps { background: var(--sc-ink); }
+.zen-sheet--share .sc-bar i.is-val { background: var(--sc-muted); }
+.zen-sheet--share .sc-bar i.is-fx { background: var(--sc-track); }
+.zen-sheet--share .sc-attr {
+  display: block;
+  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  color: var(--sc-muted);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: 1.6;
+}
+.zen-sheet--share .sc-hold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: clamp(16.56px, 4.6154vw, 24.3px) 0 0;
+}
+.zen-sheet--share .sc-hold svg {
+  display: block;
+  flex: none;
+  width: clamp(88.32px, 24.6154vw, 129.6px);
+  height: clamp(88.32px, 24.6154vw, 129.6px);
+  transform: rotate(-90deg);
+}
+/* 持仓默认全展开：两列排开，行数多也不会把卡片撑成一条长柱 */
+.zen-sheet--share .sc-hold-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(5.52px, 1.5385vw, 8.1px) clamp(12.88px, 3.5897vw, 18.9px);
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  text-align: left;
+}
+.zen-sheet--share .sc-hold-legend .co {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.zen-sheet--share .sc-hold-legend > div {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(5.52px, 1.5385vw, 8.1px);
+  color: var(--sc-muted);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+}
+.zen-sheet--share .sc-hold-legend b {
+  display: block;
+  flex: none;
+  align-self: center;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  border-radius: 50%;
+}
+.zen-sheet--share .sc-hold-legend .pc {
+  color: var(--sc-ink);
+  font-weight: 700;
+}
+.zen-sheet--share .sc-hold-legend .is-rest { color: var(--sc-hint); }
+.zen-sheet--share .sc-foot {
+  display: block;
+  margin: clamp(16.56px, 4.6154vw, 24.3px) 0 0;
+  color: var(--sc-hint);
+  font-size: clamp(8.28px, 2.3077vw, 12.15px);
+  font-weight: 600;
+  line-height: clamp(11.96px, 3.3333vw, 17.55px);
+  letter-spacing: clamp(1.84px, 0.5128vw, 2.7px);
+}

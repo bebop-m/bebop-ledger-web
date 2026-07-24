@@ -28,8 +28,9 @@ const CHROME = [
 ].find((p) => existsSync(p));
 
 const argv = Object.fromEntries(process.argv.slice(2).map((a) => {
-  const [k, v] = a.replace(/^--/, '').split('=');
-  return [k, v === undefined ? true : v];
+  const body = a.replace(/^--/, '');
+  const at = body.indexOf('=');
+  return at < 0 ? [body, true] : [body.slice(0, at), body.slice(at + 1)];
 }));
 
 const CFG = {
@@ -206,7 +207,10 @@ function inPageAudit() {
       '.holdings-hero-value', '.holdings-page-name', '.holdings-sec-label', '.stock-name',
       '.zen-sheet-title-text', '.zen-detail-qty strong', '.zen-diag-count', '.zen-edit-field',
       '.divi-hero-value', '.divi-page-name', '.divi-sec-label', '.divi-filter',
-      '.zen-md-head h3', '.zen-md-side strong', '.zen-rc-cur', '.zen-rc-confirm'
+      '.zen-md-head h3', '.zen-md-side strong', '.zen-rc-cur', '.zen-rc-confirm',
+      '.inc-hero-value', '.income-page-name', '.inc-sec-label', '.inc-year-yy',
+      '.ann-hero-value', '.annual-page-name', '.ann-sec-label', '.ann-metrics strong',
+      '.zen-bf-head h3', '.zen-bf-input', '.sc-value', '.sc-label'
     ]
       .map((s) => { const e = root.querySelector(s); return e && vis(e) ? { 选择器: s, 字号: parseFloat(getComputedStyle(e).fontSize) } : null; })
       .filter(Boolean)
@@ -225,7 +229,11 @@ const MODAL_TARGETS = {
   tax: { nav: 'holdings', sel: '[data-action="edit-tax"]' },
   dividendEdit: { nav: 'holdings', sel: '[data-action="edit-dividend"]' },
   monthDetail: { nav: 'dividends', sel: '.divi-ym.has-pay' },
-  dividendReceipt: { nav: 'dividends', sel: '.divi-ym.has-pay', then: '.zen-md-row.is-clickable' }
+  dividendReceipt: { nav: 'dividends', sel: '.divi-ym.has-pay', then: '.zen-md-row.is-clickable' },
+  annual: { nav: 'income', sel: '.inc-year' },
+  annualHoldings: { nav: 'income', sel: '.inc-year', then: '[data-annual-holdings-toggle]' },
+  yearlyManual: { nav: 'income', sel: '[data-income-manual-year]' },
+  annualShare: { nav: 'income', sel: '.inc-year', then: '#annualShareButton' }
 };
 
 async function 打开(browser, theme, w, h) {
