@@ -1,5 +1,5 @@
 import {
-  DEFAULT_RATES, DEFAULT_HOLDINGS, SEED_QUOTES, STORAGE_KEY,
+  DEFAULT_RATES, DEFAULT_HOLDINGS, DEFAULT_DIVIDEND_EVENTS, SEED_QUOTES, STORAGE_KEY,
   LABELS, TOAST_DEFAULT_DURATION_MS, CONFIRM_CLOSE_DELAY_MS,
   PORTFOLIO_SNAPSHOT_VERSION, PAGE_KEYS, LEGACY_PAGE_MAP, DIVIDEND_FILTER_KEYS
 } from './constants.js';
@@ -8,7 +8,8 @@ import {
   sanitizeHolding, sanitizePerShareOverrideInput, normalizeSymbol,
   sanitizeDividendLedgerEntry, sanitizeDailySnapshotEntry,
   sanitizeCashFlowEntry, sanitizeYearlyManualEntry, sanitizeTradeEntry,
-  sanitizeYearlyHoldingsEntry, sanitizeYearlyArchiveEntry, formatDateLabel, resolveEffectivePayDate
+  sanitizeYearlyHoldingsEntry, sanitizeYearlyArchiveEntry, formatDateLabel, resolveEffectivePayDate,
+  buildDividendSourceId
 } from './utils.js';
 
 /* ── Default Quotes (normalized from seed data) ── */
@@ -206,6 +207,44 @@ export function showConfirm(message, options = {}) {
   });
 }
 
+/* 把种子事件表展开成已到账的台账条目。年份补当年；股数取种子持仓的 100 股，
+   金额按默认汇率折 CNY（税率种子里一律未设置，即 0%，与「税率纯手填」一致）。
+   sourceId 走 buildDividendSourceId，好与行情侧的公告条目按同一把钥匙去重。 */
+function buildDefaultDividendLedger(year) {
+  const bySymbol = new Map(DEFAULT_HOLDINGS.map((item) => [item.symbol, item]));
+  return DEFAULT_DIVIDEND_EVENTS.map((event, index) => {
+    const holding = bySymbol.get(event.symbol);
+    if (!holding) return null;
+    const exDate = `${year}-${event.exDate}`;
+    const payDate = `${year}-${event.payDate}`;
+    const shares = safeNumber(holding.quantity, 0);
+    const fxRate = event.currency === 'HKD' ? DEFAULT_RATES.HKD : event.currency === 'USD' ? DEFAULT_RATES.USD : 1;
+    const grossCny = roundMoney(safeNumber(event.amountPerShare, 0) * shares * fxRate);
+    return {
+      id: `seed_div_${index + 1}`,
+      sourceId: buildDividendSourceId({ symbol: event.symbol, exDate, amountPerShare: event.amountPerShare, currency: event.currency }),
+      symbol: event.symbol,
+      exDate,
+      payDate,
+      receivedDate: payDate,
+      amountPerShare: event.amountPerShare,
+      currency: event.currency,
+      shares,
+      sharesSource: 'seed',
+      fxRate,
+      taxRate: 0,
+      grossCny,
+      netCny: grossCny,
+      bucket: holding.bucket === 'income' ? 'income' : 'core',
+      confirmed: true,
+      receiptStatus: 'received',
+      confidence: 'confirmed',
+      note: '',
+      updatedAt: ''
+    };
+  }).filter(Boolean);
+}
+
 /* ── Snapshot & Persistence ── */
 export function createDefaultSnapshot() {
   return {
@@ -227,7 +266,7 @@ export function createDefaultSnapshot() {
     currentCashCny: null,
     currentCashAsOfDate: '',
     positionOpeningDate: '',
-    dividendLedger: [],
+    dividendLedger: buildDefaultDividendLedger(new Date().getFullYear()),
     dailySnapshots: [],
     cashFlows: [],
     trades: [],

@@ -191,9 +191,41 @@ export const SEED_QUOTES = {
   '00816.HK': { name: '金茂服务', market: 'HK', currency: 'HKD', price: 0, dividendPerShareTtm: 0 },
   '513530.SH': { name: '港股通红利ETF', market: 'CN', currency: 'CNY', price: 0, dividendPerShareTtm: 0 },
   '00823.HK': { name: '领展房产基金', market: 'HK', currency: 'HKD', price: 0, dividendPerShareTtm: 0 },
-  '02156.HK': { name: '通力环球', market: 'HK', currency: 'HKD', price: 0, dividendPerShareTtm: 0 }
+  '02156.HK': { name: '通力环球', market: 'HK', currency: 'HKD', price: 0, dividendPerShareTtm: 0 },
+  '01836.HK': { name: '九兴控股', market: 'HK', currency: 'HKD', price: 0, dividendPerShareTtm: 0 },
+  '01023.HK': { name: '时代集团控股', market: 'HK', currency: 'HKD', price: 0, dividendPerShareTtm: 0 },
+  '09926.HK': { name: '康方生物', market: 'HK', currency: 'HKD', price: 0, dividendPerShareTtm: 0 },
+  '00777.HK': { name: '网龙', market: 'HK', currency: 'HKD', price: 0, dividendPerShareTtm: 0 }
 };
 
+/* 种子股息台账：上半年的真实派息事件（取自 data/market.json 的历史记录），
+   一律标为已到账。空账本首屏因此有真实的「已到账 / 在途 / 预估」三段构成，
+   而不是整条线都压在预估上。
+   只记月-日：年份在 createDefaultSnapshot 里补当年，跨年后不至于变成一片空白
+   （代价是次年沿用上一年的每股金额，种子数据够用即可）。 */
+export const DEFAULT_DIVIDEND_EVENTS = [
+  { symbol: '513530.SH', exDate: '01-21', payDate: '01-21', amountPerShare: 0.01, currency: 'CNY' },
+  { symbol: '000651.SZ', exDate: '01-23', payDate: '01-23', amountPerShare: 1, currency: 'CNY' },
+  { symbol: '513530.SH', exDate: '02-26', payDate: '02-26', amountPerShare: 0.01, currency: 'CNY' },
+  { symbol: '513530.SH', exDate: '03-23', payDate: '03-23', amountPerShare: 0.01, currency: 'CNY' },
+  { symbol: '600177.SH', exDate: '03-27', payDate: '03-27', amountPerShare: 0.08, currency: 'CNY' },
+  { symbol: '513530.SH', exDate: '04-20', payDate: '04-20', amountPerShare: 0.01, currency: 'CNY' },
+  { symbol: '09618.HK', exDate: '04-08', payDate: '04-23', amountPerShare: 3.9209, currency: 'HKD' },
+  { symbol: '01023.HK', exDate: '03-26', payDate: '04-27', amountPerShare: 0.02, currency: 'HKD' },
+  { symbol: '513530.SH', exDate: '05-18', payDate: '05-18', amountPerShare: 0.01, currency: 'CNY' },
+  { symbol: '01995.HK', exDate: '05-15', payDate: '05-29', amountPerShare: 0.1029, currency: 'HKD' },
+  { symbol: '00700.HK', exDate: '05-15', payDate: '06-01', amountPerShare: 5.3, currency: 'HKD' },
+  { symbol: '600177.SH', exDate: '06-05', payDate: '06-05', amountPerShare: 0.2, currency: 'CNY' },
+  { symbol: '01836.HK', exDate: '05-19', payDate: '06-05', amountPerShare: 0.93, currency: 'HKD' },
+  { symbol: '513530.SH', exDate: '06-15', payDate: '06-15', amountPerShare: 0.01, currency: 'CNY' },
+  { symbol: '02156.HK', exDate: '05-29', payDate: '06-17', amountPerShare: 0.2, currency: 'HKD' },
+  { symbol: '600519.SH', exDate: '06-26', payDate: '06-26', amountPerShare: 28.02423, currency: 'CNY' },
+  { symbol: '000333.SZ', exDate: '06-29', payDate: '06-29', amountPerShare: 3.8, currency: 'CNY' }
+];
+
+/* 种子持仓 = 私有仓 data/portfolio.json 的公司清单，股数一律 100。
+   真实持仓量属私有数据，不进公开仓库；这里只用来让空账本一进来就有像样的构图。
+   符号本身已公开在 data/watchlist.json / data/market.json 里。 */
 export const DEFAULT_HOLDINGS = [
   { localId: 1, symbol: '00700.HK', quantity: 100, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
   { localId: 2, symbol: '600519.SH', quantity: 100, bucket: 'core', taxRateOverride: '', dividendPerShareTtmOverride: '' },
@@ -213,7 +245,10 @@ export const DEFAULT_HOLDINGS = [
   { localId: 16, symbol: '01995.HK', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
   { localId: 17, symbol: '03316.HK', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
   { localId: 18, symbol: '00816.HK', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
-  { localId: 19, symbol: '513530.SH', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
-  { localId: 20, symbol: '00823.HK', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
-  { localId: 21, symbol: '02156.HK', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' }
+  { localId: 19, symbol: '02156.HK', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 20, symbol: '01836.HK', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 21, symbol: '01023.HK', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 22, symbol: '09926.HK', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 23, symbol: '513530.SH', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' },
+  { localId: 24, symbol: '00777.HK', quantity: 100, bucket: 'income', taxRateOverride: '', dividendPerShareTtmOverride: '' }
 ];
