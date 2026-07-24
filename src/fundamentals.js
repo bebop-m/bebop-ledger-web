@@ -2,10 +2,10 @@
    数据来自 data/fundamentals.json（scripts/update_fundamentals.py 每日复核年报口径数据）。
    本模块自持 DOM 容器，懒加载 + localStorage 离线缓存。 */
 import { state, refs } from './state.js';
-import { safeNumber, escapeHtml, formatDateLabel } from './utils.js';
+import { safeNumber, escapeHtml, formatDateLabel, resolveFxRate, resolveQuoteCurrency } from './utils.js';
 import { computeHoldings, inferQuote } from './compute.js';
 import { FUNDAMENTALS_ENDPOINT } from './constants.js';
-import { getNextReportEvent } from './report-calendar.js';
+import { getUpcomingReportEvents } from './report-calendar.js';
 
 const CACHE_KEY = 'bopup-fundamentals-cache-v1';
 
@@ -304,102 +304,6 @@ export function getPortfolioReturnSummary() {
   };
 }
 
-const CHART_W = 720;
-const CHART_H = 170;
-const CHART_PAD_X = 34;
-const CHART_PAD_TOP = 26;
-const CHART_PAD_BOTTOM = 14;
-
-function roundSvg(value) { return Math.round(value * 100) / 100; }
-
-/* 单指标线图：横轴用全量年份序列（四张图对齐），纵轴含 0 基线；点上标数值。 */
-function buildMetricChartSvg(rows, metric) {
-  const points = [];
-  rows.forEach((row, index) => {
-    if (isFiniteValue(row[metric.key])) points.push({ index, value: Number(row[metric.key]) });
-  });
-  if (points.length < 2) return '';
-  const values = points.map((point) => point.value);
-  const minValue = Math.min(0, ...values);
-  const maxValue = Math.max(0, ...values);
-  const range = maxValue === minValue ? 1 : maxValue - minValue;
-  const innerW = CHART_W - CHART_PAD_X * 2;
-  const innerH = CHART_H - CHART_PAD_TOP - CHART_PAD_BOTTOM;
-  const total = rows.length;
-  const toX = (index) => (total <= 1 ? CHART_W / 2 : CHART_PAD_X + (innerW * index) / (total - 1));
-  const toY = (value) => CHART_PAD_TOP + ((maxValue - value) / range) * innerH;
-  const zeroY = roundSvg(toY(0));
-  const coords = points.map((point) => ({ x: roundSvg(toX(point.index)), y: roundSvg(toY(point.value)), value: point.value }));
-  const polyline = coords.map((c) => `${c.x},${c.y}`).join(' ');
-  const circles = coords.map((c, i) => `<circle cx="${c.x}" cy="${c.y}" r="${i === coords.length - 1 ? 4 : 3}"></circle>`).join('');
-  const labels = coords.map((c, i) => {
-    const anchor = c.x < CHART_PAD_X + 20 ? 'start' : c.x > CHART_W - CHART_PAD_X - 20 ? 'end' : 'middle';
-    return `<text x="${c.x}" y="${Math.max(11, c.y - 9)}" text-anchor="${anchor}"${i === coords.length - 1 ? ' class="is-latest"' : ''}>${escapeHtml(formatMetricValue(c.value, metric.kind))}</text>`;
-  }).join('');
-  return `<svg class="fund-chart-svg" viewBox="0 0 ${CHART_W} ${CHART_H}" role="img" aria-label="${escapeHtml(metric.label)}历年走势">
-    <line class="fund-chart-zero" x1="${CHART_PAD_X - 6}" x2="${CHART_W - CHART_PAD_X + 6}" y1="${zeroY}" y2="${zeroY}"></line>
-    <g class="fund-chart-series"><polyline points="${polyline}"></polyline>${circles}</g>
-    <g class="fund-chart-labels">${labels}</g>
-  </svg>`;
-}
-
-function getLatestPair(rows, key) {
-  const values = rows
-    .map((row) => ({ year: row.year, value: row[key] }))
-    .filter((item) => isFiniteValue(item.value));
-  return {
-    latest: values.length ? values[values.length - 1] : null,
-    previous: values.length > 1 ? values[values.length - 2] : null
-  };
-}
-
-function buildMetricCard(rows, metric) {
-  const { latest, previous } = getLatestPair(rows, metric.key);
-  if (!latest) {
-    return `<section class="fund-card is-empty">
-      <header class="fund-card-head"><span class="fund-card-label">${escapeHtml(metric.label)}</span></header>
-      <p class="fund-card-empty">暂无数据</p>
-    </section>`;
-  }
-  let trendHtml = '';
-  if (previous && !metric.noTrend) {
-    // 百分比类指标看百分点差（pp）；金额类看相对变化。
-    const isPercent = metric.kind === 'percent';
-    const delta = isPercent
-      ? Number(latest.value) - Number(previous.value)
-      : (Number(previous.value) !== 0
-        ? (Number(latest.value) - Number(previous.value)) / Math.abs(Number(previous.value))
-        : null);
-    if (delta !== null && Number.isFinite(delta)) {
-      const up = delta > 0;
-      // 负债率上升不是好事，用中性色；其余指标涨=红、跌=绿（A 股习惯）。
-      const toneClass = metric.neutralTrend ? 'is-flat' : (up ? 'is-gain' : (delta < 0 ? 'is-loss' : 'is-flat'));
-      trendHtml = `<span class="fund-card-trend ${toneClass}">${up ? '+' : ''}${(delta * 100).toFixed(1)}${isPercent ? 'pp' : '%'} <small>同比</small></span>`;
-    }
-  }
-  let companionHtml = '';
-  if (metric.companion) {
-    const { latest: companionLatest } = getLatestPair(rows, metric.companion.key);
-    if (companionLatest) {
-      companionHtml = `<div class="fund-card-companion">
-        <span>${escapeHtml(metric.companion.label)}${metric.companion.hint ? ` <small>${escapeHtml(metric.companion.hint)}</small>` : ''}</span>
-        <strong>${escapeHtml(formatMetricValue(companionLatest.value, metric.companion.kind))}${companionLatest.year !== latest.year ? ` <small>${companionLatest.year}</small>` : ''}</strong>
-      </div>`;
-    }
-  }
-  const chart = buildMetricChartSvg(rows, metric);
-  return `<section class="fund-card">
-    <header class="fund-card-head">
-      <span class="fund-card-label">${escapeHtml(metric.label)}${metric.unit ? ` <small>${escapeHtml(metric.unit)}</small>` : ''}</span>
-      <span class="fund-card-latest"><strong>${escapeHtml(formatMetricValue(latest.value, metric.kind))}</strong><small>${latest.year}</small></span>
-      ${trendHtml}
-    </header>
-    ${companionHtml}
-    ${chart || '<p class="fund-card-empty">数据点不足，暂不画线</p>'}
-    <div class="fund-chart-years">${rows.map((row) => `<span>${String(row.year).slice(2)}</span>`).join('')}</div>
-  </section>`;
-}
-
 /* 派生指标：股息率 = 当年常规派息 ÷ 当年均价（同币种，剔除股价单点噪声）；
    EPS增速 = 同比。当前年派息只是「至今」，股息率会误导，置空。 */
 function enrichYearRows(allRows, currentYear) {
@@ -424,133 +328,262 @@ function buildCompanyMetrics(company) {
     .filter((row) => row && safeNumber(row.year, 0) > 0)
     .slice()
     .sort((a, b) => a.year - b.year), currentYear);
-  // 当前年份的股息只是「至今」累计，进线图会误导趋势判断，只在表格里展示。
-  const rows = allRows.filter((row) => row.year < currentYear);
-  // companion：主指标之外的同框架附属读数（如每股股息旁边的股息率）。
   const metrics = [
-    { key: 'dividendPerShare', label: '每股股息', unit: company.currency, kind: 'money',
-      companion: { key: 'dividendYield', label: '股息率', hint: '常规派息 ÷ 当年均价', kind: 'percent' } },
-    { key: 'payoutRatio', label: '分红率', unit: '股息 / 当期净利', kind: 'percent' },
-    { key: 'debtRatio', label: '负债率', unit: '总负债 / 总资产', kind: 'percent', neutralTrend: true },
-    // 增速本身就是同比，再叠一个「同比的同比」没有意义，关掉趋势角标。
-    { key: 'epsGrowth', label: 'EPS增速', unit: '同比', kind: 'percent', noTrend: true,
-      companion: { key: 'eps', label: 'EPS', hint: company.statementCurrency || company.currency, kind: 'money' } }
+    { key: 'dividendPerShare', label: '每股股息', kind: 'money' },
+    { key: 'dividendYield', label: '股息率', kind: 'percent' },
+    { key: 'eps', label: 'EPS', kind: 'money' },
+    { key: 'payoutRatio', label: '分红率', kind: 'percent' },
+    { key: 'debtRatio', label: '负债率', kind: 'percent' }
   ];
-  return { rows, allRows, metrics, currentYear };
-}
-
-function buildCompanySummary(company, rows) {
-  const parts = [];
-  const dpsStreak = getGrowthStreak(rows, 'dividendPerShare');
-  if (dpsStreak >= 1) parts.push(`股息连续 ${dpsStreak} 年提升`);
-  const { latest: payout } = getLatestPair(rows, 'payoutRatio');
-  if (payout) parts.push(`最新分红率 ${formatMetricValue(payout.value, 'percent')}`);
-  const { latest: debt } = getLatestPair(rows, 'debtRatio');
-  if (debt) parts.push(`负债率 ${formatMetricValue(debt.value, 'percent')}`);
-  const yieldRank = getDividendYieldPercentile(company.symbol);
-  if (yieldRank) parts.push(`现价股息率高于过去 ${yieldRank.years} 年中 ${Math.round(yieldRank.percentile * 100)}% 的年份`);
-  return parts.join(' · ');
+  return { allRows, metrics, currentYear };
 }
 
 function buildCompanyTable(allRows, metrics, currentYear) {
   if (!allRows.length) return '';
-  const head = `<div class="fund-table-row fund-table-head" role="row">
+  const head = `<div class="fu-table-row is-head" role="row">
     <div>年份</div>${metrics.map((metric) => `<div>${escapeHtml(metric.label)}</div>`).join('')}
   </div>`;
-  const body = allRows.slice().reverse().map((row) => `<div class="fund-table-row" role="row">
+  const body = allRows.slice().reverse().map((row) => `<div class="fu-table-row" role="row">
     <div class="is-year">${row.year}${row.year === currentYear ? '<small>至今</small>' : ''}</div>
     ${metrics.map((metric) => `<div>${escapeHtml(formatMetricValue(row[metric.key], metric.kind))}</div>`).join('')}
   </div>`).join('');
-  return `<section class="fund-table" role="table" aria-label="历年基本面数据">${head}${body}</section>`;
+  return `<div class="fu-table" role="table" aria-label="历年基本面数据">${head}${body}</div>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   17-公司基本面 · 按 designs/禅意UI/17-公司基本面/定稿图.html 重排
+   速览置顶 → 公司名 → 公式块 → 估值节 → 两张线图 → 折叠明细 → 财报日历。
+   ══════════════════════════════════════════════════════════════════ */
+
+/* 速览横滑条：所有能算出历史经营回报的公司，按回报降序。
+   同时给公式块的「N 家中第 M」当排名底稿。 */
+export function getFundamentalsRankModel() {
+  const { holdings, others } = getGroupedCompanies();
+  return holdings.concat(others)
+    .map((company) => {
+      const model = getCompanyReturnModel(company.symbol);
+      return model && model.historicalReturn !== null
+        ? { symbol: company.symbol, name: getCompanyDisplayName(company), historicalReturn: model.historicalReturn }
+        : null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.historicalReturn - a.historicalReturn);
+}
+
+/* 市盈率与历史分位：现价 ÷ 最新完整年度 EPS。
+   股价与财报常不同币种（如港股报价 HKD、财报 CNY），两端各自折成人民币后再相除；
+   历史序列用「当年均价 ÷ 当年 EPS」同一折算因子，分位可比。
+   少于 5 个完整年度就只显值不画尺（口径与股息率分位一致）。 */
+export function getPeValuation(symbol) {
+  const company = _data && _data.companies ? _data.companies[symbol] : null;
+  if (!company || !Array.isArray(company.years)) return null;
+  const quote = inferQuote(symbol);
+  const price = safeNumber(quote.price, 0);
+  const priceFx = resolveFxRate(company.currency || resolveQuoteCurrency(quote, symbol), state.rates);
+  const epsFx = resolveFxRate(company.statementCurrency || company.currency, state.rates);
+  if (price <= 0 || priceFx <= 0 || epsFx <= 0) return null;
+  const currentYear = new Date().getFullYear();
+  const rows = company.years
+    .filter((row) => row && safeNumber(row.year, 0) > 0 && row.year < currentYear)
+    .slice()
+    .sort((a, b) => a.year - b.year);
+  const epsRows = rows.filter((row) => safeNumber(row.eps, 0) > 0);
+  if (!epsRows.length) return null;
+  const latestEps = safeNumber(epsRows[epsRows.length - 1].eps, 0);
+  const pe = (price * priceFx) / (latestEps * epsFx);
+  if (!Number.isFinite(pe) || pe <= 0) return null;
+  const series = epsRows
+    .filter((row) => safeNumber(row.avgPrice, 0) > 0)
+    .map((row) => (safeNumber(row.avgPrice, 0) * priceFx) / (safeNumber(row.eps, 0) * epsFx))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  if (series.length < 5) return { symbol, pe, percentile: null, years: series.length };
+  const below = series.filter((value) => value < pe).length;
+  return { symbol, pe, percentile: below / series.length, years: series.length };
+}
+
+function formatPercentValue(value, digits = 1) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
+  return `${(Number(value) * 100).toFixed(digits)}%`;
 }
 
 function formatSignedPercent(value) {
   return `${(value * 100).toFixed(1)}%`;
 }
 
-/* 公式结论行：自动选择净利润桥或 EPS 直接法，避免重复计算回购。 */
-function buildFormulaBlock(company) {
+/* ── 顶部：速览横滑条 + 公司名 ── */
+function buildRankTrack(rank, symbol) {
+  if (rank.length < 2) return '';
+  return `<div class="fu-rank">${rank.map((item) => `<button class="fu-rank-item${item.symbol === symbol ? ' is-active' : ''}" type="button" data-fund-symbol="${escapeHtml(item.symbol)}">
+      <span>${escapeHtml(item.name)}</span>
+      <strong>${escapeHtml(formatPercentValue(item.historicalReturn))}</strong>
+      <i class="fu-rank-dot" aria-hidden="true"></i>
+    </button>`).join('')}</div>`;
+}
+
+function buildCompanyHead(company, totalCount) {
+  return `<div class="fu-co">
+      <button class="fu-co-name" type="button" data-fund-picker-open aria-haspopup="dialog">${escapeHtml(getCompanyDisplayName(company))}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5 12 15l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+      <p class="fu-co-sub">${escapeHtml(company.symbol)} · 股息按 ${escapeHtml(company.currency)}/股 · 财报币种 ${escapeHtml(company.statementCurrency || company.currency)} · 全部 ${totalCount} 家</p>
+    </div>`;
+}
+
+/* ── 公式块：股息 + 增长（+ 净回购）── */
+function buildFormulaSection(company, rank) {
   const model = getCompanyReturnModel(company.symbol);
   if (!model) return '';
-  const notes = [];
-  if (model.dividendYear) {
-    notes.push(`股息按 ${model.dividendYear} 年常规派息 ÷ 现价${model.specialExcluded ? '，已剔除特别股息' : ''}`);
-  } else {
-    notes.push('近两年无派息，股息按 0 计');
-  }
-  if (model.mode === 'profitBridge') {
-    notes.push(`净利润 ${model.growthSpan} 年年化`);
-    notes.push(`净回购按总股本 ${model.buybackSpan} 年变化`);
-  } else {
-    notes.push(model.growthRate === null ? 'EPS 增速暂不可算' : `EPS ${model.growthSpan} 年年化，已包含回购影响`);
-  }
-  const confidenceLabel = model.confidence === 'high' ? '高' : model.confidence === 'medium' ? '中' : '低';
-  notes.push(`置信度 ${confidenceLabel}：${model.confidenceReason}`);
-  notes.push('历史参考，不是未来预测');
   const parts = [
-    { label: '股息率', value: model.dividendYield, tone: 'iris' },
-    { label: model.mode === 'profitBridge' ? '净利润增长' : 'EPS 增长', value: model.growthRate, tone: 'iris-soft' }
+    { key: 'divi', label: '股息率', value: model.dividendYield },
+    { key: 'growth', label: model.mode === 'profitBridge' ? '净利润增长' : 'EPS 增长', value: model.growthRate }
   ];
-  if (model.mode === 'profitBridge') parts.push({ label: '净回购', value: model.netBuybackYield, tone: 'ink' });
+  if (model.mode === 'profitBridge') parts.push({ key: 'buyback', label: '净回购', value: model.netBuybackYield });
   const denominator = parts.reduce((sum, item) => sum + Math.abs(safeNumber(item.value, 0)), 0) || 1;
-  return `<div class="fund-formula ledger-fund-focus">
-    <span class="ledger-eyebrow">历史经营回报参考</span>
-    <strong class="fund-formula-total${model.historicalReturn === null ? ' is-empty' : ''}">${model.historicalReturn === null ? '—' : `≈ ${formatSignedPercent(model.historicalReturn)}`}</strong>
-    <p class="fund-formula-note">股息 + 增长${model.mode === 'profitBridge' ? ' + 净回购' : ''} · 历史参考，并非未来预测</p>
-    <div class="fund-return-stack">${parts.map((item) => `<i class="is-${item.tone}" style="width:${(Math.abs(safeNumber(item.value, 0)) / denominator * 100).toFixed(2)}%"></i>`).join('')}</div>
-    <div class="fund-return-rows">${parts.map((item) => `<div><span><i class="is-${item.tone}"></i>${item.label}</span><strong>${item.value === null ? '—' : formatSignedPercent(item.value)}</strong></div>`).join('')}</div>
-    <p class="fund-method-note">${escapeHtml(notes.join(' · '))}</p>
-  </div>`;
+  const confidenceLabel = model.confidence === 'high' ? '高' : model.confidence === 'medium' ? '中' : '低';
+  const dividendNote = model.dividendYear
+    ? `股息按 ${model.dividendYear} 年常规派息 ÷ 现价${model.specialExcluded ? '，已剔除特别股息' : ''}`
+    : '近两年无派息，股息按 0 计';
+  const growthNote = model.mode === 'profitBridge'
+    ? `净利润 ${model.growthSpan} 年年化 · 股本 ${model.buybackSpan} 年变化 · 置信度 ${confidenceLabel}`
+    : `EPS ${model.growthSpan} 年年化，已含回购 · 置信度 ${confidenceLabel}`;
+  const portfolioRate = getPortfolioReturnSummary().all;
+  const index = rank.findIndex((item) => item.symbol === company.symbol);
+  const anchorParts = [];
+  if (portfolioRate !== null) anchorParts.push(`组合加权 <strong>${escapeHtml(formatPercentValue(portfolioRate))}/年</strong>`);
+  if (index >= 0 && rank.length > 1) anchorParts.push(`本公司列 ${rank.length} 家中第 ${index + 1}`);
+  return `<section class="fu-formula">
+      <span class="fu-f-label">历史经营回报参考</span>
+      <strong class="fu-f-value">${model.historicalReturn === null ? '—' : `≈ ${escapeHtml(formatSignedPercent(model.historicalReturn))}`}<em>/年</em></strong>
+      <p class="fu-f-note">股息 + 增长${model.mode === 'profitBridge' ? ' + 净回购' : ''} · 历史参考，并非未来预测</p>
+      <div class="fu-f-stack">${parts.map((item) => `<i class="is-${item.key}" style="width:${(Math.abs(safeNumber(item.value, 0)) / denominator * 100).toFixed(2)}%"></i>`).join('')}</div>
+      <div class="fu-f-rows">${parts.map((item) => `<div><b class="is-${item.key}"></b><span>${escapeHtml(item.label)}</span><small></small><strong>${item.value === null ? '—' : escapeHtml(formatSignedPercent(item.value))}</strong></div>`).join('')}</div>
+      <p class="fu-f-method">${escapeHtml(dividendNote)}<br>${escapeHtml(growthNote)}</p>
+      ${anchorParts.length ? `<p class="fu-f-anchor">${anchorParts.join(' · ')}</p>` : ''}
+    </section>`;
 }
 
-function buildDividendBars(company, visible) {
-  const available = visible.filter((row) => row.dividendPerShare !== null && row.dividendPerShare !== undefined);
-  if (!available.length) return '';
-  const max = Math.max(1, ...available.map((row) => Math.abs(safeNumber(row.dividendPerShare, 0))));
-  const latest = available[available.length - 1];
-  const growthStreak = getGrowthStreak(visible, 'dividendPerShare');
-  return `<section class="fund-eps-section fund-dividend-section">
-    <div class="fund-eps-head"><p class="ledger-eyebrow">每股分红</p><strong class="fund-bar-latest">${escapeHtml(formatMetricValue(latest.dividendPerShare, 'money'))} ${escapeHtml(company.currency)}<small>股息率 ${escapeHtml(formatMetricValue(latest.dividendYield, 'percent'))}</small></strong></div>
-    <div class="fund-eps-bars">${visible.map((row, index) => {
-      const hasValue = row.dividendPerShare !== null && row.dividendPerShare !== undefined;
-      const height = hasValue ? Math.max(4, Math.abs(safeNumber(row.dividendPerShare, 0)) / max * 72) : 0;
-      return `<span><b>${hasValue ? escapeHtml(formatMetricValue(row.dividendPerShare, 'money')) : '—'}</b><span class="fund-bar-column"><i style="height:${height.toFixed(1)}px" class="${index === visible.length - 1 && hasValue ? 'is-current' : ''}${hasValue ? '' : ' is-empty'}"></i></span><small>${row.year}</small></span>`;
-    }).join('')}</div>
-    <div class="fund-eps-stats fund-eps-stats--dividend">
-      <div><span>特别股息</span><strong>${escapeHtml(formatMetricValue(latest.specialDividendPerShare, 'money'))}</strong></div>
-      <div><span>连续增长</span><strong>${growthStreak > 0 ? `${growthStreak} 年` : '—'}</strong></div>
-    </div>
-  </section>`;
+/* ── 估值节：两根「贵 ⇄ 便宜」标尺 ──
+   两个指标方向已统一为「点越靠右越便宜」：股息率高＝便宜，市盈率低＝便宜，
+   所以 PE 的点位取 100 − 分位。端点半径占 3.5px，落位夹在 [3%, 97%] 免得压出边界。 */
+function buildScaleRow(label, valueText, model) {
+  const scale = model.percentile === null ? '' : `<div class="fu-val-scale"><i style="left:${model.position.toFixed(1)}%"></i></div>
+      <div class="fu-val-ends"><span>贵</span><span>便宜</span></div>`;
+  const aside = model.percentile === null
+    ? `<span class="fu-val-p">${escapeHtml(model.emptyNote)}</span>`
+    : `<span class="fu-val-p">${Math.round(model.percentile * 100)}% 分位 · <strong class="${model.cheap ? 'is-cheap' : ''}">${escapeHtml(model.word)}</strong></span>`;
+  return `<div class="fu-val-row">
+      <div class="fu-val-main"><span>${escapeHtml(label)} <span class="fu-val-v">${escapeHtml(valueText)}</span></span>${aside}</div>
+      ${scale}
+    </div>`;
 }
 
-function buildEpsLedger(company, visible) {
-  const available = visible.filter((row) => row.eps !== null && row.eps !== undefined);
+function buildValuationSection(company) {
+  const rows = [];
+  const pe = getPeValuation(company.symbol);
+  if (pe) {
+    const percentile = pe.percentile;
+    rows.push(buildScaleRow('市盈率', `${pe.pe.toFixed(1)} 倍`, {
+      percentile,
+      position: percentile === null ? 50 : Math.min(97, Math.max(3, (1 - percentile) * 100)),
+      cheap: percentile !== null && percentile <= 0.3,
+      word: percentile === null ? '' : percentile <= 0.3 ? '偏低' : percentile >= 0.7 ? '偏高' : '居中',
+      emptyNote: '历史价序列不足，暂不排分位'
+    }));
+  }
+  const yieldRank = getDividendYieldPercentile(company.symbol);
+  if (yieldRank) {
+    const percentile = yieldRank.percentile;
+    rows.push(buildScaleRow('股息率', formatPercentValue(yieldRank.currentYield), {
+      percentile,
+      position: Math.min(97, Math.max(3, percentile * 100)),
+      cheap: percentile >= 0.7,
+      word: percentile >= 0.7 ? '偏便宜' : percentile <= 0.3 ? '偏贵' : '居中',
+      emptyNote: ''
+    }));
+  }
+  if (!rows.length) return '';
+  const years = Math.max(pe ? pe.years : 0, yieldRank ? yieldRank.years : 0);
+  return `<section class="fu-val">
+      <div class="fu-sec-head"><span class="fu-sec-label">估值</span><span class="fu-sec-aside">近 ${years} 年分位 · 点越靠右越便宜</span></div>
+      <div class="fu-val-rows">${rows.join('')}</div>
+    </section>`;
+}
+
+/* ── 两张线图：min–max 自适应量程（非零基线），逐点标值，当年点加大加深 ── */
+const LINE_W = 338;
+const LINE_TOP = 16;
+const LINE_BOTTOM = 66;
+const LINE_PAD_X = 44;
+
+function roundSvg(value) { return Math.round(value * 100) / 100; }
+
+function buildZenLineSvg(points, tone, ariaLabel) {
+  if (points.length < 2) return '';
+  const values = points.map((point) => point.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max === min ? 1 : max - min;
+  const inner = LINE_W - LINE_PAD_X * 2;
+  const toX = (index) => roundSvg(LINE_PAD_X + (inner * index) / (points.length - 1));
+  const toY = (value) => roundSvg(max === min
+    ? (LINE_TOP + LINE_BOTTOM) / 2
+    : LINE_TOP + ((max - value) / span) * (LINE_BOTTOM - LINE_TOP));
+  const coords = points.map((point, index) => ({ ...point, x: toX(index), y: toY(point.value) }));
+  const last = coords.length - 1;
+  return `<div class="fu-line is-${tone}">
+      <svg viewBox="0 0 ${LINE_W} 92" role="img" aria-label="${escapeHtml(ariaLabel)}">
+        <polyline points="${coords.map((c) => `${c.x},${c.y}`).join(' ')}"></polyline>
+        ${coords.map((c, i) => `<circle cx="${c.x}" cy="${c.y}" r="${i === last ? 3.2 : 2.4}"></circle>`).join('')}
+        ${coords.map((c, i) => `<text x="${c.x}" y="${roundSvg(c.y - (i === last ? 7 : 8))}" text-anchor="middle"${i === last ? ' class="is-current"' : ''}>${escapeHtml(c.text)}</text>`).join('')}
+        ${coords.map((c, i) => `<text x="${c.x}" y="88" text-anchor="middle" class="yr${i === last ? ' is-current' : ''}">${c.year}</text>`).join('')}
+      </svg>
+    </div>`;
+}
+
+function buildDividendLine(company, visible) {
+  const points = visible
+    .filter((row) => isFiniteValue(row.dividendPerShare))
+    .map((row) => ({ year: row.year, value: Number(row.dividendPerShare), text: formatMetricValue(row.dividendPerShare, 'money') }));
+  if (!points.length) return '';
+  const latest = visible.filter((row) => isFiniteValue(row.dividendPerShare)).slice(-1)[0];
+  const streak = getGrowthStreak(visible, 'dividendPerShare');
+  return `<section class="fu-bars">
+      <div class="fu-sec-head"><span class="fu-sec-label">每股分红</span><span class="fu-latest">${escapeHtml(formatMetricValue(latest.dividendPerShare, 'money'))} ${escapeHtml(company.currency)}<small>股息率 ${escapeHtml(formatMetricValue(latest.dividendYield, 'percent'))}</small></span></div>
+      ${buildZenLineSvg(points, 'gold', '每股分红历年走势')}
+      <p class="fu-bar-stats"><span>特别股息 <strong>${escapeHtml(formatMetricValue(latest.specialDividendPerShare, 'money'))}</strong></span><span>连续增长 <strong>${streak > 0 ? `${streak} 年` : '—'}</strong></span></p>
+    </section>`;
+}
+
+function buildEpsLine(company, visible) {
+  const available = visible.filter((row) => isFiniteValue(row.eps));
   if (!available.length) return '';
-  const max = Math.max(1, ...available.map((row) => Math.abs(safeNumber(row.eps, 0))));
+  const points = available.map((row) => ({ year: row.year, value: Number(row.eps), text: formatMetricValue(row.eps, 'money') }));
   const latest = available[available.length - 1];
   const previous = available.length > 1 ? available[available.length - 2] : null;
-  const latestGrowth = previous && safeNumber(previous.eps, 0) !== 0
+  const growth = previous && safeNumber(previous.eps, 0) !== 0
     ? (safeNumber(latest.eps, 0) - safeNumber(previous.eps, 0)) / Math.abs(safeNumber(previous.eps, 0))
     : null;
-  const growthTone = latestGrowth === null ? 'is-flat' : latestGrowth > 0 ? 'is-gain' : latestGrowth < 0 ? 'is-loss' : 'is-flat';
-  const growthText = latestGrowth === null ? '' : `${latestGrowth > 0 ? '+' : latestGrowth < 0 ? '−' : ''}${Math.abs(latestGrowth * 100).toFixed(1)}%`;
-  const nextReport = getNextReportEvent(company.symbol);
-  const nextReportDate = nextReport && nextReport.reportDate
-    ? `${String(Number(nextReport.reportDate.slice(5, 7))).padStart(2, '0')}/${String(Number(nextReport.reportDate.slice(8, 10))).padStart(2, '0')}`
-    : '—';
-  return `<section class="fund-eps-section">
-    <div class="fund-eps-head"><p class="ledger-eyebrow">EPS 每股收益</p><strong class="fund-bar-latest ${growthTone}">${growthText ? escapeHtml(growthText) : '—'}<small>EPS ${escapeHtml(formatMetricValue(latest.eps, 'money'))} ${escapeHtml(company.statementCurrency || company.currency)}</small></strong></div>
-    <div class="fund-eps-bars">${visible.map((row, index) => {
-      const hasValue = row.eps !== null && row.eps !== undefined;
-      const height = hasValue ? Math.max(4, Math.abs(safeNumber(row.eps, 0)) / max * 72) : 0;
-      return `<span><b>${hasValue ? escapeHtml(formatMetricValue(row.eps, 'money')) : '—'}</b><span class="fund-bar-column"><i style="height:${height.toFixed(1)}px" class="${index === visible.length - 1 && hasValue ? 'is-current' : ''}${hasValue ? '' : ' is-empty'}"></i></span><small>${row.year}</small></span>`;
-    }).join('')}</div>
-    <div class="fund-eps-stats">
-      <div><span>分红率</span><strong>${escapeHtml(formatMetricValue(latest.payoutRatio, 'percent'))}</strong></div>
-      <div><span>负债率</span><strong>${escapeHtml(formatMetricValue(latest.debtRatio, 'percent'))}</strong></div>
-    </div>
-    ${nextReportDate === '—' ? '' : `<p class="fund-chart-note">下场财报 ${escapeHtml(nextReportDate)}</p>`}
-  </section>`;
+  // 红涨绿跌覆盖到这一行的百分比：EPS 涨用 up、跌用 down，与全局同一套语义。
+  const tone = growth === null ? '' : growth > 0 ? ' is-up' : growth < 0 ? ' is-down' : '';
+  const growthText = growth === null ? '—' : `${growth > 0 ? '+' : growth < 0 ? '−' : ''}${Math.abs(growth * 100).toFixed(1)}%`;
+  return `<section class="fu-bars">
+      <div class="fu-sec-head"><span class="fu-sec-label">EPS 每股收益</span><span class="fu-latest${tone}">${escapeHtml(growthText)}<small>EPS ${escapeHtml(formatMetricValue(latest.eps, 'money'))} ${escapeHtml(company.statementCurrency || company.currency)}</small></span></div>
+      ${buildZenLineSvg(points, 'ink', 'EPS 历年走势')}
+      <p class="fu-bar-stats"><span>分红率 <strong>${escapeHtml(formatMetricValue(latest.payoutRatio, 'percent'))}</strong></span><span>负债率 <strong>${escapeHtml(formatMetricValue(latest.debtRatio, 'percent'))}</strong></span></p>
+    </section>`;
+}
+
+/* ── 财报日历：未来 90 天的持仓财报，当前公司整行金色，点其他行切公司 ── */
+function buildCalendarSection(symbol) {
+  const events = getUpcomingReportEvents({ withinDays: 90 }).slice(0, 6);
+  const body = events.length
+    ? `<div class="fu-cal-rows">${events.map((event) => `<button class="fu-cal-row${event.symbol === symbol ? ' is-self' : ''}" type="button" data-report-symbol="${escapeHtml(event.symbol)}">
+        <span>${String(Number(event.reportDate.slice(5, 7))).padStart(2, '0')}/${String(Number(event.reportDate.slice(8, 10))).padStart(2, '0')} <strong>${escapeHtml(event.name)}</strong></span>
+        <span class="fu-cal-type">${escapeHtml(event.reportType)}</span>
+      </button>`).join('')}</div>`
+    : '<p class="fu-cal-empty">未来 90 天暂未收录持仓财报日期</p>';
+  return `<section class="fu-cal">
+      <div class="fu-sec-head"><span class="fu-sec-label">财报日历</span><span class="fu-sec-aside">点公司切换</span></div>
+      ${body}
+    </section>`;
 }
 
 function getEmptyStateMarkup() {
@@ -561,15 +594,6 @@ function getEmptyStateMarkup() {
     <p class="empty-state-title">暂无基本面数据</p>
     <p class="empty-state-note">运行 scripts/update_fundamentals.py（或等待每周定时任务）生成 data/fundamentals.json 后，这里会展示历年股息、分红率、负债率与 EPS。${_loadError ? `<br>${escapeHtml(_loadError)}` : ''}</p>
   </div>`;
-}
-
-// 选中公司的下一场财报（有收录才显示）。
-function buildNextReportLine(symbol) {
-  const event = getNextReportEvent(symbol);
-  if (!event) return '';
-  const statusText = event.dateStatus === 'confirmed' ? '已确认' : event.dateStatus === 'scheduled' ? '预约' : '预计';
-  const date = `${Number(event.reportDate.slice(5, 7))}月${Number(event.reportDate.slice(8, 10))}日`;
-  return `<p class="fund-company-report">下场财报 <strong>${date}</strong> · ${escapeHtml(event.reportType)} · ${statusText}</p>`;
 }
 
 export function renderFundamentalsPage() {
@@ -589,35 +613,33 @@ export function renderFundamentalsPage() {
     _selectedSymbol = (holdings[0] || allCompanies[0]).symbol;
   }
   const company = allCompanies.find((item) => item.symbol === _selectedSymbol);
+  const rank = getFundamentalsRankModel();
+  const { allRows, metrics, currentYear } = buildCompanyMetrics(company);
+  const visible = allRows.filter((row) => row.year < currentYear).slice(-4);
 
-  const { rows, allRows, metrics, currentYear } = buildCompanyMetrics(company);
-  const chartRows = rows.slice(-4);
-  const summary = buildCompanySummary(company, rows);
   refs.fundamentalsContent.innerHTML = `
-    <section class="panel fund-head-panel">
-      <div class="fund-company-head">
-        <div>
-          <button class="fund-company-trigger" type="button" data-fund-picker-open aria-haspopup="dialog" aria-label="切换公司">
-            <h3 class="fund-company-name">${escapeHtml(getCompanyDisplayName(company))}</h3>
-            <svg class="fund-company-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5 12 15l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-            ${allCompanies.length > 1 ? `<span class="fund-company-count">${allCompanies.length} 家</span>` : ''}
-          </button>
-          <p class="fund-company-code">${escapeHtml(company.symbol)} · 股息按 ${escapeHtml(company.currency)}/股 · 财报币种 ${escapeHtml(company.statementCurrency || company.currency)}</p>
-        </div>
-      </div>
-      ${buildFormulaBlock(company)}
-      ${summary ? `<p class="fund-company-summary">${escapeHtml(summary)}</p>` : ''}
-      ${buildNextReportLine(company.symbol)}
-    </section>
-    ${buildDividendBars(company, chartRows)}
-    ${buildEpsLedger(company, chartRows)}
-    <details class="fund-fold">
-      <summary><span>年度数据明细</span><small>${allRows.length} 年</small></summary>
+    ${buildRankTrack(rank, company.symbol)}
+    ${buildCompanyHead(company, allCompanies.length)}
+    ${buildFormulaSection(company, rank)}
+    ${buildValuationSection(company)}
+    ${buildDividendLine(company, visible)}
+    ${buildEpsLine(company, visible)}
+    <details class="fu-fold">
+      <summary><span class="fu-sec-label">年度数据明细</span><span class="fu-fold-arr">${allRows.length} 年 ›</span></summary>
       ${buildCompanyTable(allRows, metrics, currentYear)}
     </details>
+    ${buildCalendarSection(company.symbol)}
   `;
+  // 速览条按回报排序，当前公司常落在屏外；横向滚到居中，让金点看得见（只动这条轨道，不动页面）
+  const activeRank = refs.fundamentalsContent.querySelector('.fu-rank-item.is-active');
+  if (activeRank && activeRank.parentElement) {
+    const track = activeRank.parentElement;
+    track.scrollLeft = Math.max(0, activeRank.offsetLeft - (track.clientWidth - activeRank.offsetWidth) / 2);
+  }
   if (refs.fundamentalsNote) {
-    const updated = _data && _data.updatedAt ? formatDateLabel(_data.updatedAt) : '';
-    refs.fundamentalsNote.textContent = updated ? `年报口径 · 数据更新 ${updated}` : '年报口径';
+    const updated = _data && _data.updatedAt ? formatDateLabel(_data.updatedAt).slice(5) : '';
+    refs.fundamentalsNote.textContent = updated
+      ? `年报口径 · 数据更新 ${updated} · 按经营回报排序`
+      : '年报口径 · 按经营回报排序';
   }
 }

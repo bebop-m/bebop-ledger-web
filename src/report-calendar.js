@@ -1,6 +1,5 @@
-import { state, refs } from './state.js';
 import { REPORT_CALENDAR_ENDPOINT } from './constants.js';
-import { escapeHtml, formatDateLabel, normalizeSymbol, safeNumber } from './utils.js';
+import { formatDateLabel, normalizeSymbol, safeNumber } from './utils.js';
 import { computeHoldings, inferQuote } from './compute.js';
 
 const CACHE_KEY = 'bopup-report-calendar-cache-v1';
@@ -124,31 +123,4 @@ export function getReportHomeSummary() {
   }
   const next = getUpcomingReportEvents()[0];
   return next ? `下场财报 ${next.name} ${formatShortDate(next.reportDate)}` : '';
-}
-
-function statusLabel(status) {
-  if (status === 'confirmed') return '已确认';
-  if (status === 'scheduled') return '预约';
-  return '预计';
-}
-
-/* 页尾折叠面板：未来 90 天的持仓财报，默认收起；覆盖率作小注。 */
-export function renderReportCalendarPanel() {
-  if (!refs.reportCalendarPanel) return;
-  const model = getCurrentMonthReportModel();
-  const events = getUpcomingReportEvents({ withinDays: 90 });
-  const coverage = model.coverage.total > 0 ? `已收录 ${model.coverage.covered}/${model.coverage.total} 家，公告后自动补齐` : '数据准备中';
-  const wasOpen = Boolean(refs.reportCalendarPanel.querySelector('details[open]'));
-  const rows = events.length
-    ? events.map((event) => `<button class="report-event-row" type="button" data-report-symbol="${escapeHtml(event.symbol)}">
-        <span class="report-event-date"><strong>${Number(event.reportDate.slice(8, 10))}</strong><small>${Number(event.reportDate.slice(5, 7))}月</small></span>
-        <span class="report-event-company"><strong>${escapeHtml(event.name)}</strong><small>${escapeHtml(event.reportType)} · ${escapeHtml(event.symbol)}</small></span>
-        <span class="report-event-status is-${escapeHtml(event.dateStatus)}">${statusLabel(event.dateStatus)}</span>
-      </button>`).join('')
-    : '<div class="report-calendar-empty">未来 90 天暂未收录持仓财报日期</div>';
-  refs.reportCalendarPanel.innerHTML = `<details class="fund-fold"${wasOpen ? ' open' : ''}>
-    <summary><span>持仓财报日历</span><small>${events.length ? `未来 90 天 · ${events.length} 场` : '暂无收录'}</small></summary>
-    <div class="report-event-list">${rows}</div>
-    <p class="report-calendar-coverage">${escapeHtml(coverage)}</p>
-  </details>`;
 }

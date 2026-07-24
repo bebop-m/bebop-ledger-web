@@ -14257,3 +14257,667 @@ body[data-active-page="records"] .rec-empty {
   background: transparent;
 }
 .zen-sheet--form .zen-seg-key.is-active .zen-seg-dot { background: var(--gold); }
+
+/* ══════════════════════════════════════════════════════════════════
+   F 簇 · 17-公司基本面 / 18-选择公司
+   按 designs/禅意UI/ 下 17–18 两个文件夹的 定稿图.html 重排。
+   尺寸一律按总则折算：定稿值 N（390 画布）→ clamp(N*.92, N/3.9 vw, N*1.35)。
+   顶部留白取定稿值的一半（真机状态栏已提供呼吸），与前五簇同规。
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 17-公司基本面 ── */
+body[data-active-page="fundamentals"] {
+  padding: 0;
+}
+body[data-active-page="fundamentals"] .app-shell {
+  width: 100%;
+  max-width: none;
+}
+body[data-active-page="fundamentals"] #fundamentalsPage {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
+  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
+  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
+  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  min-height: 100dvh;
+}
+/* 分区只靠留白：清掉历史层留在本页元素上的所有描边与伪元素装饰 */
+body[data-active-page="fundamentals"] #fundamentalsPage,
+body[data-active-page="fundamentals"] #fundamentalsPage * {
+  border: 0;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="fundamentals"] #fundamentalsPage *::before,
+body[data-active-page="fundamentals"] #fundamentalsPage *::after {
+  content: none;
+  display: none;
+}
+
+/* 页头：grid(56/1fr/56)，左裸箭头、中页名、右留空 */
+body[data-active-page="fundamentals"] .fund-pagebar {
+  display: grid;
+  grid-template-columns: clamp(51.52px, 14.359vw, 75.6px) 1fr clamp(51.52px, 14.359vw, 75.6px);
+  align-items: center;
+  gap: 0;
+  height: auto;
+  min-height: clamp(19.32px, 5.3846vw, 28.35px);
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+body[data-active-page="fundamentals"] .fund-pagebar .back-button {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  text-align: left;
+}
+body[data-active-page="fundamentals"] .fund-pagebar .back-button svg {
+  width: clamp(16.56px, 4.6154vw, 24.3px);
+  height: clamp(16.56px, 4.6154vw, 24.3px);
+}
+body[data-active-page="fundamentals"] .fund-page-name {
+  display: block;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  color: var(--label);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  text-align: center;
+}
+body[data-active-page="fundamentals"] .fund-pagebar-side {
+  display: block;
+}
+body[data-active-page="fundamentals"] .fund-pagebar-note {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: clamp(6.44px, 1.7949vw, 9.45px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  text-align: center;
+}
+
+/* 宿主容器交出边距：整页边距由 #fundamentalsPage 一处控制 */
+body[data-active-page="fundamentals"] .fundamentals-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* 速览横滑条：既是九家目录也是切换器，按历史经营回报降序 */
+body[data-active-page="fundamentals"] .fu-rank {
+  display: flex;
+  gap: clamp(18.4px, 5.1282vw, 27px);
+  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  padding: 0 0 clamp(3.68px, 1.0256vw, 5.4px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+body[data-active-page="fundamentals"] .fu-rank::-webkit-scrollbar { display: none; }
+body[data-active-page="fundamentals"] .fu-rank-item {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--hint);
+  font-family: inherit;
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  white-space: nowrap;
+  text-align: center;
+}
+body[data-active-page="fundamentals"] .fu-rank-item strong {
+  display: block;
+  margin: clamp(2.76px, 0.7692vw, 4.05px) 0 0;
+  color: var(--muted);
+  font-size: clamp(11.5px, 3.2051vw, 16.875px);
+  font-weight: 700;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+}
+body[data-active-page="fundamentals"] .fu-rank-item.is-active { color: var(--muted); }
+body[data-active-page="fundamentals"] .fu-rank-item.is-active strong { color: var(--ink); }
+/* 选中记号：4px 金点下划，与全局同一套。用真元素而非伪元素，绕开本页的清装饰规则 */
+body[data-active-page="fundamentals"] .fu-rank-dot {
+  display: none;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  margin: clamp(3.68px, 1.0256vw, 5.4px) auto 0;
+  border-radius: 50%;
+  background: var(--gold);
+}
+body[data-active-page="fundamentals"] .fu-rank-item.is-active .fu-rank-dot { display: block; }
+
+/* 公司名：19px/800 居中 + 下拉箭头，点开 18-选择公司 */
+body[data-active-page="fundamentals"] .fu-co {
+  display: block;
+  margin: clamp(22.08px, 6.1538vw, 32.4px) 0 0;
+  text-align: center;
+}
+body[data-active-page="fundamentals"] .fu-co-name {
+  display: inline;
+  width: auto;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: clamp(17.48px, 4.8718vw, 25.65px);
+  font-weight: 800;
+  line-height: clamp(24.84px, 6.9231vw, 36.45px);
+  letter-spacing: clamp(0.46px, 0.1282vw, 0.675px);
+  text-align: center;
+}
+body[data-active-page="fundamentals"] .fu-co-name svg {
+  /* 全局把 svg 设成了 block，这里不改回 inline-block 箭头会自己换行 */
+  display: inline-block;
+  width: clamp(12.88px, 3.5897vw, 18.9px);
+  height: clamp(12.88px, 3.5897vw, 18.9px);
+  margin-left: clamp(4.6px, 1.2821vw, 6.75px);
+  color: var(--muted);
+  vertical-align: -2px;
+}
+body[data-active-page="fundamentals"] .fu-co-sub {
+  display: block;
+  margin: clamp(5.52px, 1.5385vw, 8.1px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+
+/* 公式块：历史经营回报参考 = 股息 + 增长（+ 净回购） */
+body[data-active-page="fundamentals"] .fu-formula {
+  display: block;
+  margin: clamp(22.08px, 6.1538vw, 32.4px) 0 0;
+  padding: 0;
+  text-align: center;
+}
+body[data-active-page="fundamentals"] .fu-f-label {
+  display: block;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+}
+body[data-active-page="fundamentals"] .fu-f-value {
+  display: block;
+  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  color: var(--ink);
+  font-size: clamp(31.28px, 8.7179vw, 45.9px);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+}
+body[data-active-page="fundamentals"] .fu-f-value em {
+  font-style: normal;
+  color: var(--label);
+  font-size: clamp(12.88px, 3.5897vw, 18.9px);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+body[data-active-page="fundamentals"] .fu-f-note {
+  display: block;
+  margin: clamp(8.28px, 2.3077vw, 12.15px) 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+/* 构成线：2px 高、三段实色、无端点（端点金点是进度线的记号，这里是构成不是进度） */
+body[data-active-page="fundamentals"] .fu-f-stack {
+  display: flex;
+  width: clamp(230px, 64.1026vw, 337.5px);
+  max-width: 100%;
+  height: clamp(1.84px, 0.5128vw, 2.7px);
+  margin: clamp(14.72px, 4.1026vw, 21.6px) auto 0;
+  padding: 0;
+}
+body[data-active-page="fundamentals"] .fu-f-stack i {
+  display: block;
+  height: 100%;
+}
+body[data-active-page="fundamentals"] .fu-f-stack .is-divi,
+body[data-active-page="fundamentals"] .fu-f-rows .is-divi { background: var(--gold); }
+body[data-active-page="fundamentals"] .fu-f-stack .is-growth,
+body[data-active-page="fundamentals"] .fu-f-rows .is-growth { background: var(--chart-growth); }
+body[data-active-page="fundamentals"] .fu-f-stack .is-buyback,
+body[data-active-page="fundamentals"] .fu-f-rows .is-buyback { background: var(--track); }
+body[data-active-page="fundamentals"] .fu-f-rows {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  width: clamp(230px, 64.1026vw, 337.5px);
+  max-width: 100%;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) auto 0;
+  padding: 0;
+}
+body[data-active-page="fundamentals"] .fu-f-rows > div {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  color: var(--muted);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+}
+body[data-active-page="fundamentals"] .fu-f-rows b {
+  display: block;
+  flex: none;
+  align-self: center;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  border-radius: 50%;
+}
+body[data-active-page="fundamentals"] .fu-f-rows small { flex: 1; }
+body[data-active-page="fundamentals"] .fu-f-rows strong { color: var(--ink); font-weight: 700; }
+body[data-active-page="fundamentals"] .fu-f-method {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-weight: 600;
+  line-height: 1.7;
+}
+body[data-active-page="fundamentals"] .fu-f-anchor {
+  display: block;
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+}
+body[data-active-page="fundamentals"] .fu-f-anchor strong { color: var(--ink); font-weight: 700; }
+
+/* 节标行：左节标、右小注，无 rule */
+body[data-active-page="fundamentals"] .fu-sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  margin: 0;
+  padding: 0;
+}
+body[data-active-page="fundamentals"] .fu-sec-label {
+  display: block;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+}
+body[data-active-page="fundamentals"] .fu-sec-aside {
+  display: block;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  text-align: right;
+}
+
+/* 估值节：两根「贵 ⇄ 便宜」标尺，点越靠右越便宜 */
+body[data-active-page="fundamentals"] .fu-val {
+  display: block;
+  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+}
+body[data-active-page="fundamentals"] .fu-val-rows {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16.56px, 4.6154vw, 24.3px);
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+}
+body[data-active-page="fundamentals"] .fu-val-row {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(7.36px, 2.0513vw, 10.8px);
+}
+body[data-active-page="fundamentals"] .fu-val-main {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  color: var(--muted);
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 600;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+}
+body[data-active-page="fundamentals"] .fu-val-v {
+  color: var(--ink);
+  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-weight: 700;
+}
+body[data-active-page="fundamentals"] .fu-val-p {
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  white-space: nowrap;
+}
+/* 结论词只有「便宜的一侧」着金；贵/居中保持 hint 叙述色 */
+body[data-active-page="fundamentals"] .fu-val-p strong { color: var(--hint); font-weight: 700; }
+body[data-active-page="fundamentals"] .fu-val-p strong.is-cheap { color: var(--gold); }
+body[data-active-page="fundamentals"] .fu-val-scale {
+  position: relative;
+  display: block;
+  height: clamp(1.84px, 0.5128vw, 2.7px);
+  margin: 0;
+  padding: 0;
+  background: var(--track);
+}
+body[data-active-page="fundamentals"] .fu-val-scale i {
+  position: absolute;
+  top: 50%;
+  display: block;
+  width: clamp(6.44px, 1.7949vw, 9.45px);
+  height: clamp(6.44px, 1.7949vw, 9.45px);
+  border-radius: 50%;
+  background: var(--gold);
+  transform: translate(-50%, -50%);
+}
+body[data-active-page="fundamentals"] .fu-val-ends {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  color: var(--hint);
+  font-size: clamp(8.28px, 2.3077vw, 12.15px);
+  font-weight: 600;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+}
+
+/* 每股分红 / EPS 两张线图：min–max 自适应量程，逐点标值，当年点加大加深 */
+body[data-active-page="fundamentals"] .fu-bars {
+  display: block;
+  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+}
+body[data-active-page="fundamentals"] .fu-latest {
+  display: block;
+  color: var(--ink);
+  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-weight: 700;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  white-space: nowrap;
+}
+/* 红涨绿跌覆盖到 EPS 同比：金额与百分比同段同色 */
+body[data-active-page="fundamentals"] .fu-latest.is-up { color: var(--up); }
+body[data-active-page="fundamentals"] .fu-latest.is-down { color: var(--down); }
+body[data-active-page="fundamentals"] .fu-latest small {
+  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
+  color: var(--muted);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+}
+body[data-active-page="fundamentals"] .fu-line {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+}
+body[data-active-page="fundamentals"] .fu-line svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+body[data-active-page="fundamentals"] .fu-line polyline {
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+body[data-active-page="fundamentals"] .fu-line.is-gold polyline { stroke: var(--chart-gold); }
+body[data-active-page="fundamentals"] .fu-line.is-gold circle { fill: var(--chart-gold-dot); }
+body[data-active-page="fundamentals"] .fu-line.is-ink polyline { stroke: var(--chart-line-soft); }
+body[data-active-page="fundamentals"] .fu-line.is-ink circle { fill: var(--chart-ink-dot); }
+body[data-active-page="fundamentals"] .fu-line text {
+  font-family: inherit;
+  font-size: 9.5px;
+  font-weight: 700;
+  fill: var(--muted);
+}
+body[data-active-page="fundamentals"] .fu-line text.yr { font-weight: 600; fill: var(--hint); }
+body[data-active-page="fundamentals"] .fu-line text.is-current { font-size: 10.5px; fill: var(--ink); }
+body[data-active-page="fundamentals"] .fu-bar-stats {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: clamp(27.6px, 7.6923vw, 40.5px);
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+body[data-active-page="fundamentals"] .fu-bar-stats strong { color: var(--muted); font-weight: 700; }
+
+/* 年度数据明细：一行折叠，展开为历年表 */
+body[data-active-page="fundamentals"] .fu-fold {
+  display: block;
+  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+body[data-active-page="fundamentals"] .fu-fold > summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  margin: 0;
+  padding: 0;
+  background: none;
+  list-style: none;
+  cursor: default;
+}
+body[data-active-page="fundamentals"] .fu-fold > summary::-webkit-details-marker { display: none; }
+body[data-active-page="fundamentals"] .fu-fold > summary::marker { content: ""; }
+body[data-active-page="fundamentals"] .fu-fold-arr {
+  display: block;
+  color: var(--hint);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+}
+body[data-active-page="fundamentals"] .fu-table {
+  display: block;
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+body[data-active-page="fundamentals"] .fu-table-row {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr 1fr 1fr 1fr 1fr;
+  align-items: baseline;
+  gap: clamp(3.68px, 1.0256vw, 5.4px);
+  padding: clamp(4.6px, 1.2821vw, 6.75px) 0;
+  color: var(--muted);
+  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  text-align: right;
+}
+body[data-active-page="fundamentals"] .fu-table-row > div:first-child { text-align: left; }
+body[data-active-page="fundamentals"] .fu-table-row.is-head {
+  color: var(--label);
+  letter-spacing: 0.5px;
+}
+body[data-active-page="fundamentals"] .fu-table-row .is-year { color: var(--ink); font-weight: 700; }
+body[data-active-page="fundamentals"] .fu-table-row .is-year small {
+  margin-left: clamp(2.76px, 0.7692vw, 4.05px);
+  color: var(--hint);
+  font-size: clamp(7.36px, 2.0513vw, 10.8px);
+  font-weight: 600;
+}
+
+/* 财报日历：当前公司整行金色，点其他行切公司并滚回顶 */
+body[data-active-page="fundamentals"] .fu-cal {
+  display: block;
+  flex: 1;
+  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+}
+body[data-active-page="fundamentals"] .fu-cal-rows {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(11.96px, 3.3333vw, 17.55px);
+  margin: clamp(11.96px, 3.3333vw, 17.55px) 0 0;
+}
+body[data-active-page="fundamentals"] .fu-cal-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 600;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  text-align: left;
+}
+body[data-active-page="fundamentals"] .fu-cal-row strong { color: var(--ink); font-weight: 700; }
+body[data-active-page="fundamentals"] .fu-cal-row.is-self strong { color: var(--gold); }
+body[data-active-page="fundamentals"] .fu-cal-type {
+  color: var(--hint);
+  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  white-space: nowrap;
+}
+body[data-active-page="fundamentals"] .fu-cal-empty {
+  display: block;
+  margin: clamp(11.96px, 3.3333vw, 17.55px) 0 0;
+  padding: 0;
+  color: var(--hint);
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-weight: 600;
+  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+}
+
+/* ── 18-选择公司抽屉 ── */
+.zen-sheet--picker .zen-fp-body {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+.zen-sheet--picker .zen-fp-group {
+  display: block;
+  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
+  padding: 0;
+  color: var(--label);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+}
+.zen-sheet--picker .zen-fp-rows {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12.88px, 3.5897vw, 18.9px);
+  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  padding: 0;
+}
+.zen-sheet--picker .zen-fp-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--muted);
+  font-family: inherit;
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-weight: 600;
+  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  text-align: left;
+}
+.zen-sheet--picker .zen-fp-name {
+  display: block;
+  min-width: 0;
+}
+.zen-sheet--picker .zen-fp-name strong {
+  color: var(--ink);
+  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-weight: 700;
+}
+.zen-sheet--picker .zen-fp-name small {
+  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
+  color: var(--hint);
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-weight: 600;
+}
+/* 当前项记号：名后 4px 金点，与全局选中记号同一套 */
+.zen-sheet--picker .zen-fp-dot {
+  display: inline-block;
+  width: clamp(3.68px, 1.0256vw, 5.4px);
+  height: clamp(3.68px, 1.0256vw, 5.4px);
+  margin-left: clamp(6.44px, 1.7949vw, 9.45px);
+  border-radius: 50%;
+  background: var(--gold);
+  vertical-align: 2.5px;
+}
+.zen-sheet--picker .zen-fp-side {
+  display: block;
+  flex: none;
+  color: var(--ink);
+  font-weight: 700;
+  text-align: right;
+}
+.zen-sheet--picker .zen-fp-side.is-empty strong { color: var(--hint); }
+.zen-sheet--picker .zen-fp-side small {
+  display: block;
+  color: var(--gold);
+  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-weight: 700;
+  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  text-align: right;
+}

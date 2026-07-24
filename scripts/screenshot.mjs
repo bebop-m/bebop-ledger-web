@@ -94,7 +94,8 @@ const MODAL_TARGETS = {
   annualShare: { nav: 'income', sel: '.inc-year', then: '#annualShareButton' },
   trade: { sel: '#quickAddButton', then: '[data-modal-action="open-trade"]' },
   cashFlow: { sel: '#quickAddButton', then: '[data-modal-action="open-cash-flow"]' },
-  openingCash: { nav: 'records', sel: '.rec-cash' }
+  openingCash: { nav: 'records', sel: '.rec-cash' },
+  fundPicker: { nav: 'fundamentals', sel: '.fu-co-name' }
 };
 
 async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {

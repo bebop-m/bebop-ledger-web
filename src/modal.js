@@ -579,30 +579,30 @@ function renderDiagnosticsModal() {
     </section>`;
 }
 
-// 基本面页的公司选择：半屏列表，持仓在前（附市值），观察/已清仓排在后。
+/* 18-选择公司 · 按 designs/禅意UI/18-选择公司/定稿图.html
+   持仓在前按市值（附市值与「当前」标），观察/已清仓市值列写「—」。 */
 function renderFundPickerModal() {
   const model = getFundamentalsPickerModel();
-  const rowHtml = (item) => `<button class="fund-picker-row${item.selected ? ' is-active' : ''}" type="button" data-modal-action="pick-fund-symbol" data-symbol="${escapeHtml(item.symbol)}" aria-pressed="${item.selected ? 'true' : 'false'}">
-      <span class="fp-name"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.symbol)}</small></span>
-      <span class="fp-side">${item.marketValueCny > 0 ? `<strong>${escapeHtml(formatDisplayMoney(item.marketValueCny, 'CNY'))}</strong>` : '<strong>—</strong>'}<small>${item.selected ? '当前' : '&nbsp;'}</small></span>
+  const rowHtml = (item, withValue) => `<button class="zen-fp-row${item.selected ? ' is-active' : ''}" type="button" data-modal-action="pick-fund-symbol" data-symbol="${escapeHtml(item.symbol)}" aria-pressed="${item.selected ? 'true' : 'false'}">
+      <span class="zen-fp-name"><strong>${escapeHtml(item.name)}${item.selected ? '<i class="zen-fp-dot" aria-hidden="true"></i>' : ''}</strong><small>${escapeHtml(item.symbol)}</small></span>
+      <span class="zen-fp-side${withValue && item.marketValueCny > 0 ? '' : ' is-empty'}"><strong>${withValue && item.marketValueCny > 0 ? escapeHtml(formatDisplayMoney(item.marketValueCny, 'CNY')) : '—'}</strong>${item.selected ? '<small>当前</small>' : ''}</span>
     </button>`;
-  const holdingsHtml = model.holdings.length
-    ? `<p class="fund-picker-group">持仓 · 按市值</p>${model.holdings.map(rowHtml).join('')}`
-    : '';
-  const othersHtml = model.others.length
-    ? `<p class="fund-picker-group">观察 / 已清仓</p>${model.others.map(rowHtml).join('')}`
-    : '';
+  const group = (label, items, withValue) => (items.length
+    ? `<p class="zen-fp-group">${escapeHtml(label)}</p><div class="zen-fp-rows">${items.map((item) => rowHtml(item, withValue)).join('')}</div>`
+    : '');
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-    <section class="modal-sheet modal-sheet--detail" role="dialog" aria-modal="true">
-      <header class="month-detail-head">
-        <div class="month-detail-title">
-          <h3>选择公司</h3>
-          <strong>${model.holdings.length + model.others.length} 家</strong>
-        </div>
-      </header>
-      <div class="month-detail-list fund-picker-list">${holdingsHtml}${othersHtml}</div>
-      <div class="modal-actions">
-        <button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button>
+    <section class="modal-sheet zen-sheet zen-sheet--picker" role="dialog" aria-modal="true" aria-labelledby="zenPickerTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <div class="zen-sheet-title">
+        <span class="zen-sheet-title-text" id="zenPickerTitle">选择公司</span>
+        <p class="zen-sheet-note">${model.holdings.length + model.others.length} 家</p>
+      </div>
+      <div class="zen-fp-body">
+        ${group('持仓 · 按市值', model.holdings, true)}
+        ${group('观察 / 已清仓', model.others, false)}
+      </div>
+      <div class="zen-sheet-actions">
+        <button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button>
       </div>
     </section>`;
 }

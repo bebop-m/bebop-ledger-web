@@ -96,15 +96,14 @@ if (refs.fundamentalsContent) refs.fundamentalsContent.addEventListener('click',
     selectFundamentalsSymbol(symbolButton.dataset.fundSymbol);
     return;
   }
-  if (event.target.closest('[data-fund-picker-open]')) openModal('fundPicker');
-});
-// 页尾日历点公司：切到该公司并滚回页顶，让上方的切换结果可见。
-if (refs.reportCalendarPanel) refs.reportCalendarPanel.addEventListener('click', (event) => {
-  const row = event.target.closest('[data-report-symbol]');
-  if (row) {
-    selectFundamentalsSymbol(row.dataset.reportSymbol);
+  // 页尾日历点公司：切到该公司并滚回页顶，让上方的切换结果可见。
+  const reportRow = event.target.closest('[data-report-symbol]');
+  if (reportRow) {
+    selectFundamentalsSymbol(reportRow.dataset.reportSymbol);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
   }
+  if (event.target.closest('[data-fund-picker-open]')) openModal('fundPicker');
 });
 
 refs.dividendFilterGroup.addEventListener('click', (event) => {

@@ -7,7 +7,7 @@ import {
 import { renderFundamentalsPage, getFundamentalsCompanyCount, getPortfolioReturnSummary } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
 import { getPortfolioDiagnostics } from './diagnostics.js';
-import { getUpcomingReportEvents, renderReportCalendarPanel } from './report-calendar.js';
+import { getUpcomingReportEvents } from './report-calendar.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
   formatTimestamp, normalizeDividendStatus, getDividendStatusLabel,
@@ -1485,7 +1485,6 @@ function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
   renderAnnualReviewPage();
   renderIncomeRecords();
   renderDividendCalendarPage();
-  renderReportCalendarPanel();
   renderFundamentalsPage();
   syncRenderedHoldingsView(summary.holdings, { animateReflow: opts.animateHoldingReflow });
 }
