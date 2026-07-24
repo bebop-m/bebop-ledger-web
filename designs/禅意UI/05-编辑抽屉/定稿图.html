@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>禅意UI · 单字段编辑抽屉（基准股数/税率/每股股息/负债共用） · 定稿图</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 1290px; margin: 0 auto 28px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 1290px; margin: 0 auto; overflow-x: auto; padding-bottom: 12px; }
+.option { flex: 0 0 390px; }
+.option-label { font-size: 13px; font-weight: 800; letter-spacing: .5px; }
+.option-label small { font-weight: 600; color: #999; margin-left: 6px; letter-spacing: 1px; }
+.option-note { margin: 4px 0 12px; font-size: 11.5px; line-height: 1.6; color: #888; min-height: 52px; }
+.phone { width: 390px; height: 800px; border-radius: 24px; overflow: hidden; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); background: #faf8f3; }
+
+/* 素禅 token */
+.phone {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --track: #eae4d4;
+  --up: #bf5a42; --down: #6a8b74;
+}
+.num { font-variant-numeric: tabular-nums; }
+:where(.phone button) { font-family: inherit; border: none; background: none; color: inherit; text-align: inherit; cursor: default; padding: 0; }
+
+/* 背景页（弱化示意） + 遮罩 */
+.bg-page { position: absolute; inset: 0; padding: 28px 26px; color: var(--ink); }
+.bg-page .page-name { display: block; text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.bg-page .hero-value { display: block; margin-top: 46px; text-align: center; font-size: 38px; font-weight: 600; letter-spacing: -1px; }
+.bg-page .line { height: 2px; background: var(--track); margin-top: 40px; }
+.mask { position: absolute; inset: 0; background: rgba(59, 54, 46, .28); }
+
+/* 底部抽屉 */
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 22px 22px 0 0; padding: 14px 26px 30px; color: var(--ink); }
+.sheet-handle { width: 32px; height: 3px; border-radius: 2px; background: var(--track); margin: 0 auto; }
+.sheet-title { margin-top: 20px; text-align: center; }
+.sheet-title .t { font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.sheet-title .n { margin-top: 7px; font-size: 11px; font-weight: 600; color: var(--muted); line-height: 1.6; }
+.sheet-actions { display: flex; justify-content: center; gap: 46px; margin-top: 28px; }
+.sheet-actions .cancel { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--hint); }
+.sheet-actions .save { font-size: 12px; font-weight: 800; letter-spacing: 2px; color: var(--ink); }
+.sheet-actions .save::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 4px auto 0; }
+
+/* 详情抽屉 */
+.detail-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 22px; }
+.detail-head small { display: block; font-size: 10px; font-weight: 600; letter-spacing: 1px; color: var(--hint); }
+.detail-head h3 { font-size: 18px; font-weight: 800; margin-top: 4px; letter-spacing: .5px; }
+.detail-head .w { font-size: 13px; font-weight: 700; color: var(--muted); }
+.detail-qty { text-align: center; margin-top: 24px; }
+.detail-qty small { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.detail-qty strong { display: block; margin-top: 8px; font-size: 30px; font-weight: 600; letter-spacing: -.5px; }
+.detail-qty strong em { font-style: normal; font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 4px; }
+.detail-rows { margin-top: 24px; display: flex; flex-direction: column; gap: 13px; }
+.detail-rows > div { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 600; color: var(--muted); }
+.detail-rows dd { font-weight: 700; color: var(--ink); }
+.detail-note { margin-top: 20px; text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); line-height: 1.7; }
+
+/* 诊断抽屉 */
+.diag-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 22px; }
+.diag-head h3 { font-size: 15px; font-weight: 800; letter-spacing: 1px; }
+.diag-head p { margin-top: 4px; font-size: 10.5px; font-weight: 600; color: var(--hint); }
+.diag-head strong { font-size: 22px; font-weight: 700; color: var(--up); }
+.diag-group { margin-top: 22px; }
+.diag-group-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.diag-group.is-critical .diag-group-label { color: var(--up); }
+.diag-items { margin-top: 12px; display: flex; flex-direction: column; gap: 14px; }
+.diag-item { font-size: 12px; font-weight: 600; color: var(--muted); line-height: 1.65; padding-left: 12px; position: relative; }
+.diag-item::before { content: ""; position: absolute; left: 0; top: 7px; width: 4px; height: 4px; border-radius: 50%; background: var(--hint); }
+.diag-group.is-critical .diag-item::before { background: var(--up); }
+.diag-group.is-attention .diag-item::before { background: var(--gold); }
+.diag-item strong { color: var(--ink); font-weight: 700; }
+
+/* 编辑抽屉 */
+.edit-input { margin-top: 26px; text-align: center; }
+.edit-input .value { display: inline-block; font-size: 34px; font-weight: 600; letter-spacing: -.5px; color: var(--ink); border-bottom: 2px solid var(--gold); padding: 0 18px 8px; }
+.edit-input .value em { font-style: normal; font-size: 13px; color: var(--muted); margin-left: 4px; }
+</style>
+</head>
+<body>
+  <div class="canvas-head">
+    <h1>禅意UI · 单字段编辑抽屉（基准股数/税率/每股股息/负债共用） · 定稿图</h1>
+    <p>本文件是该界面唯一视觉标准（在浏览器打开即为目标效果）。数据均为示意，落地一律接真实计算链。</p>
+  </div>
+  <div class="board">
+    <section class="option">
+      <h2 class="option-label">编辑模式 <small>EDIT SHEET</small></h2>
+      <p class="option-note">基准股数 / 税率 / 每股股息 / 负债共用此模式：字距标题＋说明、金线托底的大号输入、取消／保存。保存键金点下划呼应全局记号。</p>
+      <div class="phone">
+        <div class="bg-page num"><span class="page-name">持仓</span><strong class="hero-value">¥1,070,500</strong><div class="line"></div></div>
+        <div class="mask"></div>
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">
+            <span class="t">基准股数</span>
+            <p class="n">中国海洋石油 · 交易起点的持股<br>当前持股 = 基准 + 之后的交易回放</p>
+          </div>
+          <div class="edit-input num"><span class="value">16,000<em>股</em></span></div>
+          <div class="sheet-actions"><button class="cancel">取 消</button><button class="save">保 存</button></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>波普账本 · 素禅 · 持仓页</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 900px; margin: 0 auto 28px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 40px; align-items: flex-start; max-width: 900px; margin: 0 auto; }
+.phone { flex: 0 0 390px; width: 390px; border-radius: 24px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); }
+.notes { flex: 1; font-size: 12px; line-height: 1.7; color: #555; }
+.notes h2 { font-size: 12.5px; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; color: #333; }
+.notes ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.notes li { padding-left: 14px; position: relative; }
+.notes li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: #c19a45; }
+.notes b { color: #333; }
+.notes .cut::before { background: #bf5a42; }
+
+/* ── 素禅 token ── */
+.screen {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --track: #eae4d4;
+  --up: #bf5a42; --down: #6a8b74;
+  min-height: 820px; display: flex; flex-direction: column;
+  padding: 28px 26px 34px; background: var(--bg); color: var(--ink);
+}
+:where(.screen button) { font-family: inherit; border: none; background: none; color: inherit; text-align: inherit; cursor: default; padding: 0; }
+.num { font-variant-numeric: tabular-nums; }
+.is-up { color: var(--up); }
+.is-down { color: var(--down); }
+
+.pagebar { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; }
+.pagebar .back { color: var(--muted); }
+.pagebar .back svg { width: 18px; height: 18px; }
+.pagebar .page-name { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.pagebar .diag { text-align: right; font-size: 11px; font-weight: 700; color: var(--muted); }
+.pagebar .diag b { color: var(--up); font-weight: 800; }
+.pagebar-note { margin-top: 7px; text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); }
+
+.page-hero { margin-top: 30px; text-align: center; }
+.page-hero .hero-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.page-hero .hero-value { display: block; margin-top: 12px; font-size: 38px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+.page-hero .hero-value .fraction { font-size: 19px; color: var(--label); }
+.page-hero .hero-meta { margin-top: 12px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.page-hero .hero-meta strong { color: var(--up); font-weight: 700; }
+
+/* 仓位结构：两段线 + 两个可点仓位 + 选中展开明细 */
+.structure { margin-top: 26px; }
+.structure-bar { display: flex; height: 2px; }
+.structure-bar .seg-core { background: var(--ink); }
+.structure-bar .seg-income { background: var(--gold); }
+.bucket-row { display: flex; justify-content: center; gap: 34px; margin-top: 13px; }
+.bucket { text-align: center; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.bucket strong { display: block; font-size: 15px; font-weight: 700; color: var(--ink); margin-top: 2px; }
+.bucket.is-active { color: var(--ink); }
+.bucket.is-active::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 5px auto 0; }
+.bucket-detail { margin-top: 14px; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); }
+.bucket-detail strong { color: var(--ink); font-weight: 700; }
+.portfolio-line { margin-top: 18px; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); }
+.portfolio-line strong { color: var(--ink); font-weight: 700; }
+.portfolio-line b { color: var(--gold); font-weight: 700; }
+
+/* 逐股 */
+.holdings { margin-top: 32px; flex: 1; }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.sort-action { font-size: 11px; font-weight: 700; color: var(--muted); }
+.stock-list { margin-top: 16px; display: flex; flex-direction: column; gap: 18px; }
+.stock { display: flex; flex-direction: column; gap: 3px; }
+.stock-main { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.stock-name { font-size: 14.5px; font-weight: 700; letter-spacing: .5px; }
+.stock-name .code { font-size: 10px; font-weight: 600; color: var(--hint); margin-left: 6px; letter-spacing: .5px; }
+.stock-name .divi-dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); vertical-align: 2.5px; margin-left: 6px; }
+.stock-mv { font-size: 14px; font-weight: 700; white-space: nowrap; }
+.stock-sub { display: flex; justify-content: space-between; gap: 10px; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.stock-sub .weight { color: var(--hint); }
+.expand { margin-top: 22px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="canvas-head">
+    <h1>波普账本 · 素禅 · 持仓页</h1>
+    <p>按现有功能逻辑逐项翻译成禅意排版；右侧是功能对照单。数据为示意。</p>
+  </div>
+  <div class="board">
+    <div class="phone"><div class="screen">
+      <header class="pagebar">
+        <button class="back" aria-label="返回首页"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+        <span class="page-name">持仓</span>
+        <button class="diag num">诊断 <b>2</b></button>
+      </header>
+      <p class="pagebar-note num">行情 07-24 09:32 · 12 项 · 点此打开诊断</p>
+
+      <section class="page-hero">
+        <span class="hero-label">股票市值</span>
+        <strong class="hero-value num">¥1,070,500<span class="fraction">.00</span></strong>
+        <p class="hero-meta num">今日 <strong>▲ +¥3,214 · +0.30%</strong></p>
+      </section>
+
+      <section class="structure">
+        <div class="structure-bar"><i class="seg-core" style="width:73.9%"></i><i class="seg-income" style="width:26.1%"></i></div>
+        <div class="bucket-row num">
+          <button class="bucket is-active">核心仓<strong>73.9%</strong></button>
+          <button class="bucket">打工仓<strong>26.1%</strong></button>
+        </div>
+        <p class="bucket-detail num">核心仓 <strong>¥791,200</strong> · 税后年化 <strong>¥58,300</strong> · 股息率 <strong>7.4%</strong></p>
+        <p class="portfolio-line num">组合税后年化 <b>¥86,900</b> · 组合股息率 <strong>8.1%</strong></p>
+      </section>
+
+      <section class="holdings">
+        <div class="sec-head"><span class="sec-label">逐股</span><button class="sort-action num">按市值 ↓</button></div>
+        <div class="stock-list num">
+          <div class="stock">
+            <div class="stock-main"><span class="stock-name">中国海洋石油<span class="code">0883.HK</span><span class="divi-dot" title="有在途股息"></span></span><span class="stock-mv">¥286,400</span></div>
+            <div class="stock-sub"><span>现价 15.84 · 税后年化 ¥22,600 · 7.9%</span><span class="weight">26.8%</span></div>
+          </div>
+          <div class="stock">
+            <div class="stock-main"><span class="stock-name">长江电力<span class="code">600900</span></span><span class="stock-mv">¥224,100</span></div>
+            <div class="stock-sub"><span>现价 28.06 · 税后年化 ¥7,600 · 3.4%</span><span class="weight">20.9%</span></div>
+          </div>
+          <div class="stock">
+            <div class="stock-main"><span class="stock-name">建设银行<span class="code">0939.HK</span><span class="divi-dot" title="有在途股息"></span></span><span class="stock-mv">¥198,300</span></div>
+            <div class="stock-sub"><span>现价 6.12 · 税后年化 ¥13,500 · 6.8%</span><span class="weight">18.5%</span></div>
+          </div>
+          <div class="stock">
+            <div class="stock-main"><span class="stock-name">中国神华<span class="code">1088.HK</span></span><span class="stock-mv">¥152,600</span></div>
+            <div class="stock-sub"><span>现价 33.20 · 税后年化 ¥12,500 · 8.2%</span><span class="weight">14.3%</span></div>
+          </div>
+          <div class="stock">
+            <div class="stock-main"><span class="stock-name">陕西煤业<span class="code">601225</span></span><span class="stock-mv">¥121,900</span></div>
+            <div class="stock-sub"><span>现价 19.75 · 税后年化 ¥7,400 · 6.1%</span><span class="weight">11.4%</span></div>
+          </div>
+          <div class="stock">
+            <div class="stock-main"><span class="stock-name">中国移动<span class="code">0941.HK</span></span><span class="stock-mv">¥89,200</span></div>
+            <div class="stock-sub"><span>现价 72.30 · 税后年化 ¥5,800 · 6.5%</span><span class="weight">8.3%</span></div>
+          </div>
+        </div>
+        <button class="expand">展开全部 12 项</button>
+      </section>
+    </div></div>
+
+    <aside class="notes">
+      <h2>功能对照单（现有逻辑 → 新落点）</h2>
+      <ul>
+        <li><b>诊断入口</b>：右上角「诊断 2」，计数用涨红提醒；原时间戳按钮与它合并——页名下那行小字整行可点，同样打开诊断弹窗。</li>
+        <li><b>下拉刷新 / 左缘返回</b>：手势不变，无 UI 占位（刷新指示器沿用现有旋转箭头，颜色改 token）。</li>
+        <li><b>仓位结构</b>：原两个色块 → 一根墨/金两段线；核心仓、打工仓两个百分比<b>可点切换</b>，选中态是金点下划，明细行（市值/税后年化/股息率）随选中仓切换——对应现有 bucket-detail 卡。</li>
+        <li><b>组合行</b>：原 return bar 三项收敛成一行（市值已在 hero，不重复）。</li>
+        <li><b>排序</b>：原「圆钮+三 chip」简化为「按市值 ↓」文字按钮：点一下在市值→股息率→年股息间轮换，长按或再点切升降。是否保留三 chip 展开可议。</li>
+        <li><b>逐股行四个可点域保留</b>：名称→详情弹窗；税后年化→税率；股息率→每股股息覆写；右侧市值/权重→数量（现金模式开交易）。视觉上不加装饰，落地时以点击区域划分。</li>
+        <li><b>股息状态</b>：原状态点+tooltip → 名称后 4px 金点＝有在途/已公告股息；无事件不显示。tooltip 保留。</li>
+        <li><b>折叠列表</b>：「展开全部 12 项」照旧。</li>
+        <li><b>隐私掩码</b>：所有金额支持 ****，布局按最长掩码校验。</li>
+        <li class="cut"><b>建议裁掉</b>：行内「现价」是否保留请裁决——它是唯一与股息无关的行内数字；砍掉后行更净，看价去详情弹窗。</li>
+      </ul>
+    </aside>
+  </div>
+</body>
+</html>

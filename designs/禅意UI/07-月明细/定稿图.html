@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>禅意UI · 月明细抽屉 · 定稿图</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 1290px; margin: 0 auto 28px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 1290px; margin: 0 auto; overflow-x: auto; padding-bottom: 12px; }
+.option { flex: 0 0 390px; }
+.option-label { font-size: 13px; font-weight: 800; letter-spacing: .5px; }
+.option-label small { font-weight: 600; color: #999; margin-left: 6px; letter-spacing: 1px; }
+.option-note { margin: 4px 0 12px; font-size: 11.5px; line-height: 1.6; color: #888; min-height: 68px; }
+.phone { width: 390px; min-height: 820px; border-radius: 24px; overflow: hidden; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); background: #faf8f3; }
+.phone {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --track: #eae4d4;
+  --up: #bf5a42; --down: #6a8b74;
+}
+.num { font-variant-numeric: tabular-nums; }
+:where(.phone button) { font-family: inherit; border: none; background: none; color: inherit; text-align: inherit; cursor: default; padding: 0; }
+
+/* ── 主页 ── */
+.screen { min-height: 820px; display: flex; flex-direction: column; padding: 28px 26px 34px; background: var(--bg); color: var(--ink); }
+.pagebar { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; }
+.pagebar .back { color: var(--muted); }
+.pagebar .back svg { width: 18px; height: 18px; }
+.pagebar .page-name { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.filters { margin-top: 22px; display: flex; justify-content: center; gap: 26px; font-size: 11.5px; font-weight: 600; color: var(--hint); }
+.filters .is-active { color: var(--ink); font-weight: 700; }
+.filters .is-active::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 4px auto 0; }
+
+.page-hero { margin-top: 28px; text-align: center; }
+.page-hero .hero-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.page-hero .hero-value { display: block; margin-top: 12px; font-size: 38px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+.page-hero .yoy { margin-top: 10px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.page-hero .yoy strong { color: var(--up); font-weight: 700; }
+
+/* 三段互斥构成：金=已到账 / 墨=在途 / 纸=预估 */
+.stack { display: flex; height: 2px; margin: 20px auto 0; width: 280px; }
+.stack i { height: 100%; }
+.stack .st-received { background: var(--gold); }
+.stack .st-pipeline { background: var(--ink); }
+.stack .st-forecast { background: var(--track); }
+.stack-legend { margin: 14px auto 0; width: 280px; display: flex; flex-direction: column; gap: 8px; }
+.stack-legend > div { display: flex; align-items: baseline; gap: 8px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.stack-legend b { width: 4px; height: 4px; border-radius: 50%; flex: none; align-self: center; }
+.stack-legend .b-received { background: var(--gold); }
+.stack-legend .b-pipeline { background: var(--ink); }
+.stack-legend .b-forecast { background: var(--track); }
+.stack-legend small { color: var(--hint); font-size: 10px; flex: 1; }
+.stack-legend strong { color: var(--ink); font-weight: 700; }
+
+/* 12 月点阵 */
+.year-grid { margin-top: 28px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px 6px; }
+.ym { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; color: var(--hint); }
+.ym b { width: 3.5px; height: 3.5px; border-radius: 50%; background: transparent; }
+.ym.has-pay b { background: var(--gold); }
+.ym i { font-style: normal; font-size: 9.5px; font-weight: 600; color: var(--muted); }
+/* 三态：已过淡化 / 当月高亮 / 未到正常 */
+.ym.is-past { opacity: .42; }
+.ym.is-current { color: var(--ink); font-weight: 800; }
+.ym.is-current i { color: var(--ink); font-weight: 700; }
+.ym.is-current b { width: 5px; height: 5px; }
+
+/* 待确认 / 近期 列表 */
+.grid-hint { margin-top: 12px; text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); }
+.divi-list { margin-top: 28px; flex: 1; }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.sec-aside { font-size: 10.5px; font-weight: 600; color: var(--hint); }
+.divi-rows { margin-top: 14px; display: flex; flex-direction: column; gap: 15px; }
+.divi-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.divi-row strong { color: var(--ink); font-weight: 700; font-size: 12.5px; }
+.divi-row .st { font-size: 10.5px; font-weight: 700; }
+.divi-row .st.is-due { color: var(--up); }
+.divi-row .st.is-paid { color: var(--gold); }
+.divi-row .st.is-transit { color: var(--hint); }
+
+/* ── 抽屉共用 ── */
+.bg-page { position: absolute; inset: 0; padding: 28px 26px; color: var(--ink); }
+.bg-page .page-name { display: block; text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.bg-page .hero-value { display: block; margin-top: 46px; text-align: center; font-size: 38px; font-weight: 600; letter-spacing: -1px; }
+.bg-page .line { height: 2px; background: var(--track); margin-top: 40px; }
+.mask { position: absolute; inset: 0; background: rgba(59, 54, 46, .28); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 22px 22px 0 0; padding: 14px 26px 30px; color: var(--ink); }
+.sheet-handle { width: 32px; height: 3px; border-radius: 2px; background: var(--track); margin: 0 auto; }
+.sheet-actions { display: flex; justify-content: center; gap: 46px; margin-top: 26px; }
+.sheet-actions .cancel { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--hint); }
+.sheet-actions .save { font-size: 12px; font-weight: 800; letter-spacing: 2px; color: var(--ink); }
+.sheet-actions .save::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 4px auto 0; }
+.sheet-actions .danger { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--up); }
+
+/* 月明细抽屉 */
+.md-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 22px; }
+.md-head h3 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.md-head h3 small { font-size: 10px; font-weight: 600; letter-spacing: 2px; color: var(--label); margin-left: 8px; }
+.md-head strong { font-size: 18px; font-weight: 700; }
+.md-summary { margin-top: 8px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.md-thread { position: relative; height: 2px; margin-top: 14px; background: var(--track); }
+.md-thread i { position: absolute; inset: 0 auto 0 0; background: var(--gold); }
+.md-thread b { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+.md-thread-caption { margin-top: 9px; font-size: 10px; font-weight: 600; color: var(--hint); display: flex; justify-content: space-between; }
+.md-thread-caption strong { color: var(--gold); font-weight: 700; }
+.md-rows { margin-top: 22px; display: flex; flex-direction: column; gap: 16px; }
+.md-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.md-row .co strong { display: block; font-size: 13px; font-weight: 700; color: var(--ink); }
+.md-row .co strong small { font-size: 10px; font-weight: 600; color: var(--hint); margin-left: 6px; }
+.md-row .co span { display: block; margin-top: 2px; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.md-row .side { text-align: right; }
+.md-row .side strong { display: block; font-size: 13px; font-weight: 700; color: var(--ink); }
+.md-row .side span { display: block; margin-top: 2px; font-size: 10.5px; font-weight: 700; }
+.md-row .side .s-paid { color: var(--gold); }
+.md-row .side .s-due { color: var(--up); }
+.md-row .side .s-transit { color: var(--muted); }
+.md-row .side .s-announced { color: var(--ink); }
+.md-row .side .s-forecast { color: var(--hint); }
+
+/* 股息到账抽屉 */
+.sheet-title { margin-top: 20px; text-align: center; }
+.sheet-title .t { font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.sheet-title .n { margin-top: 7px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.fields { margin-top: 22px; display: flex; flex-direction: column; gap: 15px; }
+.field { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 600; color: var(--muted); }
+.field .v { font-weight: 700; color: var(--ink); }
+.field .v.is-money { font-size: 20px; border-bottom: 2px solid var(--gold); padding: 0 8px 4px; }
+.confirm-line { margin-top: 22px; text-align: center; font-size: 12px; font-weight: 700; color: var(--ink); }
+.confirm-line b { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--gold); vertical-align: -1px; margin-right: 8px; }
+.currency-opts { display: flex; gap: 16px; }
+.currency-opts em { font-style: normal; font-size: 11.5px; font-weight: 600; color: var(--hint); }
+.currency-opts em.is-active { color: var(--ink); font-weight: 700; }
+.currency-opts em.is-active::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 3px auto 0; }
+.conv { margin-top: 14px; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); }
+.conv strong { color: var(--ink); font-weight: 700; }
+</style>
+</head>
+<body>
+  <div class="canvas-head">
+    <h1>禅意UI · 月明细抽屉 · 定稿图</h1>
+    <p>本文件是该界面唯一视觉标准（在浏览器打开即为目标效果）。数据均为示意，落地一律接真实计算链。</p>
+  </div>
+  <div class="board">
+    <section class="option">
+      <h2 class="option-label">月明细抽屉 <small>MONTH DETAIL</small></h2>
+      <p class="option-note">点上方月点阵的某月（或首页月份块）打开。抬头＝月份＋当月合计，小结一行；逐笔行左侧公司＋日期口径，右侧金额＋状态词（五态全保留）。可点行进入股息到账编辑。</p>
+      <div class="phone">
+        <div class="bg-page num"><span class="page-name">股息日历</span><strong class="hero-value">¥42,180</strong><div class="line"></div></div>
+        <div class="mask"></div>
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <header class="md-head"><h3>7月<small>当月</small></h3><strong class="num">¥6,420</strong></header>
+          <p class="md-summary num">已到账 ¥4,560 · 待核对 ¥3,420 · 在途 ¥1,860</p>
+          <div class="md-thread"><i style="width:71%"></i><b style="left:71%"></b></div>
+          <p class="md-thread-caption num"><span>收款进度</span><strong>71%</strong></p>
+          <div class="md-rows num">
+            <div class="md-row">
+              <span class="co"><strong>长江电力<small>600900</small></strong><span>07-08(实收)</span></span>
+              <span class="side"><strong>¥3,120</strong><span class="s-paid">已到账</span></span>
+            </div>
+            <div class="md-row">
+              <span class="co"><strong>建设银行<small>0939.HK</small></strong><span>07-18(待核对)</span></span>
+              <span class="side"><strong>¥2,140</strong><span class="s-due">待核对</span></span>
+            </div>
+            <div class="md-row">
+              <span class="co"><strong>陕西煤业<small>601225</small></strong><span>07-10(待核对)</span></span>
+              <span class="side"><strong>¥1,280</strong><span class="s-due">待核对</span></span>
+            </div>
+            <div class="md-row">
+              <span class="co"><strong>中国海洋石油<small>0883.HK</small></strong><span>除息 07-15 · 到账 07-28</span></span>
+              <span class="side"><strong>¥1,860</strong><span class="s-announced">已公告</span></span>
+            </div>
+          </div>
+          <div class="sheet-actions"><button class="cancel">关 闭</button></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
