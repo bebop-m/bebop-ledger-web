@@ -14,6 +14,11 @@
  *   node scripts/screenshot.mjs --modal=quickAdd         # 打开某个抽屉再截
  *   node scripts/screenshot.mjs --width=390 --height=844 # 定稿画布尺寸
  *   node scripts/screenshot.mjs --both                   # 日夜各一张
+ *   node scripts/screenshot.mjs --shots=home,holdings:dark,quickAdd@modal
+ *                                                        # 一次启动批量出图
+ *
+ * 批量优先：每次启动/退出 Chrome 都是一次进程与管道往返，串联多条命令时
+ * 更容易撞上外层工具的结果回传故障。要多张图就用 --shots 一次跑完。
  */
 import { launch } from 'puppeteer-core';
 import { existsSync, mkdirSync } from 'node:fs';
@@ -45,7 +50,8 @@ const CFG = {
   nav: argv.nav || '',                   // data-page-nav 的值
   modal: argv.modal || '',               // 触发某个抽屉
   outDir: resolve(argv.out || 'screenshots'),
-  both: Boolean(argv.both)
+  both: Boolean(argv.both),
+  shots: argv.shots || ''
 };
 
 const chrome = CHROME_CANDIDATES.find((p) => existsSync(p));
@@ -56,8 +62,11 @@ if (!chrome) {
 
 if (!existsSync(CFG.outDir)) mkdirSync(CFG.outDir, { recursive: true });
 
-async function shoot(browser, theme) {
-  const page = await browser.newPage();
+async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
+  // 每张图用独立上下文：应用会记住上次停留的页面，
+  // 共用 profile 时后一张的背景会是前一张的页面
+  const ctx = await browser.createBrowserContext();
+  const page = await ctx.newPage();
   await page.setViewport({
     width: CFG.width,
     height: CFG.height,
@@ -74,11 +83,19 @@ async function shoot(browser, theme) {
     { timeout: 15000 }
   ).catch(() => console.warn('  ! 首屏数据等待超时，仍继续截图'));
 
-  if (CFG.nav) {
-    await page.click(`[data-page-nav="${CFG.nav}"]`);
-    await new Promise((r) => setTimeout(r, 600));
+  if (nav) {
+    // 用 DOM 直接派发：page.click 要先算元素的可点击几何，
+    // 无头模式下会因遮挡/视口判定间歇性抛 "not clickable"
+    const ok = await page.evaluate((n) => {
+      const el = document.querySelector(`[data-page-nav="${n}"]`);
+      if (!el) return false;
+      el.click();
+      return true;
+    }, nav);
+    if (!ok) throw new Error(`未找到导航入口 [data-page-nav="${nav}"]`);
+    await new Promise((r) => setTimeout(r, 700));
   }
-  if (CFG.modal) {
+  if (modal) {
     await page.evaluate((name) => {
       const map = {
         quickAdd: '#quickAddButton',
@@ -86,34 +103,78 @@ async function shoot(browser, theme) {
         liability: '.home-hero-label'
       };
       document.querySelector(map[name] || name)?.click();
-    }, CFG.modal);
+    }, modal);
     await new Promise((r) => setTimeout(r, 600));
   }
   await new Promise((r) => setTimeout(r, 400)); // 让入场动画落定
 
-  const parts = ['home', CFG.nav, CFG.modal, theme, `${CFG.width}x${CFG.height}`].filter(Boolean);
+  const parts = ['home', nav, modal, theme, `${CFG.width}x${CFG.height}`].filter(Boolean);
   const file = resolve(CFG.outDir, `${parts.join('-')}.png`);
   await page.screenshot({ path: file, fullPage: false });
-  await page.close();
+  await ctx.close();
   console.log(`✓ ${file}`);
   return file;
 }
+
+/* 整体兜底超时：宁可自己退出并报错，也不要把进程挂在那里让上层等 */
+const HARD_TIMEOUT_MS = Number(argv.timeout || 120000);
+const bail = setTimeout(() => {
+  console.error(`! 超过 ${HARD_TIMEOUT_MS}ms 未完成，强制退出`);
+  process.exit(2);
+}, HARD_TIMEOUT_MS);
+bail.unref?.();
 
 const browser = await launch({
   executablePath: argv.exec || chrome,
   headless: 'new',
   // 独立临时 profile：不碰用户 Chrome 的配置、扩展与登录态
   userDataDir: resolve('.chrome-shot-profile'),
-  args: ['--no-first-run', '--no-default-browser-check', '--disable-extensions', '--hide-scrollbars']
+  dumpio: false, // 不把 Chrome 的 GPU/sandbox 噪声灌进 stdio
+  args: [
+    '--no-first-run', '--no-default-browser-check', '--disable-extensions',
+    '--hide-scrollbars', '--disable-gpu', '--log-level=3', '--silent'
+  ]
 });
 
+/* --shots=home,holdings:dark,quickAdd@modal
+   逗号分隔；:theme 指定日夜；@modal 表示按抽屉而非导航处理 */
+function parseShots(spec) {
+  return String(spec).split(',').map((raw) => {
+    const [target, theme = CFG.theme] = raw.trim().split(':');
+    const isModal = target.endsWith('@modal');
+    const name = isModal ? target.replace('@modal', '') : target;
+    return {
+      theme: theme === 'dark' ? 'dark' : 'light',
+      nav: !isModal && name !== 'home' ? name : '',
+      modal: isModal ? name : ''
+    };
+  });
+}
+
+let failed = 0;
+/* 单张失败不拖垮整批：记下来继续，最后一次性汇报 */
+async function safeShoot(...args) {
+  try {
+    await shoot(browser, ...args);
+  } catch (err) {
+    failed++;
+    console.error(`✗ ${args.filter(Boolean).join('/')} — ${err.message}`);
+  }
+}
+
 try {
-  if (CFG.both) {
-    await shoot(browser, 'light');
-    await shoot(browser, 'dark');
+  if (CFG.shots) {
+    for (const s of parseShots(CFG.shots)) await safeShoot(s.theme, s.nav, s.modal);
+  } else if (CFG.both) {
+    await safeShoot('light');
+    await safeShoot('dark');
   } else {
-    await shoot(browser, CFG.theme);
+    await safeShoot(CFG.theme);
   }
 } finally {
   await browser.close();
 }
+clearTimeout(bail);
+if (failed) console.error(`${failed} 张失败`);
+// 不等待任何可能悬挂的句柄，立即结束，让上层拿到干净的退出
+process.exit(failed ? 1 : 0);
