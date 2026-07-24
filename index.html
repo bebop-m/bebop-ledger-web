@@ -120,80 +120,39 @@
           <div id="holdingsPullIndicator" class="home-pull-indicator" aria-hidden="true">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.6 8.4A7.6 7.6 0 1 0 19 15.7" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path><path d="M15.2 5.8H20v4.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>
           </div>
-          <header class="top-bar panel-bar--list ledger-page-head">
+
+          <header class="top-bar panel-bar--list ledger-page-head holdings-pagebar">
             <button class="back-button" type="button" data-page-back aria-label="返回首页">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </button>
-            <div class="top-bar-heading">
-              <h2 class="top-bar-title">持仓</h2>
-              <button id="marketTimestamp" class="panel-note holdings-menu-button" type="button" aria-label="打开持仓操作"></button>
-            </div>
-            <div class="icon-actions holdings-primary-actions">
-              <button id="diagnosticsButton" class="diagnostics-button" type="button" aria-label="持仓诊断" hidden>诊断</button>
-              <button id="sortToggleButton" class="circle-button sort-toggle-button" type="button" aria-label="排序" aria-expanded="false"></button>
-              <button
-                id="refreshButton"
-                class="circle-button"
-                type="button"
-                aria-label="刷新行情"
-                hidden
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M18.6 8.4A7.6 7.6 0 1 0 19 15.7"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.9"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  ></path>
-                  <path
-                    d="M15.2 5.8H20v4.8"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.9"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  ></path>
-                </svg>
-              </button>
-              <button
-                id="addButton"
-                class="circle-button"
-                type="button"
-                aria-label="新增持仓"
-                hidden
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M12 5.2v13.6M5.2 12h13.6"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.9"
-                    stroke-linecap="round"
-                  ></path>
-                </svg>
-              </button>
-            </div>
+            <h2 class="top-bar-title holdings-page-name">持仓</h2>
+            <button id="diagnosticsButton" class="diagnostics-button" type="button" aria-label="持仓诊断"></button>
           </header>
+          <button id="marketTimestamp" class="holdings-pagebar-note" type="button"></button>
 
-          <section class="panel holdings-structure-panel ledger-holdings-overview">
-            <div id="bucketTrack" class="bucket-track"></div>
-            <div id="holdingsReturnBar" class="return-bar" hidden></div>
-          </section>
+          <section id="holdingsHero" class="holdings-hero" aria-label="股票市值"></section>
+          <section id="bucketTrack" class="holdings-structure" aria-label="仓位结构"></section>
 
-          <div class="ledger-section-head holdings-list-head">
-            <span>逐股</span>
-            <button id="holdingsSortLabel" class="ledger-inline-action" type="button">按市值 ↓</button>
+          <div class="holdings-list-head">
+            <span class="holdings-sec-label">逐股</span>
+            <button id="holdingsSortLabel" class="holdings-sort-action" type="button" aria-label="切换排序"></button>
           </div>
-          <div class="sort-group holdings-list-sort" aria-label="持仓排序">
-            <button class="sort-chip" type="button" data-sort-field="marketValueCny"></button>
-            <button class="sort-chip" type="button" data-sort-field="effectiveYield"></button>
-            <button class="sort-chip" type="button" data-sort-field="netAnnualDividendCny"></button>
-          </div>
-          <div id="companyLegend" class="legend-list" hidden></div>
           <div id="stockList" class="stock-list"></div>
           <button id="legendToggle" class="text-button legend-toggle" type="button" hidden></button>
+
+          <!-- 旧入口保留但不出现在版面上：持仓操作抽屉仍会程序性点击刷新/新增，
+               三个排序 chip 已被上面的单文字按钮取代。 -->
+          <div class="holdings-legacy-controls" hidden aria-hidden="true">
+            <button id="sortToggleButton" class="circle-button sort-toggle-button" type="button" tabindex="-1" aria-label="排序"></button>
+            <button id="refreshButton" class="circle-button" type="button" tabindex="-1" aria-label="刷新行情"></button>
+            <button id="addButton" class="circle-button" type="button" tabindex="-1" aria-label="新增持仓"></button>
+            <div class="sort-group" aria-label="持仓排序">
+              <button class="sort-chip" type="button" data-sort-field="marketValueCny"></button>
+              <button class="sort-chip" type="button" data-sort-field="effectiveYield"></button>
+              <button class="sort-chip" type="button" data-sort-field="netAnnualDividendCny"></button>
+            </div>
+            <div id="companyLegend" class="legend-list" hidden></div>
+          </div>
         </div>
 
         <div id="dividendCalendarPage" class="page-view page-stack" data-page-view="dividends" hidden>

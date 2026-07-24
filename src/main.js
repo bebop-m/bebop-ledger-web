@@ -8,8 +8,7 @@ import {
 import { computeHoldings, getBucketSegments, isCashModelActive } from './compute.js';
 import {
   renderApp, renderSavedStateQuietly, renderSortChips, renderBucketsView,
-  renderReturnBar,
-  applyLegendExpandState, applyHoldingSortSelection, updateDividendTooltipSide,
+  applyLegendExpandState, cycleHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
   isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, toggleDividendPastMonths
@@ -17,7 +16,7 @@ import {
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
   setModalBucketSelection, setModalCashFlowTypeSelection,
-  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo
+  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo, syncZenEditWidth
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
@@ -137,7 +136,7 @@ if (refs.dividendMonthDetailView) refs.dividendMonthDetailView.addEventListener(
 
 if (refs.holdingsSortLabel) refs.holdingsSortLabel.addEventListener('click', (event) => {
   event.stopPropagation();
-  applyHoldingSortSelection(state.sortField);
+  cycleHoldingSortSelection();
 });
 
 if (refs.marketTimestamp) refs.marketTimestamp.addEventListener('click', () => openModal('diagnostics'));
@@ -212,22 +211,21 @@ if (refs.incomeRecordsList) refs.incomeRecordsList.addEventListener('click', (ev
   if (dividendButton) openModal('dividendLedger', { sourceId: dividendButton.dataset.dividendSourceId });
 });
 
-refs.sortChips.forEach((chip) => {
-  chip.addEventListener('click', () => { const f = chip.dataset.sortField; if (!f) return; state.sortMenuOpen = false; applyHoldingSortSelection(f); });
-});
 
 document.addEventListener('click', (event) => {
   if (state.sortMenuOpen && !event.target.closest('.sort-group') && !event.target.closest('.sort-toggle-button') && !event.target.closest('#holdingsSortLabel')) { state.sortMenuOpen = false; renderSortChips(); }
   if (mutable.activeDividendTooltipButton && event.target.closest('.dividend-status-button--value') !== mutable.activeDividendTooltipButton) closeActiveDividendTooltip(true);
 });
 
+// 两个仓位是切换：点哪个哪个选中，明细行跟着换；不再有「都不选」的中间态
 refs.bucketTrack.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-bucket-toggle]'); if (!btn) return;
   const key = btn.dataset.bucketToggle;
-  state.activeBucketKey = state.activeBucketKey === key ? null : key;
+  if (state.activeBucketKey === key) return;
+  state.activeBucketKey = key;
+  saveState();
   const summary = computeHoldings();
   renderBucketsView(getBucketSegments(summary.holdings), summary.holdings, summary, { animateDetail: true });
-  renderReturnBar();
 });
 
 refs.stockList.addEventListener('mouseover', (e) => { const b = e.target.closest('.dividend-status-button'); if (b) updateDividendTooltipSide(b); });
@@ -481,6 +479,7 @@ refs.modalRoot.addEventListener('click', (event) => {
 
 refs.modalRoot.addEventListener('input', (event) => {
   if (event.target && event.target.id === 'modalTradeSymbolInput') updateTradeQuoteInfo();
+  syncZenEditWidth(event.target);
 });
 
 /* ── Boot ── */

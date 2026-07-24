@@ -17,7 +17,7 @@ import {
   MASK_AMOUNT, MASK_PRICE, LABELS, UI_TEXT,
   LEGEND_COLLAPSED_COUNT, LEGEND_TOGGLE_ANIMATION_MS, LEGEND_ENTER_STAGGER_MS,
   HOLDING_ENTER_STAGGER_MS, HOLDING_ENTER_STAGGER_MAX_MS, TOOLTIP_FALLBACK_WIDTH,
-  TOOLTIP_GAP, BUCKET_CHIP_COMPACT_THRESHOLD, HOLDING_REMOVAL_FALLBACK_MS,
+  TOOLTIP_GAP, HOLDING_REMOVAL_FALLBACK_MS,
   HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD
 } from './constants.js';
 
@@ -297,131 +297,124 @@ export function patchLegendView(segments) {
   renderLegendView(segments, { animate: false });
 }
 
-/* ── Buckets ── */
-function getBucketLabelText(l) { return String(l || '').replace(/[：:]\s*$/, ''); }
+/* ── 02-持仓页 · 按 designs/禅意UI/02-持仓页/定稿图.html 重排 ── */
 
-function getBucketViewModel(segments, holdings, summary) {
-  const total = segments.reduce((s, i) => s + safeNumber(i.value, 0), 0);
-  const items = getBucketSummaryItems(holdings);
-  if (state.activeBucketKey && !items.some((i) => i.key === state.activeBucketKey)) state.activeBucketKey = null;
-  return { totalMarketValue: total, bucketItems: items, activeItem: items.find((i) => i.key === state.activeBucketKey) || null, overallNetYield: total > 0 ? summary.totalDividendCny / total : 0 };
+/* 结构行与逐股行用整数金额 + 一位小数百分比：定稿图写的就是 ¥286,400 / 7.9%。
+   带两位小数会把 sub 行顶到换行，而验收要求 sub 行一行放得下。 */
+function formatZenMoney(value) {
+  if (!state.showAmounts) return MASK_AMOUNT;
+  const amount = safeNumber(value, 0);
+  return `${amount < 0 ? '-' : ''}¥${Math.round(Math.abs(amount)).toLocaleString('en-US')}`;
 }
 
-function getBucketChipMarkup(item, total) {
-  const share = item.marketValueCny / (total || 1);
-  const isActive = state.activeBucketKey === item.key;
-  return `<button class="bucket-chip is-${item.key}${isActive ? ' is-active' : ''}${share < BUCKET_CHIP_COMPACT_THRESHOLD ? ' is-compact' : ''}" type="button" data-bucket-toggle="${item.key}" style="--bucket-share:${share.toFixed(4)};" aria-expanded="${isActive}"><span class="bucket-chip-label">${escapeHtml(item.label)}</span><span class="bucket-chip-value">${(share * 100).toFixed(1)}%</span></button>`;
+function formatZenPercent(value) {
+  return `${(safeNumber(value, 0) * 100).toFixed(1)}%`;
 }
 
-function syncBucketChip(btn, item, total) {
-  const l = btn.querySelector('.bucket-chip-label'), v = btn.querySelector('.bucket-chip-value');
-  if (!l || !v) return false;
-  const share = item.marketValueCny / (total || 1);
-  const isActive = state.activeBucketKey === item.key;
-  btn.className = `bucket-chip is-${item.key}${isActive ? ' is-active' : ''}${share < BUCKET_CHIP_COMPACT_THRESHOLD ? ' is-compact' : ''}`;
-  btn.dataset.bucketToggle = item.key; btn.style.setProperty('--bucket-share', share.toFixed(4));
-  btn.setAttribute('aria-expanded', isActive ? 'true' : 'false'); l.textContent = item.label; v.textContent = `${(share * 100).toFixed(1)}%`;
-  return true;
+/* 居中 hero：股票市值 + 今日涨跌。涨跌额与其后的百分比同属一段、同色。 */
+export function renderHoldingsHero(summary) {
+  if (!refs.holdingsHero) return;
+  const pnl = safeNumber(summary.totalDailyPnlCny, 0);
+  const hasPnl = summary.holdings.some((item) => safeNumber(item.previousClose, 0) > 0);
+  const pnlText = hasPnl && state.showAmounts ? formatDailyPnl(pnl, summary.dailyPnlBaseCny) : '';
+  const arrow = pnl > 0 ? '▲' : pnl < 0 ? '▼' : '';
+  const tone = pnl > 0 ? 'is-market-up' : pnl < 0 ? 'is-market-down' : 'is-flat';
+  refs.holdingsHero.innerHTML = `
+    <span class="holdings-hero-label">股票市值</span>
+    <strong class="holdings-hero-value">${formatLedgerMoney(summary.totalMarketValueCny, 'CNY', 'holdings-hero-fraction')}</strong>
+    <p class="holdings-hero-meta">${pnlText ? `今日 <strong class="${tone}">${arrow} ${escapeHtml(pnlText)}</strong>` : '今日行情待更新'}</p>`;
 }
 
-function getBucketDetailMarkup(activeItem, opts = {}) {
-  if (!activeItem) return '';
-  const { animateDetail = true } = opts;
-  return `<div class="bucket-detail-card${animateDetail ? ' is-entering' : ''}">
-    <div class="bucket-detail-row"><span class="bucket-detail-label">${getBucketLabelText(LABELS.marketValue)}</span><span class="bucket-detail-value" data-bucket-field="marketValue">${formatDisplayMoney(activeItem.marketValueCny, 'CNY')}</span></div>
-    <div class="bucket-detail-row"><span class="bucket-detail-label">${getBucketLabelText(LABELS.annualDividend)}</span><span class="bucket-detail-value is-income" data-bucket-field="annualDividend">${formatDisplayMoney(activeItem.totalDividendCny, 'CNY')}</span></div>
-    <div class="bucket-detail-row"><span class="bucket-detail-label">${getBucketLabelText(LABELS.dividendYield)}</span><span class="bucket-detail-value" data-bucket-field="averageYield">${formatPercent(activeItem.averageYield)}</span></div></div>`;
-}
-
-function syncBucketDetail(card, item) {
-  const mv = card.querySelector('[data-bucket-field="marketValue"]'), ad = card.querySelector('[data-bucket-field="annualDividend"]'), ay = card.querySelector('[data-bucket-field="averageYield"]');
-  if (!mv || !ad || !ay) return false;
-  card.className = 'bucket-detail-card'; mv.textContent = formatDisplayMoney(item.marketValueCny, 'CNY');
-  ad.textContent = formatDisplayMoney(item.totalDividendCny, 'CNY'); ay.textContent = formatPercent(item.averageYield);
-  return true;
-}
-
+/* ── 仓位结构 ──
+   两段线（墨=核心 / 金=打工）→ 两个可切换仓位 → 选中仓明细行 → 组合行。
+   旧版的三列 return-bar 与左右色块图例都收敛到这四行里，市值不重复（已在 hero）。 */
 export function renderBucketsView(segments, holdings, summary, opts = {}) {
-  const v = getBucketViewModel(segments, holdings, summary);
-  const item = (key) => v.bucketItems.find((entry) => entry.key === key) || { label: key === 'core' ? LABELS.core : LABELS.income, marketValueCny: 0 };
-  const core = item('core');
-  const income = item('income');
-  const total = Math.max(1, v.totalMarketValue);
-  const corePct = core.marketValueCny / total;
-  const incomePct = income.marketValueCny / total;
-  refs.bucketTrack.className = 'bucket-track ledger-structure';
+  if (!refs.bucketTrack) return;
+  const items = getBucketSummaryItems(holdings);
+  const total = items.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0);
+  // 两个仓位是「切换」不是「开关」：始终有一个选中，明细行跟着走，默认核心仓
+  if (!items.some((item) => item.key === state.activeBucketKey)) {
+    state.activeBucketKey = items.length ? items[0].key : null;
+  }
+  const find = (key) => items.find((item) => item.key === key) || null;
+  const share = (item) => (total > 0 && item ? item.marketValueCny / total : 0);
+  const active = find(state.activeBucketKey);
+  const hasUnknownTax = holdings.some((item) => !item.taxRateKnown && safeNumber(item.quantity, 0) > 0);
+  const dividendLabel = hasUnknownTax ? '年化股息' : '税后年化';
+  const bar = ['core', 'income'].map((key) => {
+    const item = find(key);
+    return item ? `<i class="seg-${key}" style="width:${(share(item) * 100).toFixed(2)}%"></i>` : '';
+  }).join('');
+  const buttons = ['core', 'income'].map((key) => {
+    const item = find(key);
+    if (!item) return '';
+    const isActive = state.activeBucketKey === key;
+    // 金点用真元素而不是 ::after：机检把带背景的伪元素一律当旧层装饰报出来，
+    // 而这颗点是设计要求的选中记号，得让它能和残留区分开
+    return `<button class="bucket${isActive ? ' is-active' : ''}" type="button" data-bucket-toggle="${key}" aria-pressed="${isActive}">${escapeHtml(item.label)}<strong>${formatZenPercent(share(item))}</strong><i class="bucket-dot" aria-hidden="true"></i></button>`;
+  }).join('');
+  const detail = active
+    ? `<p class="bucket-detail">${escapeHtml(active.label)} <strong>${escapeHtml(formatZenMoney(active.marketValueCny))}</strong> · ${dividendLabel} <strong>${escapeHtml(formatZenMoney(active.totalDividendCny))}</strong> · 股息率 <strong>${formatZenPercent(active.averageYield)}</strong></p>`
+    : '';
   refs.bucketTrack.innerHTML = `
-    <p class="ledger-eyebrow">仓位结构</p>
-    <div class="ledger-structure-bar" aria-label="核心仓 ${(corePct * 100).toFixed(1)}%，打工仓 ${(incomePct * 100).toFixed(1)}%"><i style="width:${(corePct * 100).toFixed(2)}%"></i><span></span></div>
-    <div class="ledger-structure-values">
-      <button class="ledger-structure-item is-core${state.activeBucketKey === 'core' ? ' is-active' : ''}" type="button" data-bucket-toggle="core" aria-pressed="${state.activeBucketKey === 'core'}"><small>${escapeHtml(core.label)}</small><strong>${(corePct * 100).toFixed(1)}<em>%</em></strong><span>${escapeHtml(formatDisplayMoney(core.marketValueCny, 'CNY'))}</span></button>
-      <button class="ledger-structure-item is-income${state.activeBucketKey === 'income' ? ' is-active' : ''}" type="button" data-bucket-toggle="income" aria-pressed="${state.activeBucketKey === 'income'}"><small>${escapeHtml(income.label)}</small><strong>${(incomePct * 100).toFixed(1)}<em>%</em></strong><span>${escapeHtml(formatDisplayMoney(income.marketValueCny, 'CNY'))}</span></button>
-    </div>`;
+    <div class="structure-bar" aria-hidden="true">${bar}</div>
+    <div class="bucket-row">${buttons}</div>
+    ${detail}
+    <p class="portfolio-line">组合${dividendLabel} <b>${escapeHtml(formatZenMoney(summary.totalDividendCny))}</b> · 组合股息率 <strong>${formatZenPercent(total > 0 ? summary.totalDividendCny / total : 0)}</strong></p>`;
 }
 
 export function patchBucketsView(segments, holdings, summary) {
   renderBucketsView(segments, holdings, summary, { animateDetail: false });
 }
 
-/* ── 组合历史经营回报参考：持仓结构面板顶部的一行结论 ── */
-export function renderReturnBar() {
-  if (!refs.holdingsReturnBar) return;
-  const summary = computeHoldings();
-  const bucketItems = getBucketSummaryItems(summary.holdings);
-  const active = bucketItems.find((item) => item.key === state.activeBucketKey) || null;
-  const marketValueCny = active ? active.marketValueCny : summary.totalMarketValueCny;
-  const dividendCny = active ? active.totalDividendCny : summary.totalDividendCny;
-  const yieldRate = marketValueCny > 0 ? dividendCny / marketValueCny : 0;
-  const yieldLabel = active ? `${active.label}股息率` : '组合股息率';
-  const relevantHoldings = active ? summary.holdings.filter((item) => item.bucket === active.key) : summary.holdings;
-  const hasUnknownTax = relevantHoldings.some((item) => !item.taxRateKnown && safeNumber(item.quantity, 0) > 0);
-  refs.holdingsReturnBar.hidden = false;
-  refs.holdingsReturnBar.innerHTML = `
-    <div class="return-bar-row">
-      <span class="return-bar-item"><small>股票市值</small><strong>${escapeHtml(formatDisplayMoney(marketValueCny, 'CNY'))}</strong></span>
-      <span class="return-bar-item"><small>${hasUnknownTax ? '年化股息（未设税率按 0%）' : '税后年化股息'}</small><strong>${escapeHtml(formatDisplayMoney(dividendCny, 'CNY'))}</strong></span>
-      <span class="return-bar-item return-bar-item--yield"><small>${escapeHtml(yieldLabel)}</small><strong>${escapeHtml(formatPercent(yieldRate))}</strong></span>
-    </div>`;
-}
-
+/* 页头右槽：「诊断 N」，N>0 时计数用涨色提醒 */
 export function renderDiagnosticsButton() {
   if (!refs.diagnosticsButton) return;
-  const model = getPortfolioDiagnostics();
-  const count = model.actionableCount;
-  refs.diagnosticsButton.innerHTML = `诊断${count > 0 ? ` <strong>${count}</strong>` : ''}`;
+  const count = getPortfolioDiagnostics().actionableCount;
+  refs.diagnosticsButton.hidden = false;
+  refs.diagnosticsButton.innerHTML = count > 0 ? `诊断 <b>${count}</b>` : '诊断';
   refs.diagnosticsButton.classList.toggle('has-issues', count > 0);
   refs.diagnosticsButton.setAttribute('aria-label', count > 0 ? `持仓诊断，${count} 项需要关注` : '持仓诊断，无需处理');
 }
 
-/* ── Sort Chips ── */
+/* ── 排序：定稿图只留一个文字按钮 ── */
+export const HOLDING_SORT_FIELDS = ['marketValueCny', 'effectiveYield', 'netAnnualDividendCny'];
+
 export function getSortFieldLabel(field) {
   if (field === 'effectiveYield') return LABELS.sortDividendYield;
   if (field === 'netAnnualDividendCny') return LABELS.sortDividendAmount;
   return LABELS.sortMarketValue;
 }
 
+/* 按钮上的短名：定稿图写的是「按市值 ↓」，不是完整字段名 */
+function getSortActionLabel(field) {
+  if (field === 'effectiveYield') return '股息率';
+  if (field === 'netAnnualDividendCny') return '年股息';
+  return '市值';
+}
+
 export function renderSortChips() {
-  const lh = refs.sortGroup ? refs.sortGroup.closest('.panel-bar--list') : null;
-  if (refs.sortGroup) { refs.sortGroup.classList.add('sort-group--subtle'); refs.sortGroup.dataset.open = state.sortMenuOpen ? 'true' : 'false'; refs.sortGroup.hidden = false; refs.sortGroup.classList.toggle('is-collapsed', !state.sortMenuOpen); }
-  if (lh) lh.classList.toggle('is-sort-open', state.sortMenuOpen);
-  if (mutable.sortToggleButton) {
-    mutable.sortToggleButton.hidden = false;
-    mutable.sortToggleButton.classList.toggle('is-hidden-animated', state.sortMenuOpen);
-    mutable.sortToggleButton.classList.toggle('is-active', state.sortMenuOpen);
-    mutable.sortToggleButton.setAttribute('aria-expanded', state.sortMenuOpen ? 'true' : 'false');
-    mutable.sortToggleButton.title = `${UI_TEXT.sort} \u00b7 ${getSortFieldLabel(state.sortField)}`;
-    mutable.sortToggleButton.innerHTML = state.sortDirection === 'asc'
-      ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18V6.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path><path d="M8.8 9.7L12 6.5l3.2 3.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>'
-      : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v11.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"></path><path d="M8.8 14.3L12 17.5l3.2-3.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path></svg>';
+  // 旧的圆钮 + 三 chip 仍留在 DOM 里（持仓操作抽屉会程序性点它们），一律不出现在版面上
+  if (refs.sortGroup) refs.sortGroup.hidden = true;
+  if (mutable.sortToggleButton) mutable.sortToggleButton.hidden = true;
+  refs.sortChips.forEach((chip) => {
+    chip.hidden = true;
+    chip.textContent = getSortFieldLabel(chip.dataset.sortField);
+    chip.classList.toggle('is-active', chip.dataset.sortField === state.sortField);
+  });
+  if (refs.holdingsSortLabel) {
+    refs.holdingsSortLabel.textContent = `按${getSortActionLabel(state.sortField)} ${state.sortDirection === 'desc' ? '↓' : '↑'}`;
+    refs.holdingsSortLabel.title = `${UI_TEXT.sort} · ${getSortFieldLabel(state.sortField)}`;
   }
-  refs.sortChips.forEach((chip) => { const f = chip.dataset.sortField, a = f === state.sortField, l = getSortFieldLabel(f), arrow = a ? (state.sortDirection === 'desc' ? '\u2193' : '\u2191') : ''; chip.classList.toggle('is-active', a); chip.hidden = false; chip.classList.toggle('is-subtle-primary', false); chip.textContent = arrow ? `${l} ${arrow}` : l; });
-  if (refs.holdingsSortLabel) refs.holdingsSortLabel.textContent = `${getSortFieldLabel(state.sortField)} ${state.sortDirection === 'desc' ? '↓' : '↑'}`;
 }
 
 export function renderTimestamp() {
+  if (!refs.marketTimestamp) return;
   const count = computeHoldings().holdings.length;
-  refs.marketTimestamp.textContent = `${count} 项 · 持仓诊断`;
-  refs.marketTimestamp.title = formatTimestamp(state.lastUpdatedAt) || '打开持仓诊断';
+  // formatTimestamp 给的是「行情更新 07-24 09:32」，定稿图这行只写「行情 07-24 09:32」
+  const stamp = formatTimestamp(state.lastUpdatedAt);
+  const short = stamp.startsWith(LABELS.marketUpdated) ? `行情${stamp.slice(LABELS.marketUpdated.length)}` : stamp;
+  refs.marketTimestamp.textContent = `${short} · ${count} 项 · 点此打开诊断`;
   refs.marketTimestamp.setAttribute('aria-label', `打开持仓诊断，当前 ${count} 项持仓`);
 }
 
@@ -1048,43 +1041,60 @@ export function renderAnnualReviewPage() {
 }
 
 /* ── Holdings ── */
-function getHoldingViewModel(item, index = 0) {
-  const tl = buildDividendTooltipLines(item), sk = normalizeDividendStatus(item.dividendStatus, 'missing');
+
+/* 名称后的 4px 金点 = 这只股票有在途 / 已公告但还没确认到账的股息事件。
+   forecast 只是节奏预估、received 已经落袋，都不点亮。 */
+function getPendingDividendSymbols() {
+  const live = new Set(['pending', 'due', 'announced']);
+  const symbols = new Set();
+  computeDividendCalendar().allDetails.forEach((entry) => {
+    if (entry && live.has(entry.status)) symbols.add(entry.symbol);
+  });
+  return symbols;
+}
+
+function getHoldingViewModel(item, index = 0, opts = {}) {
+  const tooltipLines = buildDividendTooltipLines(item);
+  const statusKey = normalizeDividendStatus(item.dividendStatus, 'missing');
   return {
     priceText: state.showAmounts ? formatPlainPrice(item.price) : MASK_PRICE,
-    marketValueText: state.showAmounts ? formatMoney(item.marketValueCny, 'CNY') : MASK_AMOUNT,
-    annualDividendText: state.showAmounts ? formatMoney(item.netAnnualDividendCny, 'CNY') : MASK_AMOUNT,
+    marketValueText: formatZenMoney(item.marketValueCny),
+    annualDividendText: formatZenMoney(item.netAnnualDividendCny),
     quantityText: state.showAmounts ? String(item.quantity) : MASK_AMOUNT,
-    weightText: `${(item.holdingWeight * 100).toFixed(1)}%`,
-    statusKey: sk, statusLabel: getDividendStatusLabel(sk), tooltipLines: tl,
-    tooltipHtml: buildDividendTooltipHtml(tl), yieldText: formatPercent(item.effectiveYield),
-    annualDividendLabel: item.taxRateKnown ? '税后年化' : '税率未设·按 0% 估算',
-    bucketTone: item.bucket === 'income' ? 'income' : 'core',
+    weightText: formatZenPercent(item.holdingWeight),
+    yieldText: formatZenPercent(item.effectiveYield),
+    statusKey, statusLabel: getDividendStatusLabel(statusKey), tooltipLines,
+    tooltipHtml: buildDividendTooltipHtml(tooltipLines),
+    // 未设税率时年化是按 0% 估的，用中性的「年化股息」，别声称是税后
+    annualDividendLabel: item.taxRateKnown ? '税后年化' : '年化股息',
+    hasDividendEvent: Boolean(opts.pendingDividends && opts.pendingDividends.has(item.symbol)),
     staggerDelay: Math.min(index * HOLDING_ENTER_STAGGER_MS, HOLDING_ENTER_STAGGER_MAX_MS)
   };
 }
 
+/* 两层行：名称+代码（+金点）｜市值 · 右；现价·年化·率 ｜ 权重右。
+   四个可点域保留：名称→详情，年化→税率，率→每股股息，市值→数量（现金模式开交易）。 */
 function getHoldingMarkup(item, index, opts = {}) {
-  const { animate = true } = opts, v = getHoldingViewModel(item, index);
-  const marketValueFocus = state.sortField === 'marketValueCny' ? ' is-sort-focus' : '';
-  const dividendFocus = state.sortField === 'netAnnualDividendCny' ? ' is-sort-focus' : '';
-  const yieldFocus = state.sortField === 'effectiveYield' ? ' is-sort-focus' : '';
+  const { animate = true } = opts, v = getHoldingViewModel(item, index, opts);
   return `<div class="holding-swipe${animate ? ' is-entering' : ''}" data-id="${item.localId}" style="--holding-swipe-offset:0px;animation-delay:${v.staggerDelay}ms;">
-    <article class="holding-card" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
-      <div class="holding-row-main">
-        <div class="holding-main"><div class="holding-title-line"><button class="holding-name holding-name-button" type="button" data-action="view-holding" aria-label="查看 ${escapeHtml(item.name)} 持仓详情">${escapeHtml(item.name)}</button><span class="holding-code">${escapeHtml(item.symbol)}</span></div>
-          <div class="holding-meta-row"><span class="holding-price" data-holding-field="price">${escapeHtml(v.priceText)}</span><span>· ${escapeHtml(v.annualDividendLabel)} </span><button class="${dividendFocus.trim()}" type="button" data-action="edit-tax" data-holding-field="annualDividend">${escapeHtml(v.annualDividendText)}</button><span> · </span><button class="${yieldFocus.trim()}" type="button" data-action="edit-dividend" data-holding-field="effectiveYieldValue">${escapeHtml(v.yieldText)}</button></div>
-        </div>
-        <button class="holding-side" type="button" data-action="edit-quantity"><strong class="${marketValueFocus.trim()}" data-holding-field="marketValue">${escapeHtml(v.marketValueText)}</strong><span data-holding-field="weight">${escapeHtml(v.weightText)}</span></button>
+    <article class="holding-card stock" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
+      <div class="stock-main">
+        <span class="stock-name"><button class="stock-name-button" type="button" data-action="view-holding" aria-label="查看 ${escapeHtml(item.name)} 持仓详情">${escapeHtml(item.name)}</button><span class="code">${escapeHtml(item.symbol)}</span>${v.hasDividendEvent ? '<i class="divi-dot" title="有在途或已公告股息"></i>' : ''}</span>
+        <button class="stock-mv" type="button" data-action="edit-quantity" data-holding-field="marketValue" aria-label="编辑 ${escapeHtml(item.name)} 持股数量">${escapeHtml(v.marketValueText)}</button>
+      </div>
+      <div class="stock-sub">
+        <span class="stock-sub-main">现价 <span data-holding-field="price">${escapeHtml(v.priceText)}</span> · ${escapeHtml(v.annualDividendLabel)} <button type="button" data-action="edit-tax" data-holding-field="annualDividend" aria-label="设置股息税率">${escapeHtml(v.annualDividendText)}</button> · <button type="button" data-action="edit-dividend" data-holding-field="effectiveYieldValue" aria-label="覆写每股股息">${escapeHtml(v.yieldText)}</button></span>
+        <span class="weight" data-holding-field="weight">${escapeHtml(v.weightText)}</span>
       </div>
     </article></div>`;
 }
 
 export function renderHoldingsView(holdings, opts = {}) {
   mutable.activeDividendTooltipButton = null;
-  if (!holdings.length) { refs.stockList.innerHTML = '<article class="holding-card empty-card"></article>'; return; }
+  if (!holdings.length) { refs.stockList.innerHTML = ''; refs.legendToggle.hidden = true; return; }
+  const pendingDividends = getPendingDividendSymbols();
   const visible = state.legendExpanded ? holdings : holdings.slice(0, LEGEND_COLLAPSED_COUNT);
-  refs.stockList.innerHTML = visible.map((item, i) => getHoldingMarkup(item, i, opts)).join('');
+  refs.stockList.innerHTML = visible.map((item, i) => getHoldingMarkup(item, i, { ...opts, pendingDividends })).join('');
   refs.legendToggle.hidden = holdings.length <= LEGEND_COLLAPSED_COUNT;
   refs.legendToggle.textContent = state.legendExpanded ? '收起' : `展开全部 ${holdings.length} 项`;
 }
@@ -1130,8 +1140,8 @@ export function animateHoldingRemoval(wrapper, onComplete) {
 /* ── Dashboard Orchestration ── */
 function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
   renderHomePage(summary); patchLegendView(cs);
+  renderHoldingsHero(summary);
   patchBucketsView(bs, summary.holdings, summary);
-  renderReturnBar();
   renderDiagnosticsButton();
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
@@ -1155,8 +1165,8 @@ export function renderApp(opts = {}) {
   renderPageChrome();
   if (incremental) { renderDashboardIncrementally(summary, cs, bs, { animateHoldingReflow }); return; }
   renderHomePage(summary); renderLegendView(cs, { animate: animateLegend });
+  renderHoldingsHero(summary);
   renderBucketsView(bs, summary.holdings, summary, { animateDetail: animateBucketDetail });
-  renderReturnBar();
   renderDiagnosticsButton();
   renderSortChips(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
@@ -1168,13 +1178,16 @@ export function renderApp(opts = {}) {
   else syncRenderedHoldingsView(summary.holdings, { animateReflow: false });
 }
 
-export function applyHoldingSortSelection(nextField) {
-  if (!nextField) return;
+/* 定稿图的单文字排序键：一次点击换一个字段，三个字段轮完再翻方向 —— 6 态循环，
+   「点击轮换三字段、再点切升降」用一个按钮就能走完，不需要长按。 */
+export function cycleHoldingSortSelection() {
+  const index = HOLDING_SORT_FIELDS.indexOf(state.sortField);
+  const next = index < 0 ? 0 : (index + 1) % HOLDING_SORT_FIELDS.length;
+  if (index >= 0 && next === 0) state.sortDirection = state.sortDirection === 'desc' ? 'asc' : 'desc';
   closeActiveDividendTooltip(true);
   const opened = refs.stockList.querySelector('.holding-swipe.is-swipe-open');
   if (opened) closeHoldingSwipe(opened);
-  if (state.sortField === nextField) state.sortDirection = state.sortDirection === 'desc' ? 'asc' : 'desc';
-  else { state.sortField = nextField; state.sortDirection = 'desc'; }
+  state.sortField = HOLDING_SORT_FIELDS[next];
   saveState(); renderSortChips();
   syncRenderedHoldingsView(computeHoldings().holdings, { animateReflow: true });
 }

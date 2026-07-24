@@ -117,7 +117,7 @@ export const refs = {
   companyLegend: document.getElementById('companyLegend'),
   legendToggle: document.getElementById('legendToggle'),
   bucketTrack: document.getElementById('bucketTrack'),
-  holdingsReturnBar: document.getElementById('holdingsReturnBar'),
+  holdingsHero: document.getElementById('holdingsHero'),
   diagnosticsButton: document.getElementById('diagnosticsButton'),
   marketTimestamp: document.getElementById('marketTimestamp'),
   refreshButton: document.getElementById('refreshButton'),
