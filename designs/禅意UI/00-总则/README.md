@@ -1,6 +1,8 @@
 # 禅意UI · 素禅/墨禅改版施工总包
 
 > **本目录是唯一权威**：18 个界面文件夹，每个含 定稿图.html（浏览器打开即目标效果）、施工方案.md、验收标准.md。任何 Agent 依此可一比一实现，无需其他上下文。
+> 定稿图与施工方案文字冲突时：**视觉构图以定稿图为准，功能取舍以施工方案为准**。
+> 夜间态参照物见本目录 `夜间色板.html`（各页定稿图只画了素禅日间）。
 > 旧目录 designs/home-color-directions/ 为历史归档，勿作施工依据。
 
 ## 当前状态（2026-07-24）
@@ -9,8 +11,24 @@
 - `zen-redesign` 分支保留全部功能成果（币种折算/XIRR 删除/饼图/分享卡/速览/估值等 13 commit），**可复用其逻辑，但布局层须按各文件夹定稿图重排**。
 
 ## Token（styles.css 权威层）
-素禅（日间默认）：--bg:#faf8f3; --ink:#3b362e; --muted:#a89d86; --hint:#c2b9a6; --label:#b0a78f; --gold:#c19a45; --gold-soft:#dcc492; --track:#eae4d4; --up:#bf5a42; --down:#6a8b74; 线图褐 #b5a88f; 饼图六阶 #c9a558/#dcc492/#b3a68c/#cfc4ad/#e2d9c4/#efe9da; 遮罩 rgba(59,54,46,.28)
-墨禅（夜间，prefers-color-scheme 自动）：--bg:#23201b; --ink:#ece6d8; --muted:#8f887a; --hint:#5f594c; --gold:#d3a84f(进度线加 0 0 12px rgba(211,168,79,.45) 微光); --track:#3a352c; --up:#e07a5f; --down:#7fae8e; 遮罩 rgba(0,0,0,.45)
+素禅（日间默认）：--bg:#faf8f3; --ink:#3b362e; --muted:#a89d86; --hint:#c2b9a6; --label:#b0a78f; --gold:#c19a45; --gold-soft:#dcc492; --track:#eae4d4; --up:#bf5a42; --down:#6a8b74; 遮罩 rgba(59,54,46,.28)
+墨禅（夜间，prefers-color-scheme 自动）：--bg:#23201b; --ink:#ece6d8; --muted:#8f887a; --hint:#5f594c; --label:#8f887a; --gold:#d3a84f(进度线加 0 0 12px rgba(211,168,79,.45) 微光); --gold-soft:#b9974a; --track:#3a352c; --up:#e07a5f; --down:#7fae8e; 遮罩 rgba(0,0,0,.45)
+
+### 图表色（各页定稿图只画了日间，夜间以 `夜间色板.html` 为准）
+定稿图里折线/圆点/饼图分段写的是硬编码 hex，**施工时一律改用下表 token，不许写死**。夜间值按对比度反解得到（暗底细线有光晕衰减，线条类目标 3.4–5.2:1、点类 6.7–7.3:1，均高于日间；饼图六阶保证相邻 ≥1.25:1 可辨）。
+
+| token | 用在哪 | 素禅日间 | 墨禅夜间 |
+| --- | --- | --- | --- |
+| --chart-line | 资金收益率趋势线 | #b5a88f | #8f8266 |
+| --chart-gold | 股息收益率线、每股分红线 | #dcc492 | #a98e50 |
+| --chart-line-soft | EPS 线 | #cfc4ad | #8a7f66 |
+| --chart-gold-dot | 分红线/股息线数据点 | #c9a558 | #d3a84f |
+| --chart-ink-dot | EPS 点、资金收益率点 | #8a7d69 | #b3a68c |
+| --chart-growth | 公式三段线「增长」段 | #b3a68c | #7d7360 |
+| --donut-1 … 6 | 持仓饼图六阶 | #c9a558 / #dcc492 / #b3a68c / #cfc4ad / #e2d9c4 / #efe9da | #d3a84f / #b9974a / #8f8262 / #6f6653 / #514b3d / #3a352c |
+
+SVG 内的文字 fill 同样走 token（--ink / --muted / --hint），定稿图里的 `fill:#3b362e` 一类是日间快照值，不可照抄。
+**例外**：11-分享卡固定素禅日间导出（卡底 #fffdf8），**不随夜间变色**，两态渲染应完全一致。
 
 ## 全局纪律（每个界面都受约束）
 - 结构靠排版不靠容器：**无卡片边框、无图标底托、无 chevron、无分隔 rule**；分区只用留白。
