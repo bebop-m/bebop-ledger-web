@@ -516,7 +516,8 @@ function buildDividendRow(entry) {
   </div>`;
 }
 
-const DIVIDEND_RECENT_LIMIT = 6;
+const DIVIDEND_LIST_LIMIT = 6;
+const DIVIDEND_DUE_LIMIT = 3;
 
 function renderDividendMonths(model) {
   const cells = model.months.map((item) => {
@@ -530,13 +531,19 @@ function renderDividendMonths(model) {
     </button>`;
   }).join('');
 
+  /* 两段列表合起来最多 DIVIDEND_LIST_LIMIT 行——本页要一屏放得下，
+     而待确认在真实账本里能堆到二十几笔（把整页顶到 1610px 滚动过）。
+     节标上的「N 笔 · 总额」是全量口径，截断的只是行；要逐笔处理走月点阵进月明细，
+     那里的列表自己滚。 */
   const due = model.allDetails
     .filter((entry) => entry.status === 'due')
     .sort((a, b) => `${b.payDate}|${b.symbol}`.localeCompare(`${a.payDate}|${a.symbol}`));
   const dueCny = due.reduce((sum, entry) => sum + safeNumber(entry.netCny, 0), 0);
+  const dueShown = due.slice(0, DIVIDEND_DUE_LIMIT);
   const dueSection = due.length ? `
     <div class="divi-sec-head"><span class="divi-sec-label">待确认 · ${due.length} 笔</span><span class="divi-sec-aside">${escapeHtml(formatDisplayMoney(dueCny, 'CNY'))}</span></div>
-    <div class="divi-rows">${due.map(buildDividendRow).join('')}</div>` : '';
+    <div class="divi-rows">${dueShown.map(buildDividendRow).join('')}</div>` : '';
+  const recentLimit = Math.max(2, DIVIDEND_LIST_LIMIT - dueShown.length);
 
   /* 「近期」＝已经发生或已公告的事件，按日期倒序；节奏预估不进这段（它已经由
      月点阵和构成线里的「预估」表达）。账本刚起步、一条真实事件都还没有时才退化为
@@ -544,11 +551,11 @@ function renderDividendMonths(model) {
   const settled = model.allDetails
     .filter((entry) => !entry.isForecast && entry.status !== 'due')
     .sort((a, b) => `${b.payDate}|${b.symbol}`.localeCompare(`${a.payDate}|${a.symbol}`))
-    .slice(0, DIVIDEND_RECENT_LIMIT);
+    .slice(0, recentLimit);
   const fallback = settled.length ? [] : model.allDetails
     .filter((entry) => entry.isForecast && entry.payDate >= model.today)
     .sort((a, b) => `${a.payDate}|${a.symbol}`.localeCompare(`${b.payDate}|${b.symbol}`))
-    .slice(0, DIVIDEND_RECENT_LIMIT);
+    .slice(0, recentLimit);
   const recent = settled.length ? settled : fallback;
   const recentSection = recent.length ? `
     <div class="divi-sec-head${due.length ? ' is-later' : ''}"><span class="divi-sec-label">近期</span><span class="divi-sec-aside">${settled.length ? '' : '按往年节奏推算'}</span></div>
