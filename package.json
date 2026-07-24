@@ -12,7 +12,8 @@
     "test:py": "python -m unittest discover -s tests -p \"test_*.py\"",
     "audit:migrate": "python scripts/migrate_portfolio_v5.py",
     "audit:snapshot": "node scripts/audit_snapshot.mjs",
-    "shot": "node scripts/screenshot.mjs"
+    "shot": "node scripts/screenshot.mjs",
+    "verify": "node scripts/verify-ui.mjs"
   },
   "devDependencies": {
     "puppeteer-core": "^25.3.0",
