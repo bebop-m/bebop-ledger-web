@@ -151,20 +151,25 @@ function renderHomeMetrics(calendarModel, summary) {
   const annualYield = annual.annualYield;
   const nextDividend = getNextHomeDividend(calendarModel);
   const nextDate = getHomeDividendDateParts(nextDividend);
-  const nextReport = getUpcomingReportEvents()[0] || null;
-  const nextReportDate = getHomeEventDateParts(nextReport && nextReport.reportDate);
   const monthWindow = getHomeMonthWindow(calendarModel.months, calendarModel.currentMonth);
   const monthButtons = monthWindow.map((item) => {
-    const progress = item.totalCny > 0 ? Math.min(100, Math.max(0, item.receivedCny / item.totalCny * 100)) : 0;
+    const hasPay = safeNumber(item.totalCny, 0) > 0;
     return `
-    <button class="home-month${item.month === calendarModel.currentMonth ? ' is-current' : ''}" type="button" data-home-dividend-month="${item.month}" aria-label="查看 ${item.month} 月股息">
+    <button class="home-month${hasPay ? ' has-pay' : ''}${item.month === calendarModel.currentMonth ? ' is-current' : ''}" type="button" data-home-dividend-month="${item.month}" aria-label="查看 ${item.month} 月股息">
       <i aria-hidden="true"></i>
       <span>${String(item.month).padStart(2, '0')}</span>
-      ${item.month === calendarModel.currentMonth ? `<b aria-hidden="true" style="--home-month-progress:${progress.toFixed(1)}%"></b>` : ''}
     </button>`;
   }).join('');
   const nextName = nextDividend ? (nextDividend.name || nextDividend.symbol) : '';
-  const nextReportName = nextReport ? (nextReport.name || nextReport.symbol) : '';
+  // 待办第一行：下一笔在途股息；第二行：待确认到账笔数与金额（沿用 due 语义）
+  const nextLine = nextDividend
+    ? `${nextDate.month}${nextDate.day}日 ${escapeHtml(nextName)} <strong class="is-gold">${escapeHtml(formatDisplayMoney(nextDividend.netCny, 'CNY'))}</strong> 到账`
+    : '近期暂无在途股息';
+  const dueEntries = calendarModel.allDetails.filter((entry) => entry.status === 'due');
+  const dueCny = dueEntries.reduce((sum, entry) => sum + safeNumber(entry.netCny, 0), 0);
+  const dueLine = dueEntries.length
+    ? `待确认 <strong>${dueEntries.length} 笔 · ${escapeHtml(formatHudAmount(dueCny))}</strong>`
+    : '暂无待确认到账';
 
   refs.homeFocusCard.innerHTML = `
     <button class="home-cashflow" type="button" data-page-nav="dividends" aria-label="打开本年股息">
@@ -181,17 +186,10 @@ function renderHomeMetrics(calendarModel, summary) {
     <section class="home-month-ledger">
       <div class="home-month-track">${monthButtons}</div>
     </section>
-    <section class="home-event-strip" aria-label="快捷操作与近期事件">
-      <button class="home-event-cell" type="button" data-page-nav="dividends" aria-label="查看下一笔股息">
-        <span>下次到账</span><strong>${nextDate.day}<em>${nextDate.month}</em></strong><small>${nextName ? escapeHtml(nextName) : '待更新'}${nextDividend ? ` · ${escapeHtml(formatDisplayMoney(nextDividend.netCny, 'CNY'))}` : ''}</small>
-      </button>
-      <button class="home-event-cell" type="button" data-page-nav="fundamentals" aria-label="查看下一场财报">
-        <span>下一场财报</span><strong>${nextReportDate.day}<em>${nextReportDate.month}</em></strong><small>${nextReportName ? escapeHtml(nextReportName) : '待更新'}${nextReport ? ` · ${escapeHtml(nextReport.reportType)}` : ''}</small>
-      </button>
-      <button id="quickAddButton" class="home-event-cell is-action" type="button" data-home-action="quick-add" aria-label="记一笔交易或出入金">
-        <span>记一笔</span><strong>＋</strong><small>交易 / 出入金</small>
-      </button>
-    </section>`;
+    <div class="home-todo-strip" aria-label="近期股息待办">
+      <p class="home-todo-line">${nextLine}</p>
+      <p class="home-todo-line">${dueLine}</p>
+    </div>`;
 }
 
 /* 入口 HUD 的金额统一取整，保持单行长度可控。 */

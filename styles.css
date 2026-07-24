@@ -10426,3 +10426,110 @@ button:focus-visible,
 [tabindex]:focus-visible {
   outline-color: var(--gold);
 }
+
+/* ── 首页 --home-* 家族重映射（scoped，覆盖 Swiss Ledger home 层） ── */
+body[data-active-page="home"] {
+  --home-paper: var(--bg);
+  --home-surface: var(--bg);
+  --home-ink: var(--ink);
+  --home-muted: var(--muted);
+  --home-soft: var(--hint);
+  --home-line: transparent;
+  --home-line-strong: transparent;
+  --home-iris: var(--gold);
+  --home-iris-dark: var(--gold);
+  --home-iris-soft: rgba(193, 154, 69, 0.12);
+}
+@media (prefers-color-scheme: dark) {
+  body[data-active-page="home"] {
+    --home-iris-soft: rgba(211, 168, 79, 0.16);
+  }
+}
+
+/* zen 首页：结构靠留白，去掉 Swiss 分隔线与强 rule */
+body[data-active-page="home"] .home-metrics {
+  border-top: none;
+  padding-top: 6px;
+}
+body[data-active-page="home"] .home-month-ledger,
+body[data-active-page="home"] .home-next-arrival,
+body[data-active-page="home"] .home-annual-dividend,
+body[data-active-page="home"] .home-month-track {
+  border-top: none;
+  border-bottom: none;
+}
+body[data-active-page="home"] .home-nav-item {
+  border-bottom: none;
+}
+body[data-active-page="home"] .home-month::before {
+  display: none;
+}
+/* hero 字阶对齐 zen：47px / 600 / -1px；分数位 22px */
+body[data-active-page="home"] .home-hero-value {
+  font-size: 47px;
+  font-weight: 600;
+  letter-spacing: -1px;
+}
+body[data-active-page="home"] .home-hero-fraction {
+  font-size: 22px;
+  color: var(--label);
+}
+/* 股息金线：轨道转纸色，填充与端点金色（夜间带微光） */
+body[data-active-page="home"] .home-cashflow-progress {
+  background: var(--track);
+}
+body[data-active-page="home"] .home-cashflow-progress i {
+  box-shadow: var(--glow);
+}
+/* 月点阵：金色圆点（有派息），非竖线 */
+body[data-active-page="home"] .home-month i {
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: transparent;
+}
+body[data-active-page="home"] .home-month.has-pay i {
+  background: var(--gold);
+  box-shadow: var(--glow);
+}
+/* 两行待办：纯文字，关键数字着墨/金 */
+body[data-active-page="home"] .home-todo-strip {
+  display: block;
+  min-height: 64px;
+  margin-top: 20px;
+  padding: 0;
+  border: none;
+  text-align: center;
+}
+body[data-active-page="home"] .home-todo-line {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 2.1;
+  font-variant-numeric: tabular-nums;
+}
+body[data-active-page="home"] .home-todo-line strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+body[data-active-page="home"] .home-todo-line strong.is-gold {
+  color: var(--gold);
+}
+/* ＋记一笔 文字按钮（nav 之后） */
+body[data-active-page="home"] .home-quick-add {
+  display: block;
+  width: 100%;
+  margin-top: 22px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: var(--up);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-align: center;
+}
+body[data-active-page="home"] .home-quick-add:active {
+  opacity: 0.55;
+}
