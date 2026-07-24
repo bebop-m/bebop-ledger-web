@@ -111,7 +111,6 @@ export const refs = {
   annualShareButton: document.getElementById('annualShareButton'),
   incomeRecordsList: document.getElementById('incomeRecordsList'),
   fundamentalsNote: document.getElementById('fundamentalsNote'),
-  reportCalendarPanel: document.getElementById('reportCalendarPanel'),
   fundamentalsContent: document.getElementById('fundamentalsContent'),
   dividendMetricGrid: document.getElementById('dividendMetricGrid'),
   dividendMonthGrid: document.getElementById('dividendMonthGrid'),

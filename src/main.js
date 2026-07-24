@@ -91,20 +91,21 @@ refs.pageBackButtons.forEach((button) => {
 if (refs.quickAddButton) refs.quickAddButton.addEventListener('click', () => { openModal('quickAdd'); });
 
 if (refs.fundamentalsContent) refs.fundamentalsContent.addEventListener('click', (event) => {
+  // 速览横滑条点公司：切换后滚回页顶，让下面整页的重算结果从头读起
   const symbolButton = event.target.closest('[data-fund-symbol]');
   if (symbolButton) {
     selectFundamentalsSymbol(symbolButton.dataset.fundSymbol);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+  // 页尾日历点公司：切到该公司并滚回页顶，让上方的切换结果可见。
+  const reportRow = event.target.closest('[data-report-symbol]');
+  if (reportRow) {
+    selectFundamentalsSymbol(reportRow.dataset.reportSymbol);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
   }
   if (event.target.closest('[data-fund-picker-open]')) openModal('fundPicker');
-});
-// 页尾日历点公司：切到该公司并滚回页顶，让上方的切换结果可见。
-if (refs.reportCalendarPanel) refs.reportCalendarPanel.addEventListener('click', (event) => {
-  const row = event.target.closest('[data-report-symbol]');
-  if (row) {
-    selectFundamentalsSymbol(row.dataset.reportSymbol);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
 });
 
 refs.dividendFilterGroup.addEventListener('click', (event) => {
