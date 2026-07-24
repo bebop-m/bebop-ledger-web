@@ -11028,7 +11028,9 @@ body[data-active-page="holdings"] .holdings-sec-label {
   line-height: clamp(13.8px, 3.8462vw, 20.25px);
   letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
 }
-body[data-active-page="holdings"] .holdings-sort-action {
+/* 旧层有一条 #holdingsSortLabel { display: none }，id 选择器压过类选择器，
+   这里必须带上 id 才抢得回来 */
+body[data-active-page="holdings"] #holdingsSortLabel.holdings-sort-action {
   display: block;
   width: auto;
   height: auto;
