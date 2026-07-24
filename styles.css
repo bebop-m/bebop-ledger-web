@@ -2106,20 +2106,20 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #d6dde8;
-  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.08);
+  background: var(--track);
+  box-shadow: none;
 }
 
 .dividend-status-button.is-fresh .dividend-status-dot {
-  background: #61b46b;
+  background: var(--down);
 }
 
 .dividend-status-button.is-stale .dividend-status-dot {
-  background: #e3b548;
+  background: var(--gold);
 }
 
 .dividend-status-button.is-missing .dividend-status-dot {
-  background: #db6e63;
+  background: var(--up);
 }
 
 .dividend-status-button.is-manual {
@@ -2131,7 +2131,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #7d8eb3;
+  background: var(--muted);
   color: transparent;
   font-size: 0;
   font-weight: 400;
