@@ -2,10 +2,9 @@
    数据来自 data/fundamentals.json（scripts/update_fundamentals.py 每日复核年报口径数据）。
    本模块自持 DOM 容器，懒加载 + localStorage 离线缓存。 */
 import { state, refs } from './state.js';
-import { safeNumber, escapeHtml, formatDateLabel } from './utils.js';
+import { safeNumber, escapeHtml, formatDateLabel, resolveFxRate } from './utils.js';
 import { computeHoldings, inferQuote } from './compute.js';
 import { FUNDAMENTALS_ENDPOINT } from './constants.js';
-import { getNextReportEvent } from './report-calendar.js';
 
 const CACHE_KEY = 'bopup-fundamentals-cache-v1';
 
@@ -534,10 +533,6 @@ function buildEpsLedger(company, visible) {
     : null;
   const growthTone = latestGrowth === null ? 'is-flat' : latestGrowth > 0 ? 'is-gain' : latestGrowth < 0 ? 'is-loss' : 'is-flat';
   const growthText = latestGrowth === null ? '' : `${latestGrowth > 0 ? '+' : latestGrowth < 0 ? '−' : ''}${Math.abs(latestGrowth * 100).toFixed(1)}%`;
-  const nextReport = getNextReportEvent(company.symbol);
-  const nextReportDate = nextReport && nextReport.reportDate
-    ? `${String(Number(nextReport.reportDate.slice(5, 7))).padStart(2, '0')}/${String(Number(nextReport.reportDate.slice(8, 10))).padStart(2, '0')}`
-    : '—';
   return `<section class="fund-eps-section">
     <div class="fund-eps-head"><p class="ledger-eyebrow">EPS 每股收益</p><strong class="fund-bar-latest ${growthTone}">${growthText ? escapeHtml(growthText) : '—'}<small>EPS ${escapeHtml(formatMetricValue(latest.eps, 'money'))} ${escapeHtml(company.statementCurrency || company.currency)}</small></strong></div>
     <div class="fund-eps-bars">${visible.map((row, index) => {
@@ -549,7 +544,6 @@ function buildEpsLedger(company, visible) {
       <div><span>分红率</span><strong>${escapeHtml(formatMetricValue(latest.payoutRatio, 'percent'))}</strong></div>
       <div><span>负债率</span><strong>${escapeHtml(formatMetricValue(latest.debtRatio, 'percent'))}</strong></div>
     </div>
-    ${nextReportDate === '—' ? '' : `<p class="fund-chart-note">下场财报 ${escapeHtml(nextReportDate)}</p>`}
   </section>`;
 }
 
@@ -563,13 +557,71 @@ function getEmptyStateMarkup() {
   </div>`;
 }
 
-// 选中公司的下一场财报（有收录才显示）。
-function buildNextReportLine(symbol) {
-  const event = getNextReportEvent(symbol);
-  if (!event) return '';
-  const statusText = event.dateStatus === 'confirmed' ? '已确认' : event.dateStatus === 'scheduled' ? '预约' : '预计';
-  const date = `${Number(event.reportDate.slice(5, 7))}月${Number(event.reportDate.slice(8, 10))}日`;
-  return `<p class="fund-company-report">下场财报 <strong>${date}</strong> · ${escapeHtml(event.reportType)} · ${statusText}</p>`;
+// 九家速览横滑条：按历史经营回报降序，名+%，当前金点，点击切换公司。
+function buildFundamentalsRail(allCompanies) {
+  const items = allCompanies
+    .map((company) => {
+      const model = getCompanyReturnModel(company.symbol);
+      return { symbol: company.symbol, name: getCompanyDisplayName(company), rate: model ? model.historicalReturn : null };
+    })
+    .filter((item) => item.rate !== null && item.rate !== undefined)
+    .sort((a, b) => b.rate - a.rate);
+  if (items.length < 2) return '';
+  return `<div class="fund-rail" role="tablist" aria-label="按经营回报速览切换公司">
+    ${items.map((item) => `<button class="fund-rail-item${item.symbol === _selectedSymbol ? ' is-current' : ''}" type="button" role="tab" aria-selected="${item.symbol === _selectedSymbol}" data-fund-select="${escapeHtml(item.symbol)}">
+      <span class="fund-rail-name">${escapeHtml(item.name)}</span>
+      <span class="fund-rail-rate num">${formatSignedPercent(item.rate)}</span>
+    </button>`).join('')}
+  </div>`;
+}
+
+// 组合锚：组合加权历史经营回报 + 本公司在全部有回报公司中的名次。
+function buildPortfolioAnchor(company, allCompanies) {
+  const portfolio = getPortfolioReturnSummary();
+  if (portfolio.all === null) return '';
+  const ranked = allCompanies
+    .map((item) => ({ symbol: item.symbol, rate: (getCompanyReturnModel(item.symbol) || {}).historicalReturn }))
+    .filter((item) => item.rate !== null && item.rate !== undefined)
+    .sort((a, b) => b.rate - a.rate);
+  const idx = ranked.findIndex((item) => item.symbol === company.symbol);
+  const rankText = idx >= 0 ? ` · 本公司列 ${ranked.length} 家中第 ${idx + 1}` : '';
+  return `<p class="fund-portfolio-anchor">组合加权 <strong>${formatSignedPercent(portfolio.all)}/年</strong>${rankText}</p>`;
+}
+
+// 估值节：市盈率（现价÷最新EPS，币种折算）+ 股息率分位「贵⇄便宜」标尺。
+function buildValuationSection(company, rows) {
+  const priceLocal = safeNumber(inferQuote(company.symbol).price, 0);
+  const epsRows = rows.filter((row) => row.eps !== null && row.eps !== undefined);
+  const eps = epsRows.length ? safeNumber(epsRows[epsRows.length - 1].eps, 0) : 0;
+  const priceCny = priceLocal * resolveFxRate(company.currency, state.rates);
+  const epsCny = eps * resolveFxRate(company.statementCurrency || company.currency, state.rates);
+  const pe = epsCny > 0 && priceCny > 0 ? priceCny / epsCny : null;
+  const yieldRank = getDividendYieldPercentile(company.symbol);
+  // PE 历史分位需要历史年末价格序列，数据不足则该行只显示当前 PE 值、不画标尺。
+  const peRow = `<div class="fund-val-row">
+    <div class="fund-val-head"><span>市盈率 PE</span><strong class="num">${pe === null ? '—' : pe.toFixed(1)}</strong></div>
+    <p class="fund-val-note">现价 ÷ 最新 EPS（币种已折算）· 缺历史年末价，暂不评估分位</p>
+  </div>`;
+  let yieldRow;
+  if (yieldRank) {
+    const cheap = yieldRank.percentile >= 0.5;
+    const dotPct = Math.min(98, Math.max(2, yieldRank.percentile * 100));
+    yieldRow = `<div class="fund-val-row">
+      <div class="fund-val-head"><span>股息率</span><strong class="num">${(yieldRank.currentYield * 100).toFixed(2)}%</strong><em class="fund-val-verdict ${cheap ? 'is-cheap' : 'is-rich'}">${cheap ? '偏便宜' : '偏贵'}</em></div>
+      <div class="fund-val-ruler" role="img" aria-label="股息率分位 ${Math.round(yieldRank.percentile * 100)}%，越右越便宜"><span class="fund-val-ruler-end">贵</span><span class="fund-val-ruler-track"><i style="left:${dotPct.toFixed(1)}%"></i></span><span class="fund-val-ruler-end">便宜</span></div>
+      <p class="fund-val-note">现价股息率高于过去 ${yieldRank.years} 年中 ${Math.round(yieldRank.percentile * 100)}% 的年份</p>
+    </div>`;
+  } else {
+    yieldRow = `<div class="fund-val-row">
+      <div class="fund-val-head"><span>股息率</span><strong class="num">—</strong></div>
+      <p class="fund-val-note">完整年度不足 5 年，暂不评估股息率分位</p>
+    </div>`;
+  }
+  return `<section class="fund-valuation">
+    <p class="ledger-eyebrow">估值</p>
+    ${peRow}
+    ${yieldRow}
+  </section>`;
 }
 
 export function renderFundamentalsPage() {
@@ -594,6 +646,7 @@ export function renderFundamentalsPage() {
   const chartRows = rows.slice(-4);
   const summary = buildCompanySummary(company, rows);
   refs.fundamentalsContent.innerHTML = `
+    ${buildFundamentalsRail(allCompanies)}
     <section class="panel fund-head-panel">
       <div class="fund-company-head">
         <div>
@@ -606,9 +659,10 @@ export function renderFundamentalsPage() {
         </div>
       </div>
       ${buildFormulaBlock(company)}
+      ${buildPortfolioAnchor(company, allCompanies)}
       ${summary ? `<p class="fund-company-summary">${escapeHtml(summary)}</p>` : ''}
-      ${buildNextReportLine(company.symbol)}
     </section>
+    ${buildValuationSection(company, allRows)}
     ${buildDividendBars(company, chartRows)}
     ${buildEpsLedger(company, chartRows)}
     <details class="fund-fold">

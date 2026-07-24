@@ -92,6 +92,12 @@ refs.pageBackButtons.forEach((button) => {
 if (refs.quickAddButton) refs.quickAddButton.addEventListener('click', () => { openModal('quickAdd'); });
 
 if (refs.fundamentalsContent) refs.fundamentalsContent.addEventListener('click', (event) => {
+  const railButton = event.target.closest('[data-fund-select]');
+  if (railButton) {
+    selectFundamentalsSymbol(railButton.dataset.fundSelect);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
   const symbolButton = event.target.closest('[data-fund-symbol]');
   if (symbolButton) {
     selectFundamentalsSymbol(symbolButton.dataset.fundSymbol);
