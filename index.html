@@ -6,8 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
     >
-    <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#23201b" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#efefe9">
     <title>波普账本</title>
     <link rel="icon" href="./assets/icon.svg?v=20260716" type="image/svg+xml">
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon-v2.png">
@@ -92,27 +91,25 @@
           <nav id="homeNavList" class="home-nav-list" aria-label="主导航">
             <button class="home-nav-item" type="button" data-page-nav="holdings">
               <span class="home-nav-title">持仓</span>
-              <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="holdings"></span></span>
+              <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="holdings"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
             </button>
             <button class="home-nav-item" type="button" data-page-nav="dividends">
               <span class="home-nav-title">股息日历</span>
-              <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="dividends"></span></span>
+              <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="dividends"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
             </button>
             <button class="home-nav-item" type="button" data-page-nav="income">
               <span class="home-nav-title">收益明细</span>
-              <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="income"></span></span>
+              <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="income"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
             </button>
             <button class="home-nav-item" type="button" data-page-nav="fundamentals">
               <span class="home-nav-title">公司基本面</span>
-              <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="fundamentals"></span></span>
+              <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="fundamentals"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
             </button>
             <button class="home-nav-item" type="button" data-page-nav="records">
               <span class="home-nav-title">资金与交易</span>
-              <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="records"></span></span>
+              <span class="home-nav-side"><span class="home-nav-summary" data-nav-summary="records"></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
             </button>
           </nav>
-
-          <button id="quickAddButton" class="home-quick-add" type="button" data-home-action="quick-add" aria-label="记一笔交易或出入金">＋ 记一笔</button>
 
         </div>
 
@@ -300,9 +297,6 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </button>
             <div class="top-bar-heading"><h2 class="top-bar-title">年度回顾</h2></div>
-            <div class="icon-actions">
-              <button id="annualShareButton" class="text-button annual-share-button" type="button" aria-label="生成年度分享卡">分享</button>
-            </div>
           </header>
           <div id="annualReviewContent" class="annual-review-content"></div>
         </div>

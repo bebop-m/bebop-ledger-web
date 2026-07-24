@@ -2,7 +2,6 @@ import { state, refs } from './state.js';
 import { REPORT_CALENDAR_ENDPOINT } from './constants.js';
 import { escapeHtml, formatDateLabel, normalizeSymbol, safeNumber } from './utils.js';
 import { computeHoldings, inferQuote } from './compute.js';
-import { getSelectedFundamentalsSymbol } from './fundamentals.js';
 
 const CACHE_KEY = 'bopup-report-calendar-cache-v1';
 let _data = null;
@@ -140,9 +139,8 @@ export function renderReportCalendarPanel() {
   const events = getUpcomingReportEvents({ withinDays: 90 });
   const coverage = model.coverage.total > 0 ? `已收录 ${model.coverage.covered}/${model.coverage.total} 家，公告后自动补齐` : '数据准备中';
   const wasOpen = Boolean(refs.reportCalendarPanel.querySelector('details[open]'));
-  const selectedSymbol = getSelectedFundamentalsSymbol();
   const rows = events.length
-    ? events.map((event) => `<button class="report-event-row${event.symbol === selectedSymbol ? ' is-self' : ''}" type="button" data-report-symbol="${escapeHtml(event.symbol)}">
+    ? events.map((event) => `<button class="report-event-row" type="button" data-report-symbol="${escapeHtml(event.symbol)}">
         <span class="report-event-date"><strong>${Number(event.reportDate.slice(8, 10))}</strong><small>${Number(event.reportDate.slice(5, 7))}月</small></span>
         <span class="report-event-company"><strong>${escapeHtml(event.name)}</strong><small>${escapeHtml(event.reportType)} · ${escapeHtml(event.symbol)}</small></span>
         <span class="report-event-status is-${escapeHtml(event.dateStatus)}">${statusLabel(event.dateStatus)}</span>

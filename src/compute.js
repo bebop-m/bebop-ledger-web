@@ -16,18 +16,6 @@ export function isCashModelActive() {
   return state.currentCashCny !== null;
 }
 
-/* 股息入账币种折算：实收金额 + 入账币种（CNY/HKD/USD）→ 按当前 state.rates 折算 CNY。
-   仅供股息到账抽屉的输入辅助；账本存储仍只写 netCny，口径不变。
-   返回 { cny, rate, currency, dateLabel }，dateLabel 为今日，供折算行明示所用汇率与日期。 */
-export function convertReceiptToCny(amount, currency) {
-  const cur = String(currency || 'CNY').trim().toUpperCase();
-  const rate = resolveFxRate(cur, state.rates);
-  const cny = roundMoney(safeNumber(amount, 0) * rate);
-  const now = new Date();
-  const dateLabel = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-  return { cny, rate, currency: cur, dateLabel };
-}
-
 // 持仓交易起点与现金快照彻底解耦；旧数据沿用原起点，修改现金不会改变持股。
 function isOnOrAfterPositionOpening(dateValue) {
   if (!state.positionOpeningDate) return false;

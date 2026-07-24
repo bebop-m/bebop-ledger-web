@@ -12,14 +12,12 @@ import {
   applyLegendExpandState, applyHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
-  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, toggleDividendPastMonths,
-  generateAnnualShareCard, toggleRecordsExpand
+  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, toggleDividendPastMonths
 } from './render.js';
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
   setModalBucketSelection, setModalCashFlowTypeSelection,
-  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo,
-  setModalReceiptCurrency, updateReceiptConversion
+  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
@@ -92,12 +90,6 @@ refs.pageBackButtons.forEach((button) => {
 if (refs.quickAddButton) refs.quickAddButton.addEventListener('click', () => { openModal('quickAdd'); });
 
 if (refs.fundamentalsContent) refs.fundamentalsContent.addEventListener('click', (event) => {
-  const railButton = event.target.closest('[data-fund-select]');
-  if (railButton) {
-    selectFundamentalsSymbol(railButton.dataset.fundSelect);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    return;
-  }
   const symbolButton = event.target.closest('[data-fund-symbol]');
   if (symbolButton) {
     selectFundamentalsSymbol(symbolButton.dataset.fundSymbol);
@@ -156,12 +148,24 @@ if (refs.incomeOverviewGrid) refs.incomeOverviewGrid.addEventListener('click', (
 
 refs.incomeYearList.addEventListener('click', (event) => {
   const annualTarget = event.target.closest('[data-annual-year]');
-  if (annualTarget && !event.target.closest('[data-income-manual-year]')) {
+  if (annualTarget && !event.target.closest('[data-year-holdings], [data-year-annals], [data-income-manual-year]')) {
     const year = Math.floor(safeNumber(annualTarget.dataset.annualYear, 0));
     if (year) {
       state.activeAnnualYear = year;
       navigateTo('annual');
     }
+    return;
+  }
+  const yearHoldingsButton = event.target.closest('[data-year-holdings]');
+  if (yearHoldingsButton) {
+    const year = Math.floor(safeNumber(yearHoldingsButton.dataset.yearHoldings, 0));
+    if (year) openModal('yearHoldings', { year });
+    return;
+  }
+  const annalsButton = event.target.closest('[data-year-annals]');
+  if (annalsButton) {
+    const year = Math.floor(safeNumber(annalsButton.dataset.yearAnnals, 0));
+    if (year) openModal('yearAnnals', { year });
     return;
   }
   const btn = event.target.closest('[data-income-manual-year]');
@@ -181,9 +185,6 @@ refs.incomeYearList.addEventListener('click', (event) => {
   });
 });
 
-const annualShareButton = document.getElementById('annualShareButton');
-if (annualShareButton) annualShareButton.addEventListener('click', () => generateAnnualShareCard());
-
 if (refs.annualReviewContent) refs.annualReviewContent.addEventListener('click', (event) => {
   const button = event.target.closest('[data-annual-select]');
   if (!button) return;
@@ -195,9 +196,6 @@ if (refs.annualReviewContent) refs.annualReviewContent.addEventListener('click',
 });
 
 if (refs.incomeRecordsList) refs.incomeRecordsList.addEventListener('click', (event) => {
-  if (event.target.closest('[data-income-cash-settings]')) { openModal('openingCash'); return; }
-  const expandButton = event.target.closest('[data-records-expand]');
-  if (expandButton) { toggleRecordsExpand(expandButton.dataset.recordsExpand); return; }
   const cashButton = event.target.closest('[data-cash-flow-id]');
   if (cashButton) {
     const entry = state.cashFlows.find((item) => item && item.id === cashButton.dataset.cashFlowId);
@@ -458,7 +456,6 @@ refs.modalRoot.addEventListener('click', (event) => {
   const bb = event.target.closest('[data-bucket-option]'); if (bb) { setModalBucketSelection(bb.dataset.bucketOption); return; }
   const cf = event.target.closest('[data-cash-flow-type]'); if (cf) { setModalCashFlowTypeSelection(cf.dataset.cashFlowType); return; }
   const ts = event.target.closest('[data-trade-side]'); if (ts) { setModalTradeSideSelection(ts.dataset.tradeSide); return; }
-  const rc = event.target.closest('[data-receipt-currency]'); if (rc) { setModalReceiptCurrency(rc.dataset.receiptCurrency); return; }
   const a = event.target.closest('[data-modal-action]'); if (!a) return;
   const t = a.dataset.modalAction;
   if (t === 'confirm-dividend') { toggleDividendConfirm(a.dataset.sourceId); return; }
@@ -484,7 +481,6 @@ refs.modalRoot.addEventListener('click', (event) => {
 
 refs.modalRoot.addEventListener('input', (event) => {
   if (event.target && event.target.id === 'modalTradeSymbolInput') updateTradeQuoteInfo();
-  if (event.target && event.target.id === 'modalDividendNetInput') updateReceiptConversion();
 });
 
 /* ── Boot ── */

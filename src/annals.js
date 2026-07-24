@@ -3,11 +3,10 @@
    不新增任何存储；过去年份因归档与快照冻结而天然稳定。
 
    口径：
-   - 本年收益率（区间简单法）：资金收益 ÷ 年初净值（capitalReturnCny 已含股息与汇率）。
-     XIRR 资金加权口径已移除，UI 与归因统一走此区间简单法。
+   - XIRR：净值链（年初净值 → 出入金 → 年末净值）的资金加权年化。
+     未启用现金模式时股息不在净值内，把当年股息按年中收到的分配现金计入。
    - 归因：合计收益 = 股息 + 汇率 + 价格；价格部分再按年初持仓与 EPS
-     增速近似拆成「EPS 增长」与「估值变动」，覆盖不到的按未拆分披露。
-     各项贡献率 = 金额 ÷ 年初净值，四项相加 = 本年收益率。 */
+     增速近似拆成「EPS 增长」与「估值变动」，覆盖不到的按未拆分披露。 */
 import { state } from './state.js';
 import { safeNumber, formatDateLabel, resolveFxRate } from './utils.js';
 import {
@@ -15,6 +14,47 @@ import {
   getNormalizedDividendLedgerEntries
 } from './compute.js';
 import { getCompanyFundamentals } from './fundamentals.js';
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/* 资金加权年化收益（XIRR）。flows: [{ date: 'YYYY-MM-DD', amountCny }]，
+   投资人视角：投入为负、取回与期末价值为正。Newton 失败时退回二分。 */
+export function computeXirr(flows) {
+  const parsed = flows
+    .map((flow) => ({ time: new Date(`${flow.date}T00:00:00`).getTime(), amount: safeNumber(flow.amountCny, 0) }))
+    .filter((flow) => Number.isFinite(flow.time) && flow.amount !== 0)
+    .sort((a, b) => a.time - b.time);
+  if (parsed.length < 2) return null;
+  if (!parsed.some((f) => f.amount > 0) || !parsed.some((f) => f.amount < 0)) return null;
+  const t0 = parsed[0].time;
+  const npv = (rate) => parsed.reduce((sum, flow) =>
+    sum + flow.amount / Math.pow(1 + rate, (flow.time - t0) / (365 * DAY_MS)), 0);
+
+  let rate = 0.1;
+  for (let i = 0; i < 50; i += 1) {
+    const value = npv(rate);
+    if (Math.abs(value) < 1e-7) return rate;
+    const step = 1e-6;
+    const derivative = (npv(rate + step) - value) / step;
+    if (!Number.isFinite(derivative) || derivative === 0) break;
+    const next = rate - value / derivative;
+    if (!Number.isFinite(next) || next <= -0.9999) break;
+    if (Math.abs(next - rate) < 1e-9) return next;
+    rate = next;
+  }
+  let low = -0.9999;
+  let high = 10;
+  let npvLow = npv(low);
+  if (npvLow * npv(high) > 0) return null;
+  for (let i = 0; i < 200; i += 1) {
+    const mid = (low + high) / 2;
+    const value = npv(mid);
+    if (Math.abs(value) < 1e-7) return mid;
+    if (npvLow * value < 0) high = mid;
+    else { low = mid; npvLow = value; }
+  }
+  return (low + high) / 2;
+}
 
 function getYearlyHoldingsEntry(year) {
   return state.yearlyHoldings.find((entry) => entry && entry.year === year) || null;
@@ -159,60 +199,54 @@ function getYearDividendMonths(year) {
   return months;
 }
 
-/* 年度持仓分解：取该年持仓快照按 CNY 市值降序，附占比与较上年占比增减，供年度回顾饼图。 */
-function buildYearHoldingsBreakdown(year, currentYear) {
-  const endEntry = getYearlyHoldingsEntry(year);
-  if (!endEntry || !Array.isArray(endEntry.holdings) || !endEntry.holdings.length) {
-    return { hasData: false, items: [], total: 0, count: 0, year };
-  }
-  const rates = getYearEndRates(year, currentYear) || state.rates;
-  const mv = (holding) => {
-    const stored = safeNumber(holding.marketValueCny, NaN);
-    if (Number.isFinite(stored) && stored > 0) return stored;
-    return safeNumber(holding.shares, 0) * safeNumber(holding.price, 0) * resolveFxRate(holding.currency || 'CNY', rates);
-  };
-  const rawItems = endEntry.holdings
-    .map((holding) => ({ symbol: holding.symbol, name: holding.name || holding.symbol, value: mv(holding) }))
-    .filter((item) => item.value > 0)
-    .sort((a, b) => b.value - a.value);
-  const total = rawItems.reduce((sum, item) => sum + item.value, 0) || 1;
-  const prevEntry = getYearlyHoldingsEntry(year - 1);
-  const prevTotal = prevEntry && Array.isArray(prevEntry.holdings)
-    ? prevEntry.holdings.reduce((sum, holding) => sum + mv(holding), 0) : 0;
-  const prevPct = (symbol) => {
-    if (!prevEntry || !prevTotal) return null;
-    const found = (prevEntry.holdings || []).find((holding) => holding.symbol === symbol);
-    return found ? mv(found) / prevTotal : 0;
-  };
-  const items = rawItems.map((item) => {
-    const pct = item.value / total;
-    const pp = prevPct(item.symbol);
-    return { ...item, pct, deltaPct: pp === null ? null : pct - pp };
-  });
-  return { hasData: true, items, total, count: items.length, year };
-}
-
 export function computeYearAnnals(year) {
   const summary = computeIncomeSummary(new Date(), { filterKey: 'all' });
   const row = summary.trendRows.find((item) => item.year === year) || null;
   if (!row) return null;
   const currentYear = summary.currentYear;
 
-  // 本年收益率（区间简单法）：资金收益 ÷ 年初净值；capitalReturnCny 已含股息与汇率。
-  const yearStartNetCny = safeNumber(row.yearStartNetCny, 0);
-  const returnRate = yearStartNetCny > 0 && row.capitalReturnCny !== null
-    ? row.capitalReturnCny / yearStartNetCny
-    : null;
+  let xirr = null;
+  let xirrScope = '';
+  const startNet = safeNumber(row.yearStartNetCny, 0);
+  const endNet = safeNumber(row.yearEndNetCny, 0);
+  if (startNet > 0 && endNet > 0) {
+    const flows = [{ date: `${year}-01-01`, amountCny: -startNet }];
+    const prefix = String(year);
+    state.cashFlows.forEach((entry) => {
+      const date = formatDateLabel(entry && entry.date);
+      if (!date.startsWith(prefix)) return;
+      const amount = Math.abs(safeNumber(entry.amountCny, 0));
+      if (amount <= 0) return;
+      flows.push({ date, amountCny: entry.type === 'withdrawal' ? amount : -amount });
+    });
+    // 无逐笔出入金记录、但年度净注入非零（手填/归档口径）时按年中一笔近似。
+    if (flows.length === 1 && row.netInflowCny) {
+      flows.push({ date: `${year}-07-01`, amountCny: -row.netInflowCny });
+    }
+    if (!row.capitalReturnIncludesDividend && row.dividendCny > 0) {
+      getNormalizedDividendLedgerEntries().forEach((entry) => {
+        if (!entry || entry.confirmed !== true) return;
+        const date = getLedgerCalendarDate(entry).date;
+        if (!date.startsWith(prefix)) return;
+        const amountCny = getLedgerNetCny(entry);
+        if (amountCny > 0) flows.push({ date, amountCny });
+      });
+      xirrScope = '股息+资金';
+    } else {
+      xirrScope = '净值链';
+    }
+    flows.push({ date: year === currentYear ? summary.today : `${year}-12-31`, amountCny: endNet });
+    xirr = computeXirr(flows);
+  }
 
   const trades = getYearTrades(year);
   return {
     year,
     isCurrentYear: year === currentYear,
     row,
-    returnRate,
-    yearStartNetCny,
+    xirr,
+    xirrScope,
     attribution: computeAttribution(row, year, currentYear),
-    holdings: buildYearHoldingsBreakdown(year, currentYear),
     dividendMonths: getYearDividendMonths(year),
     trades,
     realizedPnlCny: trades.reduce((sum, trade) => sum + safeNumber(trade.realizedPnlCny, 0), 0)
