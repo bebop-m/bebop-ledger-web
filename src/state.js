@@ -104,6 +104,7 @@ export const refs = {
   incomeTrend: document.getElementById('incomeTrend'),
   incomeYearList: document.getElementById('incomeYearList'),
   annualReviewContent: document.getElementById('annualReviewContent'),
+  annualShareButton: document.getElementById('annualShareButton'),
   incomeRecordsList: document.getElementById('incomeRecordsList'),
   fundamentalsNote: document.getElementById('fundamentalsNote'),
   reportCalendarPanel: document.getElementById('reportCalendarPanel'),
@@ -308,6 +309,31 @@ export function createDemoSnapshot() {
       { year: openingYear, dividendCny: 5800, yearEndNetCny: 205000, netInflowCny: 0, capitalReturnCny: 11000, capitalReturnRate: 0.0567 },
       { year: previousYear, dividendCny: 7395.28, yearEndNetCny: 267200, netInflowCny: 48000, capitalReturnCny: 14200, capitalReturnRate: 0.069268 },
       { year, dividendCny: 4200, yearEndNetCny: 308300, netInflowCny: 22000, capitalReturnCny: 19100, capitalReturnRate: 0.071482 }
+    ],
+    /* 年界汇率来源：归因里的汇率项要拿年初/年末两套汇率才算得出来。
+       净值仍以 yearlyManual 为准（manual 优先），这里只提供汇率与年末持仓。 */
+    dailySnapshots: [
+      { date: `${openingYear}-12-31`, netCny: 205000, totalMarketValueCny: 205000, liabilityCny: 0, holdings: [], rates: { CNY: 1, USD: 7.1, HKD: 0.90 } },
+      { date: `${previousYear}-12-31`, netCny: 267200, totalMarketValueCny: 267200, liabilityCny: 0, holdings: [], rates: { CNY: 1, USD: 7.2, HKD: 0.92 } }
+    ],
+    // 历年持仓快照：年度回顾的饼图、增减仓与已清仓行都靠它
+    yearlyHoldings: [
+      { year: previousYear, date: `${previousYear}-12-31`, source: 'auto', totalMarketValueCny: 264772, holdings: [
+        { symbol: '00700.HK', name: '腾讯控股', shares: 260, bucket: 'core', currency: 'HKD', price: 500, marketValueCny: 119600 },
+        { symbol: '00883.HK', name: '中国海洋石油', shares: 1800, bucket: 'income', currency: 'HKD', price: 19.5, marketValueCny: 32292 },
+        { symbol: '601088.SH', name: '中国神华', shares: 800, bucket: 'income', currency: 'CNY', price: 40, marketValueCny: 32000 },
+        { symbol: '600519.SH', name: '贵州茅台', shares: 20, bucket: 'core', currency: 'CNY', price: 1560, marketValueCny: 31200 },
+        { symbol: '09618.HK', name: '京东集团', shares: 200, bucket: 'core', currency: 'HKD', price: 145, marketValueCny: 26680 },
+        { symbol: '000651.SZ', name: '格力电器', shares: 500, bucket: 'income', currency: 'CNY', price: 46, marketValueCny: 23000 }
+      ] },
+      { year: openingYear, date: `${openingYear}-12-31`, source: 'auto', totalMarketValueCny: 204970, holdings: [
+        { symbol: '00700.HK', name: '腾讯控股', shares: 200, bucket: 'core', currency: 'HKD', price: 415, marketValueCny: 74700 },
+        { symbol: '601088.SH', name: '中国神华', shares: 800, bucket: 'income', currency: 'CNY', price: 38, marketValueCny: 30400 },
+        { symbol: '600519.SH', name: '贵州茅台', shares: 20, bucket: 'core', currency: 'CNY', price: 1500, marketValueCny: 30000 },
+        { symbol: '00941.HK', name: '中国移动', shares: 350, bucket: 'income', currency: 'HKD', price: 78, marketValueCny: 24570 },
+        { symbol: '00883.HK', name: '中国海洋石油', shares: 1500, bucket: 'income', currency: 'HKD', price: 18, marketValueCny: 24300 },
+        { symbol: '000651.SZ', name: '格力电器', shares: 500, bucket: 'income', currency: 'CNY', price: 42, marketValueCny: 21000 }
+      ] }
     ]
   };
 }

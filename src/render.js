@@ -654,7 +654,7 @@ export function renderDividendCalendarPage() {
 }
 
 
-/* ── Income Summary ── */
+/* ── 09-收益明细 · 按 designs/禅意UI/09-收益明细/定稿图.html ── */
 function isIncomeValueMissing(value) {
   return value === null || value === undefined || !Number.isFinite(Number(value));
 }
@@ -670,40 +670,48 @@ function formatIncomeSignedMoney(value) {
   return `${amount > 0 ? '+' : ''}${formatMoney(amount, 'CNY')}`;
 }
 
+// 定稿图上的收益率一律一位小数（+5.7% / -8.1%），本页统一按此形
 function formatIncomeRate(value) {
   if (isIncomeValueMissing(value)) return '待回填';
   if (!state.showAmounts) return MASK_AMOUNT;
-  const numeric = safeNumber(value, 0);
+  const numeric = safeNumber(value, 0) * 100;
   const sign = numeric > 0 ? '+' : numeric < 0 ? '-' : '';
-  return `${sign}${formatPercent(Math.abs(numeric))}`;
+  return `${sign}${Math.abs(numeric).toFixed(1)}%`;
 }
 
-// 主窗口只显示一个结论（当年资金收益）和一个比较值（收益率）。
-// 年初净值、净注入和现金余额属于计算口径，折叠下沉，避免首屏同时争夺注意力。
+// 趋势线上的点值与累计年化行：一位小数、带符号，与定稿图的 +4.2 / -8.1 同形
+function formatTrendSigned(value) {
+  if (isIncomeValueMissing(value)) return '—';
+  if (!state.showAmounts) return MASK_AMOUNT;
+  const numeric = Number(value) * 100;
+  return `${numeric > 0 ? '+' : numeric < 0 ? '-' : ''}${Math.abs(numeric).toFixed(1)}`;
+}
+
+function getIncomeSecHead(label, aside = '') {
+  return `<div class="inc-sec-head"><span class="inc-sec-label">${escapeHtml(label)}</span><span class="inc-sec-aside">${aside}</span></div>`;
+}
+
+/* hero 只留一个结论（当年资金收益）+ 一个比较值（收益率），
+   口径退成两行 hint；现金入口已移到「资金与交易」，本页不再有。 */
 function renderIncomeOverview(model) {
   const row = model.current;
-  const holdingSummary = computeHoldings();
-  const cashActive = isCashModelActive();
-  const cashText = cashActive ? formatDisplayMoney(holdingSummary.cashBalanceCny, 'CNY') : '未设置';
-  const cashMarkup = `<button class="income-cash-context" type="button" data-income-cash-settings aria-label="${cashActive ? '编辑当前现金余额' : '设置当前现金余额'}"><small>现金余额</small><strong class="income-amount ${cashActive ? getSignedTone(holdingSummary.cashBalanceCny) : 'is-flat'}">${escapeHtml(cashText)}</strong><em>${cashActive ? '当前余额' : '点击设置'}</em></button>`;
   if (!row || !row.capitalReturnAvailable) {
-    refs.incomeOverviewGrid.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无资金收益数据</p><p class="empty-state-note">回填或生成 ${model.currentYear - 1} 年末净值后，这里会展示今年至今的资金收益。</p></div><div class="income-cash-standalone">${cashMarkup}</div>`;
+    refs.incomeOverviewGrid.innerHTML = `<section class="inc-hero">
+      <span class="inc-hero-label">${model.currentYear} · 资金收益</span>
+      <strong class="inc-hero-value">待回填</strong>
+      <p class="inc-hero-meta">回填 ${model.currentYear - 1} 年末净值后，这里显示今年至今的资金收益</p>
+    </section>`;
     return;
   }
-  refs.incomeOverviewGrid.innerHTML = `
-    <article class="income-hero">
-      <div class="income-hero-head">
-        <span class="income-hero-label">${model.currentYear} 资金收益</span>
-        <strong class="income-hero-rate">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</strong>
-      </div>
-      <strong class="income-hero-value income-amount ${getReturnTone(row.capitalReturnCny)}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</strong>
-      <div class="income-hero-context">
-        <span><small>当前净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</strong></span>
-        <span><small>年初净值</small><strong class="income-amount">${escapeHtml(formatIncomeMoney(row.yearStartNetCny))}</strong></span>
-        <span><small>净注入</small><strong class="income-amount">${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</strong></span>
-        ${cashMarkup}
-      </div>
-    </article>`;
+  const tone = getReturnTone(row.capitalReturnCny);
+  // 「已含股息」只在现金进了净值链时才成立，否则股息不在净值内，如实少说一句
+  const scopeText = row.capitalReturnIncludesDividend ? '净值链口径 · 已含股息与汇率' : '净值链口径 · 已含汇率';
+  refs.incomeOverviewGrid.innerHTML = `<section class="inc-hero">
+      <span class="inc-hero-label">${model.currentYear} · 资金收益</span>
+      <strong class="inc-hero-value ${tone}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</strong>
+      <p class="inc-hero-meta"><strong class="${getReturnTone(row.capitalReturnRate)}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</strong> · ${escapeHtml(scopeText)}</p>
+    </section>
+    <p class="inc-ctx">年初 ${escapeHtml(formatIncomeMoney(row.yearStartNetCny))} → 当前 ${escapeHtml(formatIncomeMoney(row.yearEndNetCny))} · 净注入 <b>${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</b><br>净值与注入明细见年度回顾 · 现金余额移至资金与交易</p>`;
 }
 
 function getTrendValue(row, key) {
@@ -711,153 +719,148 @@ function getTrendValue(row, key) {
   return isIncomeValueMissing(value) ? null : safeNumber(value, 0);
 }
 
-function getTrendPoint(row, index, total, key, minValue, maxValue) {
-  const value = getTrendValue(row, key);
-  if (value === null) return null;
-  const width = 720;
-  const height = 170;
-  const padX = 34;
-  const padTop = 30;
-  const padBottom = 14;
-  const innerWidth = width - padX * 2;
-  const innerHeight = height - padTop - padBottom;
-  const x = total <= 1 ? width / 2 : padX + (innerWidth * index) / (total - 1);
-  const range = maxValue === minValue ? 1 : maxValue - minValue;
-  const y = padTop + ((maxValue - value) / range) * innerHeight;
-  return { x: roundSvgNumber(x), y: roundSvgNumber(y), value };
-}
-
 function roundSvgNumber(value) {
   return Math.round(value * 100) / 100;
 }
 
-function getTrendSeriesMarkup(rows, key, className, minValue, maxValue) {
-  const points = rows
-    .map((row, index) => getTrendPoint(row, index, rows.length, key, minValue, maxValue))
+/* 双线图几何（定稿图 viewBox 338×118）：
+   x 自 24 起、末点 314；点带 y 落在 18–96，负值点的标值改挂到点下方，
+   零轴按数据范围插值——全正年份时零轴自然沉到 96。 */
+const TREND_GEO = { width: 338, xStart: 24, xEnd: 314, yTop: 18, yBottom: 96 };
+
+function getTrendX(index, total) {
+  if (total <= 1) return TREND_GEO.width / 2;
+  return TREND_GEO.xStart + ((TREND_GEO.xEnd - TREND_GEO.xStart) * index) / (total - 1);
+}
+
+function getTrendY(value, minValue, maxValue) {
+  const range = maxValue === minValue ? 1 : maxValue - minValue;
+  return TREND_GEO.yTop + ((maxValue - value) / range) * (TREND_GEO.yBottom - TREND_GEO.yTop);
+}
+
+function getTrendPoints(rows, key, minValue, maxValue) {
+  return rows
+    .map((row, index) => {
+      const value = getTrendValue(row, key);
+      if (value === null) return null;
+      return {
+        x: roundSvgNumber(getTrendX(index, rows.length)),
+        y: roundSvgNumber(getTrendY(value, minValue, maxValue)),
+        value,
+        isLast: index === rows.length - 1
+      };
+    })
     .filter(Boolean);
-  if (!points.length) return '';
-  const pointText = points.map((point) => `${point.x},${point.y}`).join(' ');
-  const circles = points.map((point) => `<circle cx="${point.x}" cy="${point.y}" r="3.4"></circle>`).join('');
-  const labels = points.map((point, index) => `<text x="${point.x}" y="${Math.max(12, point.y - 10)}" text-anchor="middle"${index === points.length - 1 ? ' class="is-latest"' : ''}>${escapeHtml(formatIncomeRate(point.value))}</text>`).join('');
-  return `<g class="income-trend-series ${className}">
-    <polyline points="${pointText}"></polyline>
-    ${circles}
-    <g class="income-trend-labels">${labels}</g>
-  </g>`;
 }
 
-function buildIncomeTrendCard(rows, item, currentYear) {
-  const values = rows.map((row) => getTrendValue(row, item.key)).filter((value) => value !== null);
-  if (!values.length) return `<section class="fund-card income-trend-card is-empty"><header class="fund-card-head"><span class="fund-card-label">${item.label}</span></header><p class="fund-card-empty">暂无数据</p></section>`;
-  const minValue = Math.min(0, ...values);
-  const maxValue = Math.max(0, ...values);
-  const zeroPoint = getTrendPoint({ rate: 0 }, 0, 1, 'rate', minValue, maxValue);
-  const available = rows.map((row) => ({ row, value: getTrendValue(row, item.key) })).filter((entry) => entry.value !== null);
-  const latest = available[available.length - 1];
-  const previous = available.length > 1 ? available[available.length - 2] : null;
-  const yoy = previous && previous.value !== 0 ? (latest.value - previous.value) / Math.abs(previous.value) : null;
-  return `<section class="fund-card income-trend-card">
-    <header class="fund-card-head">
-      <span class="fund-card-label">${item.label}</span>
-      <span class="fund-card-latest"><strong>${escapeHtml(formatIncomeRate(latest.value))}</strong><small>${latest.row.year === currentYear ? '至今' : latest.row.year}</small></span>
-      ${yoy === null ? '' : `<span class="fund-card-trend ${yoy > 0 ? 'is-gain' : yoy < 0 ? 'is-loss' : 'is-flat'}">${yoy > 0 ? '+' : ''}${(yoy * 100).toFixed(1)}% <small>同比</small></span>`}
-    </header>
-    <svg class="income-trend-svg" viewBox="0 0 720 170" role="img" aria-label="${item.label}历年走势">
-      <line class="income-trend-zero" x1="28" x2="692" y1="${zeroPoint.y}" y2="${zeroPoint.y}"></line>
-      ${getTrendSeriesMarkup(rows, item.key, item.className, minValue, maxValue)}
-    </svg>
-    <div class="fund-chart-years income-trend-years">${rows.map((row) => `<span>${row.year === currentYear ? `${String(row.year).slice(2)}至今` : String(row.year).slice(2)}</span>`).join('')}</div>
-  </section>`;
-}
-
-// 与公司基本面一致：两项收益率各用一张带点值、最新值和同比的线图。
+// 历年趋势：墨线＝资金收益率（逐点标带符号数值、负年下探零轴），金线＝股息收益率
 function renderIncomeTrend(model) {
   const rows = model.trendRows;
-  const values = ['capitalReturnRate', 'dividendYieldRate'].flatMap((key) => rows.map((row) => getTrendValue(row, key)).filter((value) => value !== null));
-  if (!values.length) {
-    refs.incomeTrend.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无趋势数据</p><p class="empty-state-note">有历年净值或历史回填后会展示收益率趋势。</p></div>`;
-    return;
-  }
-  const pointCounts = ['capitalReturnRate', 'dividendYieldRate']
-    .map((key) => rows.filter((row) => getTrendValue(row, key) !== null).length);
-  if (!pointCounts.some((count) => count >= 2)) {
-    refs.incomeTrend.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">历史数据不足</p><p class="empty-state-note">至少两个年度有收益率后，才会绘制可比较的趋势。</p></div>`;
+  const keys = ['capitalReturnRate', 'dividendYieldRate'];
+  const values = keys.flatMap((key) => rows.map((row) => getTrendValue(row, key)).filter((value) => value !== null));
+  const pointCounts = keys.map((key) => rows.filter((row) => getTrendValue(row, key) !== null).length);
+  if (!values.length || !pointCounts.some((count) => count >= 2)) {
+    refs.incomeTrend.innerHTML = `${getIncomeSecHead('历年趋势')}
+      <p class="inc-trend-empty">至少两个年度有收益率后，才会绘制可比较的趋势</p>`;
     return;
   }
   const minValue = Math.min(0, ...values);
   const maxValue = Math.max(0, ...values);
-  const zeroPoint = getTrendPoint({ rate: 0 }, 0, 1, 'rate', minValue, maxValue);
-  refs.incomeTrend.innerHTML = `<div class="income-trend-combined">
-    <svg class="income-trend-svg" viewBox="0 0 720 170" role="img" aria-label="历年资金收益率与股息收益率">
-      <line class="income-trend-zero" x1="28" x2="692" y1="${zeroPoint.y}" y2="${zeroPoint.y}"></line>
-      ${getTrendSeriesMarkup(rows, 'capitalReturnRate', 'is-capital', minValue, maxValue)}
-      ${getTrendSeriesMarkup(rows, 'dividendYieldRate', 'is-dividend', minValue, maxValue)}
-    </svg>
-    <div class="income-trend-years">${rows.map((row) => `<span>${row.year}</span>`).join('')}</div>
-    <div class="income-trend-legend"><span class="is-capital"><i></i>资金收益率</span><span class="is-dividend"><i></i>股息收益率</span></div>
-  </div>`;
-}
+  const zeroY = roundSvgNumber(getTrendY(0, minValue, maxValue));
+  const capPoints = getTrendPoints(rows, 'capitalReturnRate', minValue, maxValue);
+  const divPoints = getTrendPoints(rows, 'dividendYieldRate', minValue, maxValue);
+  const line = (points, className) => (points.length < 2
+    ? ''
+    : `<polyline class="${className}" points="${points.map((point) => `${point.x},${point.y}`).join(' ')}"></polyline>`);
+  const dots = (points, className, r) => points
+    .map((point) => `<circle class="${className}" cx="${point.x}" cy="${point.y}" r="${r}"></circle>`).join('');
+  // 负年的标值挂到点下方，让「下探零轴」一眼读得出
+  const labels = capPoints.map((point) => {
+    const below = point.value < 0;
+    const y = roundSvgNumber(below ? point.y + 13 : point.y - 8.5);
+    const cls = `${point.value < 0 ? 'is-loss' : 'is-gain'}${point.isLast ? ' is-latest' : ''}`;
+    return `<text class="${cls}" x="${point.x}" y="${y}" text-anchor="middle">${escapeHtml(formatTrendSigned(point.value))}</text>`;
+  }).join('');
+  const yearLabels = rows.map((row, index) => {
+    const x = roundSvgNumber(getTrendX(index, rows.length));
+    const isCurrent = row.year === model.currentYear;
+    return `<text class="inc-yr${isCurrent ? ' is-current' : ''}" x="${x}" y="10" text-anchor="middle">${String(row.year).slice(2)}${isCurrent ? '至今' : ''}</text>`;
+  }).join('');
 
-function getIncomeYearCell(label, value, extraClass = '') {
-  return `<div class="income-year-cell${extraClass ? ` ${extraClass}` : ''}" data-label="${escapeHtml(label)}">${escapeHtml(value)}</div>`;
-}
+  // 累计年化 = 各年资金收益率复利后折年（几何均值）；最深一年取区间最低
+  const capRates = rows.map((row) => ({ year: row.year, rate: getTrendValue(row, 'capitalReturnRate') }))
+    .filter((entry) => entry.rate !== null);
+  let cagrLine = '';
+  if (capRates.length) {
+    const worst = Math.min(...capRates.map((entry) => entry.rate));
+    const product = capRates.reduce((acc, entry) => acc * (1 + entry.rate), 1);
+    const cumulative = product > 0 ? Math.pow(product, 1 / capRates.length) - 1 : null;
+    cagrLine = `<p class="inc-trend-cagr">自 ${capRates[0].year} 累计年化 <strong class="${getReturnTone(cumulative)}">${escapeHtml(formatTrendSigned(cumulative))}%</strong> · 最深一年 <strong class="${getReturnTone(worst)}">${escapeHtml(formatTrendSigned(worst))}%</strong></p>`;
+  }
 
-// 年份格：该年有持仓快照时可点，弹出当年持仓明细。
-function getIncomeYearTitleCell(row) {
-  const hasSnapshot = state.yearlyHoldings.some((entry) => entry && entry.year === row.year);
-  if (!hasSnapshot) return getIncomeYearCell('年份', String(row.year), 'is-year');
-  return `<div class="income-year-cell is-year" data-label="年份">
-    <button class="income-year-link" type="button" data-year-holdings="${row.year}" title="查看 ${row.year} 年持仓" aria-label="查看 ${row.year} 年持仓">${row.year}</button>
-  </div>`;
-}
-
-function getIncomeYearActionCell(row) {
-  const label = row.hasManualBackfill ? '修正年度数据' : '填写年度数据';
-  return `<div class="income-year-action-cell" data-label="操作">
-    <button class="income-year-action-button" type="button" data-year-annals="${row.year}" aria-label="查看 ${row.year} 年鉴" title="查看 ${row.year} 年鉴">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M6 4.5h9.5A2.5 2.5 0 0 1 18 7v12.5H8A2 2 0 0 1 6 17.5V4.5Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>
-        <path d="M6 17.5A2 2 0 0 1 8 15.5h10M9.5 8.5h5M9.5 11.5h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+  refs.incomeTrend.innerHTML = `${getIncomeSecHead('历年趋势', '收益率')}
+    <div class="inc-trend-chart">
+      <svg class="inc-trend-svg" viewBox="0 0 338 118" role="img" aria-label="历年资金收益率与股息收益率">
+        <line class="inc-zero" x1="14" x2="324" y1="${zeroY}" y2="${zeroY}"></line>
+        ${line(divPoints, 'inc-div-line')}
+        ${line(capPoints, 'inc-cap-line')}
+        ${dots(divPoints, 'inc-div-dot', 2)}
+        ${dots(capPoints, 'inc-cap-dot', 2.6)}
+        ${labels}
       </svg>
-    </button>
-    <button class="income-year-action-button${row.hasManualBackfill ? ' is-filled' : ''}" type="button" data-income-manual-year="${row.year}" aria-label="${label} ${row.year}" title="${label}">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M5 19h4.2L18.4 9.8a2 2 0 0 0 0-2.8L17 5.6a2 2 0 0 0-2.8 0L5 14.8V19Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>
-        <path d="M13.2 6.6l4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
-      </svg>
-    </button>
-  </div>`;
+      <svg class="inc-trend-years" viewBox="0 0 338 14" aria-hidden="true">${yearLabels}</svg>
+    </div>
+    <p class="inc-trend-legend"><i></i>资金收益率<b></b>股息收益率</p>
+    ${cagrLine}`;
+}
+
+/* 年份行脚注：手工基准区间与逐笔记账起点都从实时数据里取，不写死年份 */
+function getIncomeYearFoot(model) {
+  const manualYears = model.rows.filter((row) => row.hasManualBackfill).map((row) => row.year);
+  const ledgerYears = model.trendRows
+    .filter((row) => row.fieldSources && row.fieldSources.dividendCny === 'ledger')
+    .map((row) => row.year);
+  const parts = [];
+  if (manualYears.length) {
+    const min = Math.min(...manualYears);
+    const max = Math.max(...manualYears);
+    parts.push(`${min === max ? min : `${min}–${max}`} 为年度手工基准`);
+  }
+  if (ledgerYears.length) parts.push(`逐笔记账自 ${Math.min(...ledgerYears)} 起`);
+  const first = parts.length ? `${parts.join(' · ')}<br>` : '';
+  return `<p class="inc-year-foot">${first}点年份行查看年度回顾（含当年持仓 · 归因 · 交易）</p>`;
 }
 
 function renderIncomeYearList(model) {
   if (!model.rows.length) {
-    refs.incomeYearList.innerHTML = `<div class="empty-state empty-state--compact"><p class="empty-state-title">暂无年度数据</p><p class="empty-state-note">导入历史回填后会显示年度列表。</p></div>`;
+    refs.incomeYearList.innerHTML = `${getIncomeSecHead('年度明细')}
+      <p class="inc-trend-empty">回填历史年度后会显示年度列表</p>`;
     return;
   }
-  const rows = model.rows.map((row) => `<div class="income-year-row" role="row" data-annual-year="${row.year}" tabindex="0" aria-label="查看 ${row.year} 年度回顾">
-      <div class="income-year-primary">
-        <strong class="income-year-year">${row.year}</strong>
-        <small>${row.hasManualBackfill ? '含手工回填' : '自动统计'}</small>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-      </div>
-      <div class="income-year-metrics">
-        <span><small>股息</small><b>${escapeHtml(formatIncomeMoney(row.dividendCny))}</b></span>
-        <span><small>股息率</small><b>${escapeHtml(formatIncomeRate(row.dividendYieldRate))}</b></span>
-        <span><small>资金收益</small><b class="${getReturnTone(row.capitalReturnCny)}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</b></span>
-        <span><small>收益率</small><b class="${getReturnTone(row.capitalReturnRate)}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</b></span>
-        <span><small>年末净值</small><b>${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</b></span>
-        <span><small>净注入</small><b>${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</b></span>
-      </div>
-      <div class="income-year-secondary">
-        <button type="button" data-year-holdings="${row.year}">持仓快照</button>
-        <button type="button" data-year-annals="${row.year}">查看年鉴</button>
-        <button type="button" data-income-manual-year="${row.year}">${row.hasManualBackfill ? '编辑回填' : '回填数据'}</button>
-      </div>
-    </div>`).join('');
-  refs.incomeYearList.innerHTML = `<div class="income-year-table" role="table" aria-label="年度收益列表">
-    ${rows}
-  </div>`;
+  const rows = model.rows.map((row) => {
+    const isCurrent = row.year === model.currentYear;
+    const tag = isCurrent ? '进行中' : (row.hasManualBackfill ? '手工基准' : '自动统计');
+    const sub = isCurrent
+      ? `股息 ${formatIncomeMoney(row.dividendCny)} · 净注入 ${formatIncomeSignedMoney(row.netInflowCny)}`
+      : `股息 ${formatIncomeMoney(row.dividendCny)} · 年末 ${formatIncomeMoney(row.yearEndNetCny)}`;
+    const act = isCurrent
+      ? '<span class="inc-year-acts"></span>'
+      : `<button class="inc-year-acts" type="button" data-income-manual-year="${row.year}" aria-label="回填 ${row.year} 年度数据">回填</button>`;
+    return `<div class="inc-year" role="button" tabindex="0" data-annual-year="${row.year}" aria-label="查看 ${row.year} 年度回顾">
+      <span class="inc-year-main">
+        <span class="inc-year-yy">${row.year}<small>${tag}</small></span>
+        <span class="inc-year-yv ${getReturnTone(row.capitalReturnCny)}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}<em>${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</em></span>
+      </span>
+      <span class="inc-year-sub">
+        <span>${escapeHtml(sub)}</span>${act}
+      </span>
+    </div>`;
+  }).join('');
+  refs.incomeYearList.innerHTML = `${getIncomeSecHead('年度明细')}
+    <div class="inc-year-rows">${rows}</div>
+    ${getIncomeYearFoot(model)}`;
 }
+
 
 function formatRecordQuantity(value) {
   return safeNumber(value, 0).toLocaleString('en-US', { maximumFractionDigits: 6 });
@@ -965,12 +968,16 @@ export function renderIncomeRecords() {
 
 export function renderIncomeSummaryPage() {
   const model = computeIncomeSummary();
-  // 已设置当前现金后，收益页隐藏重复入口（CSS 按此类名区分）。
-  if (refs.incomeSummaryPage) refs.incomeSummaryPage.classList.toggle('is-cash-active', isCashModelActive());
   renderIncomeOverview(model);
   renderIncomeTrend(model);
   renderIncomeYearList(model);
 }
+
+/* ── 10-年度回顾 · 按 designs/禅意UI/10-年度回顾/定稿图.html ──
+   原「持仓快照」「年鉴」两个弹窗已并入本页，XIRR 口径已删除。 */
+const ANNUAL_DONUT_R = 52;
+const ANNUAL_DONUT_C = 2 * Math.PI * ANNUAL_DONUT_R;
+const ANNUAL_MONTH_LABELS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 
 function formatAnnualRate(value) {
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
@@ -980,8 +987,87 @@ function formatAnnualRate(value) {
 
 function formatAnnualSignedMoney(value) {
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
+  if (!state.showAmounts) return MASK_AMOUNT;
   const numeric = Number(value);
-  return `${numeric > 0 ? '+' : numeric < 0 ? '−' : ''}${formatDisplayMoney(Math.abs(numeric), 'CNY')}`;
+  return `${numeric > 0 ? '+' : numeric < 0 ? '−' : ''}${formatMoney(Math.abs(numeric), 'CNY')}`;
+}
+
+function formatAnnualShares(value) {
+  return safeNumber(value, 0).toLocaleString('en-US', { maximumFractionDigits: 6 });
+}
+
+function getAnnualSecHead(label, aside = '') {
+  return `<div class="ann-sec-head"><span class="ann-sec-label">${escapeHtml(label)}</span><span class="ann-sec-aside">${aside}</span></div>`;
+}
+
+/* pp 拆分：四项金额相加恒等于资金收益（＝本年收益率的分子）。
+   现金未进净值链时资金收益本就不含股息，派出去的股息压低了净值，
+   残差项（估值变动）自然把它净掉——四项仍然相加等于 hero，口径自洽。 */
+function getAnnualAttributionItems(annals) {
+  const attribution = annals.attribution || { available: false };
+  const startNet = safeNumber(annals.yearStartNetCny, 0);
+  if (!attribution.available || startNet <= 0) return null;
+  const cap = safeNumber(annals.row.capitalReturnCny, 0);
+  const dividendCny = safeNumber(attribution.dividendCny, 0);
+  const fxCny = safeNumber(attribution.fxCny, 0);
+  const epsCny = safeNumber(attribution.epsCny, 0);
+  const valuationCny = cap - dividendCny - fxCny - epsCny;
+  return [
+    { key: 'divi', label: '股息收入', amount: dividendCny },
+    { key: 'eps', label: 'EPS 增长', amount: epsCny },
+    { key: 'val', label: '估值变动', amount: valuationCny },
+    { key: 'fx', label: '汇率变动', amount: fxCny }
+  ].map((item) => ({ ...item, rate: item.amount / startNet }));
+}
+
+function getAnnualDonutMarkup(holdings) {
+  const top = holdings.items.slice(0, 5);
+  const restPct = holdings.items.slice(5).reduce((sum, item) => sum + item.pct, 0);
+  const segs = top.map((item, index) => ({ pct: item.pct, tone: index + 1 }));
+  if (restPct > 0.0001) segs.push({ pct: restPct, tone: 6 });
+  let offset = 0;
+  const arcs = segs.map((seg) => {
+    const length = seg.pct * ANNUAL_DONUT_C;
+    const arc = `<circle class="ann-arc is-t${seg.tone}" cx="64" cy="64" r="${ANNUAL_DONUT_R}" fill="none" stroke-width="11" stroke-dasharray="${length.toFixed(1)} ${(ANNUAL_DONUT_C - length).toFixed(1)}" stroke-dashoffset="${(-offset).toFixed(1)}"></circle>`;
+    offset += length;
+    return arc;
+  }).join('');
+  const legend = top.map((item, index) => `<div class="ann-hold-row">
+      <b class="is-t${index + 1}"></b>
+      <span class="ann-hold-co">${escapeHtml(item.name)}</span>
+      <span class="ann-hold-pc">${(item.pct * 100).toFixed(1)}%</span>
+      <span class="ann-hold-chg">${escapeHtml(item.change || '')}</span>
+    </div>`).join('');
+  const restRow = restPct > 0.0001
+    ? `<div class="ann-hold-row is-rest">
+        <b class="is-t6"></b>
+        <span class="ann-hold-co">其余 ${holdings.items.length - top.length} 项</span>
+        <span class="ann-hold-pc">${(restPct * 100).toFixed(1)}%</span>
+        <span class="ann-hold-chg"></span>
+      </div>`
+    : '';
+  return `<div class="ann-hold">
+      <div class="ann-donut">
+        <svg viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="年度持仓构成">
+          <circle class="ann-arc-base" cx="64" cy="64" r="${ANNUAL_DONUT_R}" fill="none" stroke-width="11"></circle>
+          ${arcs}
+        </svg>
+        <div class="ann-donut-center"><small>${holdings.year}</small><strong>${holdings.count} 项</strong></div>
+      </div>
+      <div class="ann-hold-legend">${legend}${restRow}</div>
+    </div>`;
+}
+
+function getAnnualHoldingsNote(holdings) {
+  const lines = [];
+  const head = [];
+  if (holdings.previousYear) head.push(`增减仓对比 ${holdings.previousYear} 年`);
+  if (holdings.removed.length) {
+    head.push(`已清仓：${holdings.removed.map((item) => `${item.name} ${formatAnnualShares(item.shares)} 股`).join(' · ')}`);
+  }
+  if (head.length) lines.push(escapeHtml(head.join(' · ')));
+  lines.push('当年快照随行情更新，跨年自动冻结');
+  return `<p class="ann-hold-note">${lines.join('<br>')}</p>`;
 }
 
 export function renderAnnualReviewPage() {
@@ -989,61 +1075,291 @@ export function renderAnnualReviewPage() {
   const summary = computeIncomeSummary();
   const years = summary.rows.map((row) => row.year);
   if (!years.length) {
-    refs.annualReviewContent.innerHTML = '<div class="empty-state"><strong>暂无年度数据</strong><span>完成年度净值或回填后，这里会生成复盘。</span></div>';
+    refs.annualReviewContent.innerHTML = '<p class="ann-empty">完成年度净值或回填后，这里会生成年度回顾</p>';
     return;
   }
   if (!years.includes(state.activeAnnualYear)) state.activeAnnualYear = years[0];
   const annals = computeYearAnnals(state.activeAnnualYear);
   if (!annals) {
-    refs.annualReviewContent.innerHTML = '<div class="empty-state"><strong>该年暂无数据</strong></div>';
+    refs.annualReviewContent.innerHTML = '<p class="ann-empty">该年暂无数据</p>';
     return;
   }
   const row = annals.row;
-  const attribution = annals.attribution || { available: false };
-  const attrRows = attribution.available ? [
-    { label: '股息收入', value: attribution.dividendCny, tone: 'iris' },
-    { label: 'EPS 增长', value: attribution.epsCny, tone: 'iris' },
-    { label: '估值变动', value: attribution.valuationCny, tone: 'iris-soft' },
-    { label: '汇率变动', value: attribution.fxCny, tone: 'ink' }
-  ] : [
-    { label: '股息收入', value: attribution.dividendCny, tone: 'iris' }
-  ];
-  const attrTotal = attrRows.reduce((sum, item) => sum + Math.abs(safeNumber(item.value, 0)), 0) || 1;
-  const attrBar = attrRows.map((item) => `<i class="is-${item.tone}" style="width:${(Math.abs(safeNumber(item.value, 0)) / attrTotal * 100).toFixed(2)}%"></i>`).join('');
+  const attrItems = getAnnualAttributionItems(annals);
+  const attrTotalAbs = attrItems ? (attrItems.reduce((sum, item) => sum + Math.abs(item.amount), 0) || 1) : 1;
+  const attrBar = attrItems
+    ? attrItems.map((item) => `<i class="is-${item.key}" style="width:${(Math.abs(item.amount) / attrTotalAbs * 100).toFixed(2)}%"></i>`).join('')
+    : '';
+  const attrRows = attrItems
+    ? attrItems.map((item) => `<div class="ann-attr-row">
+        <b class="is-${item.key}"></b>
+        <span>${escapeHtml(item.label)}</span>
+        <small class="${getReturnTone(item.rate)}">${escapeHtml(formatAnnualRate(item.rate))}</small>
+        <strong class="${getReturnTone(item.amount)}">${escapeHtml(formatAnnualSignedMoney(item.amount))}</strong>
+      </div>`).join('')
+    : '';
+  const coverage = safeNumber(annals.attribution && annals.attribution.epsSplitCoverage, 0);
+  const coverageNote = attrItems && coverage < 0.5
+    ? `<p class="ann-attr-note">EPS 拆分覆盖年初市值 ${Math.round(coverage * 100)}%，未覆盖部分并入估值变动</p>`
+    : '';
   const maxDividend = Math.max(1, ...annals.dividendMonths.map((value) => safeNumber(value, 0)));
   const currentMonth = annals.isCurrentYear ? new Date().getMonth() : -1;
-  const monthLabels = ['J','F','M','A','M','J','J','A','S','O','N','D'];
-  const annualBuyCount = annals.trades.filter((trade) => trade.side === 'buy').length;
-  const annualSellCount = annals.trades.filter((trade) => trade.side === 'sell').length;
-  const trades = annals.trades.length ? annals.trades.map((trade) => `<div class="annual-trade-row">
-    <span><strong>${trade.side === 'sell' ? '卖出' : '买入'} ${escapeHtml(trade.name)}</strong><small>${escapeHtml(trade.date.slice(5).replace('-', '/'))} · ${escapeHtml(String(trade.shares))} 股 @ ${escapeHtml(String(trade.price))}</small></span>
-    <span><b>${escapeHtml(formatAnnualSignedMoney(trade.cashImpactCny))}</b></span>
-  </div>`).join('') : '<div class="month-detail-empty">该年暂无交易记录</div>';
+  const buyCount = annals.trades.filter((trade) => trade.side === 'buy').length;
+  const sellCount = annals.trades.filter((trade) => trade.side === 'sell').length;
+  const tradeRows = annals.trades.length
+    ? annals.trades.slice().reverse().map((trade) => `<div class="ann-trade-row">
+        <span>${escapeHtml(trade.date.slice(5).replace('-', '/'))} <em class="${trade.side === 'sell' ? 'is-sell' : 'is-buy'}">${trade.side === 'sell' ? '卖出' : '买入'}</em> <strong>${escapeHtml(trade.name)}</strong></span>
+        <span>${escapeHtml(formatDisplayMoney(trade.valueCny, 'CNY'))}</span>
+      </div>`).join('')
+    : '<p class="ann-empty-line">该年暂无交易记录</p>';
+  const scopeText = annals.isCurrentYear
+    ? `截至 ${annals.today.slice(0, 7).replace('-', '/')}`
+    : '完整年度';
 
   refs.annualReviewContent.innerHTML = `
-    <div class="annual-year-switch" role="group" aria-label="选择年度">${years.map((year) => `<button type="button" data-annual-select="${year}" class="${year === state.activeAnnualYear ? 'is-active' : ''}">${year}</button>`).join('')}<span>← 翻阅历年</span></div>
-    <section class="annual-focus">
-      <span class="ledger-eyebrow">XIRR · 资金加权年化</span>
-      <strong>${escapeHtml(formatAnnualRate(annals.xirr))}</strong>
-      <p>${annals.isCurrentYear ? `截至 ${summary.today.slice(0, 7).replace('-', '/')}` : '完整年度'} · 年初净值 ${escapeHtml(formatIncomeMoney(row.yearStartNetCny))} → ${annals.isCurrentYear ? '当前' : '年末'} ${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</p>
+    <nav class="ann-years" aria-label="选择年度">${years.map((year) => `<button type="button" data-annual-select="${year}" class="${year === state.activeAnnualYear ? 'is-active' : ''}" aria-pressed="${year === state.activeAnnualYear}">${year}<i aria-hidden="true"></i></button>`).join('')}</nav>
+    <section class="ann-hero">
+      <span class="ann-hero-label">本年收益率</span>
+      <strong class="ann-hero-value ${getReturnTone(annals.returnRate)}">${escapeHtml(formatAnnualRate(annals.returnRate))}</strong>
+      <p class="ann-hero-meta">${escapeHtml(scopeText)} · 年初 ${escapeHtml(formatIncomeMoney(row.yearStartNetCny))} → ${annals.isCurrentYear ? '当前' : '年末'} ${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</p>
     </section>
-    <section class="annual-section">
-      <p class="ledger-eyebrow">收益归因</p>
-      <div class="annual-attribution-bar">${attrBar}</div>
-      <div class="annual-attribution-rows">${attrRows.map((item) => `<div><span><i class="is-${item.tone}"></i>${item.label}</span><strong class="${getReturnTone(item.value)}">${escapeHtml(formatAnnualSignedMoney(item.value))}</strong></div>`).join('')}</div>
-      <p class="annual-note">${attribution.available ? `覆盖 ${Math.round(safeNumber(attribution.epsSplitCoverage, 0) * 100)}% 持仓 · 归因为辅助复盘，非会计级精确拆分。` : '缺少年初持仓或年界汇率，当前仅展示可核对部分。'}</p>
+    <div class="ann-metrics">
+      <span>股息收入<strong>${escapeHtml(formatIncomeMoney(row.dividendCny))}</strong></span>
+      <span>资金收益<strong class="${getReturnTone(row.capitalReturnCny)}">${escapeHtml(formatAnnualSignedMoney(row.capitalReturnCny))}</strong></span>
+      <span>净注入<strong>${escapeHtml(formatAnnualSignedMoney(row.netInflowCny))}</strong></span>
+      <span>当年交易<strong>${annals.trades.length} 笔</strong></span>
+    </div>
+    <section class="ann-block">
+      ${getAnnualSecHead('收益归因', attrItems ? `合计 ${escapeHtml(formatAnnualRate(annals.returnRate))} · ${escapeHtml(formatAnnualSignedMoney(row.capitalReturnCny))}` : '')}
+      ${attrItems
+        ? `<div class="ann-attr-bar">${attrBar}</div><div class="ann-attr-rows">${attrRows}</div>${coverageNote}`
+        : '<p class="ann-empty-line">缺少年初持仓快照或年界汇率，本年暂时拆不出归因</p>'}
     </section>
-    <section class="annual-section">
-      <p class="ledger-eyebrow">当年股息现金流</p>
-      <div class="annual-dividend-bars">${annals.dividendMonths.map((value, index) => `<span><i class="${index === currentMonth ? 'is-current' : ''}" style="height:${Math.max(value > 0 ? 3 : 1, safeNumber(value, 0) / maxDividend * 58).toFixed(1)}px"></i><small>${monthLabels[index]}</small></span>`).join('')}</div>
-      <div class="annual-total-row"><span>${annals.isCurrentYear ? '本年已确认股息' : '全年确认股息'}</span><strong>${escapeHtml(formatIncomeMoney(row.dividendCny))}</strong></div>
+    <section class="ann-block">
+      ${getAnnualSecHead('年度持仓', annals.holdings.hasData ? `${annals.holdings.count} 项 · ${escapeHtml(formatDisplayMoney(annals.holdings.total, 'CNY'))}` : '')}
+      ${annals.holdings.hasData
+        ? `${getAnnualDonutMarkup(annals.holdings)}${getAnnualHoldingsNote(annals.holdings)}`
+        : '<p class="ann-empty-line">该年暂无持仓快照</p>'}
     </section>
-    <section class="annual-section">
-      <p class="ledger-eyebrow">交易复盘</p>
-      <div class="annual-trades">${trades}</div>
-      <p class="annual-trade-summary">全年 <strong>${annals.trades.length}</strong> 笔 · 买入 <strong>${annualBuyCount}</strong> · 卖出 <strong>${annualSellCount}</strong></p>
+    <section class="ann-block">
+      ${getAnnualSecHead('当年股息现金流')}
+      <div class="ann-months">${annals.dividendMonths.map((value, index) => `<span class="${index === currentMonth ? 'is-current' : ''}"><i style="--v:${Math.max(2, safeNumber(value, 0) / maxDividend * 100).toFixed(1)}%"></i><small>${ANNUAL_MONTH_LABELS[index]}</small></span>`).join('')}</div>
+      <p class="ann-months-total"><span>${annals.isCurrentYear ? '本年已确认股息' : '全年确认股息'}</span><strong>${escapeHtml(formatIncomeMoney(row.dividendCny))}</strong></p>
+    </section>
+    <section class="ann-block">
+      ${getAnnualSecHead('交易复盘', annals.trades.length ? `${annals.trades.length} 笔` : '')}
+      <div class="ann-trades">${tradeRows}</div>
+      ${annals.trades.length ? `<p class="ann-trade-sum">全年 ${annals.trades.length} 笔 · 买入 ${buyCount} · 卖出 ${sellCount}</p>` : ''}
     </section>`;
 }
+
+/* ── 11-分享卡 · 按 designs/禅意UI/11-分享卡/定稿图.html ──
+   硬约束：全卡只有比例与收益率，禁止出现 ¥ 与任何绝对金额；
+   固定素禅日间配色导出，不随夜间模式变色。 */
+const SHARE_DONUT_COLORS = ['#c9a558', '#dcc492', '#b3a68c', '#cfc4ad', '#e2d9c4', '#efe9da'];
+
+function formatSharePercent(value) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
+  const numeric = Number(value) * 100;
+  return `${numeric > 0 ? '+' : numeric < 0 ? '−' : ''}${Math.abs(numeric).toFixed(1)}%`;
+}
+
+function formatSharePlainPercent(value) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
+  return `${(Number(value) * 100).toFixed(1)}%`;
+}
+
+/* 累计年化：与 09 页趋势同一口径（各年资金收益率复利折年） */
+function getCumulativeAnnualized(model) {
+  const rates = model.trendRows
+    .map((row) => getTrendValue(row, 'capitalReturnRate'))
+    .filter((value) => value !== null);
+  if (!rates.length) return { rate: null, startYear: null };
+  const product = rates.reduce((acc, value) => acc * (1 + value), 1);
+  const startYear = model.trendRows.find((row) => getTrendValue(row, 'capitalReturnRate') !== null).year;
+  return { rate: product > 0 ? Math.pow(product, 1 / rates.length) - 1 : null, startYear };
+}
+
+export function buildAnnualShareModel(year) {
+  const annals = computeYearAnnals(year);
+  if (!annals) return null;
+  const model = computeIncomeSummary();
+  const attrItems = getAnnualAttributionItems(annals) || [];
+  const holdings = annals.holdings.hasData ? annals.holdings.items : [];
+  const top = holdings.slice(0, 3);
+  const restPct = holdings.slice(3).reduce((sum, item) => sum + item.pct, 0);
+  return {
+    year,
+    returnRate: annals.returnRate,
+    dividendYieldRate: annals.row.dividendYieldRate,
+    cumulative: getCumulativeAnnualized(model),
+    attrItems,
+    top,
+    restPct,
+    restCount: Math.max(0, holdings.length - top.length)
+  };
+}
+
+function getShareCardMarkup(share) {
+  const totalAbs = share.attrItems.reduce((sum, item) => sum + Math.abs(item.amount), 0) || 1;
+  const bar = share.attrItems
+    .map((item) => `<i class="is-${item.key}" style="width:${(Math.abs(item.amount) / totalAbs * 100).toFixed(2)}%"></i>`).join('');
+  const splitText = share.attrItems.length
+    ? `收益率拆分：${share.attrItems.map((item) => `${item.label.replace('收入', '').replace('增长', '').replace('变动', '')} ${formatSharePercent(item.rate).replace('%', '')}`).join(' · ')}（合计 ${formatSharePercent(share.returnRate)}）`
+    : '归因数据不足，本卡只展示收益率与持仓占比';
+  const segs = share.top.map((item, index) => ({ pct: item.pct, color: SHARE_DONUT_COLORS[index] }));
+  if (share.restPct > 0.0001) segs.push({ pct: share.restPct, color: SHARE_DONUT_COLORS[5] });
+  const circumference = 2 * Math.PI * 38;
+  let offset = 0;
+  const arcs = segs.map((seg) => {
+    const length = seg.pct * circumference;
+    const arc = `<circle cx="48" cy="48" r="38" fill="none" stroke="${seg.color}" stroke-width="9" stroke-dasharray="${length.toFixed(1)} ${(circumference - length).toFixed(1)}" stroke-dashoffset="${(-offset).toFixed(1)}"></circle>`;
+    offset += length;
+    return arc;
+  }).join('');
+  const legend = share.top.map((item, index) => `<div><b style="background:${SHARE_DONUT_COLORS[index]}"></b><span>${escapeHtml(item.name)}</span><span class="pc">${(item.pct * 100).toFixed(1)}%</span></div>`).join('')
+    + (share.restCount > 0 ? `<div><b style="background:${SHARE_DONUT_COLORS[5]}"></b><span class="is-rest">其余 ${share.restCount} 项</span><span class="pc">${(share.restPct * 100).toFixed(1)}%</span></div>` : '');
+  const cumulativeText = share.cumulative.rate === null
+    ? ''
+    : ` · 自 ${share.cumulative.startYear} 累计年化 ${formatSharePercent(share.cumulative.rate)}`;
+  return `<div class="zen-share-card">
+      <span class="sc-brand">Bebop Ledger · ${share.year}</span>
+      <span class="sc-label">本年收益率</span>
+      <strong class="sc-value ${getReturnTone(share.returnRate)}">${escapeHtml(formatSharePercent(share.returnRate))}</strong>
+      <p class="sc-meta">股息收益率 ${escapeHtml(formatSharePlainPercent(share.dividendYieldRate))}${escapeHtml(cumulativeText)}</p>
+      ${share.attrItems.length ? `<div class="sc-bar">${bar}</div>` : ''}
+      <p class="sc-attr">${escapeHtml(splitText)}</p>
+      ${segs.length ? `<div class="sc-hold">
+        <svg viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="持仓占比">${arcs}</svg>
+        <div class="sc-hold-legend">${legend}</div>
+      </div>` : ''}
+      <p class="sc-foot">波普账本 · 比例已脱敏 · 无金额</p>
+    </div>`;
+}
+
+/* 分享卡导出：canvas 重绘同一份内容为 PNG。固定素禅日间配色，与夜间无关。 */
+export function generateAnnualShareCard() {
+  const share = buildAnnualShareModel(state.activeAnnualYear);
+  if (!share) return;
+  const C = { card: '#fffdf8', ink: '#3b362e', gold: '#c19a45', up: '#bf5a42', down: '#6a8b74', muted: '#a89d86', hint: '#c2b9a6', label: '#b0a78f', track: '#eae4d4' };
+  const W = 750;
+  const H = 1000;
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const font = (size, weight = 600) => `${weight} ${size}px -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif`;
+  const tone = (value) => (safeNumber(value, 0) > 0 ? C.up : safeNumber(value, 0) < 0 ? C.down : C.ink);
+  ctx.fillStyle = C.card;
+  ctx.fillRect(0, 0, W, H);
+  ctx.textBaseline = 'alphabetic';
+  ctx.textAlign = 'center';
+
+  ctx.fillStyle = C.hint; ctx.font = font(20, 600);
+  ctx.fillText(`BEBOP LEDGER · ${share.year}`, W / 2, 120);
+  ctx.fillStyle = C.label; ctx.font = font(22, 600);
+  ctx.fillText('本年收益率', W / 2, 200);
+  ctx.fillStyle = tone(share.returnRate); ctx.font = font(96, 600);
+  ctx.fillText(formatSharePercent(share.returnRate), W / 2, 300);
+  ctx.fillStyle = C.muted; ctx.font = font(24, 600);
+  const cumulativeText = share.cumulative.rate === null ? ''
+    : ` · 自 ${share.cumulative.startYear} 累计年化 ${formatSharePercent(share.cumulative.rate)}`;
+  ctx.fillText(`股息收益率 ${formatSharePlainPercent(share.dividendYieldRate)}${cumulativeText}`, W / 2, 350);
+
+  // 归因四段线（宽 440，高 4）+ 一行拆分文字
+  const barW = 440;
+  const barX = (W - barW) / 2;
+  const totalAbs = share.attrItems.reduce((sum, item) => sum + Math.abs(item.amount), 0) || 1;
+  const barColors = { divi: C.gold, eps: C.ink, val: C.muted, fx: C.track };
+  let bx = barX;
+  share.attrItems.forEach((item) => {
+    const w = Math.abs(item.amount) / totalAbs * barW;
+    ctx.fillStyle = barColors[item.key] || C.track;
+    ctx.fillRect(bx, 400, w, 4);
+    bx += w;
+  });
+  ctx.fillStyle = C.muted; ctx.font = font(21, 600);
+  if (share.attrItems.length) {
+    const split = share.attrItems
+      .map((item) => `${item.label.replace('收入', '').replace('增长', '').replace('变动', '')} ${formatSharePercent(item.rate).replace('%', '')}`)
+      .join(' · ');
+    ctx.fillText(split, W / 2, 452);
+    ctx.fillText(`合计 ${formatSharePercent(share.returnRate)}`, W / 2, 486);
+  }
+
+  // 持仓占比 mini 环 + 前三名
+  const cx = 250;
+  const cy = 640;
+  const rOuter = 92;
+  const rInner = 58;
+  const segs = share.top.map((item, index) => ({ pct: item.pct, color: SHARE_DONUT_COLORS[index] }));
+  if (share.restPct > 0.0001) segs.push({ pct: share.restPct, color: SHARE_DONUT_COLORS[5] });
+  let start = -Math.PI / 2;
+  segs.forEach((seg) => {
+    const end = start + seg.pct * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, rOuter, start, end);
+    ctx.closePath();
+    ctx.fillStyle = seg.color;
+    ctx.fill();
+    start = end;
+  });
+  ctx.beginPath();
+  ctx.arc(cx, cy, rInner, 0, Math.PI * 2);
+  ctx.fillStyle = C.card;
+  ctx.fill();
+
+  ctx.textAlign = 'left';
+  share.top.forEach((item, index) => {
+    const ty = 596 + index * 44;
+    ctx.fillStyle = SHARE_DONUT_COLORS[index];
+    ctx.beginPath();
+    ctx.arc(396, ty - 7, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = C.ink; ctx.font = font(22, 600);
+    ctx.fillText(item.name.length > 7 ? `${item.name.slice(0, 7)}…` : item.name, 416, ty);
+    ctx.textAlign = 'right';
+    ctx.fillText(`${(item.pct * 100).toFixed(1)}%`, 660, ty);
+    ctx.textAlign = 'left';
+  });
+  if (share.restCount > 0) {
+    const ty = 596 + share.top.length * 44;
+    ctx.fillStyle = SHARE_DONUT_COLORS[5];
+    ctx.beginPath();
+    ctx.arc(396, ty - 7, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = C.hint; ctx.font = font(22, 600);
+    ctx.fillText(`其余 ${share.restCount} 项`, 416, ty);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = C.ink;
+    ctx.fillText(`${(share.restPct * 100).toFixed(1)}%`, 660, ty);
+    ctx.textAlign = 'left';
+  }
+
+  ctx.fillStyle = C.hint; ctx.font = font(19, 600); ctx.textAlign = 'center';
+  ctx.fillText('波普账本 · 比例已脱敏 · 无金额', W / 2, H - 90);
+
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `波普账本-${share.year}-年度回顾.png`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
+}
+
+export function getAnnualShareCardMarkup(year) {
+  const share = buildAnnualShareModel(year);
+  if (!share) return '<p class="ann-empty-line">该年暂无可分享的数据</p>';
+  return getShareCardMarkup(share);
+}
+
 
 /* ── Holdings ── */
 
