@@ -10302,3 +10302,127 @@ body[data-active-page="home"] .home-nav-list { margin-top: clamp(11px, 1.6vh, 16
   body[data-active-page="home"] .home-nav-list { margin-top: 8px; }
   body[data-active-page="home"] .home-nav-item { padding: 7px 0; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   素禅 / 墨禅 主题层 —— 唯一权威 token（覆盖以上全部 Swiss/Ledger 层）
+   结构靠排版：无框体、无卡片、无图标底托、无 chevron、无发丝分隔；
+   金色仅表股息与选中；红涨绿跌保留。夜间由 prefers-color-scheme 自动切换。
+   ══════════════════════════════════════════════════════════ */
+:root {
+  color-scheme: light;
+  /* ── 素禅（日间，默认）原始 token ── */
+  --bg: #faf8f3;
+  --ink: #3b362e;
+  --muted: #a89d86;
+  --hint: #c2b9a6;
+  --label: #b0a78f;
+  --gold: #c19a45;
+  --gold-soft: #dcc492;
+  --track: #eae4d4;
+  --up: #bf5a42;
+  --down: #6a8b74;
+  --line-soft: #b5a88f;
+  --mask: rgba(59, 54, 46, 0.28);
+  --glow: none;
+  --frame: #efece4;
+  --divi-ink: var(--ink);
+  --donut-1: #c9a558;
+  --donut-2: #dcc492;
+  --donut-3: #b3a68c;
+  --donut-4: #cfc4ad;
+  --donut-5: #e2d9c4;
+  --donut-6: #efe9da;
+
+  /* ── ledger 家族重映射（内页统一走 zen） ── */
+  --ledger-paper: var(--bg);
+  --ledger-surface: var(--bg);
+  --ledger-ink: var(--ink);
+  --ledger-muted: var(--muted);
+  --ledger-soft: var(--hint);
+  --ledger-line: transparent;
+  --ledger-line-strong: var(--ink);
+  --ledger-iris: var(--gold);
+  --ledger-iris-dark: var(--gold);
+  --ledger-iris-light: var(--gold-soft);
+  --ledger-iris-soft: var(--track);
+  --ledger-iris-pale: var(--track);
+  --ledger-gain: var(--up);
+  --ledger-loss: var(--down);
+  --ledger-warning: var(--gold);
+  --ledger-due: var(--up);
+  --ledger-announced: var(--muted);
+
+  /* ── color 家族重映射（首页/弹窗/通用） ── */
+  --color-bg: var(--bg);
+  --color-bg-muted: var(--track);
+  --color-frame-bg: var(--frame);
+  --color-ink: var(--ink);
+  --color-ink-strong: var(--ink);
+  --color-primary: var(--up);
+  --color-loss: var(--down);
+  --color-hairline: transparent;
+  --color-text-secondary: var(--muted);
+  --color-text-hint: var(--hint);
+  --accent: var(--gold);
+  --panel: transparent;
+  --surface: var(--bg);
+  --shadow: none;
+  --text: var(--ink);
+  --brand: var(--ink);
+  --brand-soft: var(--track);
+  --line: transparent;
+  --tint-primary: rgba(193, 90, 66, 0.08);
+  --ring-primary: 0 0 0 2px rgba(193, 154, 69, 0.32);
+  --bg-top: var(--bg);
+  --bg-bottom: var(--bg);
+  --radius-card: 0px;
+  --radius-control: 10px;
+  --radius-chip: 999px;
+  --radius-pill: 999px;
+  --radius-xl: 0px;
+  --radius-lg: 12px;
+}
+
+html { background: var(--frame); }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    /* ── 墨禅（夜间） ── */
+    --bg: #23201b;
+    --ink: #ece6d8;
+    --muted: #8f887a;
+    --hint: #5f594c;
+    --label: #8f887a;
+    --gold: #d3a84f;
+    --gold-soft: #b9974a;
+    --track: #3a352c;
+    --up: #e07a5f;
+    --down: #7fae8e;
+    --line-soft: #6f6653;
+    --mask: rgba(0, 0, 0, 0.45);
+    --glow: 0 0 12px rgba(211, 168, 79, 0.45);
+    --frame: #1a1712;
+    --divi-ink: var(--gold);
+    --donut-1: #d3a84f;
+    --donut-2: #b9974a;
+    --donut-3: #8f8262;
+    --donut-4: #6f6653;
+    --donut-5: #514b3d;
+    --donut-6: #3a352c;
+    --tint-primary: rgba(224, 122, 95, 0.14);
+  }
+}
+
+/* ── zen 纪律补强：图标裸置、焦点描边转金、选中记号统一金点 ── */
+.circle-button,
+.summary-action-button,
+.back-button,
+.diagnostics-button {
+  background: none;
+  box-shadow: none;
+}
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline-color: var(--gold);
+}
