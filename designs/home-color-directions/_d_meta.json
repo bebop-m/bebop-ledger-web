@@ -1,0 +1,126 @@
+{
+  "type": "design",
+  "designSystems": [],
+  "primaryDesignSystem": null,
+  "createdAt": "2026-07-24T04:26:11.806Z",
+  "updatedAt": "2026-07-24T07:36:59.560Z",
+  "assets": {
+    "定稿·素禅墨禅": {
+      "versions": [
+        {
+          "path": "zen-final.html",
+          "createdAt": "2026-07-24T05:06:40.853Z",
+          "status": "needs-review"
+        }
+      ]
+    },
+    "素禅内页成套稿": {
+      "versions": [
+        {
+          "path": "zen-inner-pages.html",
+          "createdAt": "2026-07-24T05:15:26.963Z",
+          "status": "needs-review"
+        }
+      ]
+    },
+    "素禅持仓页": {
+      "versions": [
+        {
+          "path": "zen-holdings-page.html",
+          "createdAt": "2026-07-24T06:04:06.119Z",
+          "status": "needs-review"
+        }
+      ]
+    },
+    "素禅持仓子弹窗": {
+      "versions": [
+        {
+          "path": "zen-holdings-subpages.html",
+          "createdAt": "2026-07-24T06:10:39.841Z",
+          "status": "needs-review"
+        }
+      ]
+    },
+    "zen-holdings-page": {
+      "versions": [
+        {
+          "path": "zen-holdings-page.html",
+          "createdAt": "2026-07-24T06:11:53.744Z",
+          "status": "approved"
+        }
+      ]
+    },
+    "zen-holdings-subpages": {
+      "versions": [
+        {
+          "path": "zen-holdings-subpages.html",
+          "createdAt": "2026-07-24T06:11:53.844Z",
+          "status": "approved"
+        }
+      ]
+    },
+    "素禅股息日历页": {
+      "versions": [
+        {
+          "path": "zen-dividends-page.html",
+          "createdAt": "2026-07-24T06:13:26.511Z",
+          "status": "needs-review"
+        }
+      ]
+    },
+    "zen-dividends-page": {
+      "versions": [
+        {
+          "path": "zen-dividends-page.html",
+          "createdAt": "2026-07-24T06:28:12.423Z",
+          "status": "approved"
+        }
+      ]
+    },
+    "素禅收益明细全家桶": {
+      "versions": [
+        {
+          "path": "zen-income-page.html",
+          "createdAt": "2026-07-24T06:31:01.528Z",
+          "status": "needs-review"
+        }
+      ]
+    },
+    "zen-income-page": {
+      "versions": [
+        {
+          "path": "zen-income-page.html",
+          "createdAt": "2026-07-24T07:21:30.604Z",
+          "status": "approved"
+        }
+      ]
+    },
+    "素禅资金与交易": {
+      "versions": [
+        {
+          "path": "zen-records-page.html",
+          "createdAt": "2026-07-24T07:25:00.963Z",
+          "status": "needs-review"
+        }
+      ]
+    },
+    "zen-records-page": {
+      "versions": [
+        {
+          "path": "zen-records-page.html",
+          "createdAt": "2026-07-24T07:26:15.250Z",
+          "status": "approved"
+        }
+      ]
+    },
+    "素禅公司基本面": {
+      "versions": [
+        {
+          "path": "zen-fundamentals-page.html",
+          "createdAt": "2026-07-24T07:28:00.282Z",
+          "status": "needs-review"
+        }
+      ]
+    }
+  }
+}

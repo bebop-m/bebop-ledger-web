@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>波普账本 · 定稿：素禅 / 墨禅</title>
+<style>
+/* ── 画布 ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 860px; margin: 0 auto 28px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 860px; margin: 0 auto; overflow-x: auto; padding-bottom: 12px; }
+.option { flex: 0 0 390px; }
+.option-label { font-size: 13px; font-weight: 800; letter-spacing: .5px; }
+.option-label small { font-weight: 600; color: #999; margin-left: 6px; letter-spacing: 1px; }
+.option-note { margin: 4px 0 12px; font-size: 11.5px; line-height: 1.6; color: #888; min-height: 36px; }
+.phone { width: 390px; min-height: 800px; border-radius: 24px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); }
+.screen { min-height: 800px; display: flex; flex-direction: column; padding: 30px 26px 34px; background: var(--bg); color: var(--ink); }
+:where(.screen button) { font-family: inherit; border: none; background: none; color: inherit; text-align: inherit; cursor: default; padding: 0; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ── 素禅 / 墨禅 共用骨架，token 成对 ── */
+[data-theme="day"] {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --track: #eae4d4; --up: #bf5a42;
+  --divi-ink: #3b362e; --glow: none;
+}
+[data-theme="night"] {
+  --bg: #23201b; --ink: #ece6d8;
+  --muted: #8f887a; --hint: #5f594c; --label: #8f887a;
+  --gold: #d3a84f; --track: #3a352c; --up: #e07a5f;
+  --divi-ink: #d3a84f; --glow: 0 0 12px rgba(211, 168, 79, .45);
+}
+
+.top { display: flex; justify-content: space-between; align-items: center; }
+.brand { font-size: 9.5px; font-weight: 600; letter-spacing: 4px; color: var(--hint); text-transform: uppercase; }
+.bare-icons { display: flex; gap: 14px; color: var(--muted); }
+.bare-icons svg { width: 17px; height: 17px; }
+.hero { margin-top: 58px; text-align: center; }
+.hero-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.hero-value { display: block; margin-top: 14px; font-size: 47px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+.hero-value .fraction { font-size: 22px; color: var(--label); }
+.hero-meta { margin-top: 14px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.hero-meta strong { color: var(--up); font-weight: 700; }
+.divi { margin-top: 54px; text-align: center; }
+.divi-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.divi-value { display: block; margin-top: 10px; font-size: 23px; font-weight: 700; letter-spacing: -.3px; color: var(--divi-ink); }
+.thread { position: relative; height: 2px; margin: 18px auto 0; width: 214px; background: var(--track); }
+.thread i { position: absolute; inset: 0 auto 0 0; background: var(--gold); box-shadow: var(--glow); }
+.months { display: flex; justify-content: center; gap: 15px; margin-top: 14px; }
+.month { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; font-weight: 600; color: var(--hint); }
+.month i { width: 3.5px; height: 3.5px; border-radius: 50%; background: transparent; }
+.month.has-pay i { background: var(--gold); }
+.month.is-current { color: var(--ink); font-weight: 800; }
+.inline-events { margin-top: 46px; text-align: center; font-size: 11.5px; line-height: 2.1; color: var(--muted); }
+.inline-events strong { color: var(--ink); font-weight: 700; }
+.nav { margin-top: 42px; flex: 1; display: flex; flex-direction: column; gap: 19px; }
+.nav-item { display: flex; justify-content: space-between; align-items: baseline; }
+.nav-title { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+.nav-side { font-size: 11px; font-weight: 600; color: var(--muted); }
+.quick { margin-top: 24px; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: 3px; color: var(--up); }
+</style>
+</head>
+<body>
+  <div class="canvas-head">
+    <h1>波普账本 · 首页定稿方向：素禅（日间）＋ 墨禅（夜间）</h1>
+    <p>同一套排版与 token，明暗两态成对。无框体、无卡片、裸图标；金色是唯一记号色，红涨绿跌保留。数据为示意。</p>
+  </div>
+  <div class="board">
+    <section class="option">
+      <h2 class="option-label">素禅 · 日间 <small>DAY</small></h2>
+      <p class="option-note">暖白纸底 #faf8f3 · 墨字 #3b362e · 金 #c19a45 · 涨 #bf5a42。</p>
+      <div class="phone" data-theme="day"></div>
+    </section>
+    <section class="option">
+      <h2 class="option-label">墨禅 · 夜间 <small>NIGHT</small></h2>
+      <p class="option-note">暖墨底 #23201b · 米字 #ece6d8 · 鎏金 #d3a84f（微光）· 涨 #e07a5f。</p>
+      <div class="phone" data-theme="night"></div>
+    </section>
+  </div>
+
+  <template id="home-screen">
+    <div class="screen">
+      <header class="top">
+        <span class="brand">Bebop Ledger</span>
+        <span class="bare-icons">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 17a3.5 3.5 0 0 0-1.6-6.4h-.5A6.2 6.2 0 0 0 6 9.6 4.4 4.4 0 0 0 6.5 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12C4.8 7.9 8.2 5.8 12 5.8S19.2 7.9 22 12c-2.8 4.1-6.2 6.2-10 6.2S4.8 16.1 2 12Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path><circle cx="12" cy="12" r="3.15" fill="none" stroke="currentColor" stroke-width="1.9"></circle></svg>
+        </span>
+      </header>
+      <section class="hero">
+        <span class="hero-label">净资产</span>
+        <strong class="hero-value num">¥1,082,455<span class="fraction">.32</span></strong>
+        <p class="hero-meta num"><strong>▲ +¥3,214</strong> · +0.30% · USD 7.13</p>
+      </section>
+      <section class="divi">
+        <span class="divi-label">本年股息 · 58%</span>
+        <strong class="divi-value num">¥42,180</strong>
+        <div class="thread"><i style="width:58%"></i></div>
+        <div class="months">
+          <span class="month has-pay"><span>05</span><i></i></span>
+          <span class="month has-pay"><span>06</span><i></i></span>
+          <span class="month is-current has-pay"><span>07</span><i></i></span>
+          <span class="month"><span>08</span><i></i></span>
+          <span class="month has-pay"><span>09</span><i></i></span>
+          <span class="month"><span>10</span><i></i></span>
+        </div>
+      </section>
+      <p class="inline-events num">7月28日 中国海洋石油 <strong>¥1,860</strong> 到账<br>待确认 <strong>2 笔 · ¥3,420</strong></p>
+      <nav class="nav">
+        <button class="nav-item"><span class="nav-title">持仓</span><span class="nav-side num">12 项 · 核心仓 68.4%</span></button>
+        <button class="nav-item"><span class="nav-title">股息日历</span><span class="nav-side num">待确认 2 笔</span></button>
+        <button class="nav-item"><span class="nav-title">收益明细</span><span class="nav-side num">+¥58,210 (+5.7%)</span></button>
+        <button class="nav-item"><span class="nav-title">公司基本面</span><span class="nav-side num">经营回报 9.8%/年</span></button>
+        <button class="nav-item"><span class="nav-title">资金与交易</span><span class="nav-side num">7月18日 买入</span></button>
+      </nav>
+      <button class="quick">＋ 记一笔</button>
+    </div>
+  </template>
+
+  <script>
+    // 同一份骨架克隆进日/夜两个主题壳——落地时对应同一套 DOM + data-theme 切换
+    var tpl = document.getElementById('home-screen');
+    document.querySelectorAll('.phone').forEach(function (phone) {
+      phone.appendChild(tpl.content.cloneNode(true));
+    });
+  </script>
+</body>
+</html>

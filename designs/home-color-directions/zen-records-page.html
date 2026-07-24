@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>波普账本 · 素禅 · 资金与交易</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 1720px; margin: 0 auto 28px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 1720px; margin: 0 auto; overflow-x: auto; padding-bottom: 12px; }
+.option { flex: 0 0 390px; }
+.option-label { font-size: 13px; font-weight: 800; letter-spacing: .5px; }
+.option-label small { font-weight: 600; color: #999; margin-left: 6px; letter-spacing: 1px; }
+.option-note { margin: 4px 0 12px; font-size: 11.5px; line-height: 1.6; color: #888; min-height: 68px; }
+.phone { width: 390px; min-height: 820px; border-radius: 24px; overflow: hidden; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); background: #faf8f3; }
+.phone {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --track: #eae4d4;
+  --up: #bf5a42; --down: #6a8b74;
+}
+.num { font-variant-numeric: tabular-nums; }
+.is-up { color: var(--up); }
+.is-down { color: var(--down); }
+:where(.phone button) { font-family: inherit; border: none; background: none; color: inherit; text-align: inherit; cursor: default; padding: 0; }
+
+.screen { min-height: 820px; display: flex; flex-direction: column; padding: 28px 26px 34px; background: var(--bg); color: var(--ink); }
+.pagebar { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; }
+.pagebar .back { color: var(--muted); }
+.pagebar .back svg { width: 18px; height: 18px; }
+.pagebar .page-name { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.sec-aside { font-size: 10.5px; font-weight: 600; color: var(--hint); }
+
+.page-hero { margin-top: 30px; text-align: center; }
+.page-hero .hero-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.page-hero .hero-value { display: block; margin-top: 12px; font-size: 38px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+.page-hero .hero-meta { margin-top: 12px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+
+/* 现金余额新家：hero 下的次级焦点，可点校准 */
+.cash-line { margin-top: 22px; text-align: center; }
+.cash-line .cl-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.cash-line .cl-value { display: block; margin-top: 7px; font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.cash-line .cl-sub { margin-top: 5px; font-size: 10px; font-weight: 600; color: var(--hint); }
+.cash-line .cl-sub b { color: var(--gold); font-weight: 700; }
+
+.counts { margin-top: 20px; display: flex; justify-content: center; gap: 22px; font-size: 10.5px; font-weight: 600; color: var(--hint); }
+.counts strong { color: var(--muted); font-weight: 700; }
+
+.flow { margin-top: 26px; }
+.flow-rows { margin-top: 13px; display: flex; flex-direction: column; gap: 14px; }
+.flow-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.flow-row .side-buy { color: var(--up); font-weight: 700; }
+.flow-row .side-sell { color: var(--down); font-weight: 700; }
+.flow-row strong { color: var(--ink); font-weight: 700; }
+.flow-row .amt { font-weight: 700; color: var(--ink); white-space: nowrap; }
+.flow-row .detail { display: block; margin-top: 2px; font-size: 10px; color: var(--hint); }
+.flow-more { margin-top: 12px; text-align: center; font-size: 10.5px; font-weight: 700; letter-spacing: 1px; color: var(--hint); }
+
+/* ── 抽屉共用 ── */
+.bg-page { position: absolute; inset: 0; padding: 28px 26px; color: var(--ink); }
+.bg-page .page-name { display: block; text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.bg-page .hero-value { display: block; margin-top: 46px; text-align: center; font-size: 38px; font-weight: 600; letter-spacing: -1px; }
+.bg-page .line { height: 2px; background: var(--track); margin-top: 40px; }
+.mask { position: absolute; inset: 0; background: rgba(59, 54, 46, .28); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 22px 22px 0 0; padding: 14px 26px 28px; color: var(--ink); }
+.sheet-handle { width: 32px; height: 3px; border-radius: 2px; background: var(--track); margin: 0 auto; }
+.sheet-title { margin-top: 20px; text-align: center; }
+.sheet-title .t { font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.sheet-title .n { margin-top: 7px; font-size: 11px; font-weight: 600; color: var(--muted); line-height: 1.6; }
+.sheet-actions { display: flex; justify-content: center; gap: 46px; margin-top: 24px; }
+.sheet-actions .cancel { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--hint); }
+.sheet-actions .save { font-size: 12px; font-weight: 800; letter-spacing: 2px; color: var(--ink); }
+.sheet-actions .save::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 4px auto 0; }
+.sheet-actions .danger { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--up); }
+.fields { margin-top: 20px; display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 600; color: var(--muted); }
+.field .v { font-weight: 700; color: var(--ink); }
+.field .v.is-money { font-size: 20px; border-bottom: 2px solid var(--gold); padding: 0 8px 4px; }
+.field .v.is-hintv { color: var(--hint); font-weight: 600; }
+.seg { display: flex; gap: 16px; }
+.seg em { font-style: normal; font-size: 11.5px; font-weight: 600; color: var(--hint); }
+.seg em.is-active { color: var(--ink); font-weight: 700; }
+.seg em.is-active::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 3px auto 0; }
+.quote-line { text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); }
+.quote-line b { color: var(--muted); font-weight: 700; }
+
+/* 记一笔选择 */
+.qa-options { margin-top: 24px; display: flex; flex-direction: column; gap: 22px; text-align: center; }
+.qa-option strong { display: block; font-size: 14px; font-weight: 800; letter-spacing: 2px; }
+.qa-option span { display: block; margin-top: 4px; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.qa-option.is-primary strong::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 5px auto 0; }
+</style>
+</head>
+<body>
+  <div class="canvas-head">
+    <h1>波普账本 · 素禅 · 资金与交易 ＋ 记账抽屉</h1>
+    <p>主页（净注入主数 · 现金余额新家 · 三段流水）＋ 记一笔选择 ＋ 交易编辑 ＋ 出入金编辑。股息行点击进「股息到账」抽屉（已在日历页定稿）。数据为示意。</p>
+  </div>
+  <div class="board">
+
+    <section class="option">
+      <h2 class="option-label">资金与交易 <small>RECORDS</small></h2>
+      <p class="option-note">主数是本年净注入；<b>现金余额从收益明细迁到这里</b>作次级焦点（可点校准，含基准日）。四类计数一行带过；三段流水行内直接可点进编辑，金额统一墨色带符号，只有买/卖词着色。</p>
+      <div class="phone"><div class="screen">
+        <header class="pagebar">
+          <button class="back" aria-label="返回首页"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+          <span class="page-name">资金与交易</span>
+          <span></span>
+        </header>
+        <section class="page-hero">
+          <span class="hero-label">2026 · 净注入</span>
+          <strong class="hero-value num">+¥120,000</strong>
+          <p class="hero-meta num">入金 ¥150,000 · 出金 ¥30,000 · 4 笔</p>
+        </section>
+        <div class="cash-line num">
+          <span class="cl-label">现金余额</span>
+          <strong class="cl-value">¥84,200</strong>
+          <p class="cl-sub">基准日 07-20 · <b>点击校准</b></p>
+        </div>
+        <p class="counts num"><span>买入 <strong>5</strong></span><span>卖出 <strong>2</strong></span><span>出入金 <strong>4</strong></span><span>股息 <strong>14</strong></span></p>
+        <section class="flow">
+          <div class="sec-head"><span class="sec-label">买卖流水</span><span class="sec-aside num">7 笔</span></div>
+          <div class="flow-rows num">
+            <div class="flow-row"><span>07/18 <em class="side-buy">买入</em> <strong>中国海洋石油</strong><span class="detail">6,200 股 @ 15.60 HKD</span></span><span class="amt">−¥42,300</span></div>
+            <div class="flow-row"><span>05/06 <em class="side-buy">买入</em> <strong>建设银行</strong><span class="detail">30,000 股 @ 6.02 HKD</span></span><span class="amt">−¥28,100</span></div>
+            <div class="flow-row"><span>03/12 <em class="side-sell">卖出</em> <strong>中国神华</strong><span class="detail">1,500 股 @ 33.80 HKD</span></span><span class="amt">+¥18,600</span></div>
+          </div>
+          <button class="flow-more">展开全部 7 笔</button>
+        </section>
+        <section class="flow">
+          <div class="sec-head"><span class="sec-label">出入金流水</span><span class="sec-aside num">4 笔</span></div>
+          <div class="flow-rows num">
+            <div class="flow-row"><span>07/02 <strong>入金</strong><span class="detail">工资结余</span></span><span class="amt">+¥50,000</span></div>
+            <div class="flow-row"><span>05/15 <strong>入金</strong></span><span class="amt">+¥70,000</span></div>
+            <div class="flow-row"><span>03/28 <strong>出金</strong><span class="detail">家用</span></span><span class="amt">−¥30,000</span></div>
+          </div>
+          <button class="flow-more">展开全部 4 笔</button>
+        </section>
+        <section class="flow" style="flex:1;">
+          <div class="sec-head"><span class="sec-label">股息入账</span><span class="sec-aside num">14 笔 · ¥24,530</span></div>
+          <div class="flow-rows num">
+            <div class="flow-row"><span>07/08 股息 · <strong>长江电力</strong></span><span class="amt">+¥3,120</span></div>
+            <div class="flow-row"><span>06/26 股息 · <strong>中国神华</strong></span><span class="amt">+¥4,210</span></div>
+          </div>
+          <button class="flow-more">展开全部 14 笔</button>
+        </section>
+      </div></div>
+    </section>
+
+    <section class="option">
+      <h2 class="option-label">记一笔 <small>QUICK ADD</small></h2>
+      <p class="option-note">首页「＋记一笔」打开的选择抽屉。三个去向：交易 / 出入金 / 当前现金——文案保留现有口径区分（流水 vs 余额快照），防止把校准现金误记成入金。</p>
+      <div class="phone">
+        <div class="bg-page num"><span class="page-name">波普账本</span><strong class="hero-value">¥1,082,455</strong><div class="line"></div></div>
+        <div class="mask"></div>
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">
+            <span class="t">记一笔</span>
+            <p class="n">选择要记录或校准的项目</p>
+          </div>
+          <div class="qa-options">
+            <button class="qa-option is-primary"><strong>交 易</strong><span>买入 / 卖出一笔股票</span></button>
+            <button class="qa-option"><strong>出 入 金</strong><span>真实的资金转入 / 转出</span></button>
+            <button class="qa-option"><strong>当 前 现 金</strong><span>直接校准券商的现金余额（不产生流水）</span></button>
+          </div>
+          <div class="sheet-actions"><button class="cancel">取 消</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="option">
+      <h2 class="option-label">交易 <small>TRADE</small></h2>
+      <p class="option-note">字段照现有逻辑：日期 / 代码（币种按代码自动识别，识别行居中）/ 买卖二选 / 股数·成交价 / 费用可选 / 归仓二选 / 备注。成交额按当天汇率自动折算，无需手填。</p>
+      <div class="phone">
+        <div class="bg-page num"><span class="page-name">资金与交易</span><strong class="hero-value">+¥120,000</strong><div class="line"></div></div>
+        <div class="mask"></div>
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">
+            <span class="t">新增交易</span>
+          </div>
+          <div class="fields num">
+            <div class="field"><span>日期</span><span class="v">2026-07-24</span></div>
+            <div class="field"><span>股票代码</span><span class="v">0883.HK</span></div>
+            <p class="quote-line num"><b>中国海洋石油</b> · HKD · 现价 15.84 · 汇率 0.9124</p>
+            <div class="field"><span>方向</span><span class="seg"><em class="is-active">买入</em><em>卖出</em></span></div>
+            <div class="field"><span>股数</span><span class="v">6,200</span></div>
+            <div class="field"><span>成交价（HKD）</span><span class="v is-money">15.60</span></div>
+            <p class="quote-line num">成交额 HK$96,720 ≈ <b>¥88,250</b>（含费用 ¥120）</p>
+            <div class="field"><span>费用（CNY，可选）</span><span class="v">120</span></div>
+            <div class="field"><span>归入</span><span class="seg"><em class="is-active">核心仓</em><em>打工仓</em></span></div>
+            <div class="field"><span>备注</span><span class="v is-hintv">可选</span></div>
+          </div>
+          <div class="sheet-actions"><button class="danger">删 除</button><button class="cancel">取 消</button><button class="save">保 存</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="option">
+      <h2 class="option-label">出入金 <small>CASH FLOW</small></h2>
+      <p class="option-note">最简表单：日期 / 金额（金线大数字）/ 入金出金二选 / 备注。编辑已有记录时出现删除（涨红）；删除会按原路冲回现金口径。</p>
+      <div class="phone">
+        <div class="bg-page num"><span class="page-name">资金与交易</span><strong class="hero-value">+¥120,000</strong><div class="line"></div></div>
+        <div class="mask"></div>
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="sheet-title">
+            <span class="t">出入金</span>
+            <p class="n">真实的资金转入 / 转出</p>
+          </div>
+          <div class="fields num">
+            <div class="field"><span>日期</span><span class="v">2026-07-02</span></div>
+            <div class="field"><span>金额（CNY）</span><span class="v is-money">50,000.00</span></div>
+            <div class="field"><span>方向</span><span class="seg"><em class="is-active">入金</em><em>出金</em></span></div>
+            <div class="field"><span>备注</span><span class="v">工资结余</span></div>
+          </div>
+          <div class="sheet-actions"><button class="danger">删 除</button><button class="cancel">取 消</button><button class="save">保 存</button></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>

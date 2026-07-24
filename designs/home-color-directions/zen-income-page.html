@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>波普账本 · 素禅 · 收益明细全家桶</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 1720px; margin: 0 auto 28px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 1720px; margin: 0 auto; overflow-x: auto; padding-bottom: 12px; }
+.option { flex: 0 0 390px; }
+.option-label { font-size: 13px; font-weight: 800; letter-spacing: .5px; }
+.option-label small { font-weight: 600; color: #999; margin-left: 6px; letter-spacing: 1px; }
+.option-note { margin: 4px 0 12px; font-size: 11.5px; line-height: 1.6; color: #888; min-height: 68px; }
+.phone { width: 390px; border-radius: 24px; overflow: hidden; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); background: #faf8f3; }
+.phone {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --track: #eae4d4;
+  --up: #bf5a42; --down: #6a8b74;
+}
+.num { font-variant-numeric: tabular-nums; }
+.is-up { color: var(--up); }
+.is-down { color: var(--down); }
+:where(.phone button) { font-family: inherit; border: none; background: none; color: inherit; text-align: inherit; cursor: default; padding: 0; }
+
+.screen { min-height: 820px; display: flex; flex-direction: column; padding: 28px 26px 34px; background: var(--bg); color: var(--ink); }
+.pagebar { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; }
+.pagebar .back { color: var(--muted); }
+.pagebar .back svg { width: 18px; height: 18px; }
+.pagebar .page-name { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.sec-aside { font-size: 10.5px; font-weight: 600; color: var(--hint); }
+
+.page-hero { margin-top: 30px; text-align: center; }
+.page-hero .hero-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.page-hero .hero-value { display: block; margin-top: 12px; font-size: 38px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+.page-hero .hero-meta { margin-top: 12px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.page-hero .hero-meta strong { font-weight: 700; }
+
+/* 口径弱化为一行提示：净值明细看年度回顾，现金与注入看资金与交易 */
+.ctx-line { margin-top: 18px; text-align: center; font-size: 10.5px; font-weight: 600; color: var(--hint); line-height: 1.8; }
+.ctx-line b { color: var(--muted); font-weight: 700; }
+
+/* 历年趋势：双线图（墨=资金收益率带符号标值，金=股息收益率），零轴发丝线 */
+.trend { margin-top: 30px; }
+.trend-chart { margin-top: 14px; }
+.trend-chart svg { width: 100%; height: auto; display: block; }
+.trend-chart .zero { stroke: var(--track); stroke-width: 1; }
+.trend-chart .cap-line { fill: none; stroke: #b5a88f; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.trend-chart .div-line { fill: none; stroke: #dcc492; stroke-width: 1.3; stroke-linecap: round; stroke-linejoin: round; }
+.trend-chart circle.cap { fill: #8a7d69; }
+.trend-chart circle.div { fill: #c9a558; }
+.trend-chart text { font-family: inherit; font-size: 9.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.trend-chart text.v-up { fill: var(--up); }
+.trend-chart text.v-down { fill: var(--down); }
+.trend-chart text.v-latest { font-size: 10.5px; }
+.trend-chart text.yr { fill: var(--hint); font-weight: 600; }
+.trend-chart text.yr-current { fill: var(--ink); font-weight: 800; }
+.trend-legend { margin-top: 10px; text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); }
+.trend-legend i { display: inline-block; width: 12px; height: 2px; background: #b5a88f; vertical-align: 3px; margin-right: 4px; }
+.trend-legend b { display: inline-block; width: 12px; height: 2px; background: #dcc492; vertical-align: 3px; margin: 0 4px 0 12px; }
+.trend-cagr { margin-top: 10px; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); }
+.trend-cagr strong { color: var(--ink); font-weight: 700; }
+
+.years { margin-top: 28px; flex: 1; }
+.year-rows { margin-top: 14px; display: flex; flex-direction: column; gap: 16px; }
+.year-item { display: flex; flex-direction: column; gap: 3px; }
+.year-main { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.year-main .yy { font-size: 14px; font-weight: 700; }
+.year-main .yy small { font-size: 9.5px; font-weight: 600; color: var(--hint); margin-left: 7px; letter-spacing: .5px; }
+.year-main .yv { font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.year-main .yv em { font-style: normal; font-size: 11px; font-weight: 600; margin-left: 6px; }
+.year-sub { display: flex; justify-content: space-between; gap: 10px; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.year-sub .acts { color: var(--hint); white-space: nowrap; }
+.years .foot { margin-top: 18px; text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); line-height: 1.7; }
+
+/* ── 年度回顾（整合快照+年鉴） ── */
+.year-switch { margin-top: 22px; display: flex; justify-content: center; gap: 20px; font-size: 11.5px; font-weight: 600; color: var(--hint); }
+.year-switch .is-active { color: var(--ink); font-weight: 800; }
+.year-switch .is-active::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 4px auto 0; }
+.metrics4 { margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px 8px; text-align: center; }
+.metrics4 > span { font-size: 9.5px; font-weight: 600; color: var(--hint); }
+.metrics4 strong { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 700; color: var(--ink); }
+.attr { margin-top: 28px; }
+.attr-bar { display: flex; height: 2px; margin-top: 14px; }
+.attr-bar .a-divi { background: var(--gold); }
+.attr-bar .a-eps { background: var(--ink); }
+.attr-bar .a-val { background: var(--muted); }
+.attr-bar .a-fx { background: var(--track); }
+.attr-rows { margin-top: 14px; display: flex; flex-direction: column; gap: 11px; }
+.attr-rows > div { display: flex; align-items: baseline; gap: 8px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.attr-rows b { width: 4px; height: 4px; border-radius: 50%; flex: none; align-self: center; }
+.attr-rows .b-divi { background: var(--gold); }
+.attr-rows .b-eps { background: var(--ink); }
+.attr-rows .b-val { background: var(--muted); }
+.attr-rows .b-fx { background: var(--track); }
+.attr-rows small { flex: 1; color: var(--hint); font-size: 10px; }
+.attr-rows strong { color: var(--ink); font-weight: 700; }
+.attr-note { margin-top: 12px; text-align: center; font-size: 9.5px; font-weight: 600; color: var(--hint); line-height: 1.7; }
+
+/* 年度持仓：饼图 + 图例行 + 增减仓 */
+.hold-wrap { margin-top: 16px; display: flex; gap: 18px; align-items: center; }
+.donut { flex: none; position: relative; width: 128px; height: 128px; }
+.donut svg { transform: rotate(-90deg); }
+.donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.donut-center small { font-size: 9px; font-weight: 600; color: var(--hint); letter-spacing: 1px; }
+.donut-center strong { font-size: 13px; font-weight: 700; }
+.hold-legend { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.hold-legend > div { display: flex; align-items: baseline; gap: 7px; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.hold-legend b { width: 4px; height: 4px; border-radius: 50%; flex: none; align-self: center; }
+.hold-legend .co { flex: 1; color: var(--ink); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hold-legend .pc { font-variant-numeric: tabular-nums; }
+.hold-legend .chg { font-size: 9.5px; color: var(--gold); font-weight: 700; width: 44px; text-align: right; }
+.hold-note { margin-top: 14px; text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); line-height: 1.7; }
+
+.mini-months { display: grid; grid-template-columns: repeat(12, 1fr); gap: 5px; align-items: end; height: 56px; margin-top: 16px; padding: 0 6px; }
+.mini-months span { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; }
+.mini-months i { display: block; width: 4px; border-radius: 2px; background: var(--gold); opacity: .55; height: var(--v); }
+.mini-months .is-current i { opacity: 1; }
+.mini-months small { font-size: 8.5px; font-weight: 600; color: var(--hint); }
+.mini-total { margin-top: 12px; display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; color: var(--muted); }
+.mini-total strong { color: var(--ink); font-weight: 700; }
+.trade-rows { margin-top: 14px; display: flex; flex-direction: column; gap: 13px; }
+.trade-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.trade-row .side-buy { color: var(--up); font-weight: 700; }
+.trade-row .side-sell { color: var(--down); font-weight: 700; }
+.trade-row strong { color: var(--ink); font-weight: 700; }
+.trade-sum { margin-top: 16px; text-align: center; font-size: 10.5px; font-weight: 600; color: var(--hint); }
+
+/* ── 回填抽屉 ── */
+.bg-page { position: absolute; inset: 0; padding: 28px 26px; color: var(--ink); }
+.bg-page .page-name { display: block; text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.bg-page .hero-value { display: block; margin-top: 46px; text-align: center; font-size: 38px; font-weight: 600; letter-spacing: -1px; }
+.bg-page .line { height: 2px; background: var(--track); margin-top: 40px; }
+.mask { position: absolute; inset: 0; background: rgba(59, 54, 46, .28); }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 22px 22px 0 0; padding: 14px 26px 28px; color: var(--ink); }
+.sheet-handle { width: 32px; height: 3px; border-radius: 2px; background: var(--track); margin: 0 auto; }
+.sheet-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 22px; }
+.sheet-head h3 { font-size: 16px; font-weight: 800; letter-spacing: .5px; }
+.sheet-head .tag { font-size: 11px; font-weight: 600; letter-spacing: 2px; color: var(--label); }
+.sheet-sub { margin-top: 7px; font-size: 10px; font-weight: 600; color: var(--hint); line-height: 1.6; }
+.fields { margin-top: 20px; display: flex; flex-direction: column; gap: 13px; }
+.field { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 600; color: var(--muted); }
+.field .v { font-weight: 700; color: var(--ink); border-bottom: 1px solid var(--track); padding: 0 6px 3px; min-width: 96px; text-align: right; }
+.field .v.is-focus { border-bottom: 2px solid var(--gold); }
+.field .v.is-empty { color: var(--hint); font-weight: 600; }
+.sheet-actions { display: flex; justify-content: center; gap: 46px; margin-top: 24px; }
+.sheet-actions .cancel { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--hint); }
+.sheet-actions .save { font-size: 12px; font-weight: 800; letter-spacing: 2px; color: var(--ink); }
+.sheet-actions .save::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 4px auto 0; }
+.sheet-actions .danger { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--up); }
+
+/* 分享入口与分享卡 */
+.share-entry { text-align: right; font-size: 11px; font-weight: 700; color: var(--muted); }
+.share-card {
+  margin-top: 20px; background: #fffdf8; border-radius: 16px; padding: 24px 20px;
+  box-shadow: 0 1px 2px rgba(59, 54, 46, .05), 0 8px 24px rgba(59, 54, 46, .08);
+  text-align: center;
+}
+.share-card .sc-brand { font-size: 9px; font-weight: 600; letter-spacing: 4px; color: var(--hint); text-transform: uppercase; }
+.share-card .sc-label { display: block; margin-top: 16px; font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.share-card .sc-value { display: block; margin-top: 10px; font-size: 34px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+.share-card .sc-meta { margin-top: 10px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.share-card .attr-bar { width: 220px; margin: 18px auto 0; }
+.share-card .sc-attr { margin-top: 10px; font-size: 10px; font-weight: 600; color: var(--muted); }
+.share-card .sc-hold { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 18px; }
+.share-card .sc-hold-legend { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.share-card .sc-hold-legend > div { display: flex; align-items: baseline; gap: 6px; font-size: 10px; font-weight: 600; color: var(--muted); }
+.share-card .sc-hold-legend b { width: 4px; height: 4px; border-radius: 50%; flex: none; align-self: center; }
+.share-card .sc-hold-legend .pc { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 700; }
+.share-card .sc-foot { margin-top: 18px; font-size: 9px; font-weight: 600; letter-spacing: 2px; color: var(--hint); }
+</style>
+</head>
+<body>
+  <div class="canvas-head">
+    <h1>波普账本 · 素禅 · 收益明细（v2：线图趋势 · 回顾整合快照与年鉴）</h1>
+    <p>主页（口径弱化 · 线条减淡）→ 年度回顾（浅色饼图 · 归因带% · 右上分享）→ 分享卡（无金额）→ 年度回填抽屉。数据为示意。</p>
+  </div>
+  <div class="board">
+
+    <section class="option">
+      <h2 class="option-label">收益明细 <small>INCOME v2</small></h2>
+      <p class="option-note">趋势改双线图：墨线＝资金收益率（每点标带符号数值，红正绿负；2022 下探到零轴下方一目了然），金线＝股息收益率；零轴发丝线。图下一行给出<b>自 2021 累计年化</b>。年份行动作只剩「回填」。</p>
+      <div class="phone"><div class="screen">
+        <header class="pagebar">
+          <button class="back" aria-label="返回首页"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+          <span class="page-name">收益明细</span>
+          <span></span>
+        </header>
+        <section class="page-hero">
+          <span class="hero-label">2026 · 资金收益</span>
+          <strong class="hero-value num is-up">+¥58,210</strong>
+          <p class="hero-meta num"><strong class="is-up">+5.7%</strong> · 净值链口径 · 已含股息与汇率</p>
+        </section>
+        <p class="ctx-line num">年初 ¥978,500 → 当前 ¥1,156,700 · 净注入 <b>+¥120,000</b><br>净值与注入明细见年度回顾 · 现金余额移至资金与交易</p>
+        <section class="trend">
+          <div class="sec-head"><span class="sec-label">历年趋势</span><span class="sec-aside num">收益率</span></div>
+          <div class="trend-chart">
+            <svg viewBox="0 0 338 118" role="img" aria-label="历年资金收益率与股息收益率">
+              <line class="zero" x1="14" x2="324" y1="63.4" y2="63.4"></line>
+              <polyline class="div-line" points="24,51 82,49.8 140,50.2 198,48.9 256,50.6 314,47.8"></polyline>
+              <polyline class="cap-line" points="24,46.5 82,96 140,53 198,18 256,25.6 314,40.5"></polyline>
+              <circle class="div" cx="24" cy="51" r="2"></circle><circle class="div" cx="82" cy="49.8" r="2"></circle><circle class="div" cx="140" cy="50.2" r="2"></circle><circle class="div" cx="198" cy="48.9" r="2"></circle><circle class="div" cx="256" cy="50.6" r="2"></circle><circle class="div" cx="314" cy="47.8" r="2"></circle>
+              <circle class="cap" cx="24" cy="46.5" r="2.6"></circle><circle class="cap" cx="82" cy="96" r="2.6"></circle><circle class="cap" cx="140" cy="53" r="2.6"></circle><circle class="cap" cx="198" cy="18" r="2.6"></circle><circle class="cap" cx="256" cy="25.6" r="2.6"></circle><circle class="cap" cx="314" cy="40.5" r="2.6"></circle>
+              <text class="v-up" x="24" y="38" text-anchor="middle">+4.2</text>
+              <text class="v-down" x="82" y="109" text-anchor="middle">-8.1</text>
+              <text class="v-up" x="140" y="44.5" text-anchor="middle">+2.6</text>
+              <text class="v-up" x="198" y="10.5" text-anchor="middle">+11.3</text>
+              <text class="v-up" x="256" y="17.5" text-anchor="middle">+9.4</text>
+              <text class="v-up v-latest" x="314" y="32" text-anchor="middle">+5.7</text>
+            </svg>
+            <svg viewBox="0 0 338 14" style="margin-top:2px;">
+              <text class="yr" x="24" y="10" text-anchor="middle">21</text>
+              <text class="yr" x="82" y="10" text-anchor="middle">22</text>
+              <text class="yr" x="140" y="10" text-anchor="middle">23</text>
+              <text class="yr" x="198" y="10" text-anchor="middle">24</text>
+              <text class="yr" x="256" y="10" text-anchor="middle">25</text>
+              <text class="yr yr-current" x="314" y="10" text-anchor="middle">26至今</text>
+            </svg>
+          </div>
+          <p class="trend-legend"><i></i>资金收益率<b></b>股息收益率</p>
+          <p class="trend-cagr num">自 2021 累计年化 <strong class="is-up">+4.4%</strong> · 最深一年 <strong class="is-down">-8.1%</strong></p>
+        </section>
+        <section class="years">
+          <div class="sec-head"><span class="sec-label">年度明细</span><span></span></div>
+          <div class="year-rows num">
+            <div class="year-item">
+              <div class="year-main"><span class="yy">2026<small>进行中</small></span><span class="yv is-up">+¥58,210<em>+5.7%</em></span></div>
+              <div class="year-sub"><span>股息 ¥24,530 · 净注入 +¥120,000</span><span class="acts"></span></div>
+            </div>
+            <div class="year-item">
+              <div class="year-main"><span class="yy">2025<small>手工基准</small></span><span class="yv is-up">+¥86,400<em>+9.4%</em></span></div>
+              <div class="year-sub"><span>股息 ¥31,240 · 年末 ¥978,500</span><span class="acts">回填</span></div>
+            </div>
+            <div class="year-item">
+              <div class="year-main"><span class="yy">2024<small>手工基准</small></span><span class="yv is-up">+¥92,150<em>+11.3%</em></span></div>
+              <div class="year-sub"><span>股息 ¥28,900 · 年末 ¥812,300</span><span class="acts">回填</span></div>
+            </div>
+            <div class="year-item">
+              <div class="year-main"><span class="yy">2023<small>手工基准</small></span><span class="yv is-up">+¥18,900<em>+2.6%</em></span></div>
+              <div class="year-sub"><span>股息 ¥24,100 · 年末 ¥705,600</span><span class="acts">回填</span></div>
+            </div>
+            <div class="year-item">
+              <div class="year-main"><span class="yy">2022<small>手工基准</small></span><span class="yv is-down">-¥61,300<em>-8.1%</em></span></div>
+              <div class="year-sub"><span>股息 ¥21,800 · 年末 ¥668,200</span><span class="acts">回填</span></div>
+            </div>
+          </div>
+          <p class="foot">2021–2025 为年度手工基准 · 逐笔记账自 2026 起<br>点年份行查看年度回顾（含当年持仓 · 归因 · 交易）</p>
+        </section>
+      </div></div>
+    </section>
+
+    <section class="option">
+      <h2 class="option-label">年度回顾 <small>ANNUAL v2 整合版</small></h2>
+      <p class="option-note">快照与年鉴并入本页：本年收益率主数（区间简单收益法，与同花顺年度账单同口径，XIRR 已移除）→ 四指标 → 归因拆分 → <b>年度持仓饼图</b> → 股息现金流 → 交易复盘。</p>
+      <div class="phone"><div class="screen" style="min-height:1150px;">
+        <header class="pagebar">
+          <button class="back" aria-label="返回收益明细"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+          <span class="page-name">年度回顾</span>
+          <button class="share-entry">分享</button>
+        </header>
+        <nav class="year-switch num"><span class="is-active">2026</span><span>2025</span><span>2024</span><span>2023</span><span>2022</span></nav>
+        <section class="page-hero">
+          <span class="hero-label">本年收益率</span>
+          <strong class="hero-value num is-up">+5.7%</strong>
+          <p class="hero-meta num">截至 2026/07 · 年初 ¥978,500 → 当前 ¥1,156,700</p>
+        </section>
+        <div class="metrics4 num">
+          <span>股息收入<strong>¥24,530</strong></span>
+          <span>资金收益<strong class="is-up">+¥58,210</strong></span>
+          <span>净注入<strong>+¥120,000</strong></span>
+          <span>当年交易<strong>3 笔</strong></span>
+        </div>
+        <section class="attr">
+          <div class="sec-head"><span class="sec-label">收益归因</span><span class="sec-aside num">合计 +5.7% · +¥58,210</span></div>
+          <div class="attr-bar"><i class="a-divi" style="width:42%"></i><i class="a-eps" style="width:36%"></i><i class="a-val" style="width:17%"></i><i class="a-fx" style="width:5%"></i></div>
+          <div class="attr-rows num">
+            <div><b class="b-divi"></b><span>股息收入</span><small class="is-up">+2.4%</small><strong class="is-up">+¥24,530</strong></div>
+            <div><b class="b-eps"></b><span>EPS 增长</span><small class="is-up">+2.1%</small><strong class="is-up">+¥21,200</strong></div>
+            <div><b class="b-val"></b><span>估值变动</span><small class="is-up">+1.0%</small><strong class="is-up">+¥9,800</strong></div>
+            <div><b class="b-fx"></b><span>汇率变动</span><small class="is-up">+0.2%</small><strong class="is-up">+¥2,680</strong></div>
+          </div>
+        </section>
+        <section style="margin-top:28px;">
+          <div class="sec-head"><span class="sec-label">年度持仓</span><span class="sec-aside num">12 项 · ¥1,156,700</span></div>
+          <div class="hold-wrap">
+            <div class="donut num">
+              <svg viewBox="0 0 128 128" width="128" height="128" aria-label="持仓构成">
+                <circle cx="64" cy="64" r="52" fill="none" stroke="#efe9da" stroke-width="11"></circle>
+                <circle cx="64" cy="64" r="52" fill="none" stroke="#c9a558" stroke-width="11" stroke-dasharray="79.1 326.7" stroke-dashoffset="0"></circle>
+                <circle cx="64" cy="64" r="52" fill="none" stroke="#dcc492" stroke-width="11" stroke-dasharray="68.3 326.7" stroke-dashoffset="-79.1"></circle>
+                <circle cx="64" cy="64" r="52" fill="none" stroke="#b3a68c" stroke-width="11" stroke-dasharray="60.4 326.7" stroke-dashoffset="-147.4"></circle>
+                <circle cx="64" cy="64" r="52" fill="none" stroke="#cfc4ad" stroke-width="11" stroke-dasharray="46.1 326.7" stroke-dashoffset="-207.8"></circle>
+                <circle cx="64" cy="64" r="52" fill="none" stroke="#e2d9c4" stroke-width="11" stroke-dasharray="35.9 326.7" stroke-dashoffset="-253.9"></circle>
+              </svg>
+              <div class="donut-center"><small>2026</small><strong>12 项</strong></div>
+            </div>
+            <div class="hold-legend num">
+              <div><b style="background:#c9a558"></b><span class="co">中国海洋石油</span><span class="pc">24.2%</span><span class="chg">+4,000</span></div>
+              <div><b style="background:#dcc492"></b><span class="co">长江电力</span><span class="pc">20.9%</span><span class="chg"></span></div>
+              <div><b style="background:#b3a68c"></b><span class="co">建设银行</span><span class="pc">18.5%</span><span class="chg">新增</span></div>
+              <div><b style="background:#cfc4ad"></b><span class="co">中国神华</span><span class="pc">14.1%</span><span class="chg">-1,500</span></div>
+              <div><b style="background:#e2d9c4"></b><span class="co">陕西煤业</span><span class="pc">11.0%</span><span class="chg"></span></div>
+              <div><b style="background:#efe9da"></b><span class="co" style="color:var(--muted); font-weight:600;">其余 7 项</span><span class="pc">11.3%</span><span class="chg"></span></div>
+            </div>
+          </div>
+          <p class="hold-note num">增减仓对比 2025 年 · 已清仓：中国石化 12,000 股<br>当年快照随行情更新，跨年自动冻结</p>
+        </section>
+        <section style="margin-top:28px;">
+          <div class="sec-head"><span class="sec-label">当年股息现金流</span><span></span></div>
+          <div class="mini-months num">
+            <span><i style="--v:2%"></i><small>1</small></span>
+            <span><i style="--v:14%"></i><small>2</small></span>
+            <span><i style="--v:7%"></i><small>3</small></span>
+            <span><i style="--v:2%"></i><small>4</small></span>
+            <span><i style="--v:46%"></i><small>5</small></span>
+            <span><i style="--v:64%"></i><small>6</small></span>
+            <span class="is-current"><i style="--v:42%"></i><small>7</small></span>
+            <span><i style="--v:2%"></i><small>8</small></span>
+            <span><i style="--v:2%"></i><small>9</small></span>
+            <span><i style="--v:2%"></i><small>10</small></span>
+            <span><i style="--v:2%"></i><small>11</small></span>
+            <span><i style="--v:2%"></i><small>12</small></span>
+          </div>
+          <p class="mini-total num"><span>本年已确认股息</span><strong>¥24,530</strong></p>
+        </section>
+        <section style="margin-top:28px; flex:1;">
+          <div class="sec-head"><span class="sec-label">交易复盘</span><span class="sec-aside num">3 笔</span></div>
+          <div class="trade-rows num">
+            <div class="trade-row"><span>07/18 <em class="side-buy">买入</em> <strong>中国海洋石油</strong></span><span>¥42,300</span></div>
+            <div class="trade-row"><span>05/06 <em class="side-buy">买入</em> <strong>建设银行</strong></span><span>¥28,100</span></div>
+            <div class="trade-row"><span>03/12 <em class="side-sell">卖出</em> <strong>中国神华</strong></span><span>¥18,600</span></div>
+          </div>
+          <p class="trade-sum num">全年 3 笔 · 买入 2 · 卖出 1</p>
+        </section>
+      </div></div>
+    </section>
+
+    <section class="option">
+      <h2 class="option-label">分享卡 <small>SHARE · 无金额</small></h2>
+      <p class="option-note">年度回顾右上「分享」打开。卡片只含比例与收益率——XIRR、两条收益率、归因%、持仓占比，<b>不出现任何 ¥ 金额</b>；保存为图片后可直接发雪球。隐私掩码逻辑复用现有「隐藏金额」体系。</p>
+      <div class="phone" style="height:800px;">
+        <div class="bg-page num"><span class="page-name">年度回顾</span><strong class="hero-value is-up">+5.7%</strong><div class="line"></div></div>
+        <div class="mask"></div>
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <div class="share-card num">
+            <span class="sc-brand">Bebop Ledger · 2026</span>
+            <span class="sc-label">本年收益率</span>
+            <strong class="sc-value is-up">+5.7%</strong>
+            <p class="sc-meta">股息收益率 3.9% · 自 2021 累计年化 +4.4%</p>
+            <div class="attr-bar"><i class="a-divi" style="width:42%"></i><i class="a-eps" style="width:36%"></i><i class="a-val" style="width:17%"></i><i class="a-fx" style="width:5%"></i></div>
+            <p class="sc-attr">收益率拆分：股息 +2.4 · EPS +2.1 · 估值 +1.0 · 汇率 +0.2（合计 +5.7%）</p>
+            <div class="sc-hold">
+              <svg viewBox="0 0 96 96" width="96" height="96" style="transform:rotate(-90deg);" aria-label="持仓占比">
+                <circle cx="48" cy="48" r="38" fill="none" stroke="#efe9da" stroke-width="9"></circle>
+                <circle cx="48" cy="48" r="38" fill="none" stroke="#c9a558" stroke-width="9" stroke-dasharray="57.8 238.8" stroke-dashoffset="0"></circle>
+                <circle cx="48" cy="48" r="38" fill="none" stroke="#dcc492" stroke-width="9" stroke-dasharray="49.9 238.8" stroke-dashoffset="-57.8"></circle>
+                <circle cx="48" cy="48" r="38" fill="none" stroke="#b3a68c" stroke-width="9" stroke-dasharray="44.2 238.8" stroke-dashoffset="-107.7"></circle>
+              </svg>
+              <div class="sc-hold-legend">
+                <div><b style="background:#c9a558"></b><span>中国海洋石油</span><span class="pc">24.2%</span></div>
+                <div><b style="background:#dcc492"></b><span>长江电力</span><span class="pc">20.9%</span></div>
+                <div><b style="background:#b3a68c"></b><span>建设银行</span><span class="pc">18.5%</span></div>
+                <div><b style="background:#efe9da"></b><span style="color:var(--hint);">其余 9 项</span><span class="pc">36.4%</span></div>
+              </div>
+            </div>
+            <p class="sc-foot">波普账本 · 比例已脱敏 · 无金额</p>
+          </div>
+          <div class="sheet-actions"><button class="cancel">取 消</button><button class="save">保存图片</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="option">
+      <h2 class="option-label">年度回填 <small>BACKFILL</small></h2>
+      <p class="option-note">年份行「回填」打开，唯一保留的独立弹窗。六字段可部分填写，当前编辑项金线聚焦，收益率留空自动推算；删除清空该年手工数据（涨红）。</p>
+      <div class="phone" style="height:800px;">
+        <div class="bg-page num"><span class="page-name">收益明细</span><strong class="hero-value is-up">+¥58,210</strong><div class="line"></div></div>
+        <div class="mask"></div>
+        <div class="sheet">
+          <div class="sheet-handle"></div>
+          <header class="sheet-head"><h3>2024 年度数据</h3><span class="tag">手工基准</span></header>
+          <p class="sheet-sub">六项可只填部分；已填项参与年度列表与趋势</p>
+          <div class="fields num">
+            <div class="field"><span>全年股息（CNY）</span><span class="v">28,900</span></div>
+            <div class="field"><span>股息率（%）</span><span class="v">3.6</span></div>
+            <div class="field"><span>年末净值（CNY）</span><span class="v is-focus">812,300</span></div>
+            <div class="field"><span>净注入（CNY）</span><span class="v">90,000</span></div>
+            <div class="field"><span>资金收益（CNY）</span><span class="v">92,150</span></div>
+            <div class="field"><span>收益率（%）</span><span class="v is-empty">自动推算</span></div>
+          </div>
+          <div class="sheet-actions"><button class="danger">删 除</button><button class="cancel">取 消</button><button class="save">保 存</button></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</body>
+</html>
