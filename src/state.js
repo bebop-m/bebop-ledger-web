@@ -72,7 +72,9 @@ export const mutable = {
   cloudSyncSuccessTimer: 0,
   sortToggleButton: null,
   // 年度回顾的「其余 N 项」是否展开。只活在本次会话里，切年份时归零。
-  annualHoldingsExpanded: false
+  annualHoldingsExpanded: false,
+  // 资金与交易页三段流水的展开状态。同样只活在本次会话里，不写进快照。
+  recordsExpanded: { trade: false, cash: false, dividend: false }
 };
 
 /* ── Compute Cache ── */

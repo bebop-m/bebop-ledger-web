@@ -11,12 +11,13 @@ import {
   applyLegendExpandState, cycleHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
-  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, generateAnnualShareCard
+  isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, generateAnnualShareCard,
+  renderIncomeRecords
 } from './render.js';
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
   setModalBucketSelection, setModalCashFlowTypeSelection,
-  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo, syncZenEditWidth,
+  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo, updateTradeAmountInfo, syncZenEditWidth,
   setReceiptCurrency, toggleReceiptConfirmed, updateReceiptConversion
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
@@ -202,6 +203,15 @@ if (refs.annualReviewContent) refs.annualReviewContent.addEventListener('click',
 });
 
 if (refs.incomeRecordsList) refs.incomeRecordsList.addEventListener('click', (event) => {
+  // 现金余额块：点开 openingCash 校准（现金入口已从收益明细迁到本页）
+  if (event.target.closest('[data-records-action="calibrate-cash"]')) { openModal('openingCash'); return; }
+  const expandButton = event.target.closest('[data-records-expand]');
+  if (expandButton) {
+    const key = expandButton.dataset.recordsExpand;
+    mutable.recordsExpanded[key] = !mutable.recordsExpanded[key];
+    renderIncomeRecords();
+    return;
+  }
   const cashButton = event.target.closest('[data-cash-flow-id]');
   if (cashButton) {
     const entry = state.cashFlows.find((item) => item && item.id === cashButton.dataset.cashFlowId);
@@ -489,6 +499,8 @@ refs.modalRoot.addEventListener('click', (event) => {
 
 refs.modalRoot.addEventListener('input', (event) => {
   if (event.target && event.target.id === 'modalTradeSymbolInput') updateTradeQuoteInfo();
+  // 成交额随股数/成交价/费用边打边折算
+  if (event.target && ['modalTradeSharesInput', 'modalTradePriceInput', 'modalTradeFeeInput'].includes(event.target.id)) updateTradeAmountInfo();
   // 实收金额边打边折算，让读者当场看见入账人民币是多少
   if (event.target && event.target.id === 'modalDividendNetInput') updateReceiptConversion();
   syncZenEditWidth(event.target);

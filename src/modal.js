@@ -113,12 +113,6 @@ function getTradePayload() {
   return stored ? { ...stored, ...state.modalPayload } : state.modalPayload;
 }
 
-function renderSegmentGroup(hiddenId, value, options) {
-  return `<div class="modal-bucket-group" role="group">
-    ${options.map((option) => `<button class="modal-bucket-button ${option.className || ''}${option.value === value ? ' is-active' : ''}" type="button" ${option.dataAttr}="${escapeHtml(option.value)}" aria-pressed="${option.value === value ? 'true' : 'false'}">${escapeHtml(option.label)}</button>`).join('')}
-  </div><input id="${hiddenId}" type="hidden" value="${escapeHtml(value)}">`;
-}
-
 // 按代码自动判定币种：.HK→港元，.SH/.SZ 或纯 6 位数字→人民币，纯字母（美股）→美元。
 function detectTradeCurrency(symbol) {
   const s = normalizeSymbol(symbol);
@@ -131,20 +125,41 @@ function detectTradeCurrency(symbol) {
   return resolveQuoteCurrency(quote, s);
 }
 
-// 交易弹窗里的实时行情提示：识别到的币种 + 名称 + 现价（外币附当天折人民币）。
+/* 交易抽屉的识别行（定稿图：「{公司名} · {币种} · 现价 x · 汇率 x」）。
+   币种由代码自动判定，汇率取当天行情；人民币标的不赘述汇率。 */
 function buildTradeQuoteInfoText(symbol) {
   const s = normalizeSymbol(symbol);
   if (!s) return '输入代码后自动识别币种与现价';
   const currency = detectTradeCurrency(s);
   const quote = inferQuote(s);
   const price = safeNumber(quote.price, 0);
-  const name = quote.name && quote.name !== s ? quote.name : '';
-  if (price > 0) {
-    const fx = resolveFxRate(currency, state.rates);
-    const cny = currency === 'CNY' ? '' : `（≈¥${(price * fx).toFixed(2)}）`;
-    return `${name ? name + ' · ' : ''}现价 ${price} ${currency}${cny}`;
+  const name = quote.name && quote.name !== s ? quote.name : s;
+  if (price <= 0) return `${name} · ${currency} · 未识别到行情，成交价请手动填写`;
+  if (currency === 'CNY') return `${name} · CNY · 现价 ${price}`;
+  return `${name} · ${currency} · 现价 ${price} · 汇率 ${resolveFxRate(currency, state.rates).toFixed(4)}`;
+}
+
+/* 成交额折算行：股数 × 成交价 按当天汇率折人民币。
+   定稿图把费用写进括号里的「含费用」，但费用并不含在折算额内，
+   这里分成两段如实说，免得读者以为 ¥ 数已经把手续费算进去了。 */
+export function updateTradeAmountInfo() {
+  const line = document.getElementById('modalTradeAmountInfo');
+  if (!line) return;
+  const symbolInput = document.getElementById('modalTradeSymbolInput');
+  const currency = detectTradeCurrency(symbolInput ? symbolInput.value : '');
+  const label = document.getElementById('modalTradePriceLabel');
+  if (label) label.textContent = `成交价（${currency}）`;
+  const shares = Math.max(0, safeNumber(document.getElementById('modalTradeSharesInput').value, 0));
+  const price = Math.max(0, safeNumber(document.getElementById('modalTradePriceInput').value, 0));
+  const fee = Math.max(0, safeNumber(document.getElementById('modalTradeFeeInput').value, 0));
+  if (shares <= 0 || price <= 0) {
+    line.textContent = '填入股数与成交价后自动折算成交额';
+    return;
   }
-  return `币种 ${currency} · 未识别到行情，成交价请手动填写`;
+  const gross = shares * price;
+  const cny = gross * resolveFxRate(currency, state.rates);
+  const native = currency === 'CNY' ? '' : `${formatDisplayMoney(gross, currency)} ≈ `;
+  line.innerHTML = `成交额 ${escapeHtml(native)}<b>${escapeHtml(formatDisplayMoney(cny, 'CNY'))}</b>${fee > 0 ? ` · 费用 ${escapeHtml(formatDisplayMoney(fee, 'CNY'))}` : ''}`;
 }
 
 // 股票代码输入变化时，刷新行情提示，并在新增交易且价格为空时自动带出现价。
@@ -160,6 +175,7 @@ export function updateTradeQuoteInfo() {
     const price = safeNumber(inferQuote(symbol).price, 0);
     if (price > 0) priceInput.value = String(price);
   }
+  updateTradeAmountInfo();
 }
 
 /* 05-单字段编辑抽屉：基准股数 / 税率 / 每股股息 / 负债共用一套形制。
@@ -188,7 +204,7 @@ export function getZenEditWidthCh(value) {
 }
 
 export function syncZenEditWidth(input) {
-  if (!input || !(input.classList.contains('zen-edit-field') || input.classList.contains('zen-rc-amount'))) return;
+  if (!input || !(input.classList.contains('zen-edit-field') || input.classList.contains('zen-rc-amount') || input.classList.contains('zen-form-amount'))) return;
   input.style.width = `${getZenEditWidthCh(input.value)}ch`;
 }
 
@@ -224,17 +240,14 @@ function renderModal() {
   if (state.modal === 'annualShare') { renderAnnualShareModal(); return; }
   if (state.modal === 'diagnostics') { renderDiagnosticsModal(); return; }
   if (state.modal === 'fundPicker') { renderFundPickerModal(); return; }
+  if (state.modal === 'quickAdd') { renderQuickAddModal(); return; }
+  if (state.modal === 'trade') { renderTradeModal(); return; }
+  if (state.modal === 'cashFlow') { renderCashFlowModal(); return; }
+  if (state.modal === 'openingCash') { renderOpeningCashModal(); return; }
+  /* 只剩两个尚未走 zen 形制的旧弹窗：持仓操作菜单与新增持仓（均不在 18 张定稿图内）。
+     记一笔 / 交易 / 出入金 / 当前现金四个抽屉见下方各自的 render 函数。 */
   let title = '', note = '', fields = '';
-  if (state.modal === 'quickAdd') {
-    title = '记一笔';
-    note = '选择要记录或校准的项目';
-    // 出入金是「流水」，当前现金是「余额快照」——描述上要让人一眼分清，填错会污染现金口径。
-    fields = `<div class="quick-add-options">
-      <button class="quick-add-option" type="button" data-modal-action="open-trade"><strong>交易</strong><span>买入 / 卖出一笔股票</span></button>
-      <button class="quick-add-option" type="button" data-modal-action="open-cash-flow"><strong>出入金</strong><span>真实的资金转入 / 转出</span></button>
-      <button class="quick-add-option" type="button" data-modal-action="open-current-cash"><strong>当前现金</strong><span>直接校准券商的现金余额</span></button>
-    </div>`;
-  } else if (state.modal === 'holdingsMenu') {
+  if (state.modal === 'holdingsMenu') {
     title = '持仓操作';
     note = `${state.holdings.length} 项持仓`;
     fields = `<div class="quick-add-options holdings-menu-options">
@@ -242,48 +255,6 @@ function renderModal() {
       <button class="quick-add-option" type="button" data-modal-action="holding-refresh"><strong>刷新行情</strong><span>更新价格、汇率与股息数据</span></button>
       <button class="quick-add-option" type="button" data-modal-action="holding-diagnostics"><strong>持仓诊断</strong><span>查看仓位、股息与数据异常</span></button>
     </div>`;
-  } else if (state.modal === 'openingCash') {
-    title = '当前现金余额';
-    note = '填写券商此刻的实际现金；保存不会重算历史交易，也不会改变持股数量';
-    fields = `<label class="modal-field"><span>当前现金（CNY，可为负数）</span><input id="modalCurrentCashInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(state.currentCashCny === null ? '' : String(state.currentCashCny))}" placeholder="0.00"></label>
-      <label class="modal-field"><span>现金基准日</span><input id="modalCurrentCashDateInput" class="modal-input" type="date" value="${escapeHtml(state.currentCashAsOfDate || getTodayLabel())}"></label>
-      <label class="modal-field"><span>交易持仓起点</span><input id="modalPositionOpeningDateInput" class="modal-input" type="date" value="${escapeHtml(state.positionOpeningDate || getTodayLabel())}"></label>
-      <p class="modal-quote-line">基准日之后的新记录才调整现金；持仓股数从交易起点的基准股数开始回放</p>`;
-  } else if (state.modal === 'cashFlow') {
-    const entry = getCashFlowPayload();
-    const type = entry && entry.type === 'withdrawal' ? 'withdrawal' : 'deposit';
-    title = entry ? '编辑出入金' : '新增出入金';
-    note = '真实的资金转入 / 转出';
-    fields = `<label class="modal-field"><span>日期</span><input id="modalCashFlowDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry && entry.date) || getTodayLabel())}"></label>
-      <label class="modal-field"><span>金额（CNY）</span><input id="modalCashFlowAmountInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(Math.abs(safeNumber(entry.amountCny, 0))) : '')}" placeholder="0.00"></label>
-      ${renderSegmentGroup('modalCashFlowTypeInput', type, [
-        { value: 'deposit', label: '入金', className: 'is-core', dataAttr: 'data-cash-flow-type' },
-        { value: 'withdrawal', label: '出金', className: 'is-income', dataAttr: 'data-cash-flow-type' }
-      ])}
-      <label class="modal-field"><span>备注</span><input id="modalCashFlowNoteInput" class="modal-input" type="text" value="${escapeHtml(entry && entry.note || '')}" placeholder="可选"></label>`;
-  } else if (state.modal === 'trade') {
-    const entry = getTradePayload();
-    const symbol = normalizeSymbol(entry && entry.symbol || state.modalPayload && state.modalPayload.symbol || '');
-    const side = entry && entry.side === 'sell' ? 'sell' : 'buy';
-    title = entry ? '编辑交易' : '新增交易';
-    note = '币种按代码自动识别，汇率按当天自动换算';
-    fields = `<label class="modal-field"><span>日期</span><input id="modalTradeDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry && entry.date) || getTodayLabel())}"></label>
-      <label class="modal-field"><span>股票代码</span><input id="modalTradeSymbolInput" class="modal-input" type="text" value="${escapeHtml(symbol)}" placeholder="${LABELS.symbolPlaceholder}"></label>
-      <p class="modal-quote-line" id="modalTradeQuoteInfo">${escapeHtml(buildTradeQuoteInfoText(symbol))}</p>
-      ${renderSegmentGroup('modalTradeSideInput', side, [
-        { value: 'buy', label: '买入', className: 'is-core', dataAttr: 'data-trade-side' },
-        { value: 'sell', label: '卖出', className: 'is-income', dataAttr: 'data-trade-side' }
-      ])}
-      <div class="modal-grid-2">
-        <label class="modal-field"><span>股数</span><input id="modalTradeSharesInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.shares, 0)) : '')}" placeholder="0"></label>
-        <label class="modal-field"><span>成交价</span><input id="modalTradePriceInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.price, 0)) : '')}" placeholder="0.00"></label>
-      </div>
-      <label class="modal-field"><span>费用（CNY，可选）</span><input id="modalTradeFeeInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.feeCny, 0)) : '')}" placeholder="0.00"></label>
-      ${renderSegmentGroup('modalBucketInput', entry && entry.bucket === 'income' ? 'income' : 'core', [
-        { value: 'core', label: LABELS.core, className: 'is-core', dataAttr: 'data-bucket-option' },
-        { value: 'income', label: LABELS.income, className: 'is-income', dataAttr: 'data-bucket-option' }
-      ])}
-      <label class="modal-field"><span>备注</span><input id="modalTradeNoteInput" class="modal-input" type="text" value="${escapeHtml(entry && entry.note || '')}" placeholder="可选"></label>`;
   } else if (state.modal === 'add') {
     title = LABELS.addTitle; note = LABELS.addNote;
     fields = `<input id="modalSymbolInput" class="modal-input" type="text" placeholder="${LABELS.symbolPlaceholder}">
@@ -298,11 +269,142 @@ function renderModal() {
     <section class="modal-sheet" role="dialog" aria-modal="true">
     <div class="modal-title-row"><h3 class="modal-title">${title}</h3>${note ? `<p class="modal-note">${escapeHtml(note)}</p>` : ''}</div>${fields}
     <div class="modal-actions">
-    ${state.modal === 'cashFlow' && state.modalPayload && state.modalPayload.id ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-record">删除</button>' : ''}
-    ${state.modal === 'trade' && state.modalPayload && state.modalPayload.id ? '<button class="modal-button modal-button--danger" type="button" data-modal-action="delete-record">删除</button>' : ''}
-
     <button class="modal-button modal-button--secondary" type="button" data-modal-action="cancel">${LABELS.cancel}</button>
-    ${state.modal === 'quickAdd' || state.modal === 'holdingsMenu' ? '' : `<button class="modal-button modal-button--primary" type="button" data-modal-action="save">${LABELS.save}</button>`}</div></section>`;
+    ${state.modal === 'holdingsMenu' ? '' : `<button class="modal-button modal-button--primary" type="button" data-modal-action="save">${LABELS.save}</button>`}</div></section>`;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   E 簇抽屉 · 14-记一笔 / 15-交易 / 16-出入金（＋当前现金校准）
+   按 designs/禅意UI/ 下 14–16 三个文件夹的 定稿图.html 重排。
+   共用形制：22px 顶圆角、32×3 把手、无色块按钮、居中三键（金点在保存）。
+   ══════════════════════════════════════════════════════════════════ */
+
+/* 二选一：文字 + 4px 金点选中，与全局选中记号同一套。
+   隐藏 input 的 id 与旧版一致，handleModalSave 的取值链路不变。 */
+function renderZenSeg(hiddenId, value, options) {
+  return `<span class="zen-seg">${options.map((option) => `<button class="zen-seg-key${option.value === value ? ' is-active' : ''}" type="button" ${option.dataAttr}="${escapeHtml(option.value)}" aria-pressed="${option.value === value ? 'true' : 'false'}">${escapeHtml(option.label)}<i class="zen-seg-dot" aria-hidden="true"></i></button>`).join('')}</span><input id="${hiddenId}" type="hidden" value="${escapeHtml(value)}">`;
+}
+
+function renderZenSheetActions({ deletable = false } = {}) {
+  return `<div class="zen-sheet-actions">
+        ${deletable ? '<button class="zen-key zen-key--delete" type="button" data-modal-action="delete-record">删 除</button>' : ''}
+        <button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">取 消</button>
+        <button class="zen-key zen-key--save" type="button" data-modal-action="save">保 存<i class="zen-key-dot" aria-hidden="true"></i></button>
+      </div>`;
+}
+
+/* 14-记一笔 · 按 designs/禅意UI/14-记一笔/定稿图.html
+   三个居中选项，文案保留现有口径区分（出入金＝真实流水，当前现金＝余额快照），
+   防止把校准现金误记成入金。首项下缀金点。 */
+function renderQuickAddModal() {
+  const option = (action, title, note, primary) => `<button class="zen-qa-option${primary ? ' is-primary' : ''}" type="button" data-modal-action="${action}">
+        <strong>${escapeHtml(title)}${primary ? '<i class="zen-qa-dot" aria-hidden="true"></i>' : ''}</strong>
+        <span>${escapeHtml(note)}</span>
+      </button>`;
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet zen-sheet zen-sheet--quick" role="dialog" aria-modal="true" aria-labelledby="zenQuickTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <div class="zen-sheet-title">
+        <span class="zen-sheet-title-text" id="zenQuickTitle">记一笔</span>
+        <p class="zen-sheet-note">选择要记录或校准的项目</p>
+      </div>
+      <div class="zen-qa-options">
+        ${option('open-trade', '交 易', '买入 / 卖出一笔股票', true)}
+        ${option('open-cash-flow', '出 入 金', '真实的资金转入 / 转出', false)}
+        ${option('open-current-cash', '当 前 现 金', '直接校准券商的现金余额（不产生流水）', false)}
+      </div>
+      <div class="zen-sheet-actions">
+        <button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">取 消</button>
+      </div>
+    </section>`;
+}
+
+/* 15-交易 · 按 designs/禅意UI/15-交易/定稿图.html
+   日期 / 代码 →（识别行）→ 方向 / 股数 / 成交价（金线托底）→（成交额折算行）
+   → 费用 / 归入 / 备注。字段 id 与保存链路一律沿用旧版。 */
+function renderTradeModal() {
+  const entry = getTradePayload();
+  const symbol = normalizeSymbol((entry && entry.symbol) || (state.modalPayload && state.modalPayload.symbol) || '');
+  const side = entry && entry.side === 'sell' ? 'sell' : 'buy';
+  const bucket = entry && entry.bucket === 'income' ? 'income' : 'core';
+  const editing = Boolean(state.modalPayload && state.modalPayload.id);
+  const price = entry ? String(safeNumber(entry.price, 0)) : '';
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet zen-sheet zen-sheet--form" role="dialog" aria-modal="true" aria-labelledby="zenTradeTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <div class="zen-sheet-title">
+        <span class="zen-sheet-title-text" id="zenTradeTitle">${editing ? '编辑交易' : '新增交易'}</span>
+      </div>
+      <div class="zen-form">
+        <label class="zen-form-row"><span>日期</span><input id="modalTradeDateInput" class="zen-form-input" type="date" value="${escapeHtml(formatDateLabel(entry && entry.date) || getTodayLabel())}"></label>
+        <label class="zen-form-row"><span>股票代码</span><input id="modalTradeSymbolInput" class="zen-form-input" type="text" value="${escapeHtml(symbol)}" placeholder="${LABELS.symbolPlaceholder}"></label>
+        <p class="zen-form-hint" id="modalTradeQuoteInfo">${escapeHtml(buildTradeQuoteInfoText(symbol))}</p>
+        <div class="zen-form-row"><span>方向</span>${renderZenSeg('modalTradeSideInput', side, [
+          { value: 'buy', label: '买入', dataAttr: 'data-trade-side' },
+          { value: 'sell', label: '卖出', dataAttr: 'data-trade-side' }
+        ])}</div>
+        <label class="zen-form-row"><span>股数</span><input id="modalTradeSharesInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.shares, 0)) : '')}" placeholder="0"></label>
+        <label class="zen-form-row"><span id="modalTradePriceLabel">成交价（${escapeHtml(detectTradeCurrency(symbol))}）</span><span class="zen-form-money"><input id="modalTradePriceInput" class="zen-form-amount" type="number" inputmode="decimal" style="width:${getZenEditWidthCh(price)}ch" value="${escapeHtml(price)}" placeholder="0.00" aria-label="成交价"><i class="zen-form-line" aria-hidden="true"></i></span></label>
+        <p class="zen-form-hint" id="modalTradeAmountInfo"></p>
+        <label class="zen-form-row"><span>费用（CNY，可选）</span><input id="modalTradeFeeInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.feeCny, 0)) : '')}" placeholder="0.00"></label>
+        <div class="zen-form-row"><span>归入</span>${renderZenSeg('modalBucketInput', bucket, [
+          { value: 'core', label: LABELS.core, dataAttr: 'data-bucket-option' },
+          { value: 'income', label: LABELS.income, dataAttr: 'data-bucket-option' }
+        ])}</div>
+        <label class="zen-form-row"><span>备注</span><input id="modalTradeNoteInput" class="zen-form-input zen-form-note" type="text" value="${escapeHtml((entry && entry.note) || '')}" placeholder="可选"></label>
+      </div>
+      ${renderZenSheetActions({ deletable: editing })}
+    </section>`;
+  updateTradeAmountInfo();
+}
+
+/* 16-出入金 · 按 designs/禅意UI/16-出入金/定稿图.html
+   最简四字段：日期 / 金额（金线托底）/ 入金出金二选 / 备注。
+   删除按原路冲回现金口径（handleModalDelete 不变）。 */
+function renderCashFlowModal() {
+  const entry = getCashFlowPayload();
+  const type = entry && entry.type === 'withdrawal' ? 'withdrawal' : 'deposit';
+  const editing = Boolean(state.modalPayload && state.modalPayload.id);
+  const amount = entry ? String(Math.abs(safeNumber(entry.amountCny, 0))) : '';
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet zen-sheet zen-sheet--form" role="dialog" aria-modal="true" aria-labelledby="zenCashFlowTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <div class="zen-sheet-title">
+        <span class="zen-sheet-title-text" id="zenCashFlowTitle">出入金</span>
+        <p class="zen-sheet-note">真实的资金转入 / 转出</p>
+      </div>
+      <div class="zen-form">
+        <label class="zen-form-row"><span>日期</span><input id="modalCashFlowDateInput" class="zen-form-input" type="date" value="${escapeHtml(formatDateLabel(entry && entry.date) || getTodayLabel())}"></label>
+        <label class="zen-form-row"><span>金额（CNY）</span><span class="zen-form-money"><input id="modalCashFlowAmountInput" class="zen-form-amount" type="number" inputmode="decimal" style="width:${getZenEditWidthCh(amount)}ch" value="${escapeHtml(amount)}" placeholder="0.00" aria-label="金额"><i class="zen-form-line" aria-hidden="true"></i></span></label>
+        <div class="zen-form-row"><span>方向</span>${renderZenSeg('modalCashFlowTypeInput', type, [
+          { value: 'deposit', label: '入金', dataAttr: 'data-cash-flow-type' },
+          { value: 'withdrawal', label: '出金', dataAttr: 'data-cash-flow-type' }
+        ])}</div>
+        <label class="zen-form-row"><span>备注</span><input id="modalCashFlowNoteInput" class="zen-form-input zen-form-note" type="text" value="${escapeHtml((entry && entry.note) || '')}" placeholder="可选"></label>
+      </div>
+      ${renderZenSheetActions({ deletable: editing })}
+    </section>`;
+}
+
+/* 当前现金校准（记一笔第三项 / 资金页现金块）。
+   没有独立定稿图，形制照 16-出入金：一个金线大数 + 两个日期 + 沉底口径说明。 */
+function renderOpeningCashModal() {
+  const cash = state.currentCashCny === null ? '' : String(state.currentCashCny);
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet zen-sheet zen-sheet--form" role="dialog" aria-modal="true" aria-labelledby="zenOpeningCashTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <div class="zen-sheet-title">
+        <span class="zen-sheet-title-text" id="zenOpeningCashTitle">当前现金</span>
+        <p class="zen-sheet-note">券商此刻的实际余额 · 不产生流水</p>
+      </div>
+      <div class="zen-form">
+        <label class="zen-form-row"><span>现金（CNY，可为负）</span><span class="zen-form-money"><input id="modalCurrentCashInput" class="zen-form-amount" type="number" inputmode="decimal" style="width:${getZenEditWidthCh(cash)}ch" value="${escapeHtml(cash)}" placeholder="0.00" aria-label="当前现金"><i class="zen-form-line" aria-hidden="true"></i></span></label>
+        <label class="zen-form-row"><span>现金基准日</span><input id="modalCurrentCashDateInput" class="zen-form-input" type="date" value="${escapeHtml(state.currentCashAsOfDate || getTodayLabel())}"></label>
+        <label class="zen-form-row"><span>交易持仓起点</span><input id="modalPositionOpeningDateInput" class="zen-form-input" type="date" value="${escapeHtml(state.positionOpeningDate || getTodayLabel())}"></label>
+      </div>
+      <p class="zen-form-foot">基准日之后的新记录才调整现金 · 持股从交易起点的基准股数开始回放</p>
+      ${renderZenSheetActions()}
+    </section>`;
 }
 
 /* 07-月明细抽屉 · 按 designs/禅意UI/07-月明细/定稿图.html
