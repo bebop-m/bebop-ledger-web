@@ -10458,7 +10458,7 @@ body[data-active-page="home"] #homePage {
   gap: 0;
   /* 竖向留白取「定稿值」与「设备安全区」的较大者：
      普通浏览器仍是 30/34，装成 PWA 后自动让开灵动岛与 Home 指示条 */
-  padding-top: max(clamp(27.6px, 7.6923vw, 40.5px), env(safe-area-inset-top, 0px));
+  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
   padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
   padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
   padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));

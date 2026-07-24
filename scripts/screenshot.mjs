@@ -51,7 +51,8 @@ const CFG = {
   modal: argv.modal || '',               // 触发某个抽屉
   outDir: resolve(argv.out || 'screenshots'),
   both: Boolean(argv.both),
-  shots: argv.shots || ''
+  shots: argv.shots || '',
+  statusbar: Boolean(argv.statusbar)
 };
 
 const chrome = CHROME_CANDIDATES.find((p) => existsSync(p));
@@ -107,6 +108,27 @@ async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
     await new Promise((r) => setTimeout(r, 600));
   }
   await new Promise((r) => setTimeout(r, 400)); // 让入场动画落定
+
+  /* 模拟 iPhone 状态栏。注意 apple-mobile-web-app-status-bar-style=default 时
+     状态栏不透明、页面是从它**下方**开始的，所以要把内容整体下推 59pt 再在
+     上方画条，而不是盖在页面上——盖上去会把 brand 压掉，得出错误结论。 */
+  if (CFG.statusbar) {
+    const SB = 59;
+    await page.addStyleTag({
+      content: `body { padding-top: ${SB}px !important; }
+        body[data-active-page="home"] #homePage { min-height: calc(100dvh - ${SB}px) !important; }`
+    });
+    await page.evaluate((sb, dark) => {
+      const bar = document.createElement('div');
+      bar.style.cssText = `position:fixed;top:0;left:0;right:0;height:${sb}px;z-index:99999;
+        display:flex;align-items:center;justify-content:space-between;padding:0 34px 0 38px;
+        font:600 17px/1 -apple-system,"PingFang SC",sans-serif;pointer-events:none;
+        color:${dark ? '#ece6d8' : '#000'};background:${dark ? '#23201b' : '#faf8f3'};`;
+      bar.innerHTML = '<span>21:21</span><span style="font-size:15px;letter-spacing:2px">▮▮▮ ▰</span>';
+      document.body.appendChild(bar);
+    }, SB, theme === 'dark');
+    await new Promise((r) => setTimeout(r, 200));
+  }
 
   const parts = ['home', nav, modal, theme, `${CFG.width}x${CFG.height}`].filter(Boolean);
   const file = resolve(CFG.outDir, `${parts.join('-')}.png`);

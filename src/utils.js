@@ -75,8 +75,8 @@ export function formatDailyPnl(pnlCny, previousMarketValueCny) {
   const pctBase = safeNumber(previousMarketValueCny, 0);
   const pct = pctBase > 0 ? pnl / pctBase : 0;
   const pctSign = pct > 0 ? '+' : pct < 0 ? '-' : '';
-  const pctStr = `(${pctSign}${Math.abs(pct * 100).toFixed(2)}%)`;
-  return `${amountStr} ${pctStr}`;
+  const pctStr = `${pctSign}${Math.abs(pct * 100).toFixed(2)}%`;
+  return `${amountStr} \u00b7 ${pctStr}`;
 }
 
 export function formatTimestamp(isoString) {
