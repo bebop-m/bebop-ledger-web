@@ -549,40 +549,39 @@ export function toggleDividendPastMonths() {
 }
 
 function renderDividendMonths(model) {
-  const populated = model.months.filter((item) => item.totalCny > 0);
-  const past = populated.filter((item) => item.phase === 'past');
-  const visible = populated.filter((item) => item.phase !== 'past' || dividendPastExpanded);
-  const rowSummary = (item) => {
-    const entries = model.allDetails.filter((entry) => entry.month === item.month);
-    const names = Array.from(new Set(entries.map((entry) => entry.name || entry.symbol))).slice(0, 2).join(' · ');
-    let status = '节奏预估';
-    if (item.receivedCny > 0 && item.receivedCny >= item.totalCny) status = '已到账';
-    else if (item.dueCny > 0) status = `${entries.length} 笔待核对`;
-    else if (entries.some((entry) => entry.status === 'announced')) status = '已公告';
-    else if (entries.some((entry) => entry.status === 'pending')) status = `${entries.length} 笔在途`;
-    return `${names}${names ? ' · ' : ''}${status}`;
-  };
-  const tone = (item) => {
-    if (item.phase === 'current') return 'current';
-    if (item.receivedCny > 0 && item.receivedCny >= item.totalCny) return 'received';
-    if (item.dueCny > 0) return 'due';
-    if (model.allDetails.some((entry) => entry.month === item.month && entry.status === 'announced')) return 'announced';
-    if (model.allDetails.some((entry) => entry.month === item.month && entry.status === 'pending')) return 'pending';
-    return 'forecast';
-  };
-  const rows = visible.length ? visible.map((item) => {
-    const key = tone(item);
-    const progress = item.totalCny > 0 ? Math.min(100, Math.max(0, item.receivedCny / item.totalCny * 100)) : 0;
-    return `<button class="dividend-month-row is-${item.phase} is-${key}" type="button" data-dividend-month="${item.month}"${item.phase === 'current' ? ` style="--dmr-progress:${progress.toFixed(1)}%" aria-label="${item.month} 月，到账进度 ${Math.round(progress)}%"` : ''}>
-      <span class="dmr-label">${String(item.month).padStart(2, '0')}</span>
-      <span class="dmr-status"><i aria-hidden="true"></i><span>${escapeHtml(rowSummary(item))}</span></span>
-      <strong class="dmr-total">${escapeHtml(formatDisplayMoney(item.totalCny, 'CNY'))}</strong>
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 5.5 16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-      ${item.phase === 'current' ? '<span class="dmr-progress" aria-hidden="true"><i></i></span>' : ''}
+  // 12 月点阵三态：已过整体淡化 / 当月加重＋金点放大 / 未到正常；有派息月金点，月下标金额。
+  const cells = model.months.map((item) => {
+    const hasPay = safeNumber(item.totalCny, 0) > 0;
+    const amount = hasPay ? formatDisplayMoney(item.totalCny, 'CNY') : '';
+    const clickable = hasPay;
+    return `<button class="dividend-ym is-${item.phase}${hasPay ? ' has-pay' : ''}" type="button"${clickable ? ` data-dividend-month="${item.month}"` : ' disabled'} aria-label="${item.month} 月${hasPay ? `，合计 ${amount}` : '，暂无股息'}">
+      <span class="dividend-ym-name">${String(item.month).padStart(2, '0')}</span>
+      <i aria-hidden="true"></i>
+      <em class="dividend-ym-amount num">${escapeHtml(amount)}</em>
     </button>`;
-  }).join('') : '<div class="month-detail-empty">当前筛选暂无股息记录</div>';
-  const pastToggle = past.length ? `<button class="dividend-past-toggle" type="button" data-dividend-past-toggle aria-expanded="${dividendPastExpanded}">${dividendPastExpanded ? '收起已过月份' : `展开已过月份 · ${past.length}`}</button>` : '';
-  refs.dividendMonthGrid.innerHTML = `${pastToggle}${rows}<p class="dividend-month-note">黄＝待核对 · 紫＝在途／当月 · 灰＝节奏预估。点按某月查看逐笔并确认到账。</p>`;
+  }).join('');
+  // 行动列表：待确认（due）置顶（红），其后近期倒序（已到账金 / 在途灰）；行点进当月明细。
+  const details = model.allDetails.slice();
+  const dueRows = details.filter((entry) => entry.status === 'due');
+  const recent = details
+    .filter((entry) => entry.status !== 'due' && entry.status !== 'forecast')
+    .sort((a, b) => String(b.payDate || b.exDate || '').localeCompare(String(a.payDate || a.exDate || '')))
+    .slice(0, 6);
+  const listRow = (entry, forceDue) => {
+    const isDue = forceDue || entry.status === 'due';
+    const isPaid = entry.status === 'received' || entry.confirmed;
+    const st = isDue ? 'is-due' : isPaid ? 'is-paid' : 'is-transit';
+    const label = isDue ? '待确认' : isPaid ? '已到账' : '在途';
+    return `<button class="dividend-act-row" type="button" data-dividend-month="${entry.month}">
+      <span class="dividend-act-name">${escapeHtml(entry.name || entry.symbol)}<small>${escapeHtml(getMonthDetailDateShort(entry))}</small></span>
+      <span class="dividend-act-side num"><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong><em class="st ${st}">${label}</em></span>
+    </button>`;
+  };
+  const actionRows = [...dueRows.map((entry) => listRow(entry, true)), ...recent.map((entry) => listRow(entry, false))].join('')
+    || '<div class="month-detail-empty">当前筛选暂无股息记录</div>';
+  refs.dividendMonthGrid.innerHTML = `<div class="dividend-year-grid">${cells}</div>
+    <p class="dividend-month-note">点某月查看逐笔并确认到账 · 金点＝该月有派息。</p>
+    <div class="dividend-action-list">${actionRows}</div>`;
 }
 
 function getShortMonthDay(value) {
@@ -641,10 +640,14 @@ export function buildDividendMonthDetail(month) {
         </${tag}>`;
       }).join('')
     : `<div class="month-detail-empty">${escapeHtml(LABELS.dividendEmptyTitle)}</div>`;
+  // 收款进度：已到账 / 当月应收合计（用于月明细抽屉顶部金线）。
+  const progress = item && item.totalCny > 0
+    ? Math.min(100, Math.max(0, item.receivedCny / item.totalCny * 100)) : 0;
   return {
     title: `${month}${LABELS.dividendMonthSuffix}`,
     phase: item ? item.phase : 'future',
     total: item ? formatDisplayMoney(item.totalCny, 'CNY') : formatDisplayMoney(0, 'CNY'),
+    progress,
     summary: summaryParts.join(' · '),
     stats: item ? [
       { label: LABELS.dividendReceivedStatus, value: formatDisplayMoney(item.receivedCny, 'CNY') },

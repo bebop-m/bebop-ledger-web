@@ -10,7 +10,7 @@ import {
 import { LABELS } from './constants.js';
 import { renderSavedStateQuietly, buildDividendMonthDetail, formatDisplayMoney } from './render.js';
 import {
-  inferQuote, computeHoldings, computeIncomeSummary,
+  inferQuote, computeHoldings, computeIncomeSummary, convertReceiptToCny,
   getDividendCashImpactCny, getCashFlowCashImpactCny, getTradeCashImpactCny, validateTradeInventory
 } from './compute.js';
 import { getFundamentalsPickerModel } from './fundamentals.js';
@@ -54,6 +54,31 @@ export function setModalBucketSelection(next) {
   Array.from(document.querySelectorAll('[data-bucket-option]')).forEach((b) => {
     const a = b.dataset.bucketOption === bucket; b.classList.toggle('is-active', a); b.setAttribute('aria-pressed', a ? 'true' : 'false');
   });
+}
+
+// 股息到账抽屉：切换入账币种（人民币/港币/美元），刷新金点选中与折算行。
+export function setModalReceiptCurrency(next) {
+  const value = next === 'HKD' || next === 'USD' ? next : 'CNY';
+  const input = document.getElementById('modalDividendCurrencyInput'); if (input) input.value = value;
+  Array.from(document.querySelectorAll('[data-receipt-currency]')).forEach((b) => {
+    const a = b.dataset.receiptCurrency === value; b.classList.toggle('is-active', a); b.setAttribute('aria-pressed', a ? 'true' : 'false');
+  });
+  updateReceiptConversion();
+}
+
+// 折算行：实收按所选币种输入，实时按当前汇率折算 CNY；人民币无需折算则隐藏。
+export function updateReceiptConversion() {
+  const currencyInput = document.getElementById('modalDividendCurrencyInput');
+  const amountInput = document.getElementById('modalDividendNetInput');
+  const label = document.getElementById('modalDividendNetLabel');
+  const info = document.getElementById('modalDividendConvInfo');
+  if (!currencyInput || !amountInput || !info) return;
+  const currency = currencyInput.value || 'CNY';
+  if (label) label.textContent = `实收金额（${currency}）`;
+  if (currency === 'CNY') { info.hidden = true; info.textContent = ''; return; }
+  const conv = convertReceiptToCny(amountInput.value, currency);
+  info.hidden = false;
+  info.innerHTML = `按 ${escapeHtml(conv.dateLabel)} 汇率 ${conv.rate} · 入账 <strong>¥${conv.cny.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>`;
 }
 
 export function setModalCashFlowTypeSelection(next) {
@@ -213,7 +238,13 @@ function renderModal() {
     note = entry ? `${quote.name || entry.symbol}` : '未找到这笔股息';
     fields = entry ? `<label class="modal-field"><span>官方派付日（可选）</span><input id="modalDividendPayDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry.payDate))}"></label>
       <label class="modal-field"><span>实际到账日</span><input id="modalDividendReceivedDateInput" class="modal-input" type="date" value="${escapeHtml(formatDateLabel(entry.receivedDate))}"></label>
-      <label class="modal-field"><span>实收金额（CNY）</span><input id="modalDividendNetInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(safeNumber(entry.netCny, 0)))}" placeholder="0.00"></label>
+      <div class="modal-field modal-field--currency"><span>入账币种</span>${renderSegmentGroup('modalDividendCurrencyInput', 'CNY', [
+        { value: 'CNY', label: '人民币', className: '', dataAttr: 'data-receipt-currency' },
+        { value: 'HKD', label: '港币', className: '', dataAttr: 'data-receipt-currency' },
+        { value: 'USD', label: '美元', className: '', dataAttr: 'data-receipt-currency' }
+      ])}</div>
+      <label class="modal-field"><span id="modalDividendNetLabel">实收金额（CNY）</span><input id="modalDividendNetInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(safeNumber(entry.netCny, 0)))}" placeholder="0.00"></label>
+      <p class="modal-quote-line dividend-conv-line" id="modalDividendConvInfo" hidden></p>
       <label class="modal-field"><span>备注</span><input id="modalDividendNoteInput" class="modal-input" type="text" value="${escapeHtml(entry.note || '')}" placeholder="可选"></label>
       <label class="modal-check"><input id="modalDividendConfirmedInput" type="checkbox"${entry.confirmed === true ? ' checked' : ''}><span>标记已到账</span></label>` : '';
   } else if (state.modal === 'cashFlow') {
@@ -300,6 +331,11 @@ function renderMonthDetailModal() {
           <div class="month-detail-total"><small>应收合计</small><strong>${escapeHtml(detail.total)}</strong></div>
         </div>
         ${detail.stats.length ? `<div class="month-detail-stats">${detail.stats.map((item) => `<span><small>${escapeHtml(item.label)}</small><strong>${escapeHtml(item.value)}</strong></span>`).join('')}</div>` : ''}
+        <div class="month-detail-thread" role="img" aria-label="收款进度 ${Math.round(detail.progress)}%">
+          <i style="width:${Math.max(0, detail.progress).toFixed(1)}%"></i>
+          <b style="left:${Math.min(98.5, Math.max(1.5, detail.progress)).toFixed(1)}%"></b>
+        </div>
+        <p class="month-detail-thread-caption"><span>收款进度</span><strong>${Math.round(detail.progress)}%</strong></p>
         ${detail.hasConfirmable ? '<p class="month-detail-hint">点按待核对项目，确认到账</p>' : ''}
       </header>
       <div class="month-detail-list">${detail.body}</div>
@@ -587,7 +623,11 @@ function saveDividendLedgerEdit() {
   const entry = state.dividendLedger[index];
   const payDate = formatDateLabel(document.getElementById('modalDividendPayDateInput').value);
   const receivedDateRaw = formatDateLabel(document.getElementById('modalDividendReceivedDateInput').value);
-  const netCny = safeNumber(document.getElementById('modalDividendNetInput').value, 0);
+  // 存储仍只写 netCny：按所选入账币种用当前汇率折算为人民币；人民币时即原值。
+  const currencyInput = document.getElementById('modalDividendCurrencyInput');
+  const receiptCurrency = currencyInput ? currencyInput.value || 'CNY' : 'CNY';
+  const rawAmount = safeNumber(document.getElementById('modalDividendNetInput').value, 0);
+  const netCny = convertReceiptToCny(rawAmount, receiptCurrency).cny;
   if (netCny <= 0) { showToast('请输入有效实收金额', { type: 'error' }); return false; }
   const confirmed = document.getElementById('modalDividendConfirmedInput').checked === true;
   const receivedDate = confirmed ? (receivedDateRaw || getTodayLabel()) : receivedDateRaw;

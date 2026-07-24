@@ -17,7 +17,8 @@ import {
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
   setModalBucketSelection, setModalCashFlowTypeSelection,
-  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo
+  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo,
+  setModalReceiptCurrency, updateReceiptConversion
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
@@ -456,6 +457,7 @@ refs.modalRoot.addEventListener('click', (event) => {
   const bb = event.target.closest('[data-bucket-option]'); if (bb) { setModalBucketSelection(bb.dataset.bucketOption); return; }
   const cf = event.target.closest('[data-cash-flow-type]'); if (cf) { setModalCashFlowTypeSelection(cf.dataset.cashFlowType); return; }
   const ts = event.target.closest('[data-trade-side]'); if (ts) { setModalTradeSideSelection(ts.dataset.tradeSide); return; }
+  const rc = event.target.closest('[data-receipt-currency]'); if (rc) { setModalReceiptCurrency(rc.dataset.receiptCurrency); return; }
   const a = event.target.closest('[data-modal-action]'); if (!a) return;
   const t = a.dataset.modalAction;
   if (t === 'confirm-dividend') { toggleDividendConfirm(a.dataset.sourceId); return; }
@@ -481,6 +483,7 @@ refs.modalRoot.addEventListener('click', (event) => {
 
 refs.modalRoot.addEventListener('input', (event) => {
   if (event.target && event.target.id === 'modalTradeSymbolInput') updateTradeQuoteInfo();
+  if (event.target && event.target.id === 'modalDividendNetInput') updateReceiptConversion();
 });
 
 /* ── Boot ── */

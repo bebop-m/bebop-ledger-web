@@ -10534,6 +10534,175 @@ body[data-active-page="home"] .home-quick-add:active {
   opacity: 0.55;
 }
 
+/* ── 股息日历：12 月点阵三态 ── */
+.dividend-year-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 18px 6px;
+  margin-top: 6px;
+}
+.dividend-ym {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-variant-numeric: tabular-nums;
+}
+.dividend-ym-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--hint);
+}
+.dividend-ym i {
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: transparent;
+}
+.dividend-ym.has-pay i {
+  background: var(--gold);
+  box-shadow: var(--glow);
+}
+.dividend-ym-amount {
+  min-height: 12px;
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.dividend-ym.is-past {
+  opacity: 0.42;
+}
+.dividend-ym.is-current .dividend-ym-name {
+  color: var(--ink);
+  font-weight: 800;
+}
+.dividend-ym.is-current i {
+  width: 5px;
+  height: 5px;
+}
+.dividend-ym.is-current .dividend-ym-amount {
+  color: var(--ink);
+  font-weight: 700;
+}
+.dividend-ym[disabled] {
+  cursor: default;
+}
+.dividend-ym:not([disabled]):active {
+  transform: scale(0.94);
+}
+
+/* 股息行动列表：待确认置顶红 / 已到账金 / 在途灰 */
+.dividend-action-list {
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.dividend-act-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0;
+  background: none;
+  border: none;
+  text-align: left;
+}
+.dividend-act-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.dividend-act-name small {
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--hint);
+}
+.dividend-act-side {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.dividend-act-side strong {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.dividend-act-side .st {
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.dividend-act-side .st.is-due {
+  color: var(--up);
+}
+.dividend-act-side .st.is-paid {
+  color: var(--gold);
+}
+.dividend-act-side .st.is-transit {
+  color: var(--hint);
+}
+.dividend-act-row:active {
+  opacity: 0.6;
+}
+
+/* 月明细抽屉：收款进度金线 */
+.month-detail-thread {
+  position: relative;
+  height: 2px;
+  margin-top: 14px;
+  background: var(--track);
+}
+.month-detail-thread i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 2px;
+  background: var(--gold);
+  box-shadow: var(--glow);
+}
+.month-detail-thread b {
+  position: absolute;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gold);
+  transform: translate(-50%, -50%);
+  box-shadow: var(--glow);
+}
+.month-detail-thread-caption {
+  display: flex;
+  justify-content: space-between;
+  margin: 9px 0 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--hint);
+}
+.month-detail-thread-caption strong {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* 到账抽屉：币种三选 + 折算行 */
+.modal-field--currency {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.dividend-conv-line {
+  text-align: center;
+  color: var(--muted);
+}
+.dividend-conv-line strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 /* ── 持仓行：有在途/已公告股息，名称后缀 4px 金点 ── */
 .holding-name-button.has-pending-dividend::after {
   content: "";
