@@ -1205,7 +1205,7 @@ function getShareCardMarkup(share) {
   const bar = share.attrItems
     .map((item) => `<i class="is-${item.key}" style="width:${(Math.abs(item.amount) / totalAbs * 100).toFixed(2)}%"></i>`).join('');
   const splitText = share.attrItems.length
-    ? `收益率拆分：${share.attrItems.map((item) => `${item.label.replace('收入', '').replace('增长', '').replace('变动', '')} ${formatSharePercent(item.rate).replace('%', '')}`).join(' · ')}（合计 ${formatSharePercent(share.returnRate)}）`
+    ? `收益率拆分：${share.attrItems.map((item) => `${item.label.replace('收入', '').replace('增长', '').replace('变动', '').trim()} ${formatSharePercent(item.rate).replace('%', '')}`).join(' · ')}（合计 ${formatSharePercent(share.returnRate)}）`
     : '归因数据不足，本卡只展示收益率与持仓占比';
   const segs = share.top.map((item, index) => ({ pct: item.pct, color: SHARE_DONUT_COLORS[index] }));
   if (share.restPct > 0.0001) segs.push({ pct: share.restPct, color: SHARE_DONUT_COLORS[5] });
@@ -1282,7 +1282,7 @@ export function generateAnnualShareCard() {
   ctx.fillStyle = C.muted; ctx.font = font(21, 600);
   if (share.attrItems.length) {
     const split = share.attrItems
-      .map((item) => `${item.label.replace('收入', '').replace('增长', '').replace('变动', '')} ${formatSharePercent(item.rate).replace('%', '')}`)
+      .map((item) => `${item.label.replace('收入', '').replace('增长', '').replace('变动', '').trim()} ${formatSharePercent(item.rate).replace('%', '')}`)
       .join(' · ');
     ctx.fillText(split, W / 2, 452);
     ctx.fillText(`合计 ${formatSharePercent(share.returnRate)}`, W / 2, 486);
