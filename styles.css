@@ -10458,10 +10458,10 @@ body[data-active-page="home"] #homePage {
   gap: 0;
   /* 竖向留白取「定稿值」与「设备安全区」的较大者：
      普通浏览器仍是 30/34，装成 PWA 后自动让开灵动岛与 Home 指示条 */
-  padding-top: max(30px, env(safe-area-inset-top, 0px));
-  padding-right: max(26px, env(safe-area-inset-right, 0px));
-  padding-bottom: max(34px, env(safe-area-inset-bottom, 0px));
-  padding-left: max(26px, env(safe-area-inset-left, 0px));
+  padding-top: max(clamp(27.6px, 7.6923vw, 40.5px), env(safe-area-inset-top, 0px));
+  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
+  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
+  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
   min-height: 100dvh;
 }
 /* 分区只靠留白：清掉此前各层留在首页元素上的所有描边 */
@@ -10481,33 +10481,33 @@ body[data-active-page="home"] .home-top {
 body[data-active-page="home"] .home-brand {
   display: block;
   color: var(--hint);
-  font-size: 9.5px;
+  font-size: clamp(8.74px, 2.4359vw, 12.825px);
   font-weight: 600;
-  letter-spacing: 4px;
+  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
   text-transform: uppercase;
 }
 body[data-active-page="home"] .home-top-actions {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: clamp(12.88px, 3.5897vw, 18.9px);
   color: var(--muted);
 }
 body[data-active-page="home"] .home-top-actions .summary-action-button {
-  width: 17px;
-  height: 17px;
+  width: clamp(15.64px, 4.359vw, 22.95px);
+  height: clamp(15.64px, 4.359vw, 22.95px);
   min-height: 0;
   padding: 0;
   color: var(--muted);
 }
 body[data-active-page="home"] .home-top-actions .summary-action-button svg {
-  width: 17px;
-  height: 17px;
+  width: clamp(15.64px, 4.359vw, 22.95px);
+  height: clamp(15.64px, 4.359vw, 22.95px);
 }
 
 /* 净资产 hero：整区居中 */
 body[data-active-page="home"] .home-hero {
   display: block;
-  margin-top: 58px;
+  margin-top: clamp(53.36px, 14.8718vw, 78.3px);
   padding: 0;
   text-align: center;
 }
@@ -10517,31 +10517,31 @@ body[data-active-page="home"] .home-hero-label {
   border: 0;
   background: none;
   color: var(--label);
-  font-size: 10px;
-  line-height: 23px;
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  line-height: clamp(21.16px, 5.8974vw, 31.05px);
   font-weight: 600;
-  letter-spacing: 5px;
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
 }
 body[data-active-page="home"] .home-hero-value {
   display: block;
-  margin-top: 14px;
+  margin-top: clamp(12.88px, 3.5897vw, 18.9px);
   color: var(--ink);
-  font-size: 47px;
+  font-size: clamp(43.24px, 12.0513vw, 63.45px);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: -1px;
+  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
   font-variant-numeric: tabular-nums;
 }
 body[data-active-page="home"] .home-hero-value .home-hero-fraction {
   color: var(--label);
-  font-size: 22px;
+  font-size: clamp(20.24px, 5.641vw, 29.7px);
   font-weight: 600;
   letter-spacing: 0;
 }
 body[data-active-page="home"] .home-hero-meta {
-  margin: 14px 0 0;
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
   color: var(--muted);
-  font-size: 11.5px;
+  font-size: clamp(10.58px, 2.9487vw, 15.525px);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -10561,7 +10561,7 @@ body[data-active-page="home"] .home-metrics {
 body[data-active-page="home"] .home-divi {
   display: block;
   width: 100%;
-  margin-top: 54px;
+  margin-top: clamp(49.68px, 13.8462vw, 72.9px);
   padding: 0;
   border: 0;
   background: none;
@@ -10570,27 +10570,27 @@ body[data-active-page="home"] .home-divi {
 body[data-active-page="home"] .home-divi-label {
   display: block;
   color: var(--label);
-  font-size: 10px;
-  line-height: 23px;
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  line-height: clamp(21.16px, 5.8974vw, 31.05px);
   font-weight: 600;
-  letter-spacing: 5px;
+  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
   font-variant-numeric: tabular-nums;
 }
 body[data-active-page="home"] .home-divi-value {
   display: block;
-  margin-top: 10px;
+  margin-top: clamp(9.2px, 2.5641vw, 13.5px);
   color: var(--divi-ink);
-  font-size: 23px;
+  font-size: clamp(21.16px, 5.8974vw, 31.05px);
   font-weight: 700;
-  letter-spacing: -0.3px;
+  letter-spacing: clamp(-0.405px, -0.0769vw, -0.276px);
   font-variant-numeric: tabular-nums;
 }
 body[data-active-page="home"] .home-divi-thread {
   position: relative;
   display: block;
-  width: 214px;
-  height: 2px;
-  margin: 18px auto 0;
+  width: clamp(196.88px, 54.8718vw, 288.9px);
+  height: clamp(1.84px, 0.5128vw, 2.7px);
+  margin: clamp(16.56px, 4.6154vw, 24.3px) auto 0;
   background: var(--track);
 }
 body[data-active-page="home"] .home-divi-thread i {
@@ -10605,43 +10605,43 @@ body[data-active-page="home"] .home-divi-thread i {
 body[data-active-page="home"] .home-month-track {
   display: flex;
   justify-content: center;
-  gap: 15px;
-  margin-top: 14px;
+  gap: clamp(13.8px, 3.8462vw, 20.25px);
+  margin-top: clamp(12.88px, 3.5897vw, 18.9px);
 }
 body[data-active-page="home"] .home-month {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: clamp(4.6px, 1.2821vw, 6.75px);
   height: auto;
   min-height: 0;
   padding: 0;
   border: 0;
   background: none;
   color: var(--hint);
-  font-size: 10px;
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 body[data-active-page="home"] .home-month i {
   display: block;
-  width: 3.5px;
-  height: 3.5px;
+  width: clamp(3.22px, 0.8974vw, 4.725px);
+  height: clamp(3.22px, 0.8974vw, 4.725px);
   border-radius: 50%;
   background: transparent;
 }
 body[data-active-page="home"] .home-month.has-pay i { background: var(--gold); }
 body[data-active-page="home"] .home-month.is-current {
   color: var(--ink);
-  font-size: 10px;
+  font-size: clamp(9.2px, 2.5641vw, 13.5px);
   font-weight: 800;
 }
 body[data-active-page="home"] .home-month.is-current i {
-  width: 4.5px;
-  height: 4.5px;
+  width: clamp(4.14px, 1.1538vw, 6.075px);
+  height: clamp(4.14px, 1.1538vw, 6.075px);
   box-shadow: var(--glow);
 }
-/* 旧月份轴的 1×4px 刻度线与选中横杠：定稿图只保留数字与金点 */
+/* 旧月份轴的 1×clamp(3.68px, 1.0256vw, 5.4px) 刻度线与选中横杠：定稿图只保留数字与金点 */
 body[data-active-page="home"] .home-month::before,
 body[data-active-page="home"] .home-month::after {
   content: none;
@@ -10650,9 +10650,9 @@ body[data-active-page="home"] .home-month::after {
 
 /* 两行待办：关键词加重，其余退成叙述 */
 body[data-active-page="home"] .home-todo {
-  margin-top: 46px;
+  margin-top: clamp(42.32px, 11.7949vw, 62.1px);
   color: var(--muted);
-  font-size: 11.5px;
+  font-size: clamp(10.58px, 2.9487vw, 15.525px);
   font-weight: 600;
   line-height: 2.1;
   text-align: center;
@@ -10669,8 +10669,8 @@ body[data-active-page="home"] .home-nav-list {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 19px;
-  margin-top: 42px;
+  gap: clamp(17.48px, 4.8718vw, 25.65px);
+  margin-top: clamp(38.64px, 10.7692vw, 56.7px);
   padding: 0;
   border: 0;
 }
@@ -10687,38 +10687,41 @@ body[data-active-page="home"] .home-nav-item {
 body[data-active-page="home"] .home-nav-item:active { background: none; }
 body[data-active-page="home"] .home-nav-title {
   color: var(--ink);
-  font-size: 15px;
+  font-size: clamp(13.8px, 3.8462vw, 20.25px);
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: clamp(0.92px, 0.2564vw, 1.35px);
 }
 body[data-active-page="home"] .home-nav-side {
   display: block;
   color: var(--muted);
-  font-size: 11px;
+  font-size: clamp(10.12px, 2.8205vw, 14.85px);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
+/* 摘要里的收益额与百分比跟随红涨绿跌，其余摘要保持 muted 叙述色 */
+body[data-active-page="home"] .home-nav-side .is-market-up { color: var(--up); }
+body[data-active-page="home"] .home-nav-side .is-market-down { color: var(--down); }
 
 /* ＋记一笔：涨色文字键，全页唯一的动作 */
 body[data-active-page="home"] .home-quick-add {
   display: block;
   width: 100%;
-  margin-top: 24px;
+  margin-top: clamp(22.08px, 6.1538vw, 32.4px);
   padding: 0;
   border: 0;
   background: none;
   color: var(--up);
   font-family: inherit;
-  font-size: 12px;
+  font-size: clamp(11.04px, 3.0769vw, 16.2px);
   font-weight: 700;
-  letter-spacing: 3px;
+  letter-spacing: clamp(2.76px, 0.7692vw, 4.05px);
   text-align: center;
 }
 
 /* 矮屏收紧竖向留白，首页仍要一屏放得下 */
 @media (max-height: 760px) {
-  body[data-active-page="home"] .home-hero { margin-top: 34px; }
-  body[data-active-page="home"] .home-divi { margin-top: 32px; }
-  body[data-active-page="home"] .home-todo { margin-top: 26px; }
-  body[data-active-page="home"] .home-nav-list { margin-top: 26px; gap: 15px; }
+  body[data-active-page="home"] .home-hero { margin-top: clamp(31.28px, 8.7179vw, 45.9px); }
+  body[data-active-page="home"] .home-divi { margin-top: clamp(29.44px, 8.2051vw, 43.2px); }
+  body[data-active-page="home"] .home-todo { margin-top: clamp(23.92px, 6.6667vw, 35.1px); }
+  body[data-active-page="home"] .home-nav-list { margin-top: clamp(23.92px, 6.6667vw, 35.1px); gap: clamp(13.8px, 3.8462vw, 20.25px); }
 }
