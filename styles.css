@@ -13295,6 +13295,24 @@ body[data-active-page="annual"] .ann-hold-chg {
   font-weight: 700;
   text-align: right;
 }
+/* 展开后图例远高于 128px 圆环，居中会把环甩到中段——展开态改顶对齐 */
+body[data-active-page="annual"] .ann-hold.is-expanded { align-items: flex-start; }
+/* 「其余 N 项 / 收起」是纯文字键，与图例行同形，无 chevron 无底托 */
+body[data-active-page="annual"] .ann-hold-row.is-toggle {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-family: inherit;
+  text-align: left;
+}
+body[data-active-page="annual"] .ann-hold-row.is-toggle .ann-hold-co {
+  color: var(--muted);
+  font-weight: 600;
+}
 body[data-active-page="annual"] .ann-hold-note {
   display: block;
   margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
@@ -13632,7 +13650,6 @@ body[data-active-page="annual"] .ann-empty-line {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(14.72px, 4.1026vw, 21.6px);
   margin: clamp(16.56px, 4.6154vw, 24.3px) 0 0;
 }
 .zen-sheet--share .sc-hold svg {
@@ -13642,11 +13659,20 @@ body[data-active-page="annual"] .ann-empty-line {
   height: clamp(88.32px, 24.6154vw, 129.6px);
   transform: rotate(-90deg);
 }
+/* 持仓默认全展开：两列排开，行数多也不会把卡片撑成一条长柱 */
 .zen-sheet--share .sc-hold-legend {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(5.52px, 1.5385vw, 8.1px);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(5.52px, 1.5385vw, 8.1px) clamp(12.88px, 3.5897vw, 18.9px);
+  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
   text-align: left;
+}
+.zen-sheet--share .sc-hold-legend .co {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .zen-sheet--share .sc-hold-legend > div {
   display: flex;

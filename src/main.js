@@ -185,11 +185,18 @@ if (refs.annualShareButton) {
 }
 
 if (refs.annualReviewContent) refs.annualReviewContent.addEventListener('click', (event) => {
+  if (event.target.closest('[data-annual-holdings-toggle]')) {
+    mutable.annualHoldingsExpanded = !mutable.annualHoldingsExpanded;
+    renderApp({ incremental: true, animateHoldingReflow: false });
+    return;
+  }
   const button = event.target.closest('[data-annual-select]');
   if (!button) return;
   const year = Math.floor(safeNumber(button.dataset.annualSelect, 0));
   if (!year || year === state.activeAnnualYear) return;
   state.activeAnnualYear = year;
+  // 换一年就是换一份持仓，展开状态不该跟着串过去
+  mutable.annualHoldingsExpanded = false;
   saveState();
   renderApp({ incremental: true, animateHoldingReflow: false });
 });

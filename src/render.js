@@ -1032,21 +1032,29 @@ function getAnnualDonutMarkup(holdings) {
     offset += length;
     return arc;
   }).join('');
-  const legend = top.map((item, index) => `<div class="ann-hold-row">
-      <b class="is-t${index + 1}"></b>
+  // 前五各占一阶色；第六阶是那段「其余」弧，展开后尾部各项都归它
+  const holdingRow = (item, tone) => `<div class="ann-hold-row">
+      <b class="is-t${tone}"></b>
       <span class="ann-hold-co">${escapeHtml(item.name)}</span>
       <span class="ann-hold-pc">${(item.pct * 100).toFixed(1)}%</span>
       <span class="ann-hold-chg">${escapeHtml(item.change || '')}</span>
-    </div>`).join('');
-  const restRow = restPct > 0.0001
-    ? `<div class="ann-hold-row is-rest">
-        <b class="is-t6"></b>
-        <span class="ann-hold-co">其余 ${holdings.items.length - top.length} 项</span>
-        <span class="ann-hold-pc">${(restPct * 100).toFixed(1)}%</span>
-        <span class="ann-hold-chg"></span>
-      </div>`
-    : '';
-  return `<div class="ann-hold">
+    </div>`;
+  const legend = top.map((item, index) => holdingRow(item, index + 1)).join('');
+  const rest = holdings.items.slice(5);
+  let restRow = '';
+  if (restPct > 0.0001 && rest.length) {
+    restRow = mutable.annualHoldingsExpanded
+      ? rest.map((item) => holdingRow(item, 6)).join('')
+        + `<button class="ann-hold-row is-toggle" type="button" data-annual-holdings-toggle aria-expanded="true">
+            <b class="is-t6"></b><span class="ann-hold-co">收起其余 ${rest.length} 项</span>
+            <span class="ann-hold-pc">${(restPct * 100).toFixed(1)}%</span><span class="ann-hold-chg"></span>
+          </button>`
+      : `<button class="ann-hold-row is-toggle" type="button" data-annual-holdings-toggle aria-expanded="false">
+          <b class="is-t6"></b><span class="ann-hold-co">其余 ${rest.length} 项</span>
+          <span class="ann-hold-pc">${(restPct * 100).toFixed(1)}%</span><span class="ann-hold-chg"></span>
+        </button>`;
+  }
+  return `<div class="ann-hold${mutable.annualHoldingsExpanded ? ' is-expanded' : ''}">
       <div class="ann-donut">
         <svg viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="年度持仓构成">
           <circle class="ann-arc-base" cx="64" cy="64" r="${ANNUAL_DONUT_R}" fill="none" stroke-width="11"></circle>
@@ -1185,18 +1193,19 @@ export function buildAnnualShareModel(year) {
   if (!annals) return null;
   const model = computeIncomeSummary();
   const attrItems = getAnnualAttributionItems(annals) || [];
+  // 分享卡默认把持仓全展开：前五各占一阶色，尾部并入第六阶（也就是环上那段「其余」）
   const holdings = annals.holdings.hasData ? annals.holdings.items : [];
-  const top = holdings.slice(0, 3);
-  const restPct = holdings.slice(3).reduce((sum, item) => sum + item.pct, 0);
+  const top = holdings.slice(0, 5);
+  const restPct = holdings.slice(5).reduce((sum, item) => sum + item.pct, 0);
   return {
     year,
     returnRate: annals.returnRate,
     dividendYieldRate: annals.row.dividendYieldRate,
     cumulative: getCumulativeAnnualized(model),
     attrItems,
+    holdings,
     top,
-    restPct,
-    restCount: Math.max(0, holdings.length - top.length)
+    restPct
   };
 }
 
@@ -1217,8 +1226,8 @@ function getShareCardMarkup(share) {
     offset += length;
     return arc;
   }).join('');
-  const legend = share.top.map((item, index) => `<div><b style="background:${SHARE_DONUT_COLORS[index]}"></b><span>${escapeHtml(item.name)}</span><span class="pc">${(item.pct * 100).toFixed(1)}%</span></div>`).join('')
-    + (share.restCount > 0 ? `<div><b style="background:${SHARE_DONUT_COLORS[5]}"></b><span class="is-rest">其余 ${share.restCount} 项</span><span class="pc">${(share.restPct * 100).toFixed(1)}%</span></div>` : '');
+  // 逐项列全（无「其余 N 项」折叠），前五取对应阶色，尾部统一走第六阶
+  const legend = share.holdings.map((item, index) => `<div><b style="background:${SHARE_DONUT_COLORS[Math.min(index, 5)]}"></b><span class="co">${escapeHtml(item.name)}</span><span class="pc">${(item.pct * 100).toFixed(1)}%</span></div>`).join('');
   const cumulativeText = share.cumulative.rate === null
     ? ''
     : ` · 自 ${share.cumulative.startYear} 累计年化 ${formatSharePercent(share.cumulative.rate)}`;
@@ -1231,8 +1240,8 @@ function getShareCardMarkup(share) {
       <p class="sc-attr">${escapeHtml(splitText)}</p>
       ${segs.length ? `<div class="sc-hold">
         <svg viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="持仓占比">${arcs}</svg>
-        <div class="sc-hold-legend">${legend}</div>
-      </div>` : ''}
+      </div>
+      <div class="sc-hold-legend">${legend}</div>` : ''}
       <p class="sc-foot">波普账本 · 比例已脱敏 · 无金额</p>
     </div>`;
 }
@@ -1243,7 +1252,11 @@ export function generateAnnualShareCard() {
   if (!share) return;
   const C = { card: '#fffdf8', ink: '#3b362e', gold: '#c19a45', up: '#bf5a42', down: '#6a8b74', muted: '#a89d86', hint: '#c2b9a6', label: '#b0a78f', track: '#eae4d4' };
   const W = 750;
-  const H = 1000;
+  // 持仓两列排开，行数决定画布高度——24 家和 4 家不该出一样高的图
+  const listTop = 736;
+  const rowH = 34;
+  const listRows = Math.ceil(share.holdings.length / 2);
+  const H = listTop + listRows * rowH + 100;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
@@ -1288,11 +1301,11 @@ export function generateAnnualShareCard() {
     ctx.fillText(`合计 ${formatSharePercent(share.returnRate)}`, W / 2, 486);
   }
 
-  // 持仓占比 mini 环 + 前三名
-  const cx = 250;
-  const cy = 640;
-  const rOuter = 92;
-  const rInner = 58;
+  // 持仓占比：mini 环居中，下面把持仓逐项列全（两列），与卡片预览一致
+  const cx = W / 2;
+  const cy = 610;
+  const rOuter = 84;
+  const rInner = 53;
   const segs = share.top.map((item, index) => ({ pct: item.pct, color: SHARE_DONUT_COLORS[index] }));
   if (share.restPct > 0.0001) segs.push({ pct: share.restPct, color: SHARE_DONUT_COLORS[5] });
   let start = -Math.PI / 2;
@@ -1311,35 +1324,27 @@ export function generateAnnualShareCard() {
   ctx.fillStyle = C.card;
   ctx.fill();
 
-  ctx.textAlign = 'left';
-  share.top.forEach((item, index) => {
-    const ty = 596 + index * 44;
-    ctx.fillStyle = SHARE_DONUT_COLORS[index];
+  const colX = [64, 400];
+  const colW = 286;
+  share.holdings.forEach((item, index) => {
+    const x = colX[index % 2];
+    const ty = listTop + Math.floor(index / 2) * rowH;
+    ctx.fillStyle = SHARE_DONUT_COLORS[Math.min(index, 5)];
     ctx.beginPath();
-    ctx.arc(396, ty - 7, 7, 0, Math.PI * 2);
+    ctx.arc(x + 5, ty - 6, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = C.ink; ctx.font = font(22, 600);
-    ctx.fillText(item.name.length > 7 ? `${item.name.slice(0, 7)}…` : item.name, 416, ty);
-    ctx.textAlign = 'right';
-    ctx.fillText(`${(item.pct * 100).toFixed(1)}%`, 660, ty);
     ctx.textAlign = 'left';
+    ctx.fillStyle = C.muted; ctx.font = font(19, 600);
+    ctx.fillText(item.name.length > 7 ? `${item.name.slice(0, 7)}…` : item.name, x + 20, ty);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = C.ink; ctx.font = font(19, 700);
+    ctx.fillText(`${(item.pct * 100).toFixed(1)}%`, x + colW, ty);
   });
-  if (share.restCount > 0) {
-    const ty = 596 + share.top.length * 44;
-    ctx.fillStyle = SHARE_DONUT_COLORS[5];
-    ctx.beginPath();
-    ctx.arc(396, ty - 7, 7, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = C.hint; ctx.font = font(22, 600);
-    ctx.fillText(`其余 ${share.restCount} 项`, 416, ty);
-    ctx.textAlign = 'right';
-    ctx.fillStyle = C.ink;
-    ctx.fillText(`${(share.restPct * 100).toFixed(1)}%`, 660, ty);
-    ctx.textAlign = 'left';
-  }
 
+  // 水印永远贴在最后一行下面
+  const footY = listTop + listRows * rowH + 54;
   ctx.fillStyle = C.hint; ctx.font = font(19, 600); ctx.textAlign = 'center';
-  ctx.fillText('波普账本 · 比例已脱敏 · 无金额', W / 2, H - 90);
+  ctx.fillText('波普账本 · 比例已脱敏 · 无金额', W / 2, footY);
 
   canvas.toBlob((blob) => {
     if (!blob) return;

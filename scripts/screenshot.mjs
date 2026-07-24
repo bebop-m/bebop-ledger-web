@@ -89,6 +89,7 @@ const MODAL_TARGETS = {
   monthDetail: { nav: 'dividends', sel: '.divi-ym.has-pay' },
   dividendReceipt: { nav: 'dividends', sel: '.divi-ym.has-pay', then: '.zen-md-row.is-clickable' },
   annual: { nav: 'income', sel: '.inc-year' },
+  annualHoldings: { nav: 'income', sel: '.inc-year', then: '[data-annual-holdings-toggle]' },
   yearlyManual: { nav: 'income', sel: '[data-income-manual-year]' },
   annualShare: { nav: 'income', sel: '.inc-year', then: '#annualShareButton' }
 };

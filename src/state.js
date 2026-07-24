@@ -70,7 +70,9 @@ export const mutable = {
   activeDividendTooltipButton: null,
   suppressHoldingClickUntil: 0,
   cloudSyncSuccessTimer: 0,
-  sortToggleButton: null
+  sortToggleButton: null,
+  // 年度回顾的「其余 N 项」是否展开。只活在本次会话里，切年份时归零。
+  annualHoldingsExpanded: false
 };
 
 /* ── Compute Cache ── */
