@@ -11053,3 +11053,98 @@ body[data-active-page="home"] .home-quick-add:active {
   box-shadow: var(--glow);
   vertical-align: middle;
 }
+
+/* ══ zen 抽屉规格：顶圆角 22px、把手、居中文字动作键、金色聚焦 ══ */
+.modal-mask,
+.confirm-mask {
+  background: var(--mask);
+  backdrop-filter: blur(2px);
+}
+.modal-sheet,
+.confirm-sheet {
+  border: none;
+  border-radius: 22px 22px 0 0;
+  background: var(--bg);
+  box-shadow: 0 -18px 50px rgba(0, 0, 0, 0.16);
+  color: var(--ink);
+  backdrop-filter: none;
+}
+/* 所有底部抽屉统一顶部把手（32×3 --track）；到账抽屉已有显式把手则隐藏其一 */
+.modal-sheet::before {
+  content: "";
+  display: block;
+  width: 32px;
+  height: 3px;
+  margin: 2px auto 12px;
+  border-radius: 2px;
+  background: var(--track);
+}
+.modal-sheet > .sheet-handle { display: none; }
+.modal-actions,
+.confirm-actions {
+  justify-content: center;
+  gap: 46px;
+  padding-top: 22px;
+}
+.modal-button,
+.confirm-button {
+  min-height: auto;
+  padding: 4px 2px;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.modal-button--primary,
+.confirm-button--ok {
+  position: relative;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font-weight: 800;
+}
+.modal-button--primary::after,
+.confirm-button--ok::after {
+  content: "";
+  display: block;
+  width: 4px;
+  height: 4px;
+  margin: 4px auto 0;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: var(--glow);
+}
+.modal-button--secondary,
+.confirm-button--cancel {
+  border: none;
+  background: none;
+  color: var(--hint);
+  font-weight: 700;
+}
+.modal-button--danger,
+.confirm-button--danger {
+  border: none;
+  background: none;
+  color: var(--up);
+  font-weight: 700;
+}
+.modal-button:active,
+.confirm-button:active {
+  transform: none;
+  opacity: 0.55;
+}
+.modal-input:focus,
+.modal-select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(193, 154, 69, 0.16);
+}
+.modal-bucket-button.is-active,
+.modal-bucket-button.is-core.is-active,
+.modal-bucket-button.is-income.is-active {
+  border-color: var(--gold);
+  background: transparent;
+  color: var(--ink);
+}
