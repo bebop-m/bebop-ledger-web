@@ -160,8 +160,61 @@ export function updateTradeQuoteInfo() {
   }
 }
 
+/* 05-单字段编辑抽屉：基准股数 / 税率 / 每股股息 / 负债共用一套形制。
+   金线托底的大号输入 + 取消／保存两个文字键；税率纯手填，不给快捷选项。
+   input 的 id 与旧版一致，handleModalSave 的取值链路不变。 */
+const FIELD_EDIT_SHEETS = {
+  quantity: { title: '基准股数', unit: '股', inputId: 'modalQuantityInput', placeholder: LABELS.quantityPlaceholder },
+  tax: { title: '股息税率', unit: '%', inputId: 'modalTaxInput', placeholder: LABELS.taxPlaceholder },
+  dividend: { title: '每股股息', unit: '', inputId: 'modalDividendInput', placeholder: LABELS.dividendPerSharePlaceholder },
+  liability: { title: '负债', unit: '元', inputId: 'modalLiabilityInput', placeholder: LABELS.liabilityPlaceholder }
+};
+
+function getFieldEditNote(type) {
+  const name = (state.modalPayload && state.modalPayload.name) || '';
+  if (type === 'quantity') return [`${name} · 交易起点的持股`, '当前持股 = 基准 + 之后的交易回放'];
+  if (type === 'tax') return [`${name} · 按实际预扣税率填写`, '留空表示未知，计算时暂按 0% 估算'];
+  if (type === 'dividend') return [`${name} · 每股 TTM 股息`, '按股票原币输入，留空则回到自动行情'];
+  return ['净资产 = 股票市值 + 现金 − 负债', '没有负债就填 0'];
+}
+
+/* input 没法按内容自动收宽（field-sizing 在 iOS Safari 还不能用），
+   金线要像定稿图那样贴着数字就得自己算宽度。数字是 tabular-nums，
+   1ch 正好是一个数位宽，按字符数给 ch 即可，各浏览器一致。 */
+export function getZenEditWidthCh(value) {
+  return Math.max(3, String(value === null || value === undefined ? '' : value).length);
+}
+
+export function syncZenEditWidth(input) {
+  if (!input || !input.classList.contains('zen-edit-field')) return;
+  input.style.width = `${getZenEditWidthCh(input.value)}ch`;
+}
+
+function renderFieldEditModal() {
+  const spec = FIELD_EDIT_SHEETS[state.modal];
+  const payload = state.modalPayload || {};
+  const unit = state.modal === 'dividend' && payload.currency ? String(payload.currency) : spec.unit;
+  const value = payload.value === null || payload.value === undefined ? '' : String(payload.value);
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet zen-sheet zen-sheet--edit" role="dialog" aria-modal="true" aria-labelledby="zenSheetTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <div class="zen-sheet-title">
+        <span class="zen-sheet-title-text" id="zenSheetTitle">${escapeHtml(spec.title)}</span>
+        <p class="zen-sheet-note">${getFieldEditNote(state.modal).map((line) => escapeHtml(line)).join('<br>')}</p>
+      </div>
+      <div class="zen-edit-input">
+        <span class="zen-edit-value"><input id="${spec.inputId}" class="modal-input zen-edit-field" type="number" inputmode="decimal" style="width:${getZenEditWidthCh(value)}ch" value="${escapeHtml(value)}" placeholder="${escapeHtml(spec.placeholder)}" aria-label="${escapeHtml(spec.title)}">${unit ? `<em class="zen-edit-unit">${escapeHtml(unit)}</em>` : ''}<i class="zen-edit-line" aria-hidden="true"></i></span>
+      </div>
+      <div class="zen-sheet-actions">
+        <button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">取 消</button>
+        <button class="zen-key zen-key--save" type="button" data-modal-action="save">保 存<i class="zen-key-dot" aria-hidden="true"></i></button>
+      </div>
+    </section>`;
+}
+
 function renderModal() {
   if (!state.modal) { refs.modalRoot.innerHTML = ''; return; }
+  if (FIELD_EDIT_SHEETS[state.modal]) { renderFieldEditModal(); return; }
   if (state.modal === 'monthDetail') { renderMonthDetailModal(); return; }
   if (state.modal === 'holdingDetail') { renderHoldingDetailModal(); return; }
   if (state.modal === 'yearHoldings') { renderYearHoldingsModal(); return; }
@@ -186,19 +239,6 @@ function renderModal() {
       <button class="quick-add-option" type="button" data-modal-action="holding-refresh"><strong>刷新行情</strong><span>更新价格、汇率与股息数据</span></button>
       <button class="quick-add-option" type="button" data-modal-action="holding-diagnostics"><strong>持仓诊断</strong><span>查看仓位、股息与数据异常</span></button>
     </div>`;
-  } else if (state.modal === 'quantity') {
-    title = '基准股数'; note = `${state.modalPayload.name || ''} · 交易起点的持股，当前持股还会叠加之后的交易`;
-    fields = `<input id="modalQuantityInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.quantityPlaceholder}">`;
-  } else if (state.modal === 'tax') {
-    title = LABELS.taxTitle; note = `${state.modalPayload.name || ''} · 留空表示未知，计算时暂按 0% 估算`;
-    fields = `<input id="modalTaxInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.taxPlaceholder}">`;
-  } else if (state.modal === 'dividend') {
-    title = LABELS.dividendPerShareTitle;
-    note = [state.modalPayload.name || '', state.modalPayload.currency ? `${LABELS.dividendPerShareHint} (${state.modalPayload.currency})` : LABELS.dividendPerShareHint].filter(Boolean).join(' - ');
-    fields = `<input id="modalDividendInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.dividendPerSharePlaceholder}">`;
-  } else if (state.modal === 'liability') {
-    title = LABELS.liabilityTitle; note = LABELS.totalMarketValue;
-    fields = `<input id="modalLiabilityInput" class="modal-input" type="number" inputmode="decimal" value="${escapeHtml(String(state.modalPayload.value ?? ''))}" placeholder="${LABELS.liabilityPlaceholder}">`;
   } else if (state.modal === 'openingCash') {
     title = '当前现金余额';
     note = '填写券商此刻的实际现金；保存不会重算历史交易，也不会改变持股数量';
@@ -309,24 +349,23 @@ function renderMonthDetailModal() {
     </section>`;
 }
 
+/* 04-持仓诊断抽屉 · 按 designs/禅意UI/04-持仓诊断/定稿图.html
+   三组严重度：严重＝涨红点、关注＝金点、数据质量＝灰点（不计入右上计数）。
+   每项两行：结论（公司名加粗）+ 依据行，左侧 4px 色点悬挂缩进。诊断规则本身不动。 */
 function renderDiagnosticsModal() {
   const model = getPortfolioDiagnostics();
-  const group = (title, items, className) => {
+  const group = (label, items, className) => {
     if (!items.length) return '';
-    return `<section class="diagnostics-group">
-      <h4>${escapeHtml(title)}<span>${items.length}</span></h4>
-      <div class="diagnostics-list">${items.map((item) => `<article class="diagnostics-item ${className}">
-        <div class="diagnostics-item-head"><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.title)}</span></div>
-        <p>${escapeHtml(item.evidence)}</p>
-        <small>${escapeHtml(item.source)}</small>
-      </article>`).join('')}</div>
-    </section>`;
+    return `<div class="zen-diag-group ${className}">
+      <span class="zen-diag-group-label">${escapeHtml(label)}<b>· ${items.length}</b></span>
+      <div class="zen-diag-items">${items.map((item) => `<div class="zen-diag-item"><i class="zen-diag-dot" aria-hidden="true"></i><strong>${escapeHtml(item.name)}</strong> ${escapeHtml(item.title)}<br>依据：${escapeHtml(item.evidence)}</div>`).join('')}</div>
+    </div>`;
   };
   let body = '';
   if (!model.ready) {
-    body = '<div class="diagnostics-empty"><strong>正在读取自动基本面</strong><p>数据完成加载后会自动生成诊断。</p></div>';
+    body = '<p class="zen-diag-empty">正在读取自动基本面，完成后会自动生成诊断</p>';
   } else if (!model.items.length) {
-    body = '<div class="diagnostics-empty is-clear"><strong>没有发现需要处理的问题</strong><p>仓位、股息和公司基本面均未触发当前规则。</p></div>';
+    body = '<p class="zen-diag-empty">仓位、股息与公司基本面均未触发当前规则</p>';
   } else {
     body = [
       group('严重', model.critical, 'is-critical'),
@@ -335,13 +374,14 @@ function renderDiagnosticsModal() {
     ].join('');
   }
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-    <section class="modal-sheet modal-sheet--detail diagnostics-sheet" role="dialog" aria-modal="true" aria-labelledby="diagnosticsTitle">
-      <header class="diagnostics-head">
+    <section class="modal-sheet zen-sheet zen-sheet--diag" role="dialog" aria-modal="true" aria-labelledby="diagnosticsTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <header class="zen-diag-head">
         <div><h3 id="diagnosticsTitle">持仓诊断</h3><p>只列异常 · 全部自动计算</p></div>
-        <div class="diagnostics-head-side"><strong>${model.actionableCount}</strong><button type="button" data-modal-action="cancel" aria-label="关闭持仓诊断">×</button></div>
+        <strong class="zen-diag-count">${model.actionableCount}</strong>
       </header>
-      <div class="diagnostics-body">${body}</div>
-      <div class="modal-actions"><button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button></div>
+      <div class="zen-diag-body">${body}</div>
+      <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
     </section>`;
 }
 
@@ -777,15 +817,17 @@ function formatHoldingQuantity(value) {
   return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 4 }).format(Math.max(0, safeNumber(value, 0)));
 }
 
+/* 03-持仓详情抽屉 · 按 designs/禅意UI/03-持仓详情/定稿图.html
+   抬头（代码·所属仓 / 公司名 / 权重）→ 当前持股主数 → 台账七行 → 沉底口径说明 → 关闭。 */
 function renderHoldingDetailModal() {
   const localId = safeNumber(state.modalPayload && state.modalPayload.localId, 0);
   const item = computeHoldings().holdings.find((holding) => holding.localId === localId);
   if (!item) {
     refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-      <section class="modal-sheet holding-detail-sheet" role="dialog" aria-modal="true">
-        <div class="modal-title-row"><h3 class="modal-title">持仓详情</h3></div>
-        <p class="holding-detail-empty">未找到这项持仓。</p>
-        <div class="modal-actions"><button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button></div>
+      <section class="modal-sheet zen-sheet zen-sheet--detail" role="dialog" aria-modal="true">
+        <div class="zen-sheet-handle" aria-hidden="true"></div>
+        <div class="zen-sheet-title"><span class="zen-sheet-title-text">持仓详情</span><p class="zen-sheet-note">未找到这项持仓</p></div>
+        <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
       </section>`;
     return;
   }
@@ -795,26 +837,28 @@ function renderHoldingDetailModal() {
   const quantity = formatHoldingQuantity(item.quantity);
   const baselineHolding = state.holdings.find((holding) => holding.localId === localId);
   const baselineQuantity = formatHoldingQuantity(baselineHolding && baselineHolding.quantity);
+  const row = (label, value) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`;
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-    <section class="modal-sheet holding-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="holdingDetailTitle">
-      <header class="holding-detail-head">
+    <section class="modal-sheet zen-sheet zen-sheet--detail" role="dialog" aria-modal="true" aria-labelledby="holdingDetailTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <header class="zen-detail-head">
         <div><small>${escapeHtml(item.symbol)} · ${escapeHtml(bucketLabel)}</small><h3 id="holdingDetailTitle">${escapeHtml(item.name)}</h3></div>
-        <span>${escapeHtml((safeNumber(item.holdingWeight, 0) * 100).toFixed(1))}%</span>
+        <span class="zen-detail-weight">${escapeHtml((safeNumber(item.holdingWeight, 0) * 100).toFixed(1))}%</span>
       </header>
-      <section class="holding-detail-quantity" aria-label="当前持股数量">
-        <small>当前持股</small><strong>${escapeHtml(quantity)}</strong><span>股</span>
-      </section>
-      <dl class="holding-detail-ledger">
-        <div><dt>现价</dt><dd>${escapeHtml(state.showAmounts ? formatDisplayMoney(item.price, item.currency) : '••••')}</dd></div>
-        <div><dt>持仓市值</dt><dd>${escapeHtml(formatDisplayMoney(item.marketValueCny, 'CNY'))}</dd></div>
-        <div><dt>交易起点基准股数</dt><dd>${escapeHtml(baselineQuantity)}</dd></div>
-        <div><dt>股息税率</dt><dd>${escapeHtml(item.taxRateKnown ? `${taxPercent}%` : '未设置（按 0% 估算）')}</dd></div>
-        <div><dt>每股 TTM 股息</dt><dd>${escapeHtml(state.showAmounts ? formatDisplayMoney(item.effectiveDividendPerShareTtm, item.currency) : '••••')}</dd></div>
-        <div><dt>税前年化股息</dt><dd>${escapeHtml(formatDisplayMoney(item.grossAnnualDividendCny, 'CNY'))}</dd></div>
-        <div><dt>税后年化股息</dt><dd>${escapeHtml(formatDisplayMoney(item.netAnnualDividendCny, 'CNY'))}</dd></div>
+      <div class="zen-detail-qty">
+        <small>当前持股</small><strong>${escapeHtml(quantity)}<em>股</em></strong>
+      </div>
+      <dl class="zen-detail-rows">
+        ${row('现价', state.showAmounts ? formatDisplayMoney(item.price, item.currency) : '••••')}
+        ${row('持仓市值', formatDisplayMoney(item.marketValueCny, 'CNY'))}
+        ${row('交易起点基准股数', baselineQuantity)}
+        ${row('股息税率', item.taxRateKnown ? `${taxPercent}%` : '未设置（按 0% 估算）')}
+        ${row('每股 TTM 股息', state.showAmounts ? formatDisplayMoney(item.effectiveDividendPerShareTtm, item.currency) : '••••')}
+        ${row('税前年化股息', formatDisplayMoney(item.grossAnnualDividendCny, 'CNY'))}
+        ${row('税后年化股息', formatDisplayMoney(item.netAnnualDividendCny, 'CNY'))}
       </dl>
-      <p class="holding-detail-note">${escapeHtml(sourceLabel)} · 金额按当前汇率折算为人民币；已除息事件以除息日快照为准。</p>
-      <div class="modal-actions"><button class="modal-button modal-button--primary" type="button" data-modal-action="cancel">关闭</button></div>
+      <p class="zen-detail-note">${escapeHtml(sourceLabel)} · 金额按当前汇率折算人民币 · 已除息事件以除息日快照为准</p>
+      <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
     </section>`;
 }
 
