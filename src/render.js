@@ -319,10 +319,15 @@ export function renderHoldingsHero(summary) {
   const pnlText = hasPnl && state.showAmounts ? formatDailyPnl(pnl, summary.dailyPnlBaseCny) : '';
   const arrow = pnl > 0 ? '▲' : pnl < 0 ? '▼' : '';
   const tone = pnl > 0 ? 'is-market-up' : pnl < 0 ? 'is-market-down' : 'is-flat';
+  /* 三种空要分开：掩码遮住的数字不是「行情没更新」，直接落到待更新文案会被读成数据故障。
+     掩码态用中性色的掩码串，连涨跌方向一起遮住。 */
+  const meta = pnlText
+    ? `今日 <strong class="${tone}">${arrow} ${escapeHtml(pnlText)}</strong>`
+    : hasPnl ? `今日 <strong class="is-flat">${MASK_AMOUNT}</strong>` : '今日行情待更新';
   refs.holdingsHero.innerHTML = `
     <span class="holdings-hero-label">股票市值</span>
     <strong class="holdings-hero-value">${formatLedgerMoney(summary.totalMarketValueCny, 'CNY', 'holdings-hero-fraction')}</strong>
-    <p class="holdings-hero-meta">${pnlText ? `今日 <strong class="${tone}">${arrow} ${escapeHtml(pnlText)}</strong>` : '今日行情待更新'}</p>`;
+    <p class="holdings-hero-meta">${meta}</p>`;
 }
 
 /* ── 仓位结构 ──
@@ -1043,8 +1048,9 @@ export function renderAnnualReviewPage() {
 /* ── Holdings ── */
 
 /* 名称后的 4px 金点 = 这只股票有在途 / 已公告但还没确认到账的股息事件。
-   forecast 只是节奏预估、received 已经落袋，都不点亮。 */
-function getPendingDividendSymbols() {
+   forecast 只是节奏预估、received 已经落袋，都不点亮。
+   导出供 tests/core.test.mjs 钉规则：真实数据常年只有 forecast，UI 上造不出正向用例。 */
+export function getPendingDividendSymbols() {
   const live = new Set(['pending', 'due', 'announced']);
   const symbols = new Set();
   computeDividendCalendar().allDetails.forEach((entry) => {
