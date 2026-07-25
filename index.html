@@ -8,6 +8,10 @@
     >
     <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#23201b" media="(prefers-color-scheme: dark)">
+    <!-- 无 media 的兜底必须留着：带 media 的两条如果没被识别，iOS 会退回
+         「按页面顶部内容采样」给状态栏上色，抽屉的半透明遮罩就会把状态栏一起染灰。
+         规范按文档顺序取第一条 media 命中的，所以兜底放最后不会抢走日夜切换。 -->
+    <meta name="theme-color" content="#faf8f3">
     <title>波普账本</title>
     <link rel="icon" href="./assets/favicon-64-v3.png" type="image/png">
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon-v3.png">

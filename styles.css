@@ -925,8 +925,10 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   animation: modal-fade-in 200ms var(--ease-soft) forwards;
 }
 
+/* 遮罩比抽屉先退干净：iOS 拿页面顶部的颜色给状态栏上色，压暗层留得越久，
+   关闭后状态栏那一条灰残留得越明显。抽屉仍滑 200ms，视觉上不会脱节。 */
 .modal-mask.is-closing {
-  animation: modal-fade-out 180ms var(--ease-soft) forwards;
+  animation: modal-fade-out 120ms var(--ease-soft) forwards;
 }
 
 @keyframes modal-fade-in {
@@ -1035,7 +1037,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .confirm-mask.is-closing {
-  animation: confirm-fade-out 180ms var(--ease-soft) forwards;
+  animation: confirm-fade-out 120ms var(--ease-soft) forwards;
 }
 
 .confirm-sheet {
