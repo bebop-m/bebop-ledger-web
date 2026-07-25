@@ -54,15 +54,20 @@ function latestPair(rows, key) {
   return { previous: available[available.length - 2], latest: available[available.length - 1] };
 }
 
+/* 仓位纪律的分母是净资产（股票市值 + 现金，融资即负现金）：
+   融资会放大单一标的对净资产的冲击，用净资产才如实反映风险敞口。
+   注意别把它说成「总资产」——融资时总资产是股票市值，两者差着那笔融资。 */
 function addPositionDiagnostics(items, holding, source) {
   if (holding.bucket !== 'income') return;
-  const assetWeight = holding.totalAssetWeight === null ? holding.holdingWeight : holding.totalAssetWeight;
+  const useNetAsset = holding.totalAssetWeight !== null;
+  const assetWeight = useNetAsset ? holding.totalAssetWeight : holding.holdingWeight;
+  const basis = useNetAsset ? '净资产' : '股票市值';
   if (assetWeight > INCOME_HARD_MAX) {
     items.push(makeItem('critical', holding, '打工仓超过 10% 上限',
-      `当前占总资产 ${percent(assetWeight)}，超过策略硬上限 ${percent(INCOME_HARD_MAX, 0)}`, source, 'income-hard-max'));
+      `当前占${basis} ${percent(assetWeight)}，超过策略硬上限 ${percent(INCOME_HARD_MAX, 0)}`, source, 'income-hard-max'));
   } else if (assetWeight > INCOME_USUAL_MAX) {
     items.push(makeItem('attention', holding, '打工仓高于常规区间',
-      `当前占总资产 ${percent(assetWeight)}，常规仓位为 2%–5%`, source, 'income-usual-max'));
+      `当前占${basis} ${percent(assetWeight)}，常规仓位为 2%–5%`, source, 'income-usual-max'));
   }
 }
 
