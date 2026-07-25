@@ -2869,7 +2869,10 @@ body[data-active-page="home"] .page-stack {
 
 
 
-html, body { overscroll-behavior-y: contain; }
+/* contain 只挡住「下拉重载」，挡不住橡皮筋回弹。装成 PWA 后回弹会把页面
+   整体推下去，露出 WKWebView 自己的滚动视图底色（系统灰），截图里就是顶部
+   那条灰切块。none 连回弹一起禁掉，下拉刷新由 setPagePullDistance 自己画。 */
+html, body { overscroll-behavior-y: none; }
 
 .home-pull-indicator {
   height: 0;
@@ -4082,7 +4085,12 @@ body[data-active-page="home"] .home-nav-list { margin-top: clamp(11px, 1.6vh, 16
 }
 
 html { background: var(--frame); }
-body { background: var(--bg); color: var(--ink); }/* zen 纪律补强：图标裸置、焦点描边转金 */
+body { background: var(--bg); color: var(--ink); }
+/* --frame 是宽屏时画布外的边框色。手机上没有边框，画布底色必须就是纸色，
+   否则任何露出根元素的时刻（回弹、安全区、重载间隙）都会切出一条深边。 */
+@media (max-width: 430px) {
+  html { background: var(--bg); }
+}/* zen 纪律补强：图标裸置、焦点描边转金 */
 
 
 .circle-button,
