@@ -5,6 +5,7 @@
   ],
   "dividendChangeThreshold": 0.3,
   "staleDays": 7,
+  "diagnosticsMinWeight": 0.01,
   "forceVerifyMonths": [
     3,
     4,

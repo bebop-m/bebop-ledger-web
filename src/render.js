@@ -389,14 +389,24 @@ export function patchBucketsView(segments, holdings, summary) {
   renderBucketsView(segments, holdings, summary, { animateDetail: false });
 }
 
-/* 页头右槽：「诊断 N」，N>0 时计数用涨色提醒 */
+/* 页头右槽：角标只报严重档，用涨色提醒。
+   关注与数据质量不进角标——它们不需要「现在就处理」，常年挂着的数字会把真警报淹掉；
+   有关注但无严重时留一颗小点，表示「有东西可看，不急」。完整分组在抽屉里。 */
 export function renderDiagnosticsButton() {
   if (!refs.diagnosticsButton) return;
-  const count = getPortfolioDiagnostics().actionableCount;
+  const model = getPortfolioDiagnostics();
+  const critical = model.criticalCount;
+  const attention = model.attention.length;
   refs.diagnosticsButton.hidden = false;
-  refs.diagnosticsButton.innerHTML = count > 0 ? `诊断 <b>${count}</b>` : '诊断';
-  refs.diagnosticsButton.classList.toggle('has-issues', count > 0);
-  refs.diagnosticsButton.setAttribute('aria-label', count > 0 ? `持仓诊断，${count} 项需要关注` : '持仓诊断，无需处理');
+  refs.diagnosticsButton.innerHTML = critical > 0
+    ? `诊断 <b>${critical}</b>`
+    : (attention > 0 ? '诊断 <i class="diag-dot" aria-hidden="true"></i>' : '诊断');
+  refs.diagnosticsButton.classList.toggle('has-issues', critical > 0);
+  refs.diagnosticsButton.classList.toggle('has-attention', critical === 0 && attention > 0);
+  const label = critical > 0
+    ? `持仓诊断，${critical} 项严重${attention > 0 ? `、${attention} 项关注` : ''}`
+    : (attention > 0 ? `持仓诊断，${attention} 项关注` : '持仓诊断，无需处理');
+  refs.diagnosticsButton.setAttribute('aria-label', label);
 }
 
 /* ── 排序：定稿图只留一个文字按钮 ── */
