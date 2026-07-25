@@ -915,6 +915,21 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   font-size: 16px;
 }
 
+/* iOS standalone 的状态栏颜色来自对页面顶部渲染像素的采样（theme-color 在
+   standalone 下被无视），且关闭遮罩后要过好几秒才重新采样。这条钉在最顶端、
+   压在所有遮罩之上的纸色护条，保证 iOS 任何时刻采到的都是纸色：
+   抽屉一开状态栏不再跟着变灰，关掉也没有残留。 */
+.statusbar-sample-guard {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  z-index: 60;
+  background: var(--color-bg);
+  pointer-events: none;
+}
+
 .modal-mask {
   position: fixed;
   inset: 0;
@@ -925,10 +940,8 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   animation: modal-fade-in 200ms var(--ease-soft) forwards;
 }
 
-/* 遮罩比抽屉先退干净：iOS 拿页面顶部的颜色给状态栏上色，压暗层留得越久，
-   关闭后状态栏那一条灰残留得越明显。抽屉仍滑 200ms，视觉上不会脱节。 */
 .modal-mask.is-closing {
-  animation: modal-fade-out 120ms var(--ease-soft) forwards;
+  animation: modal-fade-out 180ms var(--ease-soft) forwards;
 }
 
 @keyframes modal-fade-in {
@@ -1037,7 +1050,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .confirm-mask.is-closing {
-  animation: confirm-fade-out 120ms var(--ease-soft) forwards;
+  animation: confirm-fade-out 180ms var(--ease-soft) forwards;
 }
 
 .confirm-sheet {

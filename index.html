@@ -8,9 +8,9 @@
     >
     <meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#23201b" media="(prefers-color-scheme: dark)">
-    <!-- 无 media 的兜底必须留着：带 media 的两条如果没被识别，iOS 会退回
-         「按页面顶部内容采样」给状态栏上色，抽屉的半透明遮罩就会把状态栏一起染灰。
-         规范按文档顺序取第一条 media 命中的，所以兜底放最后不会抢走日夜切换。 -->
+    <!-- theme-color 只对 Android 和 Safari 浏览器 UI 生效；iOS standalone 状态栏
+         压根不认它，永远按页面顶部渲染像素采样上色。状态栏防染灰靠的是
+         body 里的 .statusbar-sample-guard，别指望这几条 meta。 -->
     <meta name="theme-color" content="#faf8f3">
     <title>波普账本</title>
     <link rel="icon" href="./assets/favicon-64-v3.png" type="image/png">
@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
+    <div class="statusbar-sample-guard" aria-hidden="true"></div>
     <div class="app-shell">
       <main class="app-pages">
         <div id="homePage" class="page-view page-stack" data-page-view="home">
