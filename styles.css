@@ -10851,6 +10851,11 @@ body[data-active-page="holdings"] .holdings-pagebar-note {
   letter-spacing: 0;
   text-align: center;
 }
+/* 行情停更：不引入新颜色（金色只给股息与选中记号，红绿只给盈亏），
+   仅把这行从 hint 提到 ink，让它从背景噪声里浮上来 */
+body[data-active-page="holdings"] .holdings-pagebar-note.is-stale {
+  color: var(--ink);
+}
 
 /* 居中 hero：股票市值 */
 body[data-active-page="holdings"] .holdings-hero {
@@ -11982,16 +11987,6 @@ body[data-active-page="dividends"] .divi-ym.is-current i { color: var(--ink); fo
 body[data-active-page="dividends"] .divi-ym.is-current b {
   width: clamp(4.6px, 1.2821vw, 6.75px);
   height: clamp(4.6px, 1.2821vw, 6.75px);
-}
-body[data-active-page="dividends"] .divi-grid-hint {
-  display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
-  padding: 0;
-  color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
-  font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
-  text-align: center;
 }
 
 /* 待确认 / 近期 两段列表 */

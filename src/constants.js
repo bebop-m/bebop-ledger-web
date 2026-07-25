@@ -62,7 +62,6 @@ export const UI_TEXT = {
   dividendFilterIncome: '\u6253\u5de5\u4ed3'
 };
 
-export const BUCKET_CHIP_COMPACT_THRESHOLD = 0.16;
 export const HOLDING_SWIPE_DELETE_WIDTH = 72;
 export const HOLDING_SWIPE_OPEN_THRESHOLD = 34;
 

@@ -11,7 +11,7 @@ import { getUpcomingReportEvents } from './report-calendar.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
   formatTimestamp, normalizeDividendStatus, getDividendStatusLabel,
-  buildDividendTooltipLines, buildDividendTooltipHtml, createElementFromHtml
+  buildDividendTooltipLines, buildDividendTooltipHtml, createElementFromHtml, getStaleDays
 } from './utils.js';
 import {
   MASK_AMOUNT, MASK_PRICE, LABELS, UI_TEXT,
@@ -143,7 +143,7 @@ function getHomeEventDateParts(value) {
 
 /* 本年股息区：金线进度 + 六月点 + 两行待办，构图见 designs/禅意UI/01-首页/定稿图.html。 */
 function renderHomeMetrics(calendarModel, summary) {
-  const annual = getAnnualDividendOverview(calendarModel, summary);
+  const annual = getAnnualDividendOverview(calendarModel);
   const annualProjected = annual.projectedCny;
   const annualRatio = annual.receivedRatio;
   const ratioPct = Math.round(Math.max(0, Math.min(1, annualRatio)) * 100);
@@ -430,14 +430,30 @@ export function renderSortChips() {
   }
 }
 
+/* 行情整体停更天数：超过配置阈值（config.json 的 staleDays）才返回天数，否则 0。
+   定时任务挂掉时时间戳长得和平时一模一样，没有这个提示就只能靠心算日期。
+   逐只股息的新鲜度另有 isDividendDataStale，两者共用同一个阈值。 */
+function getMarketStaleDays() {
+  const updated = new Date(state.lastUpdatedAt);
+  if (Number.isNaN(updated.getTime())) return 0;
+  const days = Math.floor((Date.now() - updated.getTime()) / 86400000);
+  return days > getStaleDays() ? days : 0;
+}
+
 export function renderTimestamp() {
   if (!refs.marketTimestamp) return;
   const count = computeHoldings().holdings.length;
   // formatTimestamp 给的是「行情更新 07-24 09:32」，定稿图这行只写「行情 07-24 09:32」
   const stamp = formatTimestamp(state.lastUpdatedAt);
   const short = stamp.startsWith(LABELS.marketUpdated) ? `行情${stamp.slice(LABELS.marketUpdated.length)}` : stamp;
-  refs.marketTimestamp.textContent = `${short} · ${count} 项 · 点此打开诊断`;
-  refs.marketTimestamp.setAttribute('aria-label', `打开持仓诊断，当前 ${count} 项持仓`);
+  const staleDays = getMarketStaleDays();
+  // 「点此打开诊断」删去：右上角已有「诊断 N」按钮，可点性不靠这行字教
+  const parts = staleDays > 0 ? [short, `停更 ${staleDays} 天`, `${count} 项`] : [short, `${count} 项`];
+  refs.marketTimestamp.textContent = parts.join(' · ');
+  refs.marketTimestamp.classList.toggle('is-stale', staleDays > 0);
+  refs.marketTimestamp.setAttribute('aria-label', staleDays > 0
+    ? `行情已停更 ${staleDays} 天，打开持仓诊断，当前 ${count} 项持仓`
+    : `打开持仓诊断，当前 ${count} 项持仓`);
 }
 
 export function renderPrivacyButton() {
@@ -579,7 +595,6 @@ function renderDividendMonths(model) {
 
   refs.dividendMonthGrid.innerHTML = `
     <div class="divi-year">${cells}</div>
-    <p class="divi-grid-hint">点按月份查看当月逐笔并确认到账</p>
     <div class="divi-list">${dueSection}${recentSection}${due.length || recent.length ? '' : `<p class="divi-list-empty">${escapeHtml(LABELS.dividendEmptyTitle)}</p>`}</div>`;
 }
 
@@ -727,7 +742,7 @@ function renderIncomeOverview(model) {
       <strong class="inc-hero-value ${tone}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</strong>
       <p class="inc-hero-meta"><strong class="${getReturnTone(row.capitalReturnRate)}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</strong> · ${escapeHtml(scopeText)}</p>
     </section>
-    <p class="inc-ctx">年初 ${escapeHtml(formatIncomeMoney(row.yearStartNetCny))} → 当前 ${escapeHtml(formatIncomeMoney(row.yearEndNetCny))} · 净注入 <b>${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</b><br>净值与注入明细见年度回顾 · 现金余额移至资金与交易</p>`;
+    <p class="inc-ctx">年初 ${escapeHtml(formatIncomeMoney(row.yearStartNetCny))} → 当前 ${escapeHtml(formatIncomeMoney(row.yearEndNetCny))} · 净注入 <b>${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</b></p>`;
 }
 
 function getTrendValue(row, key) {
@@ -840,7 +855,9 @@ function renderIncomeTrend(model) {
     ${cagrLine}`;
 }
 
-/* 年份行脚注：手工基准区间与逐笔记账起点都从实时数据里取，不写死年份 */
+/* 年份行脚注：只留口径声明（哪几年是手工基准、逐笔记账从哪年起），
+   都从实时数据里取，不写死年份。「点年份行查看年度回顾」这类教学文案已删——
+   行本身可点，学一次就会，长期只是灰噪声。 */
 function getIncomeYearFoot(model) {
   const manualYears = model.rows.filter((row) => row.hasManualBackfill).map((row) => row.year);
   const ledgerYears = model.trendRows
@@ -853,8 +870,7 @@ function getIncomeYearFoot(model) {
     parts.push(`${min === max ? min : `${min}–${max}`} 为年度手工基准`);
   }
   if (ledgerYears.length) parts.push(`逐笔记账自 ${Math.min(...ledgerYears)} 起`);
-  const first = parts.length ? `${parts.join(' · ')}<br>` : '';
-  return `<p class="inc-year-foot">${first}点年份行查看年度回顾（含当年持仓 · 归因 · 交易）</p>`;
+  return parts.length ? `<p class="inc-year-foot">${parts.join(' · ')}</p>` : '';
 }
 
 function renderIncomeYearList(model) {
@@ -1093,16 +1109,15 @@ function getAnnualDonutMarkup(holdings) {
     </div>`;
 }
 
+/* 只留对读数有影响的事实（对比哪一年、清了哪些仓）。
+   「当年快照随行情更新，跨年自动冻结」是实现细节，读者不需要知道。 */
 function getAnnualHoldingsNote(holdings) {
-  const lines = [];
   const head = [];
   if (holdings.previousYear) head.push(`增减仓对比 ${holdings.previousYear} 年`);
   if (holdings.removed.length) {
     head.push(`已清仓：${holdings.removed.map((item) => `${item.name} ${formatAnnualShares(item.shares)} 股`).join(' · ')}`);
   }
-  if (head.length) lines.push(escapeHtml(head.join(' · ')));
-  lines.push('当年快照随行情更新，跨年自动冻结');
-  return `<p class="ann-hold-note">${lines.join('<br>')}</p>`;
+  return head.length ? `<p class="ann-hold-note">${escapeHtml(head.join(' · '))}</p>` : '';
 }
 
 export function renderAnnualReviewPage() {

@@ -408,7 +408,7 @@ function renderOpeningCashModal() {
         <label class="zen-form-row"><span>现金基准日</span><input id="modalCurrentCashDateInput" class="zen-form-input" type="date" value="${escapeHtml(state.currentCashAsOfDate || getTodayLabel())}"></label>
         <label class="zen-form-row"><span>交易持仓起点</span><input id="modalPositionOpeningDateInput" class="zen-form-input" type="date" value="${escapeHtml(state.positionOpeningDate || getTodayLabel())}"></label>
       </div>
-      <p class="zen-form-foot">基准日之后的新记录才调整现金 · 持股从交易起点的基准股数开始回放</p>
+      <p class="zen-form-foot">基准日之后的新记录才调整现金 · 起点之前的买卖不计入持股</p>
       ${renderZenSheetActions()}
     </section>`;
 }
@@ -870,7 +870,7 @@ function renderHoldingDetailModal() {
         ${row('税前年化股息', formatDisplayMoney(item.grossAnnualDividendCny, 'CNY'))}
         ${row('税后年化股息', formatDisplayMoney(item.netAnnualDividendCny, 'CNY'))}
       </dl>
-      <p class="zen-detail-note">${escapeHtml(sourceLabel)} · 金额按当前汇率折算人民币 · 已除息事件以除息日快照为准</p>
+      <p class="zen-detail-note">${escapeHtml(sourceLabel)} · 按当前汇率折人民币</p>
       <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
     </section>`;
 }

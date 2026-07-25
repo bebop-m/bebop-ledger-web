@@ -421,10 +421,12 @@ function buildRankTrack(rank, symbol) {
     </button>`).join('')}</div>`;
 }
 
-function buildCompanyHead(company, totalCount) {
+function buildCompanyHead(company) {
   return `<div class="fu-co">
       <button class="fu-co-name" type="button" data-fund-picker-open aria-haspopup="dialog">${escapeHtml(getCompanyDisplayName(company))}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5 12 15l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
-      <p class="fu-co-sub">${escapeHtml(company.symbol)} · 股息按 ${escapeHtml(company.currency)}/股 · 财报币种 ${escapeHtml(company.statementCurrency || company.currency)} · 全部 ${totalCount} 家</p>
+      <p class="fu-co-sub">${escapeHtml(company.symbol)}${company.statementCurrency && company.statementCurrency !== company.currency
+        ? ` · 股息 ${escapeHtml(company.currency)} · 财报 ${escapeHtml(company.statementCurrency)}`
+        : ` · ${escapeHtml(company.currency)}`}</p>
     </div>`;
 }
 
@@ -629,7 +631,7 @@ export function renderFundamentalsPage() {
 
   refs.fundamentalsContent.innerHTML = `
     ${buildRankTrack(rank, company.symbol)}
-    ${buildCompanyHead(company, allCompanies.length)}
+    ${buildCompanyHead(company)}
     ${buildFormulaSection(company, rank)}
     ${buildValuationSection(company)}
     ${buildDividendLine(company, visible)}

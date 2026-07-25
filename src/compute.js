@@ -692,24 +692,15 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
   };
 }
 
-/* 首页用：当前自然年「预计全年」股息（全部仓位，不受日历筛选影响）。
-   = 已到账 + 待核对 + 在途 + 已公告 + 节奏预估；历史事件按除息日前的权利股数冻结。 */
-export function computeCurrentYearDividendCny() {
-  return computeDividendCalendar(new Date(), 'all').metrics.projectedCny;
-}
-
-// 首页年度现金流的单一口径：全年应收、确认进度与相对当前股票市值的年度股息率。
-export function getAnnualDividendOverview(calendarModel, holdingSummary = computeHoldings()) {
+// 首页年度现金流的单一口径：全年应收与确认进度。
+export function getAnnualDividendOverview(calendarModel) {
   const metrics = calendarModel && calendarModel.metrics ? calendarModel.metrics : (calendarModel || {});
   const projectedCny = Math.max(0, safeNumber(metrics.projectedCny, 0));
   const receivedCny = Math.max(0, safeNumber(metrics.receivedCny, 0));
-  const marketValueCny = Math.max(0, safeNumber(holdingSummary && holdingSummary.totalMarketValueCny, 0));
   return {
     projectedCny: roundMoney(projectedCny),
     receivedCny: roundMoney(receivedCny),
-    waitingCny: roundMoney(Math.max(0, projectedCny - receivedCny)),
-    receivedRatio: projectedCny > 0 ? Math.min(1, receivedCny / projectedCny) : 0,
-    annualYield: marketValueCny > 0 ? projectedCny / marketValueCny : 0
+    receivedRatio: projectedCny > 0 ? Math.min(1, receivedCny / projectedCny) : 0
   };
 }
 
@@ -970,8 +961,7 @@ export function computeTradeSummary(year = null) {
     totalUnrealizedPnlCny: roundMoney(positionRows.reduce((sum, row) => sum + row.unrealizedPnlCny, 0)),
     totalUnrealizedPnlComplete: positionRows.every((row) => row.costBasisComplete),
     totalRealizedPnlCny: roundMoney(positionRows.reduce((sum, row) => sum + row.realizedPnlCny, 0)),
-    totalRealizedPnlComplete: positionRows.every((row) => row.realizedPnlComplete),
-    totalAnnualDividendCny: roundMoney(positionRows.reduce((sum, row) => sum + row.annualDividendCny, 0))
+    totalRealizedPnlComplete: positionRows.every((row) => row.realizedPnlComplete)
   };
 }
 
