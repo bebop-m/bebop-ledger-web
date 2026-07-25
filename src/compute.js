@@ -598,24 +598,11 @@ export function normalizeEconomicDividendEntries(entries) {
   return result;
 }
 
-function getDividendHistoryStartDate() {
-  const snapshotStart = state.dailySnapshots.map((entry) => formatDateLabel(entry && entry.date)).filter(Boolean).sort()[0] || '';
-  const opening = formatDateLabel(state.positionOpeningDate);
-  if (snapshotStart && opening) return snapshotStart < opening ? snapshotStart : opening;
-  return snapshotStart || opening;
-}
-
-export function isUnverifiedHistoricalDividend(entry) {
-  if (!entry || entry.confirmed === true || entry.confidence === 'manual' || entry.sharesSource === 'manual') return false;
-  const historyStart = getDividendHistoryStartDate();
-  const exDate = formatDateLabel(entry.exDate);
-  return entry.sharesSource === 'current' && (!historyStart || (exDate && exDate < historyStart));
-}
-
-export function getNormalizedDividendLedgerEntries(options = {}) {
-  const includeUnverified = options.includeUnverified === true;
-  return normalizeEconomicDividendEntries(state.dividendLedger)
-    .filter((entry) => includeUnverified || !isUnverifiedHistoricalDividend(entry));
+/* 账本自 2026 年起逐笔记录，更早年份只留年度手工基准（09-收益明细里回填）。
+   那批「按当前持股倒推的早年派息」已从账本清除，展示层不再需要过滤器兜底。
+   生成端仍由 revenue.js 把关：交易起点之前的事件不会再写进账本。 */
+export function getNormalizedDividendLedgerEntries() {
+  return normalizeEconomicDividendEntries(state.dividendLedger);
 }
 
 // 以（标的 + 除息日）作为一笔派息的经济身份，折叠账本/公告/预估之间以及账本内部的重复条目，
@@ -631,8 +618,6 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
   const filterKey = DIVIDEND_FILTER_KEYS.has(filterKeyOverride) ? filterKeyOverride : getDividendFilterKey();
   const summary = computeHoldings();
   const normalizedLedger = getNormalizedDividendLedgerEntries();
-  const excludedHistoricalEstimateCount = normalizeEconomicDividendEntries(state.dividendLedger)
-    .filter(isUnverifiedHistoricalDividend).length;
   const ledgerEntries = normalizedLedger
     .map((entry) => buildLedgerDividendEntry(entry, year, todayLabel))
     .filter(Boolean);
@@ -702,7 +687,6 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
       lastYearTotalCny,
       projectedYoy
     },
-    excludedHistoricalEstimateCount,
     months: buildDividendMonthItems(entries, currentMonth),
     allDetails: entries
   };

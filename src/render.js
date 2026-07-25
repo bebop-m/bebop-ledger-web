@@ -504,8 +504,7 @@ function renderDividendMetricGrid(model) {
       ${legendRow('received', '已到账', '钱已入账', m.receivedCny)}
       ${legendRow('pipeline', '在途', '已公告 · 等待到账', pipelineCny)}
       ${legendRow('forecast', '预估', '按往年节奏推算', m.forecastCny)}
-    </div>
-    ${model.excludedHistoricalEstimateCount > 0 ? `<p class="divi-legend-note">另有 ${model.excludedHistoricalEstimateCount} 笔早年股息缺少当年持仓记录，仅存档、不计入统计</p>` : ''}`;
+    </div>`;
 }
 
 /* 近期列表的状态词与色：金=已到账，hint=在途/已公告/预估，涨红只留给待确认（置顶那段）。 */

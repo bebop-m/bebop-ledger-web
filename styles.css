@@ -11918,17 +11918,6 @@ body[data-active-page="dividends"] .divi-legend-row strong {
   color: var(--ink);
   font-weight: 700;
 }
-body[data-active-page="dividends"] .divi-legend-note {
-  display: block;
-  width: clamp(257.6px, 71.7949vw, 378px);
-  margin: clamp(9.2px, 2.5641vw, 13.5px) auto 0;
-  padding: 0;
-  color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
-  font-weight: 600;
-  line-height: 1.6;
-  text-align: center;
-}
 
 /* 12 月点阵：6 列 2 行，三态＝已过淡化 / 当月加粗 / 未到正常 */
 body[data-active-page="dividends"] #dividendMonthGrid {
