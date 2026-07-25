@@ -915,21 +915,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   font-size: 16px;
 }
 
-/* iOS standalone 的状态栏颜色来自对页面顶部渲染像素的采样（theme-color 在
-   standalone 下被无视），且关闭遮罩后要过好几秒才重新采样。这条钉在最顶端、
-   压在所有遮罩之上的纸色护条，保证 iOS 任何时刻采到的都是纸色：
-   抽屉一开状态栏不再跟着变灰，关掉也没有残留。 */
-.statusbar-sample-guard {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  z-index: 60;
-  background: var(--color-bg);
-  pointer-events: none;
-}
-
 .modal-mask {
   position: fixed;
   inset: 0;
@@ -3996,9 +3981,11 @@ body[data-active-page="home"] .home-nav-list { margin-top: clamp(11px, 1.6vh, 16
   --track: #eae4d4;
   --up: #bf5a42;
   --down: #6a8b74;
-  --mask: rgba(59, 54, 46, 0.28);
   --glow: none;
   --frame: #efece4;
+  /* 抽屉自己的纸：背景页不再被压暗，层次全靠这一档色差和一道向上散开的柔光 */
+  --sheet: #fffdf8;
+  --sheet-lift: 0 -20px 44px -18px rgba(59, 54, 46, 0.16);
   --divi-ink: var(--ink);
   /* 图表色：定稿图里写死的 hex 一律走这层，夜间值见 00-总则/夜间色板.html */
   --chart-line: #b5a88f;
@@ -4079,9 +4066,10 @@ body[data-active-page="home"] .home-nav-list { margin-top: clamp(11px, 1.6vh, 16
     --track: #3a352c;
     --up: #e07a5f;
     --down: #7fae8e;
-    --mask: rgba(0, 0, 0, 0.45);
     --glow: 0 0 12px rgba(211, 168, 79, 0.45);
     --frame: #1a1712;
+    --sheet: #2c2821;
+    --sheet-lift: 0 -20px 44px -18px rgba(0, 0, 0, 0.55);
     --divi-ink: var(--gold);
     --chart-line: #8f8266;
     --chart-gold: #a98e50;
@@ -4929,19 +4917,20 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   body[data-active-page="holdings"] #stockList { gap: clamp(12.88px, 3.5897vw, 18.9px); }
 }/* ══════════════════════════════════════════════════════════════════
    03 / 04 / 05 抽屉通用规格
-   顶部圆角 22px、32×3 把手、无边框、背景页原位被压暗（只有 rgba，无毛玻璃）。
+   顶部圆角 22px、32×3 把手、无边框、背景页原位不动。
+
+   遮罩不再压暗：iOS standalone 的状态栏是按页面顶部渲染像素采样上色的，
+   压暗层铺到 y=0 就把状态栏一起染灰，关掉后还要滞后 200ms 才采样回来。
+   在顶端加护条能挡住采样，但抽屉一开顶部就切出一条不压暗的亮带，界面反而更割裂。
+   干脆让背景页整屏不动，层次改由抽屉自己承担：底色抬高一档 + 一道向上散开的柔光。
    ══════════════════════════════════════════════════════════════════ */
 
 
 .modal-mask,
 .confirm-mask {
-  background: rgba(59, 54, 46, 0.28);
+  background: transparent;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-}
-@media (prefers-color-scheme: dark) {
-  .modal-mask,
-  .confirm-mask { background: rgba(0, 0, 0, 0.45); }
 }
 
 .zen-sheet {
@@ -4955,12 +4944,12 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
     calc(clamp(27.6px, 7.6923vw, 40.5px) + env(safe-area-inset-bottom, 0px));
   border: 0;
   border-radius: 22px 22px 0 0;
-  background: var(--bg);
-  box-shadow: none;
+  background: var(--sheet);
+  box-shadow: var(--sheet-lift);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   color: var(--ink);
-  /* 抽屉最多吃到 78dvh：背景页要留得住，「原位被压暗」才读得出是抽屉而不是新页面 */
+  /* 抽屉最多吃到 78dvh：背景页要留得住，才读得出是抽屉而不是新页面 */
   max-height: min(78dvh, calc(100dvh - clamp(51.52px, 14.359vw, 75.6px)));
   overflow-y: auto;
   font-variant-numeric: tabular-nums;

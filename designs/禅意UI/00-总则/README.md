@@ -55,8 +55,10 @@ padding-top: max(clamp(...), env(safe-area-inset-top, 0px));
 ---
 
 ## Token（styles.css 权威层）
-素禅（日间默认）：--bg:#faf8f3; --ink:#3b362e; --muted:#a89d86; --hint:#c2b9a6; --label:#b0a78f; --gold:#c19a45; --gold-soft:#dcc492; --track:#eae4d4; --up:#bf5a42; --down:#6a8b74; 遮罩 rgba(59,54,46,.28)
-墨禅（夜间，prefers-color-scheme 自动）：--bg:#23201b; --ink:#ece6d8; --muted:#8f887a; --hint:#5f594c; --label:#8f887a; --gold:#d3a84f(进度线加 0 0 12px rgba(211,168,79,.45) 微光); --gold-soft:#b9974a; --track:#3a352c; --up:#e07a5f; --down:#7fae8e; 遮罩 rgba(0,0,0,.45)
+素禅（日间默认）：--bg:#faf8f3; --ink:#3b362e; --muted:#a89d86; --hint:#c2b9a6; --label:#b0a78f; --gold:#c19a45; --gold-soft:#dcc492; --track:#eae4d4; --up:#bf5a42; --down:#6a8b74; --sheet:#fffdf8; --sheet-lift:0 -20px 44px -18px rgba(59,54,46,.16)
+墨禅（夜间，prefers-color-scheme 自动）：--bg:#23201b; --ink:#ece6d8; --muted:#8f887a; --hint:#5f594c; --label:#8f887a; --gold:#d3a84f(进度线加 0 0 12px rgba(211,168,79,.45) 微光); --gold-soft:#b9974a; --track:#3a352c; --up:#e07a5f; --down:#7fae8e; --sheet:#2c2821; --sheet-lift:0 -20px 44px -18px rgba(0,0,0,.55)
+
+遮罩色（原 rgba(59,54,46,.28) / rgba(0,0,0,.45)）已退役，原因见下文「抽屉不压暗背景页」。
 
 ### 图表色（各页定稿图只画了日间，夜间以 `夜间色板.html` 为准）
 定稿图里折线/圆点/饼图分段写的是硬编码 hex，**施工时一律改用下表 token，不许写死**。夜间值按对比度反解得到（暗底细线有光晕衰减，线条类目标 3.4–5.2:1、点类 6.7–7.3:1，均高于日间；饼图六阶保证相邻 ≥1.25:1 可辨）。
@@ -125,9 +127,16 @@ zen 层写得再靠后也赢不了——元素整个不显示时，先拿它的 
   首页那段（`01-首页 · 按 designs/…/定稿图.html 重排`）是已验收的样板，
   新区块照它写；要显式覆盖哪些属性见上文「覆盖旧层」，此处不重复。
 
-- **抽屉遮罩要去掉模糊**：现有 `.modal-mask` 一类带 `backdrop-filter: blur(...)`，
-  而定稿图要求「背景页保持原位**被压暗**」——只有 `rgba` 遮罩，没有毛玻璃。
-  03/04/05 及所有抽屉界面施工时一并清掉（styles.css 里搜 `backdrop-filter`）。
+- **抽屉不压暗背景页**（2026-07-25 定，推翻定稿图的「原位被压暗」）：
+  `.modal-mask` / `.confirm-mask` 一律 `background: transparent`，只承担点击关闭；
+  毛玻璃同样清掉（styles.css 里搜 `backdrop-filter`）。层次改由抽屉自己承担：
+  底色 `--sheet` 比页面抬高一档，加一道向上散开的柔光 `--sheet-lift`，配顶部 22px 圆角。
+
+  缘由：iOS 装成主屏 PWA 后，状态栏颜色是**对页面顶部渲染像素采样**得来的
+  （`theme-color` 在 standalone 下完全无效），压暗层铺到 y=0 就把状态栏一起染灰，
+  关掉抽屉后还要滞后约 200ms 才采样回纸色，看着就是闪一下。
+  在顶端钉纸色护条能挡住采样，但抽屉一开顶部就切出一条不压暗的亮带，界面更割裂——
+  所以直接让背景页整屏不动，采样区永远是纸色，这一类问题从根上没有了。
 
 - **种子数据是个人仓的 24 家公司**（各 100 股，真实股数不入公开仓）＋上半年 17 笔真实派息标为已到账，
   所以空账本首屏就有真实的「已到账/在途/预估」三段，验配色和比例不必自己造数。
