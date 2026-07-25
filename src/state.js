@@ -64,6 +64,10 @@ export const state = {
   sortMenuOpen: false
 };
 
+/* 启动时本机到底有没有存档。「添加到主屏幕」生成的是一份全新存储，读不到存档时
+   界面上摆的是出厂模板——这种设备只能从云端拉，绝不能把模板推上去盖掉真实账本。 */
+export const bootstrap = { hadLocalArchive: false };
+
 /* ── Shared mutable state across modules ── */
 export const mutable = {
   activeHoldingSwipe: null,
@@ -637,9 +641,11 @@ export function restoreState() {
     }
     if (!saved || typeof saved !== 'object') throw new Error('invalid state');
     applySnapshot(saved);
+    bootstrap.hadLocalArchive = true;
     saveState();
     return true;
   } catch (_error) {
+    bootstrap.hadLocalArchive = false;
     applySnapshot(isDemoMode() ? createDemoSnapshot() : createDefaultSnapshot());
     return false;
   }

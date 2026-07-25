@@ -25,7 +25,8 @@ const {
 } = computeModule;
 const { settleRevenueData, archiveCompletedYears } = revenueModule;
 const { roundMoney, roundTo, formatDateLabel } = utilsModule;
-const { mergePortfolioSnapshots } = syncModule;
+const { mergePortfolioSnapshots, isLocalPortfolioTemplateState } = syncModule;
+const { createDefaultSnapshot } = stateModule;
 
 function applyBase(overrides = {}) {
   applySnapshot({
@@ -398,4 +399,38 @@ test('cloud merge retains remote-only records, applies tombstones, accepts all-c
     }
   );
   assert.equal(readded.holdings.length, 1, 'a later explicit re-add must beat an older deletion tombstone');
+});
+
+/* 2026-07-25 事故：出厂模板加了种子股息台账，「本地是空模板」判定随之失效，
+   新装的 PWA 走了合并分支，24 只 100 股的模板被推上云端，覆盖了真实持仓。
+   这两条各守一道：判定必须认得出出厂模板；合并必须让种子条目输给有时间戳的云端记录。 */
+test('出厂模板必须被认成空壳，种子股息不得顶掉云端的真实记录', () => {
+  applySnapshot(createDefaultSnapshot());
+  invalidateComputeCache();
+  assert.equal(
+    isLocalPortfolioTemplateState(), true,
+    '新装设备的出厂状态必须判定为模板，否则同步会把模板推上云端'
+  );
+
+  const merged = mergePortfolioSnapshots(
+    {
+      holdings: [{ symbol: 'TEST.HK', quantity: 4700, updatedAt: '2026-07-10T09:40:27.529Z' }],
+      dividendLedger: [ledgerEntry(5.3, 21579.53, {
+        id: 'div_real', shares: 4700, taxRate: 0.2, netCny: 17263.62,
+        confirmed: true, receiptStatus: 'received', updatedAt: '2026-07-10T09:40:27.529Z'
+      })]
+    },
+    {
+      holdings: [{ symbol: 'TEST.HK', quantity: 100 }],
+      dividendLedger: [ledgerEntry(5.3, 487.6, {
+        id: 'seed_div_11', shares: 100, sharesSource: 'seed', netCny: 487.6,
+        confirmed: true, receiptStatus: 'received', updatedAt: ''
+      })]
+    }
+  );
+  assert.equal(merged.holdings[0].quantity, 4700, '没有时间戳的模板持仓不得覆盖云端持仓');
+  assert.equal(merged.dividendLedger.length, 1);
+  assert.equal(merged.dividendLedger[0].shares, 4700, '种子股息不得把真实股数改成 100');
+  assert.equal(merged.dividendLedger[0].netCny, 17263.62);
+  assert.equal(merged.dividendLedger[0].taxRate, 0.2, '税率也不能被种子条目抹平');
 });

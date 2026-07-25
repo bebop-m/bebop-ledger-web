@@ -1,4 +1,4 @@
-import { state, refs, mutable, saveState, applySnapshot, showToast, showConfirm, buildPortfolioSnapshot, DEFAULT_QUOTES } from './state.js';
+import { state, refs, mutable, bootstrap, saveState, applySnapshot, showToast, showConfirm, buildPortfolioSnapshot, DEFAULT_QUOTES } from './state.js';
 import { safeNumber, normalizeSymbol, mergeQuotes } from './utils.js';
 import { canonicalDividendSourceId } from './utils.js';
 import { computeHoldings, normalizeEconomicDividendEntries } from './compute.js';
@@ -79,14 +79,32 @@ function normalizeImportedSnapshotSource(payload) {
   return null;
 }
 
-function isLocalPortfolioTemplateState() {
+/* createDefaultSnapshot 预置的种子股息不是用户数据。2026-07-25 的事故就出在这里：
+   判定要求「台账为空」，而出厂模板从那天起自带 17 条种子条目，判定永远不成立，
+   新装设备于是走了合并分支，把 24 只 100 股的模板推上了云端。 */
+function isSeedDividendEntry(entry) {
+  return Boolean(entry) && (String(entry.id || '').startsWith('seed_div_') || entry.sharesSource === 'seed');
+}
+
+export function isLocalPortfolioTemplateState() {
   const holdingsAreDefault = state.holdings.length > 0 && state.holdings.length === DEFAULT_HOLDINGS.length
     && state.holdings.every((h, i) => DEFAULT_HOLDINGS[i] && h.symbol === DEFAULT_HOLDINGS[i].symbol && h.quantity === DEFAULT_HOLDINGS[i].quantity);
   return holdingsAreDefault
-    && !state.dividendLedger.length && !state.dailySnapshots.length && !state.cashFlows.length && !state.trades.length
+    && state.holdings.every((h) => !recordTimestamp(h))
+    && state.dividendLedger.every(isSeedDividendEntry)
+    && !state.dailySnapshots.length && !state.cashFlows.length && !state.trades.length
     && !state.yearlyManual.length && !state.yearlyArchives.length && !state.yearlyHoldings.length
     && !state.dividendLedgerIgnored.length && !state.dividendLedgerTombstones.length
     && state.currentCashCny === null && safeNumber(state.liabilityCny, 0) === 0;
+}
+
+/* 这次同步能不能往云端推。restore：只拉不推；merge：正常合并回推；abort：放弃。
+   没有本地存档就说明这台设备从没同步过，它手上的东西不足以当作账本的一部分。 */
+async function resolveSyncMode() {
+  if (isLocalPortfolioTemplateState()) return 'restore';
+  if (bootstrap.hadLocalArchive) return 'merge';
+  const confirmed = await showConfirm(LABELS.syncFirstRunConfirm, { okLabel: LABELS.syncFirstRunOk, cancelLabel: LABELS.cancel });
+  return confirmed ? 'restore' : 'abort';
 }
 
 function getSyncEligibleSymbols(holdings = computeHoldings().holdings) {
@@ -103,6 +121,9 @@ function preferRecord(remoteEntry, localEntry) {
   const remoteTime = recordTimestamp(remoteEntry);
   const localTime = recordTimestamp(localEntry);
   if (remoteTime && localTime && remoteTime !== localTime) return remoteTime > localTime ? remoteEntry : localEntry;
+  /* 只有云端那条带时间戳：本地这条要么是出厂种子，要么从没被人动过——用户任何一次
+     编辑都会盖上 updatedAt，所以「没有时间戳」本身就说明它不该顶掉有据可查的记录。 */
+  if (remoteTime && !localTime) return remoteEntry;
   return localEntry;
 }
 
@@ -288,7 +309,9 @@ export async function syncPortfolioToCloud() {
   if (state.cloudSyncing) return;
   setCloudSyncButtonBusy(true);
   let token = getGithubToken(); if (!token) { token = promptGithubToken(); if (!token) { setCloudSyncButtonBusy(false); showToast(LABELS.syncTokenInvalid, { type: 'error' }); return; } }
-  const localIsTemplate = isLocalPortfolioTemplateState();
+  const syncMode = await resolveSyncMode();
+  if (syncMode === 'abort') { setCloudSyncButtonBusy(false); return; }
+  const localIsTemplate = syncMode === 'restore';
   let restored = false, keepBusy = false, shouldFlash = false;
   try {
     const remote = await loadGithubJsonFile(GITHUB_PRIVATE_PORTFOLIO_CONTENTS_API, token, { allowMissing: true });
@@ -302,7 +325,8 @@ export async function syncPortfolioToCloud() {
     let wlResult = { addedSymbols: [], workflowTriggered: false }, wlFailed = false;
     try { wlResult = await syncPublicWatchlistFromPortfolio(token); } catch (e) { wlFailed = true; console.warn('public watchlist sync failed', e); }
     await refreshMarketData({ silent: true });
-    await uploadPrivatePortfolioSnapshot(token, remote && remote.sha);
+    // 恢复模式下这一份就是刚从云端拉回来的，回推没有意义，只会多一次写和一次翻车机会。
+    if (!localIsTemplate) await uploadPrivatePortfolioSnapshot(token, remote && remote.sha);
     showToast(buildSyncSuccessMessage({ restored, addedCount: wlResult.addedSymbols.length, workflowTriggered: wlResult.workflowTriggered, watchlistUpdateFailed: wlFailed }), { type: wlFailed ? 'error' : 'success' });
     if (wlResult.workflowTriggered && wlResult.addedSymbols.length) { keepBusy = true; void runBackgroundMarketRefreshWait({ baselineUpdatedAt: baseline, requiredSymbols: wlResult.addedSymbols.slice(), token }); }
     else { shouldFlash = true; }
