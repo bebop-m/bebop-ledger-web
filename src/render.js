@@ -162,8 +162,12 @@ function renderHomeMetrics(calendarModel, summary) {
   const nextDividend = getNextHomeDividend(calendarModel);
   const nextDate = getHomeDividendDateParts(nextDividend);
   const nextName = nextDividend ? (nextDividend.name || nextDividend.symbol) : '';
+  /* \u8282\u594f\u9884\u4f30\u53ea\u662f\u6309\u5f80\u5e74\u63a8\u7b97\uff0c\u4e0d\u80fd\u548c\u5df2\u516c\u544a/\u5728\u9014\u4e00\u6837\u9648\u8ff0\u6210\u300c\u5230\u8d26\u300d\u3002
+     \u91d1\u989d\u524d\u7f00\u300c\u7ea6\u300d\u4e0e\u53e5\u5c3e\u300c\u9884\u8ba1\u5230\u8d26\u300d\u4e00\u8d77\uff0c\u628a\u4e0d\u786e\u5b9a\u6027\u8bf4\u6e05\u695a\u3002 */
+  const nextIsEstimate = Boolean(nextDividend && nextDividend.isForecast);
+  const nextAmountText = nextDividend ? formatDisplayMoney(nextDividend.netCny, 'CNY') : '';
   const nextLine = nextDividend
-    ? `${nextDate.month}${nextDate.day}\u65e5 ${escapeHtml(nextName)} <strong>${escapeHtml(formatDisplayMoney(nextDividend.netCny, 'CNY'))}</strong> \u5230\u8d26`
+    ? `${nextDate.month}${nextDate.day}\u65e5 ${escapeHtml(nextName)} <strong>${escapeHtml(nextIsEstimate ? `\u7ea6${nextAmountText}` : nextAmountText)}</strong> ${nextIsEstimate ? '\u9884\u8ba1\u5230\u8d26' : '\u5230\u8d26'}`
     : '\u8fd1\u671f\u6682\u65e0\u5728\u9014\u80a1\u606f';
   // \u7b2c\u4e8c\u884c\uff1a\u4e0b\u4e00\u573a\u8d22\u62a5\uff08\u5f85\u786e\u8ba4\u7b14\u6570\u5df2\u5728\u80a1\u606f\u65e5\u5386\u5165\u53e3\u6458\u8981\u91cc\uff09
   const nextReport = getUpcomingReportEvents()[0] || null;
@@ -208,7 +212,8 @@ function getDividendNavSummary(calendarModel) {
   }
   const next = getNextHomeDividend(calendarModel);
   if (!next) return '暂无在途股息';
-  return `下一笔 ${formatHudDate(next.payDate || next.exDate)} ${escapeHtml(next.symbol)}`;
+  // 同上：预估条目不冒充确定的「下一笔」
+  return `${next.isForecast ? '预计' : '下一笔'} ${formatHudDate(next.payDate || next.exDate)} ${escapeHtml(next.symbol)}`;
 }
 
 /* 基本面入口：公式仪表盘的核心结论——组合加权经营回报（仅中高置信度公司）。 */
@@ -355,6 +360,9 @@ export function renderBucketsView(segments, holdings, summary, opts = {}) {
   const active = find(state.activeBucketKey);
   const hasUnknownTax = holdings.some((item) => !item.taxRateKnown && safeNumber(item.quantity, 0) > 0);
   const dividendLabel = hasUnknownTax ? '年化股息' : '税后年化';
+  /* 组合行的标签点破口径：这里是「按当前持仓 × 近 12 个月每股股息」的前瞻年化，
+     与首页/股息日历的「本年股息」（自然年现金流）不是一回事，两个数天然不等。 */
+  const portfolioLabel = hasUnknownTax ? '当前持仓年化' : '当前持仓税后年化';
   const bar = ['core', 'income'].map((key) => {
     const item = find(key);
     return item ? `<i class="seg-${key}" style="width:${(share(item) * 100).toFixed(2)}%"></i>` : '';
@@ -374,7 +382,7 @@ export function renderBucketsView(segments, holdings, summary, opts = {}) {
     <div class="structure-bar" aria-hidden="true">${bar}</div>
     <div class="bucket-row">${buttons}</div>
     ${detail}
-    <p class="portfolio-line">组合${dividendLabel} <b>${escapeHtml(formatZenMoney(summary.totalDividendCny))}</b> · 组合股息率 <strong>${formatZenPercent(total > 0 ? summary.totalDividendCny / total : 0)}</strong></p>`;
+    <p class="portfolio-line">${portfolioLabel} <b>${escapeHtml(formatZenMoney(summary.totalDividendCny))}</b> · 组合股息率 <strong>${formatZenPercent(total > 0 ? summary.totalDividendCny / total : 0)}</strong></p>`;
 }
 
 export function patchBucketsView(segments, holdings, summary) {
@@ -727,6 +735,15 @@ function getTrendValue(row, key) {
   return isIncomeValueMissing(value) ? null : safeNumber(value, 0);
 }
 
+/* 已完结年度的资金收益率序列（升序），进行中的年份不计入。
+   09 页趋势的累计年化与 11 分享卡共用这一口径，两处必须同源。 */
+function getCompletedCapitalRates(rows, currentYear) {
+  return rows
+    .filter((row) => row.year !== currentYear)
+    .map((row) => ({ year: row.year, rate: getTrendValue(row, 'capitalReturnRate') }))
+    .filter((entry) => entry.rate !== null);
+}
+
 function roundSvgNumber(value) {
   return Math.round(value * 100) / 100;
 }
@@ -795,15 +812,16 @@ function renderIncomeTrend(model) {
     return `<text class="inc-yr${isCurrent ? ' is-current' : ''}" x="${x}" y="10" text-anchor="middle">${String(row.year).slice(2)}${isCurrent ? '至今' : ''}</text>`;
   }).join('');
 
-  // 累计年化 = 各年资金收益率复利后折年（几何均值）；最深一年取区间最低
-  const capRates = rows.map((row) => ({ year: row.year, rate: getTrendValue(row, 'capitalReturnRate') }))
-    .filter((entry) => entry.rate !== null);
+  /* 累计年化 = 各年资金收益率复利后折年（几何均值）。只用已完结年度：
+     进行中的年份才过了几个月，按整年参与复利会把结果拉歪（半年 -9.6% 会被
+     当成一整年的 -9.6%）。不足两个完整年度时「累计」无从谈起，整行不出。 */
+  const capRates = getCompletedCapitalRates(rows, model.currentYear);
   let cagrLine = '';
-  if (capRates.length) {
+  if (capRates.length >= 2) {
     const worst = Math.min(...capRates.map((entry) => entry.rate));
     const product = capRates.reduce((acc, entry) => acc * (1 + entry.rate), 1);
     const cumulative = product > 0 ? Math.pow(product, 1 / capRates.length) - 1 : null;
-    cagrLine = `<p class="inc-trend-cagr">自 ${capRates[0].year} 累计年化 <strong class="${getReturnTone(cumulative)}">${escapeHtml(formatTrendSigned(cumulative))}%</strong> · 最深一年 <strong class="${getReturnTone(worst)}">${escapeHtml(formatTrendSigned(worst))}%</strong></p>`;
+    cagrLine = `<p class="inc-trend-cagr">${capRates[0].year}–${capRates[capRates.length - 1].year} 累计年化 <strong class="${getReturnTone(cumulative)}">${escapeHtml(formatTrendSigned(cumulative))}%</strong> · 最深一年 <strong class="${getReturnTone(worst)}">${escapeHtml(formatTrendSigned(worst))}%</strong></p>`;
   }
 
   refs.incomeTrend.innerHTML = `${getIncomeSecHead('历年趋势', '收益率')}
@@ -1186,15 +1204,17 @@ function formatSharePlainPercent(value) {
   return `${(Number(value) * 100).toFixed(1)}%`;
 }
 
-/* 累计年化：与 09 页趋势同一口径（各年资金收益率复利折年） */
+/* 累计年化：与 09 页趋势同一口径（已完结年度的资金收益率复利折年）。
+   进行中的年份不参与，不足两个完整年度时不给这个数。 */
 function getCumulativeAnnualized(model) {
-  const rates = model.trendRows
-    .map((row) => getTrendValue(row, 'capitalReturnRate'))
-    .filter((value) => value !== null);
-  if (!rates.length) return { rate: null, startYear: null };
-  const product = rates.reduce((acc, value) => acc * (1 + value), 1);
-  const startYear = model.trendRows.find((row) => getTrendValue(row, 'capitalReturnRate') !== null).year;
-  return { rate: product > 0 ? Math.pow(product, 1 / rates.length) - 1 : null, startYear };
+  const entries = getCompletedCapitalRates(model.trendRows, model.currentYear);
+  if (entries.length < 2) return { rate: null, startYear: null, endYear: null };
+  const product = entries.reduce((acc, entry) => acc * (1 + entry.rate), 1);
+  return {
+    rate: product > 0 ? Math.pow(product, 1 / entries.length) - 1 : null,
+    startYear: entries[0].year,
+    endYear: entries[entries.length - 1].year
+  };
 }
 
 export function buildAnnualShareModel(year) {
@@ -1239,7 +1259,7 @@ function getShareCardMarkup(share) {
   const legend = share.holdings.map((item, index) => `<div><b style="background:${SHARE_DONUT_COLORS[Math.min(index, 5)]}"></b><span class="co">${escapeHtml(item.name)}</span><span class="pc">${(item.pct * 100).toFixed(1)}%</span></div>`).join('');
   const cumulativeText = share.cumulative.rate === null
     ? ''
-    : ` · 自 ${share.cumulative.startYear} 累计年化 ${formatSharePercent(share.cumulative.rate)}`;
+    : ` · ${share.cumulative.startYear}–${share.cumulative.endYear} 累计年化 ${formatSharePercent(share.cumulative.rate)}`;
   return `<div class="zen-share-card">
       <span class="sc-brand">Bebop Ledger · ${share.year}</span>
       <span class="sc-label">本年收益率</span>
@@ -1286,7 +1306,7 @@ export function generateAnnualShareCard() {
   ctx.fillText(formatSharePercent(share.returnRate), W / 2, 300);
   ctx.fillStyle = C.muted; ctx.font = font(24, 600);
   const cumulativeText = share.cumulative.rate === null ? ''
-    : ` · 自 ${share.cumulative.startYear} 累计年化 ${formatSharePercent(share.cumulative.rate)}`;
+    : ` · ${share.cumulative.startYear}–${share.cumulative.endYear} 累计年化 ${formatSharePercent(share.cumulative.rate)}`;
   ctx.fillText(`股息收益率 ${formatSharePlainPercent(share.dividendYieldRate)}${cumulativeText}`, W / 2, 350);
 
   // 归因四段线（宽 440，高 4）+ 一行拆分文字
