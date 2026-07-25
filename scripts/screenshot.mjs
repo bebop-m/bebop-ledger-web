@@ -113,13 +113,22 @@ async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
     hasTouch: true
   });
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: theme }]);
+  /* 行情要等到真的落地再拍。只判「hero 非空」是不够的：种子状态下 hero
+     早就渲染好了（净资产先显示 ¥0.00），那一帧拍出来像数据故障。
+     market.json 的响应必须在 goto 之前挂监听，否则会错过。 */
+  const marketLoaded = page.waitForResponse(
+    (res) => /data\/market\.json/.test(res.url()) && res.status() === 200,
+    { timeout: 20000 }
+  ).catch(() => null);
   await page.goto(CFG.url, { waitUntil: 'networkidle2', timeout: 30000 });
+  if (!await marketLoaded) console.warn('  ! 未捕获到 market.json 响应，画面可能是行情应用前的一帧');
 
-  // 等首屏渲染出真实数据，而不是空壳
+  // 响应落地后还要等这一轮渲染出结果
   await page.waitForFunction(
     () => document.querySelector('#homeHero') && document.querySelector('#homeHero').innerHTML.trim().length > 0,
     { timeout: 15000 }
   ).catch(() => console.warn('  ! 首屏数据等待超时，仍继续截图'));
+  await new Promise((r) => setTimeout(r, 250));
 
   // 抽屉挂在内页上时，先把宿主页面打开
   if (!nav && modal && MODAL_TARGETS[modal] && MODAL_TARGETS[modal].nav) nav = MODAL_TARGETS[modal].nav;
