@@ -22,6 +22,9 @@ export const LEGEND_TOGGLE_ANIMATION_MS = 220;
 export const MASK_AMOUNT = '******';
 export const MASK_PRICE = '***.**';
 export const DEFAULT_STALE_DAYS = 7;
+/* 公司层面的诊断（经营、股息、数据覆盖）低于这个持仓权重就不再生成条目。
+   仓位纪律类规则不受影响——它检验的正是权重本身。config.json 可覆盖。 */
+export const DEFAULT_DIAGNOSTICS_MIN_WEIGHT = 0.01;
 export const MARKET_DEPLOY_WAIT_TIMEOUT_MS = 90000;
 export const MARKET_DEPLOY_WAIT_INTERVAL_MS = 3000;
 export const VALID_DIVIDEND_SOURCES = new Set(['yfinance', 'yahoo', 'eodhd', 'manual', 'cache']);
@@ -62,7 +65,6 @@ export const UI_TEXT = {
   dividendFilterIncome: '\u6253\u5de5\u4ed3'
 };
 
-export const BUCKET_CHIP_COMPACT_THRESHOLD = 0.16;
 export const HOLDING_SWIPE_DELETE_WIDTH = 72;
 export const HOLDING_SWIPE_OPEN_THRESHOLD = 34;
 

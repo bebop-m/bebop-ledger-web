@@ -408,7 +408,7 @@ function renderOpeningCashModal() {
         <label class="zen-form-row"><span>现金基准日</span><input id="modalCurrentCashDateInput" class="zen-form-input" type="date" value="${escapeHtml(state.currentCashAsOfDate || getTodayLabel())}"></label>
         <label class="zen-form-row"><span>交易持仓起点</span><input id="modalPositionOpeningDateInput" class="zen-form-input" type="date" value="${escapeHtml(state.positionOpeningDate || getTodayLabel())}"></label>
       </div>
-      <p class="zen-form-foot">基准日之后的新记录才调整现金 · 持股从交易起点的基准股数开始回放</p>
+      <p class="zen-form-foot">基准日之后的新记录才调整现金 · 起点之前的买卖不计入持股</p>
       ${renderZenSheetActions()}
     </section>`;
 }
@@ -555,24 +555,32 @@ function renderDiagnosticsModal() {
       <div class="zen-diag-items">${items.map((item) => `<div class="zen-diag-item"><i class="zen-diag-dot" aria-hidden="true"></i><strong>${escapeHtml(item.name)}</strong> ${escapeHtml(item.title)}<br>依据：${escapeHtml(item.evidence)}</div>`).join('')}</div>
     </div>`;
   };
+  /* 小仓位被门槛静默时如实交代一句：否则「为什么茅台报了、这只没报」无从判断。
+     这是口径披露，不是教学文案，所以留着。 */
+  const mutedNote = model.mutedHoldingCount > 0
+    ? `<p class="zen-diag-muted">另有 ${model.mutedHoldingCount} 只小仓位（合计 ${(model.mutedHoldingWeight * 100).toFixed(1)}%）只查仓位纪律，不列公司层面的发现</p>`
+    : '';
   let body = '';
   if (!model.ready) {
     body = '<p class="zen-diag-empty">正在读取自动基本面，完成后会自动生成诊断</p>';
   } else if (!model.items.length) {
-    body = '<p class="zen-diag-empty">仓位、股息与公司基本面均未触发当前规则</p>';
+    body = `<p class="zen-diag-empty">仓位、股息与公司基本面均未触发当前规则</p>${mutedNote}`;
   } else {
     body = [
       group('严重', model.critical, 'is-critical'),
       group('关注', model.attention, 'is-attention'),
-      group('数据质量', model.data, 'is-data')
+      group('数据质量', model.data, 'is-data'),
+      mutedNote
     ].join('');
   }
+  /* 抬头大数与页头角标同源（严重档），不然一个页面两个「诊断 N」对不上。
+     关注 / 数据质量的条数由下面各组自己的标签交代。 */
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
     <section class="modal-sheet zen-sheet zen-sheet--diag" role="dialog" aria-modal="true" aria-labelledby="diagnosticsTitle">
       <div class="zen-sheet-handle" aria-hidden="true"></div>
       <header class="zen-diag-head">
         <div><h3 id="diagnosticsTitle">持仓诊断</h3><p>只列异常 · 全部自动计算</p></div>
-        <strong class="zen-diag-count">${model.actionableCount}</strong>
+        <strong class="zen-diag-count">${model.criticalCount}</strong>
       </header>
       <div class="zen-diag-body">${body}</div>
       <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
@@ -870,7 +878,7 @@ function renderHoldingDetailModal() {
         ${row('税前年化股息', formatDisplayMoney(item.grossAnnualDividendCny, 'CNY'))}
         ${row('税后年化股息', formatDisplayMoney(item.netAnnualDividendCny, 'CNY'))}
       </dl>
-      <p class="zen-detail-note">${escapeHtml(sourceLabel)} · 金额按当前汇率折算人民币 · 已除息事件以除息日快照为准</p>
+      <p class="zen-detail-note">${escapeHtml(sourceLabel)} · 按当前汇率折人民币</p>
       <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
     </section>`;
 }

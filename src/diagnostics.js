@@ -6,7 +6,7 @@ import {
   getFundamentalsCompanyCount,
   getFundamentalsMeta
 } from './fundamentals.js';
-import { safeNumber } from './utils.js';
+import { safeNumber, getDiagnosticsMinWeight } from './utils.js';
 
 const INCOME_USUAL_MAX = 0.05;
 const INCOME_HARD_MAX = 0.10;
@@ -54,15 +54,20 @@ function latestPair(rows, key) {
   return { previous: available[available.length - 2], latest: available[available.length - 1] };
 }
 
+/* 仓位纪律的分母是净资产（股票市值 + 现金，融资即负现金）：
+   融资会放大单一标的对净资产的冲击，用净资产才如实反映风险敞口。
+   注意别把它说成「总资产」——融资时总资产是股票市值，两者差着那笔融资。 */
 function addPositionDiagnostics(items, holding, source) {
   if (holding.bucket !== 'income') return;
-  const assetWeight = holding.totalAssetWeight === null ? holding.holdingWeight : holding.totalAssetWeight;
+  const useNetAsset = holding.totalAssetWeight !== null;
+  const assetWeight = useNetAsset ? holding.totalAssetWeight : holding.holdingWeight;
+  const basis = useNetAsset ? '净资产' : '股票市值';
   if (assetWeight > INCOME_HARD_MAX) {
     items.push(makeItem('critical', holding, '打工仓超过 10% 上限',
-      `当前占总资产 ${percent(assetWeight)}，超过策略硬上限 ${percent(INCOME_HARD_MAX, 0)}`, source, 'income-hard-max'));
+      `当前占${basis} ${percent(assetWeight)}，超过策略硬上限 ${percent(INCOME_HARD_MAX, 0)}`, source, 'income-hard-max'));
   } else if (assetWeight > INCOME_USUAL_MAX) {
     items.push(makeItem('attention', holding, '打工仓高于常规区间',
-      `当前占总资产 ${percent(assetWeight)}，常规仓位为 2%–5%`, source, 'income-usual-max'));
+      `当前占${basis} ${percent(assetWeight)}，常规仓位为 2%–5%`, source, 'income-usual-max'));
   }
 }
 
@@ -147,6 +152,15 @@ function addModelDiagnostics(items, holding, model, source) {
   }
 }
 
+/* 公司层面的发现（经营 / 股息 / 数据覆盖）对组合的意义随权重衰减：
+   一只占 0.07%（约 ¥190）的持仓净利润下滑，是事实，但不是待办。
+   低于门槛的持仓只跑仓位纪律，其余规则不生成条目，改为在抽屉沉底汇总一句。
+   门槛本身在 config.json 的 diagnosticsMinWeight，设 0 即恢复全量上报。 */
+function isBelowDiagnosticsFloor(holding) {
+  const floor = getDiagnosticsMinWeight();
+  return floor > 0 && safeNumber(holding.holdingWeight, 0) < floor;
+}
+
 export function getPortfolioDiagnostics() {
   const summary = computeHoldings();
   const meta = getFundamentalsMeta();
@@ -156,9 +170,19 @@ export function getPortfolioDiagnostics() {
     ? `自动基本面 · 更新 ${String(meta.updatedAt).slice(0, 10)}`
     : '自动基本面';
   const items = [];
+  let mutedCount = 0;
+  let mutedWeight = 0;
 
   summary.holdings.forEach((holding) => {
+    // 仓位纪律检验的正是权重本身，任何仓位都要跑。
     addPositionDiagnostics(items, holding, '当前持仓');
+    if (isBelowDiagnosticsFloor(holding)) {
+      if (safeNumber(holding.marketValueCny, 0) > 0) {
+        mutedCount += 1;
+        mutedWeight += safeNumber(holding.holdingWeight, 0);
+      }
+      return;
+    }
     const company = getCompanyFundamentals(holding.symbol);
     if (!company) {
       if (ready) items.push(makeItem('data', holding, '缺少公司基本面', '自动数据源尚未覆盖该证券', source, 'company-missing'));
@@ -178,13 +202,18 @@ export function getPortfolioDiagnostics() {
   const severityOrder = { critical: 0, attention: 1, data: 2 };
   const unique = items.filter((item, index, rows) => rows.findIndex((other) => other.key === item.key) === index)
     .sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity] || b.weight - a.weight || a.name.localeCompare(b.name, 'zh-CN'));
+  const critical = unique.filter((item) => item.severity === 'critical');
   return {
     ready,
     items: unique,
-    critical: unique.filter((item) => item.severity === 'critical'),
+    critical,
     attention: unique.filter((item) => item.severity === 'attention'),
     data: unique.filter((item) => item.severity === 'data'),
     actionableCount: unique.filter((item) => item.severity !== 'data').length,
+    // 角标只认严重档：常年高挂的数字不是告警。关注与数据质量仍在抽屉里逐条列出。
+    criticalCount: critical.length,
+    mutedHoldingCount: mutedCount,
+    mutedHoldingWeight: mutedWeight,
     updatedAt: meta.updatedAt || ''
   };
 }

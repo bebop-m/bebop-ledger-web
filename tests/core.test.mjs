@@ -273,14 +273,12 @@ test('bucket summaries and all three holding sorts use the same computed values'
   assert.equal(summary.holdings.length, 2);
 });
 
-test('annual dividend overview reports expected cashflow, remaining amount, progress and yield', () => {
-  const overview = getAnnualDividendOverview({ metrics: { projectedCny: 120, receivedCny: 45 } }, { totalMarketValueCny: 2000 });
+test('annual dividend overview reports expected cashflow and progress', () => {
+  const overview = getAnnualDividendOverview({ metrics: { projectedCny: 120, receivedCny: 45 } });
   assert.deepEqual(overview, {
     projectedCny: 120,
     receivedCny: 45,
-    waitingCny: 75,
-    receivedRatio: 0.375,
-    annualYield: 0.06
+    receivedRatio: 0.375
   });
 });
 

@@ -1,13 +1,24 @@
 import {
   DEFAULT_STALE_DAYS, VALID_DIVIDEND_SOURCES, VALID_DIVIDEND_STATUSES,
   VALID_RECEIPT_STATUSES, VALID_DIVIDEND_CONFIDENCES, LABELS, DEFAULT_RATES,
-  PAYDATE_LAG_DAYS
+  PAYDATE_LAG_DAYS, DEFAULT_DIAGNOSTICS_MIN_WEIGHT
 } from './constants.js';
 
 /* ── Stale-days config (set from network module on config load) ── */
 let _staleDays = DEFAULT_STALE_DAYS;
 export function setStaleDays(value) { _staleDays = normalizeStaleDays(value); }
 export function getStaleDays() { return _staleDays; }
+
+/* ── 诊断权重门槛（同样由 config.json 注入）── */
+let _diagnosticsMinWeight = DEFAULT_DIAGNOSTICS_MIN_WEIGHT;
+export function normalizeDiagnosticsMinWeight(value, fallback = DEFAULT_DIAGNOSTICS_MIN_WEIGHT) {
+  const numeric = Number(value);
+  // 允许 0（全部上报）；上限 1 是因为它是权重比例，超过就没有持仓能过线了。
+  if (!Number.isFinite(numeric) || numeric < 0 || numeric >= 1) return fallback;
+  return numeric;
+}
+export function setDiagnosticsMinWeight(value) { _diagnosticsMinWeight = normalizeDiagnosticsMinWeight(value); }
+export function getDiagnosticsMinWeight() { return _diagnosticsMinWeight; }
 
 /* ── Core Utilities ── */
 export function roundTo(value, digits = 6) {

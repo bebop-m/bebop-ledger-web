@@ -72,27 +72,6 @@ function displayName(symbol) {
   return String(quote.name || symbol).trim() || symbol;
 }
 
-export function getCurrentMonthReportModel(today = localToday()) {
-  const monthKey = String(today).slice(0, 7);
-  const month = Number(monthKey.slice(5, 7));
-  const holdingSymbols = getHoldingSymbols();
-  const events = (_data && _data.events || [])
-    .filter((event) => holdingSymbols.has(event.symbol) && event.reportDate.startsWith(monthKey))
-    .map((event) => ({ ...event, name: displayName(event.symbol), isPast: event.reportDate < today }))
-    .sort((a, b) => `${a.reportDate}|${a.symbol}`.localeCompare(`${b.reportDate}|${b.symbol}`));
-  const companies = new Set(events.map((event) => event.symbol));
-  const upcoming = events.find((event) => event.reportDate >= today) || null;
-  return {
-    month,
-    label: `${month}月财报`,
-    companyCount: companies.size,
-    events,
-    upcoming,
-    coverage: _data ? { covered: _data.symbolsCovered, total: _data.symbolsTotal } : { covered: 0, total: holdingSymbols.size },
-    updatedAt: _data && _data.updatedAt || ''
-  };
-}
-
 /* 未来财报（默认限当前持仓），按日期升序；symbol 传入时只看该公司。 */
 export function getUpcomingReportEvents(opts = {}) {
   const { symbol = '', withinDays = 0, today = localToday() } = opts;
@@ -107,20 +86,3 @@ export function getUpcomingReportEvents(opts = {}) {
     .sort((a, b) => `${a.reportDate}|${a.symbol}`.localeCompare(`${b.reportDate}|${b.symbol}`));
 }
 
-export function getNextReportEvent(symbol) {
-  return getUpcomingReportEvents({ symbol })[0] || null;
-}
-
-function formatShortDate(dateLabel) {
-  return `${Number(dateLabel.slice(5, 7))}月${Number(dateLabel.slice(8, 10))}日`;
-}
-
-/* 首页摘要：本月有财报 →「7月财报 · N家」；本月没有 →「下场财报 腾讯控股 8月12日」。 */
-export function getReportHomeSummary() {
-  const model = getCurrentMonthReportModel();
-  if (model.companyCount) {
-    return model.upcoming ? `${model.label} · ${model.companyCount}家` : `${model.label} · 本月已发布`;
-  }
-  const next = getUpcomingReportEvents()[0];
-  return next ? `下场财报 ${next.name} ${formatShortDate(next.reportDate)}` : '';
-}

@@ -598,24 +598,11 @@ export function normalizeEconomicDividendEntries(entries) {
   return result;
 }
 
-function getDividendHistoryStartDate() {
-  const snapshotStart = state.dailySnapshots.map((entry) => formatDateLabel(entry && entry.date)).filter(Boolean).sort()[0] || '';
-  const opening = formatDateLabel(state.positionOpeningDate);
-  if (snapshotStart && opening) return snapshotStart < opening ? snapshotStart : opening;
-  return snapshotStart || opening;
-}
-
-export function isUnverifiedHistoricalDividend(entry) {
-  if (!entry || entry.confirmed === true || entry.confidence === 'manual' || entry.sharesSource === 'manual') return false;
-  const historyStart = getDividendHistoryStartDate();
-  const exDate = formatDateLabel(entry.exDate);
-  return entry.sharesSource === 'current' && (!historyStart || (exDate && exDate < historyStart));
-}
-
-export function getNormalizedDividendLedgerEntries(options = {}) {
-  const includeUnverified = options.includeUnverified === true;
-  return normalizeEconomicDividendEntries(state.dividendLedger)
-    .filter((entry) => includeUnverified || !isUnverifiedHistoricalDividend(entry));
+/* 账本自 2026 年起逐笔记录，更早年份只留年度手工基准（09-收益明细里回填）。
+   那批「按当前持股倒推的早年派息」已从账本清除，展示层不再需要过滤器兜底。
+   生成端仍由 revenue.js 把关：交易起点之前的事件不会再写进账本。 */
+export function getNormalizedDividendLedgerEntries() {
+  return normalizeEconomicDividendEntries(state.dividendLedger);
 }
 
 // 以（标的 + 除息日）作为一笔派息的经济身份，折叠账本/公告/预估之间以及账本内部的重复条目，
@@ -631,8 +618,6 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
   const filterKey = DIVIDEND_FILTER_KEYS.has(filterKeyOverride) ? filterKeyOverride : getDividendFilterKey();
   const summary = computeHoldings();
   const normalizedLedger = getNormalizedDividendLedgerEntries();
-  const excludedHistoricalEstimateCount = normalizeEconomicDividendEntries(state.dividendLedger)
-    .filter(isUnverifiedHistoricalDividend).length;
   const ledgerEntries = normalizedLedger
     .map((entry) => buildLedgerDividendEntry(entry, year, todayLabel))
     .filter(Boolean);
@@ -702,30 +687,20 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
       lastYearTotalCny,
       projectedYoy
     },
-    excludedHistoricalEstimateCount,
     months: buildDividendMonthItems(entries, currentMonth),
     allDetails: entries
   };
 }
 
-/* 首页用：当前自然年「预计全年」股息（全部仓位，不受日历筛选影响）。
-   = 已到账 + 待核对 + 在途 + 已公告 + 节奏预估；历史事件按除息日前的权利股数冻结。 */
-export function computeCurrentYearDividendCny() {
-  return computeDividendCalendar(new Date(), 'all').metrics.projectedCny;
-}
-
-// 首页年度现金流的单一口径：全年应收、确认进度与相对当前股票市值的年度股息率。
-export function getAnnualDividendOverview(calendarModel, holdingSummary = computeHoldings()) {
+// 首页年度现金流的单一口径：全年应收与确认进度。
+export function getAnnualDividendOverview(calendarModel) {
   const metrics = calendarModel && calendarModel.metrics ? calendarModel.metrics : (calendarModel || {});
   const projectedCny = Math.max(0, safeNumber(metrics.projectedCny, 0));
   const receivedCny = Math.max(0, safeNumber(metrics.receivedCny, 0));
-  const marketValueCny = Math.max(0, safeNumber(holdingSummary && holdingSummary.totalMarketValueCny, 0));
   return {
     projectedCny: roundMoney(projectedCny),
     receivedCny: roundMoney(receivedCny),
-    waitingCny: roundMoney(Math.max(0, projectedCny - receivedCny)),
-    receivedRatio: projectedCny > 0 ? Math.min(1, receivedCny / projectedCny) : 0,
-    annualYield: marketValueCny > 0 ? projectedCny / marketValueCny : 0
+    receivedRatio: projectedCny > 0 ? Math.min(1, receivedCny / projectedCny) : 0
   };
 }
 
@@ -986,8 +961,7 @@ export function computeTradeSummary(year = null) {
     totalUnrealizedPnlCny: roundMoney(positionRows.reduce((sum, row) => sum + row.unrealizedPnlCny, 0)),
     totalUnrealizedPnlComplete: positionRows.every((row) => row.costBasisComplete),
     totalRealizedPnlCny: roundMoney(positionRows.reduce((sum, row) => sum + row.realizedPnlCny, 0)),
-    totalRealizedPnlComplete: positionRows.every((row) => row.realizedPnlComplete),
-    totalAnnualDividendCny: roundMoney(positionRows.reduce((sum, row) => sum + row.annualDividendCny, 0))
+    totalRealizedPnlComplete: positionRows.every((row) => row.realizedPnlComplete)
   };
 }
 

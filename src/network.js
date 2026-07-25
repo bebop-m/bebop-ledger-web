@@ -1,7 +1,8 @@
 import { state, refs, invalidateComputeCache, saveState, showToast } from './state.js';
 import {
   safeNumber, normalizeSymbol, normalizeDividendSource, chunkSymbols,
-  toTencentSymbol, inferQuoteFromMap, mergeQuotes, setStaleDays, normalizeStaleDays
+  toTencentSymbol, inferQuoteFromMap, mergeQuotes, setStaleDays, normalizeStaleDays,
+  setDiagnosticsMinWeight
 } from './utils.js';
 import { settleRevenueData } from './revenue.js';
 import {
@@ -43,6 +44,7 @@ export function applyDividendOverridePayload(payload) {
 export function applyClientConfigPayload(payload) {
   if (!payload || typeof payload !== 'object') return;
   setStaleDays(normalizeStaleDays(payload.staleDays, DEFAULT_STALE_DAYS));
+  setDiagnosticsMinWeight(payload.diagnosticsMinWeight);
 }
 
 export async function loadClientConfigSnapshot() {

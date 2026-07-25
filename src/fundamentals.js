@@ -421,10 +421,12 @@ function buildRankTrack(rank, symbol) {
     </button>`).join('')}</div>`;
 }
 
-function buildCompanyHead(company, totalCount) {
+function buildCompanyHead(company) {
   return `<div class="fu-co">
       <button class="fu-co-name" type="button" data-fund-picker-open aria-haspopup="dialog">${escapeHtml(getCompanyDisplayName(company))}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5 12 15l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
-      <p class="fu-co-sub">${escapeHtml(company.symbol)} · 股息按 ${escapeHtml(company.currency)}/股 · 财报币种 ${escapeHtml(company.statementCurrency || company.currency)} · 全部 ${totalCount} 家</p>
+      <p class="fu-co-sub">${escapeHtml(company.symbol)}${company.statementCurrency && company.statementCurrency !== company.currency
+        ? ` · 股息 ${escapeHtml(company.currency)} · 财报 ${escapeHtml(company.statementCurrency)}`
+        : ` · ${escapeHtml(company.currency)}`}</p>
     </div>`;
 }
 
@@ -448,7 +450,9 @@ function buildFormulaSection(company, rank) {
   const portfolioRate = getPortfolioReturnSummary().all;
   const index = rank.findIndex((item) => item.symbol === company.symbol);
   const anchorParts = [];
-  if (portfolioRate !== null) anchorParts.push(`组合加权 <strong>${escapeHtml(formatPercentValue(portfolioRate))}/年</strong>`);
+  /* 「组合经营回报」而非「组合加权」：这是所持公司的历史经营成绩（市值加权），
+     与账户收益率无关——买入价与买入时机都不参与计算，别让它冒充你的收益率。 */
+  if (portfolioRate !== null) anchorParts.push(`组合经营回报 ${escapeHtml(formatPercentValue(portfolioRate))}/年`);
   if (index >= 0 && rank.length > 1) anchorParts.push(`本公司列 ${rank.length} 家中第 ${index + 1}`);
   return `<section class="fu-formula">
       <span class="fu-f-label">历史经营回报参考</span>
@@ -554,7 +558,7 @@ function buildDividendLine(company, visible) {
   const latest = visible.filter((row) => isFiniteValue(row.dividendPerShare)).slice(-1)[0];
   const streak = getGrowthStreak(visible, 'dividendPerShare');
   return `<section class="fu-bars">
-      <div class="fu-sec-head"><span class="fu-sec-label">每股分红</span><span class="fu-latest">${escapeHtml(formatMetricValue(latest.dividendPerShare, 'money'))} ${escapeHtml(company.currency)}<small>股息率 ${escapeHtml(formatMetricValue(latest.dividendYield, 'percent'))}</small></span></div>
+      <div class="fu-sec-head"><span class="fu-sec-label">每股分红</span><span class="fu-latest">${escapeHtml(formatMetricValue(latest.dividendPerShare, 'money'))} ${escapeHtml(company.currency)}<small>${latest.year} 股息率 ${escapeHtml(formatMetricValue(latest.dividendYield, 'percent'))}</small></span></div>
       ${buildZenLineSvg(points, 'gold', '每股分红历年走势')}
       <p class="fu-bar-stats"><span>特别股息 <strong>${escapeHtml(formatMetricValue(latest.specialDividendPerShare, 'money'))}</strong></span><span>连续增长 <strong>${streak > 0 ? `${streak} 年` : '—'}</strong></span></p>
     </section>`;
@@ -627,7 +631,7 @@ export function renderFundamentalsPage() {
 
   refs.fundamentalsContent.innerHTML = `
     ${buildRankTrack(rank, company.symbol)}
-    ${buildCompanyHead(company, allCompanies.length)}
+    ${buildCompanyHead(company)}
     ${buildFormulaSection(company, rank)}
     ${buildValuationSection(company)}
     ${buildDividendLine(company, visible)}
