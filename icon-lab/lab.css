@@ -1,0 +1,261 @@
+/* 图标 A/B 对比台。只服务 icon-lab/，不参与主应用样式。 */
+:root {
+  --paper: #faf8f3;
+  --ink: #23201b;
+  --ink-soft: #6f675a;
+  --gold: #c19a45;
+  --hairline: rgba(35, 32, 27, 0.14);
+  /* iOS 主屏图标的圆角是超椭圆，22.37% 是常用的近似值 */
+  --squircle: 22.37%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 32px 20px 64px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.tag {
+  margin: 0 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.hint {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+
+.hint a {
+  color: var(--gold);
+}
+
+section {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid var(--hairline);
+}
+
+section > h2 {
+  margin: 0 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+}
+
+/* ---- 模拟主屏 ---- */
+.wallpaper {
+  padding: 26px 18px 22px;
+  border-radius: 18px;
+  background: #ded7c8;
+  transition: background 0.2s ease;
+}
+
+body.wall-dark .wallpaper {
+  background: #1b1915;
+}
+
+body.wall-photo .wallpaper {
+  background: linear-gradient(150deg, #6d7f8b 0%, #9aa79c 45%, #c9b391 100%);
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px 12px;
+  justify-items: center;
+}
+
+.home-app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+/* 60pt 是 iPhone 主屏图标的真实边长，别改这个数 */
+.home-app img {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--squircle);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* 浅壁纸上白字看不清，跟着壁纸切颜色 */
+.home-app span {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #2c2822;
+}
+
+body.wall-dark .home-app span,
+body.wall-photo .home-app span {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.wall-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.wall-controls button {
+  padding: 6px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.wall-controls button[aria-pressed="true"] {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ---- 尺寸阶梯 ---- */
+.ladder {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.ladder figure {
+  margin: 0;
+}
+
+.ladder figcaption {
+  margin-bottom: 10px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+.sizes {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.sizes img {
+  border-radius: var(--squircle);
+  box-shadow: 0 1px 4px rgba(35, 32, 27, 0.14);
+}
+
+.sizes .s40 { width: 40px; height: 40px; }   /* 设置列表 / Spotlight */
+.sizes .s60 { width: 60px; height: 60px; }   /* 主屏 */
+.sizes .s120 { width: 120px; height: 120px; }
+
+/* ---- 圆形遮罩（Android 自适应图标） ---- */
+.round img {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(35, 32, 27, 0.14);
+}
+
+.round {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.round figure {
+  margin: 0;
+  text-align: center;
+}
+
+.round figcaption {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* ---- 安装入口 ---- */
+.install {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.install a {
+  flex: 1 1 200px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.install img {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--squircle);
+}
+
+.install strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.install em {
+  font-size: 12px;
+  font-style: normal;
+  color: var(--ink-soft);
+}
+
+/* ---- 候选页 ---- */
+.candidate main {
+  max-width: 420px;
+  text-align: center;
+  padding-top: 40px;
+}
+
+.candidate .hero {
+  width: 200px;
+  height: 200px;
+  margin: 24px auto 16px;
+  border-radius: var(--squircle);
+  box-shadow: 0 2px 10px rgba(35, 32, 27, 0.16);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #17150f;
+    --ink: #f2ece0;
+    --ink-soft: #a79c88;
+    --hairline: rgba(242, 236, 224, 0.16);
+  }
+}

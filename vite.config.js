@@ -3,9 +3,9 @@ import { readFile } from 'node:fs/promises';
 
 const stablePwaAssets = [
   'manifest.webmanifest',
-  'assets/pwa-icon-192-v3.png',
-  'assets/pwa-icon-512-v3.png',
-  'assets/pwa-icon-maskable-512-v3.png'
+  'assets/pwa-icon-192-v4b.png',
+  'assets/pwa-icon-512-v4b.png',
+  'assets/pwa-icon-maskable-512-v4b.png'
 ];
 
 function emitStablePwaAssets() {

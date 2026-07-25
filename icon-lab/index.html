@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#faf8f3">
+    <title>图标对比台</title>
+    <link rel="icon" href="../assets/favicon-64-v3.png" type="image/png">
+    <link rel="stylesheet" href="./lab.css">
+  </head>
+  <body>
+    <main>
+      <p class="tag">Icon Lab</p>
+      <h1>PWA 图标 A/B 对比</h1>
+      <p class="hint">
+        屏幕上的预览只能排除明显不行的方案，最终还得看真机桌面。
+        下面两个入口分别用「分享 → 添加到主屏幕」装一次，桌面上就会出现「刻度A」「刻度B」两个图标，
+        和正装的「波普账本」并排比。现役正式图标是候选 B（v4b），改主意就把引用换成另一版。
+      </p>
+
+      <section>
+        <h2>装到桌面</h2>
+        <div class="install">
+          <a href="./a.html">
+            <img src="../assets/apple-touch-icon-v4a.png" alt="">
+            <span><strong>候选 A · 刻度细线</strong><em>带月份数字 07</em></span>
+          </a>
+          <a href="./b.html">
+            <img src="../assets/apple-touch-icon-v4b.png" alt="">
+            <span><strong>候选 B · 刻度粗线</strong><em>只有线和红点</em></span>
+          </a>
+        </div>
+      </section>
+
+      <section>
+        <h2>模拟主屏（图标为真实 60pt）</h2>
+        <div class="wall-controls">
+          <button type="button" data-wall="" aria-pressed="true">浅壁纸</button>
+          <button type="button" data-wall="wall-dark" aria-pressed="false">深壁纸</button>
+          <button type="button" data-wall="wall-photo" aria-pressed="false">照片壁纸</button>
+        </div>
+        <div class="wallpaper">
+          <div class="home-grid">
+            <span class="home-app">
+              <img src="../assets/apple-touch-icon-v4a.png" alt="候选 A">
+              <span>刻度A</span>
+            </span>
+            <span class="home-app">
+              <img src="../assets/apple-touch-icon-v4b.png" alt="候选 B">
+              <span>刻度B</span>
+            </span>
+            <span class="home-app">
+              <img src="../assets/apple-touch-icon-v3.png" alt="旧版水墨图标">
+              <span>旧版水墨</span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>尺寸阶梯 40 / 60 / 120</h2>
+        <div class="ladder">
+          <figure>
+            <figcaption>候选 A</figcaption>
+            <div class="sizes">
+              <img class="s40" src="../assets/apple-touch-icon-v4a.png" alt="">
+              <img class="s60" src="../assets/apple-touch-icon-v4a.png" alt="">
+              <img class="s120" src="../assets/pwa-icon-192-v4a.png" alt="">
+            </div>
+          </figure>
+          <figure>
+            <figcaption>候选 B</figcaption>
+            <div class="sizes">
+              <img class="s40" src="../assets/apple-touch-icon-v4b.png" alt="">
+              <img class="s60" src="../assets/apple-touch-icon-v4b.png" alt="">
+              <img class="s120" src="../assets/pwa-icon-192-v4b.png" alt="">
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>圆形遮罩（Android 自适应图标用 maskable 版）</h2>
+        <div class="round">
+          <figure>
+            <img src="../assets/pwa-icon-maskable-512-v4a.png" alt="">
+            <figcaption>A</figcaption>
+          </figure>
+          <figure>
+            <img src="../assets/pwa-icon-maskable-512-v4b.png" alt="">
+            <figcaption>B</figcaption>
+          </figure>
+          <figure>
+            <img src="../assets/pwa-icon-maskable-512-v3.png" alt="">
+            <figcaption>旧版 v3</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>换图标要记得</h2>
+        <p class="hint">
+          iOS 按 URL 死缓存主屏图标，改画面必须换文件名。所以每套图都带版本后缀，
+          由 <code>scripts/generate_icons.py</code> 从 1024 母图统一派生。
+          定稿后改三处引用即可：<code>index.html</code> 的 icon / apple-touch-icon、
+          <code>manifest.webmanifest</code> 的 icons、<code>vite.config.js</code> 的 stablePwaAssets。
+        </p>
+      </section>
+    </main>
+
+    <script>
+      const buttons = document.querySelectorAll('.wall-controls button');
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+          document.body.classList.remove('wall-dark', 'wall-photo');
+          if (button.dataset.wall) document.body.classList.add(button.dataset.wall);
+          buttons.forEach((other) => other.setAttribute('aria-pressed', String(other === button)));
+        });
+      });
+    </script>
+  </body>
+</html>
