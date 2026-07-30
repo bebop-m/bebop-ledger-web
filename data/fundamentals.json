@@ -1,7 +1,7 @@
 {
   "ok": true,
   "provider": "yfinance",
-  "updatedAt": "2026-07-29T03:49:32.120234Z",
+  "updatedAt": "2026-07-30T03:40:54.759153Z",
   "companies": {
     "00700.HK": {
       "symbol": "00700.HK",
@@ -119,7 +119,7 @@
           "year": 2026,
           "dividendPerShare": 5.3,
           "lastExDate": "2026-05-15",
-          "avgPrice": 504.5201
+          "avgPrice": 504.265
         }
       ],
       "sector": "Communication Services",
@@ -244,7 +244,7 @@
           "year": 2026,
           "dividendPerShare": 28.02423,
           "lastExDate": "2026-06-26",
-          "avgPrice": 1360.4974
+          "avgPrice": 1360.3601
         }
       ],
       "sector": "Consumer Defensive",
@@ -261,7 +261,7 @@
           "year": 2014,
           "dividendPerShare": 0.75,
           "lastExDate": "2014-06-06",
-          "avgPrice": 7.605
+          "avgPrice": 7.6057
         },
         {
           "year": 2015,
@@ -369,7 +369,7 @@
           "year": 2026,
           "dividendPerShare": 1.0,
           "lastExDate": "2026-01-23",
-          "avgPrice": 38.6834
+          "avgPrice": 38.7062
         }
       ],
       "sector": "Consumer Cyclical",
@@ -494,7 +494,7 @@
           "year": 2026,
           "dividendPerShare": 0.55,
           "lastExDate": "2026-06-11",
-          "avgPrice": 25.1871
+          "avgPrice": 25.1786
         }
       ],
       "sector": "Energy",
@@ -587,7 +587,7 @@
           "year": 2026,
           "dividendPerShare": 1.60706,
           "lastExDate": "2026-06-02",
-          "avgPrice": 30.9056
+          "avgPrice": 30.8883
         }
       ],
       "sector": "Real Estate",
@@ -712,7 +712,7 @@
           "year": 2026,
           "dividendPerShare": 3.8,
           "lastExDate": "2026-06-29",
-          "avgPrice": 79.0662
+          "avgPrice": 79.1285
         }
       ],
       "sector": "Consumer Cyclical",
@@ -828,7 +828,7 @@
           "year": 2026,
           "dividendPerShare": 0.1,
           "lastExDate": "2026-06-23",
-          "avgPrice": 4.0363
+          "avgPrice": 4.0326
         }
       ],
       "sector": "Real Estate",
@@ -989,7 +989,7 @@
           "year": 2026,
           "dividendPerShare": 0.3,
           "lastExDate": "2026-06-18",
-          "avgPrice": 4.0799
+          "avgPrice": 4.0786
         }
       ],
       "sector": "Consumer Cyclical",
@@ -1115,7 +1115,7 @@
           "year": 2026,
           "dividendPerShare": 0.1963,
           "lastExDate": "2026-07-02",
-          "avgPrice": 7.777
+          "avgPrice": 7.782
         }
       ],
       "sector": "Utilities",
@@ -1130,7 +1130,7 @@
       "years": [
         {
           "year": 2022,
-          "dividendPerShare": 4.940838,
+          "dividendPerShare": 4.941235,
           "lastExDate": "2022-05-19",
           "avgPrice": 231.052,
           "eps": 3.32,
@@ -1146,7 +1146,7 @@
         },
         {
           "year": 2023,
-          "dividendPerShare": 2.431206,
+          "dividendPerShare": 2.431401,
           "lastExDate": "2023-04-04",
           "avgPrice": 146.2763,
           "eps": 7.69,
@@ -1162,7 +1162,7 @@
         },
         {
           "year": 2024,
-          "dividendPerShare": 2.980188,
+          "dividendPerShare": 2.980427,
           "lastExDate": "2024-04-03",
           "avgPrice": 116.8744,
           "eps": 13.83,
@@ -1178,7 +1178,7 @@
         },
         {
           "year": 2025,
-          "dividendPerShare": 3.9213,
+          "dividendPerShare": 3.921615,
           "lastExDate": "2025-04-07",
           "avgPrice": 134.0402,
           "eps": 6.89,
@@ -1194,9 +1194,9 @@
         },
         {
           "year": 2026,
-          "dividendPerShare": 3.9213,
+          "dividendPerShare": 3.921615,
           "lastExDate": "2026-04-08",
-          "avgPrice": 112.9637
+          "avgPrice": 113.0718
         }
       ],
       "sector": "Consumer Cyclical",
@@ -1317,7 +1317,7 @@
           "year": 2026,
           "dividendPerShare": 0.10391,
           "lastExDate": "2026-06-02",
-          "avgPrice": 4.9953
+          "avgPrice": 4.9931
         }
       ],
       "sector": "Communication Services",
@@ -1440,7 +1440,7 @@
           "year": 2026,
           "dividendPerShare": 0.40224,
           "lastExDate": "2026-07-02",
-          "avgPrice": 11.8334
+          "avgPrice": 11.8157
         }
       ],
       "sector": "Consumer Cyclical",
@@ -1565,7 +1565,7 @@
           "year": 2026,
           "dividendPerShare": 0.28,
           "lastExDate": "2026-06-05",
-          "avgPrice": 7.5045
+          "avgPrice": 7.5067
         }
       ],
       "sector": "Consumer Cyclical",
@@ -1580,23 +1580,23 @@
       "years": [
         {
           "year": 2012,
-          "dividendPerShare": 0.11577,
+          "dividendPerShare": 0.11598,
           "lastExDate": "2012-02-27"
         },
         {
           "year": 2013,
-          "dividendPerShare": 0.57885,
+          "dividendPerShare": 0.5799,
           "lastExDate": "2013-06-25"
         },
         {
           "year": 2014,
           "dividendPerShare": 0.54066,
           "lastExDate": "2014-07-02",
-          "avgPrice": 7.992
+          "avgPrice": 7.9786
         },
         {
           "year": 2017,
-          "dividendPerShare": 0.138924,
+          "dividendPerShare": 0.139176,
           "lastExDate": "2017-06-20",
           "avgPrice": 8.5807
         },
@@ -1620,7 +1620,7 @@
         },
         {
           "year": 2021,
-          "dividendPerShare": 0.405195,
+          "dividendPerShare": 0.40593,
           "lastExDate": "2021-06-23",
           "avgPrice": 10.6822
         },
@@ -1785,7 +1785,7 @@
           "year": 2026,
           "dividendPerShare": 0.1029,
           "lastExDate": "2026-05-15",
-          "avgPrice": 1.8087
+          "avgPrice": 1.8084
         }
       ],
       "sector": "Real Estate",
@@ -1880,7 +1880,7 @@
           "year": 2026,
           "dividendPerShare": 0.978,
           "lastExDate": "2026-07-06",
-          "avgPrice": 23.226
+          "avgPrice": 23.2289
         }
       ],
       "sector": "Real Estate",
@@ -1957,7 +1957,7 @@
           "year": 2026,
           "dividendPerShare": 0.083,
           "lastExDate": "2026-06-25",
-          "avgPrice": 2.4945
+          "avgPrice": 2.4931
         }
       ],
       "sector": "Real Estate",
@@ -2089,7 +2089,7 @@
           "year": 2026,
           "dividendPerShare": 1.2673,
           "lastExDate": "2026-06-11",
-          "avgPrice": 37.6224,
+          "avgPrice": 37.6351,
           "eps": -2.86,
           "netIncome": -7397000000.0,
           "dividendsPaid": 6220000000.0,
@@ -2184,7 +2184,7 @@
           "year": 2026,
           "dividendPerShare": 0.2,
           "lastExDate": "2026-05-29",
-          "avgPrice": 2.7045
+          "avgPrice": 2.7036
         }
       ],
       "sector": "Real Estate",
@@ -2310,7 +2310,7 @@
           "year": 2026,
           "dividendPerShare": 1.03,
           "lastExDate": "2026-07-13",
-          "avgPrice": 44.5499
+          "avgPrice": 44.5551
         }
       ],
       "sector": "Energy",
@@ -2434,7 +2434,7 @@
           "year": 2026,
           "dividendPerShare": 2.52,
           "lastExDate": "2026-06-05",
-          "avgPrice": 80.9687
+          "avgPrice": 80.9979
         }
       ],
       "sector": "Communication Services",
@@ -2455,7 +2455,7 @@
         },
         {
           "year": 2016,
-          "dividendPerShare": 0.370464,
+          "dividendPerShare": 0.371136,
           "lastExDate": "2016-06-23",
           "avgPrice": 13.7358
         },
@@ -2554,7 +2554,7 @@
           "year": 2026,
           "dividendPerShare": 1.185,
           "lastExDate": "2026-07-02",
-          "avgPrice": 44.1809
+          "avgPrice": 44.1784
         }
       ],
       "sector": "Energy",
@@ -2678,7 +2678,7 @@
           "year": 2026,
           "dividendPerShare": 0.93,
           "lastExDate": "2026-05-19",
-          "avgPrice": 14.2386
+          "avgPrice": 14.2411
         }
       ],
       "sector": "Consumer Cyclical",
@@ -2791,7 +2791,7 @@
           "year": 2026,
           "dividendPerShare": 0.02,
           "lastExDate": "2026-03-26",
-          "avgPrice": 0.4965
+          "avgPrice": 0.4961
         }
       ],
       "sector": "Consumer Cyclical",
@@ -2813,7 +2813,7 @@
           "year": 2014,
           "dividendPerShare": 0.338235,
           "lastExDate": "2014-08-22",
-          "avgPrice": 843.2237
+          "avgPrice": 845.9711
         },
         {
           "year": 2015,
@@ -3078,7 +3078,7 @@
           "year": 2026,
           "dividendPerShare": 0.5,
           "lastExDate": "2026-06-04",
-          "avgPrice": 8.8309
+          "avgPrice": 8.8234
         }
       ],
       "sector": "Communication Services",
