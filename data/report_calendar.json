@@ -1,14 +1,15 @@
 {
   "ok": true,
-  "updatedAt": "2026-08-03T04:39:38.446048Z",
+  "updatedAt": "2026-08-04T04:21:30.786468Z",
   "symbolsTotal": 29,
-  "symbolsCovered": 8,
+  "symbolsCovered": 9,
   "coveredSymbols": [
     "000333.SZ",
     "000651.SZ",
     "00700.HK",
     "00926.HK",
     "01836.HK",
+    "09618.HK",
     "600177.SH",
     "600519.SH",
     "601088.SH"
@@ -190,6 +191,15 @@
       "dateStatus": "confirmed",
       "source": "hkex",
       "purpose": "INT RES/DIV",
+      "fiscalPeriod": "6-MTH-ENDED30/06/26"
+    },
+    {
+      "symbol": "09618.HK",
+      "reportDate": "2026-08-13",
+      "reportType": "中期业绩",
+      "dateStatus": "confirmed",
+      "source": "hkex",
+      "purpose": "INT RES",
       "fiscalPeriod": "6-MTH-ENDED30/06/26"
     },
     {
