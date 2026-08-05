@@ -516,7 +516,7 @@ function buildValuationSection(company) {
   }
   if (!rows.length) return '';
   return `<section class="fu-val">
-      <div class="fu-sec-head"><span class="fu-sec-label">估值</span><span class="fu-sec-aside">${headYears ? `近 ${headYears} 年分位 · ` : ''}点越靠右越便宜</span></div>
+      <div class="sec-head"><span class="sec-label">估值</span><span class="sec-aside">${headYears ? `近 ${headYears} 年分位 · ` : ''}点越靠右越便宜</span></div>
       <div class="fu-val-rows">${rows.join('')}</div>
     </section>`;
 }
@@ -560,7 +560,7 @@ function buildDividendLine(company, visible) {
   const latest = visible.filter((row) => isFiniteValue(row.dividendPerShare)).slice(-1)[0];
   const streak = getGrowthStreak(visible, 'dividendPerShare');
   return `<section class="fu-bars">
-      <div class="fu-sec-head"><span class="fu-sec-label">每股分红</span><span class="fu-latest">${escapeHtml(formatMetricValue(latest.dividendPerShare, 'money'))} ${escapeHtml(company.currency)}<small>${latest.year} 股息率 ${escapeHtml(formatMetricValue(latest.dividendYield, 'percent'))}</small></span></div>
+      <div class="sec-head"><span class="sec-label">每股分红</span><span class="fu-latest">${escapeHtml(formatMetricValue(latest.dividendPerShare, 'money'))} ${escapeHtml(company.currency)}<small>${latest.year} 股息率 ${escapeHtml(formatMetricValue(latest.dividendYield, 'percent'))}</small></span></div>
       ${buildZenLineSvg(points, 'gold', '每股分红历年走势')}
       <p class="fu-bar-stats"><span>特别股息 <strong>${escapeHtml(formatMetricValue(latest.specialDividendPerShare, 'money'))}</strong></span><span>连续增长 <strong>${streak > 0 ? `${streak} 年` : '—'}</strong></span></p>
     </section>`;
@@ -579,7 +579,7 @@ function buildEpsLine(company, visible) {
   const tone = growth === null ? '' : growth > 0 ? ' is-up' : growth < 0 ? ' is-down' : '';
   const growthText = growth === null ? '—' : `${signPrefix(growth)}${Math.abs(growth * 100).toFixed(1)}%`;
   return `<section class="fu-bars">
-      <div class="fu-sec-head"><span class="fu-sec-label">EPS 每股收益</span><span class="fu-latest${tone}">${escapeHtml(growthText)}<small>EPS ${escapeHtml(formatMetricValue(latest.eps, 'money'))} ${escapeHtml(company.statementCurrency || company.currency)}</small></span></div>
+      <div class="sec-head"><span class="sec-label">EPS 每股收益</span><span class="fu-latest${tone}">${escapeHtml(growthText)}<small>EPS ${escapeHtml(formatMetricValue(latest.eps, 'money'))} ${escapeHtml(company.statementCurrency || company.currency)}</small></span></div>
       ${buildZenLineSvg(points, 'ink', 'EPS 历年走势')}
       <p class="fu-bar-stats"><span>分红率 <strong>${escapeHtml(formatMetricValue(latest.payoutRatio, 'percent'))}</strong></span><span>负债率 <strong>${escapeHtml(formatMetricValue(latest.debtRatio, 'percent'))}</strong></span></p>
     </section>`;
@@ -595,7 +595,7 @@ function buildCalendarSection(symbol) {
       </button>`).join('')}</div>`
     : '<p class="fu-cal-empty">未来 90 天暂未收录持仓财报日期</p>';
   return `<section class="fu-cal">
-      <div class="fu-sec-head"><span class="fu-sec-label">财报日历</span><span class="fu-sec-aside">点公司切换</span></div>
+      <div class="sec-head"><span class="sec-label">财报日历</span><span class="sec-aside">点公司切换</span></div>
       ${body}
     </section>`;
 }
@@ -639,7 +639,7 @@ export function renderFundamentalsPage() {
     ${buildDividendLine(company, visible)}
     ${buildEpsLine(company, visible)}
     <details class="fu-fold">
-      <summary><span class="fu-sec-label">年度数据明细</span><span class="fu-fold-arr">${allRows.length} 年 ›</span></summary>
+      <summary><span class="sec-label">年度数据明细</span><span class="fu-fold-arr">${allRows.length} 年 ›</span></summary>
       ${buildCompanyTable(allRows, metrics, currentYear)}
     </details>
     ${buildCalendarSection(company.symbol)}

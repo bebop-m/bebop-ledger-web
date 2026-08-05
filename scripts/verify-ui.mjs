@@ -204,16 +204,16 @@ function inPageAudit() {
     // 只取当前可见页面内的元素：隐藏页面属于尚未施工的旧版，不该参与等比判定
     关键字号: [
       '.home-hero-value', '.home-divi-value', '.home-nav-title',
-      '.holdings-hero-value', '.holdings-page-name', '.holdings-sec-label', '.stock-name',
+      '.holdings-hero-value', '.page-name', '.sec-label', '.stock-name',
       '.zen-sheet-title-text', '.zen-detail-qty strong', '.zen-diag-count', '.zen-edit-field',
-      '.divi-hero-value', '.divi-page-name', '.divi-sec-label', '.divi-filter',
+      '.divi-hero-value', '.page-name', '.sec-label', '.divi-filter',
       '.zen-md-head h3', '.zen-md-side strong', '.zen-rc-cur', '.zen-rc-confirm',
-      '.inc-hero-value', '.income-page-name', '.inc-sec-label', '.inc-year-yy',
-      '.ann-hero-value', '.annual-page-name', '.ann-sec-label', '.ann-metrics strong',
+      '.inc-hero-value', '.page-name', '.sec-label', '.inc-year-yy',
+      '.ann-hero-value', '.page-name', '.sec-label', '.ann-metrics strong',
       '.zen-bf-head h3', '.zen-bf-input', '.sc-value', '.sc-label',
-      '.rec-hero-value', '.rec-cash-value', '.rec-sec-label', '.rec-row-amt',
+      '.rec-hero-value', '.rec-cash-value', '.sec-label', '.rec-row-amt',
       '.zen-qa-option strong', '.zen-form-amount', '.zen-form-row > span:first-child',
-      '.fund-page-name', '.fu-co-name', '.fu-f-value', '.fu-sec-label', '.zen-fp-name strong'
+      '.page-name', '.fu-co-name', '.fu-f-value', '.sec-label', '.zen-fp-name strong'
     ]
       .map((s) => { const e = root.querySelector(s); return e && vis(e) ? { 选择器: s, 字号: parseFloat(getComputedStyle(e).fontSize) } : null; })
       .filter(Boolean)

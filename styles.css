@@ -3870,53 +3870,31 @@ body[data-active-page="holdings"] #holdingsPage *::after {
 }/* 页头：grid(56/1fr/56)，左裸箭头、中页名、右诊断，下方无 rule */
 
 
-body[data-active-page="holdings"] .holdings-pagebar {
-  display: grid;
-  grid-template-columns: var(--fl-56) 1fr var(--fl-56);
-  align-items: center;
-  gap: 0;
-  height: auto;
-  /* 定稿图这条 21px 是返回箭头在 16px strut 里撑出的行盒；
-     本项目字体栈不同，svg 自己只有 18px，显式补回来免得整页上缩 3px */
-  min-height: var(--fl-21);
-  margin: 0;
-  padding: 0;
-  background: none;
-  box-shadow: none;
-}
-body[data-active-page="holdings"] .holdings-pagebar .back-button {
-  display: block;
-  flex: none;
-  width: auto;
-  height: auto;
-  min-width: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  color: var(--muted);
-  text-align: left;
-}
-body[data-active-page="holdings"] .holdings-pagebar .back-button svg {
-  width: var(--fl-18);
-  height: var(--fl-18);
-}
-body[data-active-page="holdings"] .holdings-page-name {
-  display: block;
-  height: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  color: var(--label);
-  font-size: var(--fl-11);
-  font-weight: 600;
-  line-height: var(--fl-15);
-  letter-spacing: var(--fl-5);
-  text-align: center;
-}
-body[data-active-page="holdings"] .holdings-pagebar .diagnostics-button {
+/* ── 子页页头：返回键 + 居中页名 + 右侧位，六页共用（原 5 套 *-pagebar 拷贝合一）。
+   scope 用 :not(home) 保持与旧 body[data-active-page=X] 相同的特异性，
+   否则会被中间主题层的通用 .top-bar 规则反超。 ── */
+
+
+body:not([data-active-page="home"]) .pagebar { display: grid; grid-template-columns: var(--fl-56) 1fr var(--fl-56); align-items: center; gap: 0; height: auto; min-height: var(--fl-21); margin: 0; padding: 0; background: none; box-shadow: none; }
+
+
+body:not([data-active-page="home"]) .pagebar .back-button { display: block; flex: none; width: auto; height: auto; min-width: 0; min-height: 0; margin: 0; padding: 0; border-radius: 0; background: none; box-shadow: none; color: var(--muted); text-align: left; }
+
+
+body:not([data-active-page="home"]) .pagebar .back-button svg { width: var(--fl-18); height: var(--fl-18); }
+
+
+body:not([data-active-page="home"]) .page-name { display: block; height: auto; min-height: 0; margin: 0; padding: 0; color: var(--label); font-size: var(--fl-11); font-weight: 600; line-height: var(--fl-15); letter-spacing: var(--fl-5); text-align: center; }
+
+
+body:not([data-active-page="home"]) .pagebar-side { display: block; width: auto; height: auto; min-height: 0; margin: 0; padding: 0; background: none; }
+
+
+body:not([data-active-page="home"]) .pagebar-note { display: block; width: 100%; height: auto; min-height: 0; margin: var(--fl-7) 0 0; padding: 0; border-radius: 0; background: none; box-shadow: none; color: var(--hint); font-family: inherit; font-size: var(--fl-10); font-weight: 600; line-height: var(--fl-14); letter-spacing: 0; text-align: center; }
+
+
+body:not([data-active-page="home"]) .pagebar-note.is-stale { color: var(--ink); }
+body[data-active-page="holdings"] .pagebar .diagnostics-button {
   display: block;
   width: auto;
   height: auto;
@@ -3936,13 +3914,13 @@ body[data-active-page="holdings"] .holdings-pagebar .diagnostics-button {
   text-align: right;
   white-space: nowrap;
 }
-body[data-active-page="holdings"] .holdings-pagebar .diagnostics-button b {
+body[data-active-page="holdings"] .pagebar .diagnostics-button b {
   color: var(--up);
   font-weight: 800;
 }/* 无严重项但有关注项：一颗与正文同色的小点，不引入第三种状态色
    （金色留给股息与选中记号，涨红留给严重档） */
 
-body[data-active-page="holdings"] .holdings-pagebar .diagnostics-button .diag-dot {
+body[data-active-page="holdings"] .pagebar .diagnostics-button .diag-dot {
   display: inline-block;
   width: 3.5px;
   height: 3.5px;
@@ -3951,32 +3929,8 @@ body[data-active-page="holdings"] .holdings-pagebar .diagnostics-button .diag-do
   background: currentColor;
   vertical-align: middle;
   opacity: 0.7;
-}/* 页名下小字行：整行可点，与右上「诊断 N」同一个去向 */
-
-
-body[data-active-page="holdings"] .holdings-pagebar-note {
-  display: block;
-  width: 100%;
-  height: auto;
-  min-height: 0;
-  margin: var(--fl-7) 0 0;
-  padding: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  color: var(--hint);
-  font-family: inherit;
-  font-size: var(--fl-10);
-  font-weight: 600;
-  line-height: var(--fl-14);
-  letter-spacing: 0;
-  text-align: center;
-}/* 行情停更：不引入新颜色（金色只给股息与选中记号，红绿只给盈亏），
-   仅把这行从 hint 提到 ink，让它从背景噪声里浮上来 */
-
-body[data-active-page="holdings"] .holdings-pagebar-note.is-stale {
-  color: var(--ink);
-}/* 居中 hero：股票市值 */
+}/* 页名下小字行：整行可点，与右上「诊断 N」同一个去向 *//* 行情停更：不引入新颜色（金色只给股息与选中记号，红绿只给盈亏），
+   仅把这行从 hint 提到 ink，让它从背景噪声里浮上来 *//* 居中 hero：股票市值 */
 
 
 body[data-active-page="holdings"] .holdings-hero {
@@ -4141,7 +4095,18 @@ body[data-active-page="holdings"] .holdings-list-head {
   padding: 0;
   background: none;
 }
-body[data-active-page="holdings"] .holdings-sec-label {
+/* ── 区块标题：左标签 + 右说明，七页共用（原 holdings/divi/inc/ann/rec/fu 六族拷贝合一）。
+   行高统一 --fl-15，间隙统一 --fl-10；is-later 供同页第二个区块拉开与上一节的距离。 ── */
+.sec-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--fl-10);
+  margin: 0;
+  padding: 0;
+}
+.sec-head.is-later { margin-top: var(--fl-26); }
+.sec-label {
   display: block;
   margin: 0;
   padding: 0;
@@ -4150,6 +4115,14 @@ body[data-active-page="holdings"] .holdings-sec-label {
   font-weight: 600;
   line-height: var(--fl-15);
   letter-spacing: var(--fl-4);
+}
+.sec-aside {
+  display: block;
+  color: var(--hint);
+  font-size: var(--fl-10p5);
+  font-weight: 600;
+  line-height: var(--fl-15);
+  text-align: right;
 }/* 旧层有一条 #holdingsSortLabel { display: none }，id 选择器压过类选择器，
    这里必须带上 id 才抢得回来 */
 
@@ -4838,62 +4811,7 @@ body[data-active-page="dividends"] #dividendCalendarListView {
   gap: 0;
   margin: 0;
   padding: 0;
-}/* 页头：grid(56/1fr/56)，左裸箭头、中页名、右留空，下方无 rule */
-
-
-body[data-active-page="dividends"] .divi-pagebar {
-  display: grid;
-  grid-template-columns: var(--fl-56) 1fr var(--fl-56);
-  align-items: center;
-  gap: 0;
-  height: auto;
-  min-height: var(--fl-21);
-  margin: 0;
-  padding: 0;
-  background: none;
-  box-shadow: none;
-}
-body[data-active-page="dividends"] .divi-pagebar .back-button {
-  display: block;
-  flex: none;
-  width: auto;
-  height: auto;
-  min-width: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  color: var(--muted);
-  text-align: left;
-}
-body[data-active-page="dividends"] .divi-pagebar .back-button svg {
-  width: var(--fl-18);
-  height: var(--fl-18);
-}
-body[data-active-page="dividends"] .divi-page-name {
-  display: block;
-  height: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  color: var(--label);
-  font-size: var(--fl-11);
-  font-weight: 600;
-  line-height: var(--fl-15);
-  letter-spacing: var(--fl-5);
-  text-align: center;
-}
-body[data-active-page="dividends"] .divi-pagebar-side {
-  display: block;
-  width: auto;
-  height: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  background: none;
-}/* 三仓筛选：居中纯文字，选中＝ink＋4px 金点下划 */
+}/* 页头：grid(56/1fr/56)，左裸箭头、中页名、右留空，下方无 rule *//* 三仓筛选：居中纯文字，选中＝ink＋4px 金点下划 */
 
 
 body[data-active-page="dividends"] #dividendCalendarListView #dividendFilterGroup.divi-filters {
@@ -5127,30 +5045,6 @@ body[data-active-page="dividends"] .divi-list {
   flex: 1;
   margin: var(--fl-28) 0 0;
   padding: 0;
-}
-body[data-active-page="dividends"] .divi-sec-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--fl-10);
-  margin: 0;
-  padding: 0;
-}
-body[data-active-page="dividends"] .divi-sec-head.is-later { margin-top: var(--fl-26); }
-body[data-active-page="dividends"] .divi-sec-label {
-  display: block;
-  color: var(--label);
-  font-size: var(--fl-10);
-  font-weight: 600;
-  line-height: var(--fl-15);
-  letter-spacing: var(--fl-4);
-}
-body[data-active-page="dividends"] .divi-sec-aside {
-  display: block;
-  color: var(--hint);
-  font-size: var(--fl-10p5);
-  font-weight: 600;
-  line-height: var(--fl-15);
 }
 body[data-active-page="dividends"] .divi-rows {
   display: flex;
@@ -5624,62 +5518,7 @@ body[data-active-page="income"] #incomeSummaryPage *::before,
 body[data-active-page="income"] #incomeSummaryPage *::after {
   content: none;
   display: none;
-}/* 页头：grid(56/1fr/56)，左裸箭头、中页名、右留空 */
-
-
-body[data-active-page="income"] .income-pagebar {
-  display: grid;
-  grid-template-columns: var(--fl-56) 1fr var(--fl-56);
-  align-items: center;
-  gap: 0;
-  height: auto;
-  min-height: var(--fl-21);
-  margin: 0;
-  padding: 0;
-  background: none;
-  box-shadow: none;
-}
-body[data-active-page="income"] .income-pagebar .back-button {
-  display: block;
-  flex: none;
-  width: auto;
-  height: auto;
-  min-width: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  color: var(--muted);
-  text-align: left;
-}
-body[data-active-page="income"] .income-pagebar .back-button svg {
-  width: var(--fl-18);
-  height: var(--fl-18);
-}
-body[data-active-page="income"] .income-page-name {
-  display: block;
-  height: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  color: var(--label);
-  font-size: var(--fl-11);
-  font-weight: 600;
-  line-height: var(--fl-15);
-  letter-spacing: var(--fl-5);
-  text-align: center;
-}
-body[data-active-page="income"] .income-pagebar-side {
-  display: block;
-  width: auto;
-  height: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  background: none;
-}/* 居中 hero：一个结论 + 一个比较值 */
+}/* 页头：grid(56/1fr/56)，左裸箭头、中页名、右留空 *//* 居中 hero：一个结论 + 一个比较值 */
 
 
 body[data-active-page="income"] #incomeOverviewGrid {
@@ -5744,32 +5583,7 @@ body[data-active-page="income"] .inc-ctx {
 body[data-active-page="income"] .inc-ctx b {
   color: var(--muted);
   font-weight: 700;
-}/* 节标：左标签、右附注，无分隔线 */
-
-
-body[data-active-page="income"] .inc-sec-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--fl-10);
-  margin: 0;
-  padding: 0;
-}
-body[data-active-page="income"] .inc-sec-label {
-  display: block;
-  color: var(--label);
-  font-size: var(--fl-10);
-  font-weight: 600;
-  line-height: var(--fl-14);
-  letter-spacing: var(--fl-4);
-}
-body[data-active-page="income"] .inc-sec-aside {
-  display: block;
-  color: var(--hint);
-  font-size: var(--fl-10p5);
-  font-weight: 600;
-  line-height: var(--fl-14);
-}/* 历年趋势：墨线＝资金收益率（逐点标值），金线＝股息收益率，零轴发丝线 */
+}/* 节标：左标签、右附注，无分隔线 *//* 历年趋势：墨线＝资金收益率（逐点标值），金线＝股息收益率，零轴发丝线 */
 
 
 body[data-active-page="income"] #incomeTrend {
@@ -6025,50 +5839,6 @@ body[data-active-page="annual"] #annualReviewPage *::after {
   content: none;
   display: none;
 }
-body[data-active-page="annual"] .annual-pagebar {
-  display: grid;
-  grid-template-columns: var(--fl-56) 1fr var(--fl-56);
-  align-items: center;
-  gap: 0;
-  height: auto;
-  min-height: var(--fl-21);
-  margin: 0;
-  padding: 0;
-  background: none;
-  box-shadow: none;
-}
-body[data-active-page="annual"] .annual-pagebar .back-button {
-  display: block;
-  flex: none;
-  width: auto;
-  height: auto;
-  min-width: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  color: var(--muted);
-  text-align: left;
-}
-body[data-active-page="annual"] .annual-pagebar .back-button svg {
-  width: var(--fl-18);
-  height: var(--fl-18);
-}
-body[data-active-page="annual"] .annual-page-name {
-  display: block;
-  height: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  color: var(--label);
-  font-size: var(--fl-11);
-  font-weight: 600;
-  line-height: var(--fl-15);
-  letter-spacing: var(--fl-5);
-  text-align: center;
-}
 body[data-active-page="annual"] .annual-share-entry {
   display: block;
   width: auto;
@@ -6208,29 +5978,6 @@ body[data-active-page="annual"] .ann-block {
   display: block;
   margin: var(--fl-28) 0 0;
   padding: 0;
-}
-body[data-active-page="annual"] .ann-sec-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--fl-10);
-  margin: 0;
-  padding: 0;
-}
-body[data-active-page="annual"] .ann-sec-label {
-  display: block;
-  color: var(--label);
-  font-size: var(--fl-10);
-  font-weight: 600;
-  line-height: var(--fl-14);
-  letter-spacing: var(--fl-4);
-}
-body[data-active-page="annual"] .ann-sec-aside {
-  display: block;
-  color: var(--hint);
-  font-size: var(--fl-10p5);
-  font-weight: 600;
-  line-height: var(--fl-14);
 }/* 收益归因：2px 四段线 + 四行 pp 拆分（四项相加 = 本年收益率） */
 
 
@@ -7033,29 +6780,6 @@ body[data-active-page="records"] .rec-flow {
 }/* 末段吃掉剩余高度，底部留白不塌 */
 
 body[data-active-page="records"] .rec-flow--dividend { flex: 1; }
-body[data-active-page="records"] .rec-sec-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--fl-10);
-  margin: 0;
-  padding: 0;
-}
-body[data-active-page="records"] .rec-sec-label {
-  display: block;
-  color: var(--label);
-  font-size: var(--fl-10);
-  font-weight: 600;
-  line-height: var(--fl-14);
-  letter-spacing: var(--fl-4);
-}
-body[data-active-page="records"] .rec-sec-aside {
-  display: block;
-  color: var(--hint);
-  font-size: var(--fl-10p5);
-  font-weight: 600;
-  line-height: var(--fl-14);
-}
 body[data-active-page="records"] .rec-rows {
   display: flex;
   flex-direction: column;
@@ -7414,69 +7138,7 @@ body[data-active-page="fundamentals"] #fundamentalsPage *::before,
 body[data-active-page="fundamentals"] #fundamentalsPage *::after {
   content: none;
   display: none;
-}/* 页头：grid(56/1fr/56)，左裸箭头、中页名、右留空 */
-
-
-body[data-active-page="fundamentals"] .fund-pagebar {
-  display: grid;
-  grid-template-columns: var(--fl-56) 1fr var(--fl-56);
-  align-items: center;
-  gap: 0;
-  height: auto;
-  min-height: var(--fl-21);
-  margin: 0;
-  padding: 0;
-  background: none;
-  box-shadow: none;
-}
-body[data-active-page="fundamentals"] .fund-pagebar .back-button {
-  display: block;
-  flex: none;
-  width: auto;
-  height: auto;
-  min-width: 0;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
-  color: var(--muted);
-  text-align: left;
-}
-body[data-active-page="fundamentals"] .fund-pagebar .back-button svg {
-  width: var(--fl-18);
-  height: var(--fl-18);
-}
-body[data-active-page="fundamentals"] .fund-page-name {
-  display: block;
-  height: auto;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  color: var(--label);
-  font-size: var(--fl-11);
-  font-weight: 600;
-  line-height: var(--fl-21);
-  letter-spacing: var(--fl-5);
-  text-align: center;
-}
-body[data-active-page="fundamentals"] .fund-pagebar-side {
-  display: block;
-}
-body[data-active-page="fundamentals"] .fund-pagebar-note {
-  display: block;
-  width: 100%;
-  height: auto;
-  min-height: 0;
-  margin: var(--fl-7) 0 0;
-  padding: 0;
-  color: var(--hint);
-  font-size: var(--fl-10);
-  font-weight: 600;
-  line-height: var(--fl-14);
-  text-align: center;
-}/* 宿主容器交出边距：整页边距由 #fundamentalsPage 一处控制 */
+}/* 页头：grid(56/1fr/56)，左裸箭头、中页名、右留空 *//* 宿主容器交出边距：整页边距由 #fundamentalsPage 一处控制 */
 
 
 body[data-active-page="fundamentals"] .fundamentals-content {
@@ -7692,33 +7354,7 @@ body[data-active-page="fundamentals"] .fu-f-anchor {
   font-weight: 600;
   line-height: var(--fl-16);
 }
-body[data-active-page="fundamentals"] .fu-f-anchor strong { color: var(--ink); font-weight: 700; }/* 节标行：左节标、右小注，无 rule */
-
-
-body[data-active-page="fundamentals"] .fu-sec-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--fl-8);
-  margin: 0;
-  padding: 0;
-}
-body[data-active-page="fundamentals"] .fu-sec-label {
-  display: block;
-  color: var(--label);
-  font-size: var(--fl-10);
-  font-weight: 600;
-  line-height: var(--fl-15);
-  letter-spacing: var(--fl-4);
-}
-body[data-active-page="fundamentals"] .fu-sec-aside {
-  display: block;
-  color: var(--hint);
-  font-size: var(--fl-10p5);
-  font-weight: 600;
-  line-height: var(--fl-15);
-  text-align: right;
-}/* 估值节：两根「贵 ⇄ 便宜」标尺，点越靠右越便宜 */
+body[data-active-page="fundamentals"] .fu-f-anchor strong { color: var(--ink); font-weight: 700; }/* 节标行：左节标、右小注，无 rule *//* 估值节：两根「贵 ⇄ 便宜」标尺，点越靠右越便宜 */
 
 
 body[data-active-page="fundamentals"] .fu-val {

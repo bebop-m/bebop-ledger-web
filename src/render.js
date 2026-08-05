@@ -540,7 +540,7 @@ function renderDividendMonths(model) {
   const dueCny = due.reduce((sum, entry) => sum + safeNumber(entry.netCny, 0), 0);
   const dueShown = due.slice(0, DIVIDEND_DUE_LIMIT);
   const dueSection = due.length ? `
-    <div class="divi-sec-head"><span class="divi-sec-label">待确认 · ${due.length} 笔</span><span class="divi-sec-aside">${escapeHtml(formatDisplayMoney(dueCny, 'CNY'))}</span></div>
+    <div class="sec-head"><span class="sec-label">待确认 · ${due.length} 笔</span><span class="sec-aside">${escapeHtml(formatDisplayMoney(dueCny, 'CNY'))}</span></div>
     <div class="divi-rows">${dueShown.map(buildDividendRow).join('')}</div>` : '';
   const recentLimit = Math.max(2, DIVIDEND_LIST_LIMIT - dueShown.length);
 
@@ -557,7 +557,7 @@ function renderDividendMonths(model) {
     .slice(0, recentLimit);
   const recent = settled.length ? settled : fallback;
   const recentSection = recent.length ? `
-    <div class="divi-sec-head${due.length ? ' is-later' : ''}"><span class="divi-sec-label">近期</span><span class="divi-sec-aside">${settled.length ? '' : '按往年节奏推算'}</span></div>
+    <div class="sec-head${due.length ? ' is-later' : ''}"><span class="sec-label">近期</span><span class="sec-aside">${settled.length ? '' : '按往年节奏推算'}</span></div>
     <div class="divi-rows">${recent.map(buildDividendRow).join('')}</div>` : '';
 
   refs.dividendMonthGrid.innerHTML = `
@@ -683,7 +683,7 @@ function formatTrendSigned(value) {
 }
 
 function getIncomeSecHead(label, aside = '') {
-  return `<div class="inc-sec-head"><span class="inc-sec-label">${escapeHtml(label)}</span><span class="inc-sec-aside">${aside}</span></div>`;
+  return `<div class="sec-head"><span class="sec-label">${escapeHtml(label)}</span><span class="sec-aside">${aside}</span></div>`;
 }
 
 /* hero 只留一个结论（当年资金收益）+ 一个比较值（收益率），
@@ -934,7 +934,7 @@ function renderRecordFlow(key, label, aside, records, emptyText, rowMarkup) {
     ? `<button class="rec-more" type="button" data-records-expand="${key}">${expanded ? '收 起' : `展开全部 ${records.length} 笔`}</button>`
     : '';
   return `<section class="rec-flow rec-flow--${key}">
-      <div class="rec-sec-head"><span class="rec-sec-label">${escapeHtml(label)}</span><span class="rec-sec-aside">${aside}</span></div>
+      <div class="sec-head"><span class="sec-label">${escapeHtml(label)}</span><span class="sec-aside">${aside}</span></div>
       ${body}${more}
     </section>`;
 }
@@ -1002,7 +1002,7 @@ function formatAnnualShares(value) {
 }
 
 function getAnnualSecHead(label, aside = '') {
-  return `<div class="ann-sec-head"><span class="ann-sec-label">${escapeHtml(label)}</span><span class="ann-sec-aside">${aside}</span></div>`;
+  return `<div class="sec-head"><span class="sec-label">${escapeHtml(label)}</span><span class="sec-aside">${aside}</span></div>`;
 }
 
 /* pp 拆分：四项金额相加恒等于资金收益（＝本年收益率的分子）。
