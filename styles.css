@@ -5730,6 +5730,11 @@ body[data-active-page="dividends"] .divi-row {
   font-weight: 600;
   line-height: clamp(14.72px, 4.1026vw, 21.6px);
 }
+/* 可点行是 button：全局重置已抹掉边框底色，这里只补回块级占满与左对齐 */
+body[data-active-page="dividends"] .divi-row.is-clickable {
+  width: 100%;
+  text-align: left;
+}
 body[data-active-page="dividends"] .divi-row strong {
   color: var(--ink);
   font-size: clamp(11.5px, 3.2051vw, 16.875px);

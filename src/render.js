@@ -362,7 +362,7 @@ export function renderBucketsView(segments, holdings, summary, opts = {}) {
   const dividendLabel = hasUnknownTax ? '年化股息' : '税后年化';
   /* 组合行的标签点破口径：这里是「按当前持仓 × 近 12 个月每股股息」的前瞻年化，
      与首页/股息日历的「本年股息」（自然年现金流）不是一回事，两个数天然不等。 */
-  const portfolioLabel = hasUnknownTax ? '当前持仓年化' : '当前持仓税后年化';
+  const portfolioLabel = hasUnknownTax ? '组合年化' : '组合税后年化';
   const bar = ['core', 'income'].map((key) => {
     const item = find(key);
     return item ? `<i class="seg-${key}" style="width:${(share(item) * 100).toFixed(2)}%"></i>` : '';
@@ -382,7 +382,7 @@ export function renderBucketsView(segments, holdings, summary, opts = {}) {
     <div class="structure-bar" aria-hidden="true">${bar}</div>
     <div class="bucket-row">${buttons}</div>
     ${detail}
-    <p class="portfolio-line">${portfolioLabel} <b>${escapeHtml(formatZenMoney(summary.totalDividendCny))}</b> · 组合股息率 <strong>${formatZenPercent(total > 0 ? summary.totalDividendCny / total : 0)}</strong></p>`;
+    <p class="portfolio-line">${portfolioLabel} <b>${escapeHtml(formatZenMoney(summary.totalDividendCny))}</b> · 股息率 <strong>${formatZenPercent(total > 0 ? summary.totalDividendCny / total : 0)}</strong></p>`;
 }
 
 export function patchBucketsView(segments, holdings, summary) {
@@ -529,7 +529,8 @@ function renderDividendMetricGrid(model) {
     <div class="divi-hero">
       <span class="divi-hero-label">预计全年</span>
       <strong class="divi-hero-value">${escapeHtml(formatDisplayMoney(m.projectedCny, 'CNY'))}</strong>
-      <p class="divi-yoy">${buildDividendYoyLine(m.projectedYoy)}</p>
+      <p class="divi-yoy">${buildDividendYoyLine(m.projectedYoy)}${m.projectedYieldRate !== null && m.projectedYieldRate !== undefined
+        ? ` · 股息率 ${escapeHtml(`${(m.projectedYieldRate * 100).toFixed(1)}%`)}` : ''}</p>
     </div>
     <div class="divi-stack" role="img" aria-label="构成：已到账 ${receivedPct}%，其余在途与预估">
       <i class="is-received" style="width:${width(m.receivedCny)}%"></i><i class="is-pipeline" style="width:${width(pipelineCny)}%"></i><i class="is-forecast" style="width:${width(m.forecastCny)}%"></i>
@@ -550,12 +551,19 @@ function getDividendRowStatus(entry) {
   return { text: '在途', tone: 'transit' };
 }
 
+/* 真实台账条目直接点行进 08-股息到账，可点判定与月明细同一规则；
+   预估/已公告背后没有可编辑的台账条目，保持纯展示。 */
 function buildDividendRow(entry) {
   const status = getDividendRowStatus(entry);
-  return `<div class="divi-row">
+  const clickable = !entry.isForecast && !(entry.isAnnounced || entry.status === 'announced') && entry.sourceId;
+  const tag = clickable ? 'button' : 'div';
+  const attrs = clickable
+    ? ` type="button" data-modal-action="edit-dividend-ledger" data-source-id="${escapeHtml(entry.sourceId)}" aria-label="编辑 ${escapeHtml(entry.name || entry.symbol)} 股息"`
+    : '';
+  return `<${tag} class="divi-row${clickable ? ' is-clickable' : ''}"${attrs}>
     <span>${escapeHtml(formatDividendRowDate(entry))} <strong>${escapeHtml(entry.name || entry.symbol)}</strong></span>
     <span><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong> <span class="divi-st is-${status.tone}">${escapeHtml(status.text)}</span></span>
-  </div>`;
+  </${tag}>`;
 }
 
 const DIVIDEND_LIST_LIMIT = 6;
@@ -575,8 +583,8 @@ function renderDividendMonths(model) {
 
   /* 两段列表合起来最多 DIVIDEND_LIST_LIMIT 行——本页要一屏放得下，
      而待确认在真实账本里能堆到二十几笔（把整页顶到 1610px 滚动过）。
-     节标上的「N 笔 · 总额」是全量口径，截断的只是行；要逐笔处理走月点阵进月明细，
-     那里的列表自己滚。 */
+     节标上的「N 笔 · 总额」是全量口径，截断的只是行；列出的行可以直接点开处理，
+     被截断的走月点阵进月明细，那里的列表自己滚。 */
   const due = model.allDetails
     .filter((entry) => entry.status === 'due')
     .sort((a, b) => `${b.payDate}|${b.symbol}`.localeCompare(`${a.payDate}|${a.symbol}`));
@@ -1446,8 +1454,9 @@ function getHoldingViewModel(item, index = 0, opts = {}) {
     yieldText: formatZenPercent(item.effectiveYield),
     statusKey, statusLabel: getDividendStatusLabel(statusKey), tooltipLines,
     tooltipHtml: buildDividendTooltipHtml(tooltipLines),
-    // 未设税率时年化是按 0% 估的，用中性的「年化股息」，别声称是税后
-    annualDividendLabel: item.taxRateKnown ? '税后年化' : '年化股息',
+    /* 逐股行统一用中性的「年化」：短，且未设税率时不会声称税后。
+       税后与否是页级信息，由分仓小结行的「税后年化/年化股息」披露。 */
+    annualDividendLabel: '年化',
     hasDividendEvent: Boolean(opts.pendingDividends && opts.pendingDividends.has(item.symbol)),
     staggerDelay: Math.min(index * HOLDING_ENTER_STAGGER_MS, HOLDING_ENTER_STAGGER_MAX_MS)
   };
@@ -1464,7 +1473,7 @@ function getHoldingMarkup(item, index, opts = {}) {
         <button class="stock-mv" type="button" data-action="edit-quantity" data-holding-field="marketValue" aria-label="编辑 ${escapeHtml(item.name)} 持股数量">${escapeHtml(v.marketValueText)}</button>
       </div>
       <div class="stock-sub">
-        <span class="stock-sub-main">现价 <span data-holding-field="price">${escapeHtml(v.priceText)}</span> · ${escapeHtml(v.annualDividendLabel)} <button type="button" data-action="edit-tax" data-holding-field="annualDividend" aria-label="设置股息税率">${escapeHtml(v.annualDividendText)}</button> · <button type="button" data-action="edit-dividend" data-holding-field="effectiveYieldValue" aria-label="覆写每股股息">${escapeHtml(v.yieldText)}</button></span>
+        <span class="stock-sub-main">现价 <span data-holding-field="price">${escapeHtml(v.priceText)}</span> · ${escapeHtml(v.annualDividendLabel)} <button type="button" data-action="edit-tax" data-holding-field="annualDividend" aria-label="设置股息税率">${escapeHtml(v.annualDividendText)}</button> · 股息率 <button type="button" data-action="edit-dividend" data-holding-field="effectiveYieldValue" aria-label="覆写每股股息">${escapeHtml(v.yieldText)}</button></span>
         <span class="weight" data-holding-field="weight">${escapeHtml(v.weightText)}</span>
       </div>
     </article></div>`;
@@ -1558,16 +1567,19 @@ export function renderApp(opts = {}) {
   else syncRenderedHoldingsView(summary.holdings, { animateReflow: false });
 }
 
-/* 定稿图的单文字排序键：一次点击换一个字段，三个字段轮完再翻方向 —— 6 态循环，
-   「点击轮换三字段、再点切升降」用一个按钮就能走完，不需要长按。 */
-export function cycleHoldingSortSelection() {
-  const index = HOLDING_SORT_FIELDS.indexOf(state.sortField);
-  const next = index < 0 ? 0 : (index + 1) % HOLDING_SORT_FIELDS.length;
-  if (index >= 0 && next === 0) state.sortDirection = state.sortDirection === 'desc' ? 'asc' : 'desc';
+/* 排序抽屉的落点：点当前字段翻转升降，点其他字段按该字段降序重排。
+   旧版单按钮 6 态循环已废——从「按市值 ↓」走到「按年股息 ↑」要点五次。 */
+export function applyHoldingSortSelection(field) {
+  if (!HOLDING_SORT_FIELDS.includes(field)) return;
+  if (state.sortField === field) {
+    state.sortDirection = state.sortDirection === 'desc' ? 'asc' : 'desc';
+  } else {
+    state.sortField = field;
+    state.sortDirection = 'desc';
+  }
   closeActiveDividendTooltip(true);
   const opened = refs.stockList.querySelector('.holding-swipe.is-swipe-open');
   if (opened) closeHoldingSwipe(opened);
-  state.sortField = HOLDING_SORT_FIELDS[next];
   saveState(); renderSortChips();
   syncRenderedHoldingsView(computeHoldings().holdings, { animateReflow: true });
 }

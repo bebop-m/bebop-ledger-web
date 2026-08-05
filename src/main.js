@@ -8,7 +8,7 @@ import {
 import { computeHoldings, getBucketSegments, isCashModelActive } from './compute.js';
 import {
   renderApp, renderSavedStateQuietly, renderSortChips, renderBucketsView,
-  applyLegendExpandState, cycleHoldingSortSelection, updateDividendTooltipSide,
+  applyLegendExpandState, applyHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
   isHoldingSwipeEnabled, getHoldingSwipeOffset, setHoldingSwipeOffset, generateAnnualShareCard,
@@ -118,6 +118,12 @@ refs.dividendFilterGroup.addEventListener('click', (event) => {
 });
 
 refs.dividendMonthGrid.addEventListener('click', (event) => {
+  // 列表里的真实条目行直接进 08-股息到账，与月明细同规则；月格子仍是月明细唯一入口。
+  const row = event.target.closest('[data-modal-action="edit-dividend-ledger"]');
+  if (row) {
+    openModal('dividendLedger', { sourceId: row.dataset.sourceId });
+    return;
+  }
   const btn = event.target.closest('[data-dividend-month]');
   if (!btn) return;
   const month = Math.floor(safeNumber(btn.dataset.dividendMonth, 0));
@@ -138,7 +144,7 @@ if (refs.dividendMonthDetailView) refs.dividendMonthDetailView.addEventListener(
 
 if (refs.holdingsSortLabel) refs.holdingsSortLabel.addEventListener('click', (event) => {
   event.stopPropagation();
-  cycleHoldingSortSelection();
+  openModal('sortHoldings');
 });
 
 if (refs.marketTimestamp) refs.marketTimestamp.addEventListener('click', () => openModal('diagnostics'));
@@ -484,6 +490,7 @@ refs.modalRoot.addEventListener('click', (event) => {
     openModal('dividendLedger', { sourceId: a.dataset.sourceId, returnMonth });
     return;
   }
+  if (t === 'sort-holdings') { applyHoldingSortSelection(a.dataset.sortField); closeModal(); return; }
   if (t === 'open-trade') { openModal('trade'); return; }
   if (t === 'open-cash-flow') { openModal('cashFlow'); return; }
   if (t === 'open-current-cash') { openModal('openingCash'); return; }

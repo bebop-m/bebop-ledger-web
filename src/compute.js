@@ -669,6 +669,13 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
     if (baselineCny !== null && baselineCny > 0) lastYearTotalCny = roundMoney(baselineCny);
   }
   const projectedYoy = lastYearTotalCny > 0 ? (projectedCny - lastYearTotalCny) / lastYearTotalCny : null;
+  /* 预计股息率的分母跟着仓位筛选走：核心仓筛选下就是「核心仓预计全年 ÷ 核心仓市值」。
+     与持仓页「组合股息率」（TTM 每股股息前瞻年化）口径不同：这里是本自然年现金流。 */
+  const filteredMarketValueCny = summary.holdings.reduce((sum, holding) => {
+    const bucket = holding.bucket === 'income' ? 'income' : 'core';
+    return matchesDividendFilter({ bucket }, filterKey) ? sum + safeNumber(holding.marketValueCny, 0) : sum;
+  }, 0);
+  const projectedYieldRate = filteredMarketValueCny > 0 ? projectedCny / filteredMarketValueCny : null;
   const currentMonth = todayParts ? todayParts.month : new Date().getMonth() + 1;
   return {
     year,
@@ -685,7 +692,9 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
       upcomingCny: roundMoney(upcomingCny),
       projectedCny: roundMoney(projectedCny),
       lastYearTotalCny,
-      projectedYoy
+      projectedYoy,
+      marketValueCny: roundMoney(filteredMarketValueCny),
+      projectedYieldRate
     },
     months: buildDividendMonthItems(entries, currentMonth),
     allDetails: entries

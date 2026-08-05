@@ -247,6 +247,7 @@ function renderModal() {
   if (state.modal === 'diagnostics') { renderDiagnosticsModal(); return; }
   if (state.modal === 'fundPicker') { renderFundPickerModal(); return; }
   if (state.modal === 'quickAdd') { renderQuickAddModal(); return; }
+  if (state.modal === 'sortHoldings') { renderSortHoldingsModal(); return; }
   if (state.modal === 'trade') { renderTradeModal(); return; }
   if (state.modal === 'cashFlow') { renderCashFlowModal(); return; }
   if (state.modal === 'openingCash') { renderOpeningCashModal(); return; }
@@ -318,6 +319,35 @@ function renderQuickAddModal() {
         ${option('open-trade', '交 易', '买入 / 卖出一笔股票', true)}
         ${option('open-cash-flow', '出 入 金', '真实的资金转入 / 转出', false)}
         ${option('open-current-cash', '当 前 现 金', '直接校准券商的现金余额（不产生流水）', false)}
+      </div>
+      <div class="zen-sheet-actions">
+        <button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">取 消</button>
+      </div>
+    </section>`;
+}
+
+/* 持仓排序抽屉：三个字段一目了然，点当前字段翻转升降，点其他字段按其降序重排。
+   旧版是单按钮 6 态循环，找到目标状态最多要点五次。 */
+function renderSortHoldingsModal() {
+  const directionText = state.sortDirection === 'desc' ? '从高到低' : '从低到高';
+  const option = (field, title) => {
+    const isActive = state.sortField === field;
+    return `<button class="zen-qa-option${isActive ? ' is-primary' : ''}" type="button" data-modal-action="sort-holdings" data-sort-field="${field}">
+        <strong>${title}${isActive ? '<i class="zen-qa-dot" aria-hidden="true"></i>' : ''}</strong>
+        ${isActive ? `<span>当前 · ${directionText} · 再点切换升降</span>` : ''}
+      </button>`;
+  };
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet zen-sheet zen-sheet--quick" role="dialog" aria-modal="true" aria-labelledby="zenSortTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <div class="zen-sheet-title">
+        <span class="zen-sheet-title-text" id="zenSortTitle">逐股排序</span>
+        <p class="zen-sheet-note">选择排序字段</p>
+      </div>
+      <div class="zen-qa-options">
+        ${option('marketValueCny', '市 值')}
+        ${option('effectiveYield', '股 息 率')}
+        ${option('netAnnualDividendCny', '年 股 息')}
       </div>
       <div class="zen-sheet-actions">
         <button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">取 消</button>

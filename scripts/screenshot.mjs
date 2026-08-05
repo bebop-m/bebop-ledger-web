@@ -86,6 +86,7 @@ const MODAL_TARGETS = {
   quantity: { nav: 'holdings', sel: '[data-action="edit-quantity"]' },
   tax: { nav: 'holdings', sel: '[data-action="edit-tax"]' },
   dividendEdit: { nav: 'holdings', sel: '[data-action="edit-dividend"]' },
+  sortHoldings: { nav: 'holdings', sel: '#holdingsSortLabel' },
   monthDetail: { nav: 'dividends', sel: '.divi-ym.has-pay' },
   dividendReceipt: { nav: 'dividends', sel: '.divi-ym.has-pay', then: '.zen-md-row.is-clickable' },
   annual: { nav: 'income', sel: '.inc-year' },
