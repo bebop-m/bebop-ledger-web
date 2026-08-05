@@ -2,7 +2,7 @@
    数据来自 data/fundamentals.json（scripts/update_fundamentals.py 每日复核年报口径数据）。
    本模块自持 DOM 容器，懒加载 + localStorage 离线缓存。 */
 import { state, refs } from './state.js';
-import { safeNumber, escapeHtml, formatDateLabel, resolveFxRate, resolveQuoteCurrency } from './utils.js';
+import { safeNumber, escapeHtml, formatDateLabel, resolveFxRate, resolveQuoteCurrency, signPrefix, SIGN_MINUS } from './utils.js';
 import { computeHoldings, inferQuote } from './compute.js';
 import { FUNDAMENTALS_ENDPOINT } from './constants.js';
 import { getUpcomingReportEvents } from './report-calendar.js';
@@ -407,8 +407,10 @@ function formatPercentValue(value, digits = 1) {
   return `${(Number(value) * 100).toFixed(digits)}%`;
 }
 
+/* 经营回报拆分不给正号：页面上下文全是无符号百分比（速览条、组合回报、股息率），
+   正号只添噪；负数按全局约定用 U+2212。 */
 function formatSignedPercent(value) {
-  return `${(value * 100).toFixed(1)}%`;
+  return `${value < 0 ? SIGN_MINUS : ''}${Math.abs(value * 100).toFixed(1)}%`;
 }
 
 /* ── 顶部：速览横滑条 + 公司名 ── */
@@ -575,7 +577,7 @@ function buildEpsLine(company, visible) {
     : null;
   // 红涨绿跌覆盖到这一行的百分比：EPS 涨用 up、跌用 down，与全局同一套语义。
   const tone = growth === null ? '' : growth > 0 ? ' is-up' : growth < 0 ? ' is-down' : '';
-  const growthText = growth === null ? '—' : `${growth > 0 ? '+' : growth < 0 ? '−' : ''}${Math.abs(growth * 100).toFixed(1)}%`;
+  const growthText = growth === null ? '—' : `${signPrefix(growth)}${Math.abs(growth * 100).toFixed(1)}%`;
   return `<section class="fu-bars">
       <div class="fu-sec-head"><span class="fu-sec-label">EPS 每股收益</span><span class="fu-latest${tone}">${escapeHtml(growthText)}<small>EPS ${escapeHtml(formatMetricValue(latest.eps, 'money'))} ${escapeHtml(company.statementCurrency || company.currency)}</small></span></div>
       ${buildZenLineSvg(points, 'ink', 'EPS 历年走势')}

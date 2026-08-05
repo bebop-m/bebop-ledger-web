@@ -19,8 +19,8 @@ export const PORTFOLIO_SNAPSHOT_VERSION = 5;
 // 折叠时露出几行：02-持仓页定稿图画的是 6 行 + 「展开全部 N 项」
 export const LEGEND_COLLAPSED_COUNT = 6;
 export const LEGEND_TOGGLE_ANIMATION_MS = 220;
-export const MASK_AMOUNT = '******';
-export const MASK_PRICE = '***.**';
+/* 隐私遮罩：金额、价格、数量一律四点，全 app 只此一种 */
+export const MASK_AMOUNT = '••••';
 export const DEFAULT_STALE_DAYS = 7;
 /* 公司层面的诊断（经营、股息、数据覆盖）低于这个持仓权重就不再生成条目。
    仓位纪律类规则不受影响——它检验的正是权重本身。config.json 可覆盖。 */

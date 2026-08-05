@@ -62,9 +62,18 @@ export function createElementFromHtml(markup) {
 }
 
 /* ── Formatting ── */
+/* 展示层符号约定：负号一律 U+2212（−，与 + 等宽），不用 ASCII 连字符。
+   所有带符号的展示字符串统一从 signPrefix / formatMoney 取符号。 */
+export const SIGN_MINUS = '−';
+
+export function signPrefix(value) {
+  const n = safeNumber(value, 0);
+  return n > 0 ? '+' : n < 0 ? SIGN_MINUS : '';
+}
+
 export function formatMoney(value, currency) {
   const amount = safeNumber(value, 0);
-  const sign = amount < 0 ? '-' : '';
+  const sign = amount < 0 ? SIGN_MINUS : '';
   const absolute = Math.abs(amount);
   const symbols = { CNY: '\u00a5', USD: '$', HKD: 'HK$' };
   return `${sign}${symbols[currency] || ''}${absolute.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -80,13 +89,10 @@ export function formatPercent(value) {
 
 export function formatDailyPnl(pnlCny, previousMarketValueCny) {
   const pnl = safeNumber(pnlCny, 0);
-  const sign = pnl > 0 ? '+' : pnl < 0 ? '-' : '';
-  const absolute = Math.abs(pnl);
-  const amountStr = `${sign}\u00a5${Math.round(absolute).toLocaleString('en-US')}`;
+  const amountStr = `${signPrefix(pnl)}\u00a5${Math.round(Math.abs(pnl)).toLocaleString('en-US')}`;
   const pctBase = safeNumber(previousMarketValueCny, 0);
   const pct = pctBase > 0 ? pnl / pctBase : 0;
-  const pctSign = pct > 0 ? '+' : pct < 0 ? '-' : '';
-  const pctStr = `${pctSign}${Math.abs(pct * 100).toFixed(2)}%`;
+  const pctStr = `${signPrefix(pct)}${Math.abs(pct * 100).toFixed(2)}%`;
   return `${amountStr} \u00b7 ${pctStr}`;
 }
 

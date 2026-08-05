@@ -56,7 +56,8 @@ const CFG = {
   statusbar: Boolean(argv.statusbar),
   /* 屏蔽跨域请求（腾讯实时行情等）。美股盘中每次启动拉到的现价都不同，
      权重百分比全列表跟着变，逐像素回归对比只能在纯静态数据下做。 */
-  blockExternal: Boolean(argv['block-external'])
+  blockExternal: Boolean(argv['block-external']),
+  privacy: Boolean(argv.privacy) // 出图前点一次隐私眼，拍金额遮罩态
 };
 
 const chrome = CHROME_CANDIDATES.find((p) => existsSync(p));
@@ -141,6 +142,11 @@ async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
     { timeout: 15000 }
   ).catch(() => console.warn('  ! 首屏数据等待超时，仍继续截图'));
   await new Promise((r) => setTimeout(r, 250));
+
+  if (CFG.privacy) {
+    await page.evaluate(() => document.getElementById('privacyButton')?.click());
+    await new Promise((r) => setTimeout(r, 300));
+  }
 
   // 抽屉挂在内页上时，先把宿主页面打开
   if (!nav && modal && MODAL_TARGETS[modal] && MODAL_TARGETS[modal].nav) nav = MODAL_TARGETS[modal].nav;

@@ -7,7 +7,7 @@ import {
   mergeQuotes, sanitizeCashFlowEntry, sanitizeTradeEntry, formatDateLabel,
   resolveQuoteCurrency, resolveFxRate, resolveEffectivePayDate
 } from './utils.js';
-import { LABELS } from './constants.js';
+import { LABELS, MASK_AMOUNT } from './constants.js';
 import {
   renderSavedStateQuietly, buildDividendMonthDetail, formatDisplayMoney, getAnnualShareCardMarkup
 } from './render.js';
@@ -820,7 +820,7 @@ export function handleModalSave() {
 }
 
 function formatHoldingQuantity(value) {
-  if (!state.showAmounts) return '••••';
+  if (!state.showAmounts) return MASK_AMOUNT;
   return new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 4 }).format(Math.max(0, safeNumber(value, 0)));
 }
 
@@ -856,11 +856,11 @@ function renderHoldingDetailModal() {
         <small>当前持股</small><strong>${escapeHtml(quantity)}<em>股</em></strong>
       </div>
       <dl class="zen-detail-rows">
-        ${row('现价', state.showAmounts ? formatDisplayMoney(item.price, item.currency) : '••••')}
+        ${row('现价', state.showAmounts ? formatDisplayMoney(item.price, item.currency) : MASK_AMOUNT)}
         ${row('持仓市值', formatDisplayMoney(item.marketValueCny, 'CNY'))}
         ${row('交易起点基准股数', baselineQuantity)}
         ${row('股息税率', item.taxRateKnown ? `${taxPercent}%` : '未设置（按 0% 估算）')}
-        ${row('每股 TTM 股息', state.showAmounts ? formatDisplayMoney(item.effectiveDividendPerShareTtm, item.currency) : '••••')}
+        ${row('每股 TTM 股息', state.showAmounts ? formatDisplayMoney(item.effectiveDividendPerShareTtm, item.currency) : MASK_AMOUNT)}
         ${row('税前年化股息', formatDisplayMoney(item.grossAnnualDividendCny, 'CNY'))}
         ${row('税后年化股息', formatDisplayMoney(item.netAnnualDividendCny, 'CNY'))}
       </dl>
@@ -948,7 +948,7 @@ function renderYearlyManualModal() {
     // 提示只占半行，用紧凑数字（无 ¥、无小数），否则六行标签都会折行
     const shown = field.percent
       ? `${(Number(value) * 100).toFixed(1)}%`
-      : (state.showAmounts ? Math.round(Number(value)).toLocaleString('en-US') : '••••');
+      : (state.showAmounts ? Math.round(Number(value)).toLocaleString('en-US') : MASK_AMOUNT);
     return `<small class="zen-bf-auto">自动 ${escapeHtml(shown)}</small>`;
   };
   const fields = BACKFILL_FIELDS.map((field) => {

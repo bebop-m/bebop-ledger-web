@@ -10,11 +10,11 @@ import { getPortfolioDiagnostics } from './diagnostics.js';
 import { getUpcomingReportEvents } from './report-calendar.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
-  formatTimestamp, normalizeDividendStatus, getDividendStatusLabel,
+  formatTimestamp, normalizeDividendStatus, getDividendStatusLabel, signPrefix, SIGN_MINUS,
   buildDividendTooltipLines, buildDividendTooltipHtml, createElementFromHtml, getStaleDays
 } from './utils.js';
 import {
-  MASK_AMOUNT, MASK_PRICE, LABELS, UI_TEXT,
+  MASK_AMOUNT, LABELS, UI_TEXT,
   LEGEND_COLLAPSED_COUNT, LEGEND_TOGGLE_ANIMATION_MS,
   HOLDING_ENTER_STAGGER_MS, HOLDING_ENTER_STAGGER_MAX_MS, TOOLTIP_FALLBACK_WIDTH,
   TOOLTIP_GAP, HOLDING_REMOVAL_FALLBACK_MS,
@@ -87,10 +87,9 @@ function getIncomeNavSummaryHtml(incomeModel) {
   if (!available) return '\u5f85\u56de\u586b\u5e74\u521d\u51c0\u503c';
   const value = row.capitalReturnCny;
   const rate = row.capitalReturnRate;
-  const sign = value > 0 ? '+' : value < 0 ? '-' : '';
-  const amountText = state.showAmounts ? `${sign}\u00a5${Math.round(Math.abs(value)).toLocaleString('en-US')}` : MASK_AMOUNT;
+  const amountText = state.showAmounts ? `${signPrefix(value)}\u00a5${Math.round(Math.abs(value)).toLocaleString('en-US')}` : MASK_AMOUNT;
   const rateText = rate === null || rate === undefined
-    ? '' : ` \u00b7 ${rate > 0 ? '+' : rate < 0 ? '-' : ''}${formatPercent(Math.abs(rate))}`;
+    ? '' : ` \u00b7 ${signPrefix(rate)}${formatPercent(Math.abs(rate))}`;
   return escapeHtml(amountText + rateText);
 }
 
@@ -277,7 +276,7 @@ export function applyLegendExpandState(opts = {}) {
 function formatZenMoney(value) {
   if (!state.showAmounts) return MASK_AMOUNT;
   const amount = safeNumber(value, 0);
-  return `${amount < 0 ? '-' : ''}¥${Math.round(Math.abs(amount)).toLocaleString('en-US')}`;
+  return `${amount < 0 ? SIGN_MINUS : ''}¥${Math.round(Math.abs(amount)).toLocaleString('en-US')}`;
 }
 
 function formatZenPercent(value) {
@@ -449,12 +448,12 @@ function buildDividendYoyLine(yoy) {
     return escapeHtml(LABELS.dividendNoCompare);
   }
   const up = yoy >= 0;
-  return `<strong class="is-${up ? 'up' : 'down'}">${escapeHtml(`${up ? '+' : '-'}${formatPercent(Math.abs(yoy))}`)}</strong> · ${escapeHtml(LABELS.dividendVsLastYear)}`;
+  return `<strong class="is-${up ? 'up' : 'down'}">${escapeHtml(`${up ? '+' : SIGN_MINUS}${formatPercent(Math.abs(yoy))}`)}</strong> · ${escapeHtml(LABELS.dividendVsLastYear)}`;
 }
 
 // 月点阵格子里的金额：无派息写破折号，掩码态收成短点串，免得 6 列被撑破。
 function formatMonthCellAmount(value) {
-  if (!state.showAmounts) return '••••';
+  if (!state.showAmounts) return MASK_AMOUNT;
   const amount = safeNumber(value, 0);
   return amount > 0 ? Math.round(amount).toLocaleString('en-US') : '—';
 }
@@ -669,21 +668,18 @@ function formatIncomeSignedMoney(value) {
   return `${amount > 0 ? '+' : ''}${formatMoney(amount, 'CNY')}`;
 }
 
-// 定稿图上的收益率一律一位小数（+5.7% / -8.1%），本页统一按此形
+// 定稿图上的收益率一律一位小数（+5.7% / −8.1%），本页统一按此形
 function formatIncomeRate(value) {
   if (isIncomeValueMissing(value)) return '待回填';
   if (!state.showAmounts) return MASK_AMOUNT;
-  const numeric = safeNumber(value, 0) * 100;
-  const sign = numeric > 0 ? '+' : numeric < 0 ? '-' : '';
-  return `${sign}${Math.abs(numeric).toFixed(1)}%`;
+  return `${signPrefix(value)}${Math.abs(safeNumber(value, 0) * 100).toFixed(1)}%`;
 }
 
-// 趋势线上的点值与累计年化行：一位小数、带符号，与定稿图的 +4.2 / -8.1 同形
+// 趋势线上的点值与累计年化行：一位小数、带符号，与定稿图的 +4.2 / −8.1 同形
 function formatTrendSigned(value) {
   if (isIncomeValueMissing(value)) return '—';
   if (!state.showAmounts) return MASK_AMOUNT;
-  const numeric = Number(value) * 100;
-  return `${numeric > 0 ? '+' : numeric < 0 ? '-' : ''}${Math.abs(numeric).toFixed(1)}`;
+  return `${signPrefix(value)}${Math.abs(Number(value) * 100).toFixed(1)}`;
 }
 
 function getIncomeSecHead(label, aside = '') {
@@ -905,7 +901,7 @@ function renderTradeFlowRow(entry) {
      （与 03-持仓详情里「当前持股」掩码同一套口径）。 */
   const detail = state.showAmounts
     ? `${formatRecordQuantity(entry.shares)} 股 @ ${safeNumber(entry.price, 0)} ${entry.currency || ''}`.trim()
-    : `${MASK_PRICE} 股 @ ${MASK_PRICE} ${entry.currency || ''}`.trim();
+    : `${MASK_AMOUNT} 股 @ ${MASK_AMOUNT} ${entry.currency || ''}`.trim();
   return `<button class="rec-row" type="button" data-trade-id="${escapeHtml(entry.id)}">
       <span class="rec-row-main">${escapeHtml(getRecordDayLabel(entry.date))} <em class="${isSell ? 'is-sell' : 'is-buy'}">${isSell ? '卖出' : '买入'}</em> <strong>${escapeHtml(entry.name || entry.symbol)}</strong>${getRecordDetailMarkup(detail)}</span>
       <span class="rec-row-amt">${escapeHtml(formatIncomeSignedMoney(entry.cashImpactCny))}</span>
@@ -992,15 +988,13 @@ const ANNUAL_MONTH_LABELS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 
 
 function formatAnnualRate(value) {
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
-  const numeric = Number(value);
-  return `${numeric > 0 ? '+' : numeric < 0 ? '−' : ''}${Math.abs(numeric * 100).toFixed(1)}%`;
+  return `${signPrefix(value)}${Math.abs(Number(value) * 100).toFixed(1)}%`;
 }
 
 function formatAnnualSignedMoney(value) {
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
   if (!state.showAmounts) return MASK_AMOUNT;
-  const numeric = Number(value);
-  return `${numeric > 0 ? '+' : numeric < 0 ? '−' : ''}${formatMoney(Math.abs(numeric), 'CNY')}`;
+  return `${signPrefix(value)}${formatMoney(Math.abs(Number(value)), 'CNY')}`;
 }
 
 function formatAnnualShares(value) {
@@ -1178,8 +1172,7 @@ const SHARE_DONUT_COLORS = ['#c9a558', '#dcc492', '#b3a68c', '#cfc4ad', '#e2d9c4
 
 function formatSharePercent(value) {
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
-  const numeric = Number(value) * 100;
-  return `${numeric > 0 ? '+' : numeric < 0 ? '−' : ''}${Math.abs(numeric).toFixed(1)}%`;
+  return `${signPrefix(value)}${Math.abs(Number(value) * 100).toFixed(1)}%`;
 }
 
 function formatSharePlainPercent(value) {
@@ -1396,7 +1389,7 @@ function getHoldingViewModel(item, index = 0, opts = {}) {
   const tooltipLines = buildDividendTooltipLines(item);
   const statusKey = normalizeDividendStatus(item.dividendStatus, 'missing');
   return {
-    priceText: state.showAmounts ? formatPlainPrice(item.price) : MASK_PRICE,
+    priceText: state.showAmounts ? formatPlainPrice(item.price) : MASK_AMOUNT,
     marketValueText: formatZenMoney(item.marketValueCny),
     annualDividendText: formatZenMoney(item.netAnnualDividendCny),
     quantityText: state.showAmounts ? String(item.quantity) : MASK_AMOUNT,
