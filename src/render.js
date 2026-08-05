@@ -1,6 +1,6 @@
 import { state, refs, mutable, saveState, isDemoMode } from './state.js';
 import {
-  computeHoldings, getCompanySegments, getBucketSegments, getBucketSummaryItems,
+  computeHoldings, getBucketSegments, getBucketSummaryItems,
   computeDividendCalendar, computeIncomeSummary,
   computeCashFlowRecords, computeDividendRecords, computeTradeSummary, isCashModelActive, computeCashBalance, getAnnualDividendOverview
 } from './compute.js';
@@ -15,7 +15,7 @@ import {
 } from './utils.js';
 import {
   MASK_AMOUNT, MASK_PRICE, LABELS, UI_TEXT,
-  LEGEND_COLLAPSED_COUNT, LEGEND_TOGGLE_ANIMATION_MS, LEGEND_ENTER_STAGGER_MS,
+  LEGEND_COLLAPSED_COUNT, LEGEND_TOGGLE_ANIMATION_MS,
   HOLDING_ENTER_STAGGER_MS, HOLDING_ENTER_STAGGER_MAX_MS, TOOLTIP_FALLBACK_WIDTH,
   TOOLTIP_GAP, HOLDING_REMOVAL_FALLBACK_MS,
   HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD
@@ -257,35 +257,6 @@ function renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv, in
 }
 
 /* ── Legend ── */
-function getLegendSegmentKey(seg, i) {
-  if (seg && seg.key != null) return String(seg.key);
-  if (seg && seg.label) return String(seg.label);
-  return `legend-${i}`;
-}
-
-function getLegendViewModel(segments) {
-  const total = segments.reduce((s, i) => s + i.value, 0) || 1;
-  const cc = Math.min(segments.length, LEGEND_COLLAPSED_COUNT);
-  return { total, collapsedCount: cc, canToggleLegend: cc < segments.length };
-}
-
-function getLegendRowMarkup(seg, pct, index, opts = {}) {
-  const { animate = true } = opts;
-  return `<div class="legend-row${animate ? ' is-entering' : ''}" data-legend-key="${escapeHtml(getLegendSegmentKey(seg, index))}" style="animation-delay:${index * LEGEND_ENTER_STAGGER_MS}ms">
-    <div class="legend-row-shell"><div class="legend-main"><span class="legend-bar" aria-hidden="true"><i style="width:${Math.max(3, pct * 100).toFixed(1)}%"></i></span><span class="legend-label">${escapeHtml(seg.label)}</span></div>
-    <span class="legend-value">${(pct * 100).toFixed(1)}%</span></div></div>`;
-}
-
-function syncLegendRow(row, seg, pct, index, opts = {}) {
-  const bar = row.querySelector('.legend-bar i'), label = row.querySelector('.legend-label'), value = row.querySelector('.legend-value');
-  if (!bar || !label || !value) return false;
-  row.dataset.legendKey = getLegendSegmentKey(seg, index);
-  row.className = `legend-row${opts.animate ? ' is-entering' : ''}`;
-  row.style.animationDelay = `${index * LEGEND_ENTER_STAGGER_MS}ms`;
-  bar.style.width = `${Math.max(3, pct * 100).toFixed(1)}%`; label.textContent = seg.label; value.textContent = `${(pct * 100).toFixed(1)}%`;
-  return true;
-}
-
 function keepLegendToggleStable(prevTop) {
   if (!Number.isFinite(prevTop)) return;
   const adjust = () => { const d = refs.legendToggle.getBoundingClientRect().top - prevTop; if (Math.abs(d) > 1) window.scrollBy(0, d); };
@@ -297,18 +268,6 @@ export function applyLegendExpandState(opts = {}) {
   const holdings = computeHoldings().holdings;
   renderHoldingsView(holdings, { animate: false });
   if (preserveScroll) keepLegendToggleStable(toggleTop);
-}
-
-export function renderLegendView(segments, opts = {}) {
-  const count = computeHoldings().holdings.length;
-  refs.companyLegend.innerHTML = '';
-  refs.companyLegend.hidden = true;
-  refs.legendToggle.hidden = count <= LEGEND_COLLAPSED_COUNT;
-  refs.legendToggle.textContent = state.legendExpanded ? '收起' : `展开全部 ${count} 项`;
-}
-
-export function patchLegendView(segments) {
-  renderLegendView(segments, { animate: false });
 }
 
 /* ── 02-持仓页 · 按 designs/禅意UI/02-持仓页/定稿图.html 重排 ── */
@@ -425,19 +384,10 @@ function getSortActionLabel(field) {
   return '市值';
 }
 
-export function renderSortChips() {
-  // 旧的圆钮 + 三 chip 仍留在 DOM 里（持仓操作抽屉会程序性点它们），一律不出现在版面上
-  if (refs.sortGroup) refs.sortGroup.hidden = true;
-  if (mutable.sortToggleButton) mutable.sortToggleButton.hidden = true;
-  refs.sortChips.forEach((chip) => {
-    chip.hidden = true;
-    chip.textContent = getSortFieldLabel(chip.dataset.sortField);
-    chip.classList.toggle('is-active', chip.dataset.sortField === state.sortField);
-  });
-  if (refs.holdingsSortLabel) {
-    refs.holdingsSortLabel.textContent = `按${getSortActionLabel(state.sortField)} ${state.sortDirection === 'desc' ? '↓' : '↑'}`;
-    refs.holdingsSortLabel.title = `${UI_TEXT.sort} · ${getSortFieldLabel(state.sortField)}`;
-  }
+export function renderSortControl() {
+  if (!refs.holdingsSortLabel) return;
+  refs.holdingsSortLabel.textContent = `按${getSortActionLabel(state.sortField)} ${state.sortDirection === 'desc' ? '↓' : '↑'}`;
+  refs.holdingsSortLabel.title = `${UI_TEXT.sort} · ${getSortFieldLabel(state.sortField)}`;
 }
 
 /* 行情整体停更天数：超过配置阈值（config.json 的 staleDays）才返回天数，否则 0。
@@ -1528,12 +1478,12 @@ export function animateHoldingRemoval(wrapper, onComplete) {
 }
 
 /* ── Dashboard Orchestration ── */
-function renderDashboardIncrementally(summary, cs, bs, opts = {}) {
-  renderHomePage(summary); patchLegendView(cs);
+function renderDashboardIncrementally(summary, bs, opts = {}) {
+  renderHomePage(summary);
   renderHoldingsHero(summary);
   patchBucketsView(bs, summary.holdings, summary);
   renderDiagnosticsButton();
-  renderSortChips(); renderTimestamp(); renderPrivacyButton();
+  renderSortControl(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
   renderAnnualReviewPage();
   renderIncomeRecords();
@@ -1547,17 +1497,16 @@ export function renderSavedStateQuietly(opts = {}) {
 }
 
 export function renderApp(opts = {}) {
-  const { animateLegend = true, animateBucketDetail = true, animateHoldings = true, renderHoldingsList = true, incremental = false, animateHoldingReflow = false } = opts;
+  const { animateBucketDetail = true, animateHoldings = true, renderHoldingsList = true, incremental = false, animateHoldingReflow = false } = opts;
   const summary = computeHoldings();
-  const cs = getCompanySegments(summary.holdings);
   const bs = getBucketSegments(summary.holdings);
   renderPageChrome();
-  if (incremental) { renderDashboardIncrementally(summary, cs, bs, { animateHoldingReflow }); return; }
-  renderHomePage(summary); renderLegendView(cs, { animate: animateLegend });
+  if (incremental) { renderDashboardIncrementally(summary, bs, { animateHoldingReflow }); return; }
+  renderHomePage(summary);
   renderHoldingsHero(summary);
   renderBucketsView(bs, summary.holdings, summary, { animateDetail: animateBucketDetail });
   renderDiagnosticsButton();
-  renderSortChips(); renderTimestamp(); renderPrivacyButton();
+  renderSortControl(); renderTimestamp(); renderPrivacyButton();
   renderIncomeSummaryPage();
   renderAnnualReviewPage();
   renderIncomeRecords();
@@ -1580,7 +1529,7 @@ export function applyHoldingSortSelection(field) {
   closeActiveDividendTooltip(true);
   const opened = refs.stockList.querySelector('.holding-swipe.is-swipe-open');
   if (opened) closeHoldingSwipe(opened);
-  saveState(); renderSortChips();
+  saveState(); renderSortControl();
   syncRenderedHoldingsView(computeHoldings().holdings, { animateReflow: true });
 }
 

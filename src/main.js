@@ -2,12 +2,12 @@
 import { state, refs, mutable, saveState, createDefaultSnapshot, applySnapshot, restoreState, showConfirm, addRecordTombstone } from './state.js';
 import { safeNumber } from './utils.js';
 import {
-  UI_TEXT, LABELS, HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD,
+  LABELS, HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD,
   SWIPE_SUPPRESS_CLICK_MS, PAGE_KEYS, DIVIDEND_FILTER_KEYS
 } from './constants.js';
 import { computeHoldings, getBucketSegments, isCashModelActive } from './compute.js';
 import {
-  renderApp, renderSavedStateQuietly, renderSortChips, renderBucketsView,
+  renderApp, renderSavedStateQuietly, renderBucketsView,
   applyLegendExpandState, applyHoldingSortSelection, updateDividendTooltipSide,
   closeActiveDividendTooltip, toggleDividendTooltip, captureHoldingPositions,
   animateHoldingReflow, animateHoldingRemoval, closeHoldingSwipe, openHoldingSwipe,
@@ -16,7 +16,7 @@ import {
 } from './render.js';
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
-  setModalBucketSelection, setModalCashFlowTypeSelection,
+  setModalCashFlowTypeSelection,
   setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo, updateTradeAmountInfo, syncZenEditWidth,
   setReceiptCurrency, toggleReceiptConfirmed, updateReceiptConversion
 } from './modal.js';
@@ -24,13 +24,6 @@ import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
 import { loadFundamentals, selectFundamentalsSymbol } from './fundamentals.js';
 import { loadReportCalendar } from './report-calendar.js';
-
-/* ── Sort Toggle Button（静态节点，只补事件与无障碍标签，图标由 renderSortChips 填充）── */
-mutable.sortToggleButton = document.getElementById('sortToggleButton');
-if (mutable.sortToggleButton) {
-  mutable.sortToggleButton.setAttribute('aria-label', UI_TEXT.sort);
-  mutable.sortToggleButton.addEventListener('click', (e) => { e.stopPropagation(); state.sortMenuOpen = !state.sortMenuOpen; renderSortChips(); });
-}
 
 /* ── Page Navigation ── */
 const pageHistory = [];
@@ -40,7 +33,6 @@ function navigateTo(page, options = {}) {
   if (options.recordHistory !== false && state.activePage) pageHistory.push(state.activePage);
   closeActiveDividendTooltip(true);
   state.activePage = page;
-  state.sortMenuOpen = false;
   saveState();
   renderApp({ incremental: true, animateHoldingReflow: false });
   window.scrollTo({ top: 0, behavior: 'auto' });
@@ -58,10 +50,7 @@ refs.exportButton.addEventListener('click', syncPortfolioToCloud);
 refs.importButton.addEventListener('click', () => refs.importFileInput.click());
 refs.importFileInput.addEventListener('change', handleImportFile);
 refs.legendToggle.addEventListener('click', () => { const t = refs.legendToggle.getBoundingClientRect().top; state.legendExpanded = !state.legendExpanded; saveState(); applyLegendExpandState({ preserveScroll: true, toggleTop: t }); });
-refs.refreshButton.addEventListener('click', () => { refreshMarketData({ silent: false }); });
 if (refs.diagnosticsButton) refs.diagnosticsButton.addEventListener('click', () => { openModal('diagnostics'); });
-// 现金模式下，首页「+」直接开一笔买入交易（替代旧的新增持仓）；未启用时仍是新增持仓。
-refs.addButton.addEventListener('click', () => { openModal(isCashModelActive() ? 'trade' : 'add'); });
 
 refs.homeNavList.addEventListener('click', (event) => {
   const btn = event.target.closest('[data-page-nav]');
@@ -237,7 +226,6 @@ if (refs.incomeRecordsList) refs.incomeRecordsList.addEventListener('click', (ev
 
 
 document.addEventListener('click', (event) => {
-  if (state.sortMenuOpen && !event.target.closest('.sort-group') && !event.target.closest('.sort-toggle-button') && !event.target.closest('#holdingsSortLabel')) { state.sortMenuOpen = false; renderSortChips(); }
   if (mutable.activeDividendTooltipButton && event.target.closest('.dividend-status-button--value') !== mutable.activeDividendTooltipButton) closeActiveDividendTooltip(true);
 });
 
@@ -277,9 +265,9 @@ refs.stockList.addEventListener('click', (event) => {
         animateHoldingRemoval(w, () => {
           if (mutable.activeDividendTooltipButton && w.contains(mutable.activeDividendTooltipButton)) mutable.activeDividendTooltipButton = null;
           w.remove(); state.holdings = state.holdings.filter((i) => i.localId !== localId); addRecordTombstone('holding', holding.symbol); saveState();
-          renderApp({ animateLegend: false, animateBucketDetail: false, animateHoldings: false, renderHoldingsList: false }); animateHoldingReflow(prev);
+          renderApp({ animateBucketDetail: false, animateHoldings: false, renderHoldingsList: false }); animateHoldingReflow(prev);
         });
-      } else { state.holdings = state.holdings.filter((i) => i.localId !== localId); addRecordTombstone('holding', holding.symbol); saveState(); renderApp({ animateLegend: false, animateBucketDetail: false, animateHoldings: false, renderHoldingsList: false }); }
+      } else { state.holdings = state.holdings.filter((i) => i.localId !== localId); addRecordTombstone('holding', holding.symbol); saveState(); renderApp({ animateBucketDetail: false, animateHoldings: false, renderHoldingsList: false }); }
     });
     return;
   }
@@ -475,7 +463,6 @@ refs.stockList.addEventListener('touchcancel', settleHoldingSwipe, { passive: tr
 
 /* ── Modal click delegation ── */
 refs.modalRoot.addEventListener('click', (event) => {
-  const bb = event.target.closest('[data-bucket-option]'); if (bb) { setModalBucketSelection(bb.dataset.bucketOption); return; }
   const cf = event.target.closest('[data-cash-flow-type]'); if (cf) { setModalCashFlowTypeSelection(cf.dataset.cashFlowType); return; }
   const ts = event.target.closest('[data-trade-side]'); if (ts) { setModalTradeSideSelection(ts.dataset.tradeSide); return; }
   const dc = event.target.closest('[data-dividend-currency]'); if (dc) { setReceiptCurrency(dc.dataset.dividendCurrency); return; }
@@ -494,9 +481,6 @@ refs.modalRoot.addEventListener('click', (event) => {
   if (t === 'open-trade') { openModal('trade'); return; }
   if (t === 'open-cash-flow') { openModal('cashFlow'); return; }
   if (t === 'open-current-cash') { openModal('openingCash'); return; }
-  if (t === 'holding-diagnostics') { closeModal(); refs.diagnosticsButton.click(); return; }
-  if (t === 'holding-refresh') { closeModal(); refs.refreshButton.click(); return; }
-  if (t === 'holding-add') { closeModal(); refs.addButton.click(); return; }
   if (t === 'save-share-card') { generateAnnualShareCard(); return; }
   if (t === 'close' || t === 'cancel') { closeModal(); return; }
   if (t === 'delete-yearly-manual') { handleModalDelete(); return; }
@@ -520,7 +504,7 @@ async function boot() {
   catch (error) { console.error('boot render failed, resetting to defaults:', error); applySnapshot(createDefaultSnapshot()); saveState(); renderApp(); }
   await cleanupLegacyCaches();
   void Promise.all([loadFundamentals(), loadReportCalendar()])
-    .then(() => renderApp({ animateLegend: false, animateBucketDetail: false, animateHoldings: false }));
+    .then(() => renderApp({ animateBucketDetail: false, animateHoldings: false }));
   await refreshMarketData({ silent: true });
 }
 

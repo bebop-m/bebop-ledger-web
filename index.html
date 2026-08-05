@@ -143,20 +143,6 @@
           </div>
           <div id="stockList" class="stock-list"></div>
           <button id="legendToggle" class="text-button legend-toggle" type="button" hidden></button>
-
-          <!-- 旧入口保留但不出现在版面上：持仓操作抽屉仍会程序性点击刷新/新增，
-               三个排序 chip 已被上面的单文字按钮取代。 -->
-          <div class="holdings-legacy-controls" hidden aria-hidden="true">
-            <button id="sortToggleButton" class="circle-button sort-toggle-button" type="button" tabindex="-1" aria-label="排序"></button>
-            <button id="refreshButton" class="circle-button" type="button" tabindex="-1" aria-label="刷新行情"></button>
-            <button id="addButton" class="circle-button" type="button" tabindex="-1" aria-label="新增持仓"></button>
-            <div class="sort-group" aria-label="持仓排序">
-              <button class="sort-chip" type="button" data-sort-field="marketValueCny"></button>
-              <button class="sort-chip" type="button" data-sort-field="effectiveYield"></button>
-              <button class="sort-chip" type="button" data-sort-field="netAnnualDividendCny"></button>
-            </div>
-            <div id="companyLegend" class="legend-list" hidden></div>
-          </div>
         </div>
 
         <div id="dividendCalendarPage" class="page-view page-stack" data-page-view="dividends" hidden>

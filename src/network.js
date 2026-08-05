@@ -1,4 +1,4 @@
-import { state, refs, invalidateComputeCache, saveState, showToast } from './state.js';
+import { state, invalidateComputeCache, saveState, showToast } from './state.js';
 import {
   safeNumber, normalizeSymbol, normalizeDividendSource, chunkSymbols,
   toTencentSymbol, inferQuoteFromMap, mergeQuotes, setStaleDays, normalizeStaleDays,
@@ -105,15 +105,10 @@ export async function loadRealtimeQuoteSnapshot() {
   return quotes;
 }
 
-function getRefreshButtons() {
-  return [refs.refreshButton].filter(Boolean);
-}
-
 export async function refreshMarketData(opts = {}) {
   const { silent = false } = opts;
   if (state.syncing) return;
   state.syncing = true;
-  getRefreshButtons().forEach((btn) => { btn.disabled = true; btn.classList.add('is-syncing'); });
   let hasUpdates = false, lastError = null;
   try {
     try { applyClientConfigPayload(await loadClientConfigSnapshot()); } catch (e) { lastError = lastError || e; console.warn('config refresh failed', e); }
@@ -132,7 +127,7 @@ export async function refreshMarketData(opts = {}) {
     }
     if (!silent) showToast(LABELS.refreshFailed, { type: 'error' });
   }
-  finally { state.syncing = false; getRefreshButtons().forEach((btn) => { btn.disabled = false; btn.classList.remove('is-syncing'); }); }
+  finally { state.syncing = false; }
 }
 
 export async function cleanupLegacyCaches() {

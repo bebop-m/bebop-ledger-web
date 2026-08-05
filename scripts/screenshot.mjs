@@ -53,7 +53,10 @@ const CFG = {
   outDir: resolve(argv.out || 'screenshots'),
   both: Boolean(argv.both),
   shots: argv.shots || '',
-  statusbar: Boolean(argv.statusbar)
+  statusbar: Boolean(argv.statusbar),
+  /* 屏蔽跨域请求（腾讯实时行情等）。美股盘中每次启动拉到的现价都不同，
+     权重百分比全列表跟着变，逐像素回归对比只能在纯静态数据下做。 */
+  blockExternal: Boolean(argv['block-external'])
 };
 
 const chrome = CHROME_CANDIDATES.find((p) => existsSync(p));
@@ -114,6 +117,14 @@ async function shoot(browser, theme, nav = CFG.nav, modal = CFG.modal) {
     hasTouch: true
   });
   await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: theme }]);
+  if (CFG.blockExternal) {
+    await page.setRequestInterception(true);
+    const origin = new URL(CFG.url).origin;
+    page.on('request', (req) => {
+      if (req.url().startsWith(origin)) req.continue();
+      else req.abort('blockedbyclient');
+    });
+  }
   /* 行情要等到真的落地再拍。只判「hero 非空」是不够的：种子状态下 hero
      早就渲染好了（净资产先显示 ¥0.00），那一帧拍出来像数据故障。
      market.json 的响应必须在 goto 之前挂监听，否则会错过。 */

@@ -60,8 +60,7 @@ export const state = {
   modalPayload: null,
   syncing: false,
   cloudSyncing: false,
-  activeBucketKey: null,
-  sortMenuOpen: false
+  activeBucketKey: null
 };
 
 /* 启动时本机到底有没有存档。「添加到主屏幕」生成的是一份全新存储，读不到存档时
@@ -74,7 +73,6 @@ export const mutable = {
   activeDividendTooltipButton: null,
   suppressHoldingClickUntil: 0,
   cloudSyncSuccessTimer: 0,
-  sortToggleButton: null,
   // 年度回顾的「其余 N 项」是否展开。只活在本次会话里，切年份时归零。
   annualHoldingsExpanded: false,
   // 资金与交易页三段流水的展开状态。同样只活在本次会话里，不写进快照。
@@ -123,22 +121,17 @@ export const refs = {
   exportButton: document.getElementById('exportButton'),
   importButton: document.getElementById('importButton'),
   importFileInput: document.getElementById('importFileInput'),
-  companyLegend: document.getElementById('companyLegend'),
   legendToggle: document.getElementById('legendToggle'),
   bucketTrack: document.getElementById('bucketTrack'),
   holdingsHero: document.getElementById('holdingsHero'),
   diagnosticsButton: document.getElementById('diagnosticsButton'),
   marketTimestamp: document.getElementById('marketTimestamp'),
-  refreshButton: document.getElementById('refreshButton'),
   homePullIndicator: document.getElementById('homePullIndicator'),
   holdingsPullIndicator: document.getElementById('holdingsPullIndicator'),
-  addButton: document.getElementById('addButton'),
   stockList: document.getElementById('stockList'),
   modalRoot: document.getElementById('modalRoot'),
   confirmRoot: document.getElementById('confirmRoot'),
   toastContainer: document.getElementById('toastContainer'),
-  sortGroup: document.querySelector('.sort-group'),
-  sortChips: Array.from(document.querySelectorAll('.sort-chip')),
   holdingsSortLabel: document.getElementById('holdingsSortLabel')
 };
 

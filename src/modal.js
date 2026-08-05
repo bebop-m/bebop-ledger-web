@@ -50,14 +50,6 @@ export function closeModal() {
   } else { state.modal = null; state.modalPayload = null; document.body.classList.remove('modal-open'); refs.modalRoot.innerHTML = ''; }
 }
 
-export function setModalBucketSelection(next) {
-  const bucket = next === 'income' ? 'income' : 'core';
-  const input = document.getElementById('modalBucketInput'); if (input) input.value = bucket;
-  Array.from(document.querySelectorAll('[data-bucket-option]')).forEach((b) => {
-    const a = b.dataset.bucketOption === bucket; b.classList.toggle('is-active', a); b.setAttribute('aria-pressed', a ? 'true' : 'false');
-  });
-}
-
 export function setModalCashFlowTypeSelection(next) {
   const type = next === 'withdrawal' ? 'withdrawal' : 'deposit';
   state.modalPayload = { ...(state.modalPayload || {}), type };
@@ -251,33 +243,8 @@ function renderModal() {
   if (state.modal === 'trade') { renderTradeModal(); return; }
   if (state.modal === 'cashFlow') { renderCashFlowModal(); return; }
   if (state.modal === 'openingCash') { renderOpeningCashModal(); return; }
-  /* 只剩两个尚未走 zen 形制的旧弹窗：持仓操作菜单与新增持仓（均不在 18 张定稿图内）。
-     记一笔 / 交易 / 出入金 / 当前现金四个抽屉见下方各自的 render 函数。 */
-  let title = '', note = '', fields = '';
-  if (state.modal === 'holdingsMenu') {
-    title = '持仓操作';
-    note = `${state.holdings.length} 项持仓`;
-    fields = `<div class="quick-add-options holdings-menu-options">
-      <button class="quick-add-option" type="button" data-modal-action="holding-add"><strong>新增持仓</strong><span>添加证券或记录一笔买入</span></button>
-      <button class="quick-add-option" type="button" data-modal-action="holding-refresh"><strong>刷新行情</strong><span>更新价格、汇率与股息数据</span></button>
-      <button class="quick-add-option" type="button" data-modal-action="holding-diagnostics"><strong>持仓诊断</strong><span>查看仓位、股息与数据异常</span></button>
-    </div>`;
-  } else if (state.modal === 'add') {
-    title = LABELS.addTitle; note = LABELS.addNote;
-    fields = `<input id="modalSymbolInput" class="modal-input" type="text" placeholder="${LABELS.symbolPlaceholder}">
-      <input id="modalQuantityInput" class="modal-input" type="number" inputmode="decimal" placeholder="${LABELS.quantityPlaceholder}">
-      <div class="modal-bucket-group" role="group" aria-label="${LABELS.core} / ${LABELS.income}">
-        <button class="modal-bucket-button is-core is-active" type="button" data-bucket-option="core" aria-pressed="true">${LABELS.core}</button>
-        <button class="modal-bucket-button is-income" type="button" data-bucket-option="income" aria-pressed="false">${LABELS.income}</button>
-      </div><input id="modalBucketInput" type="hidden" value="core">`;
-  }
-
-  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
-    <section class="modal-sheet" role="dialog" aria-modal="true">
-    <div class="modal-title-row"><h3 class="modal-title">${title}</h3>${note ? `<p class="modal-note">${escapeHtml(note)}</p>` : ''}</div>${fields}
-    <div class="modal-actions">
-    <button class="modal-button modal-button--secondary" type="button" data-modal-action="cancel">${LABELS.cancel}</button>
-    ${state.modal === 'holdingsMenu' ? '' : `<button class="modal-button modal-button--primary" type="button" data-modal-action="save">${LABELS.save}</button>`}</div></section>`;
+  // 全部抽屉均已走 zen 形制；未知 modal 名视为程序错误，清空兜底。
+  refs.modalRoot.innerHTML = '';
 }
 
 /* ══════════════════════════════════════════════════════════════════
@@ -838,17 +805,6 @@ export function handleModalSave() {
       .filter((item) => item.year !== year)
       .concat(hasOverride ? entry : [])
       .sort((a, b) => b.year - a.year);
-  } else if (state.modal === 'add') {
-    const symbol = normalizeSymbol(document.getElementById('modalSymbolInput').value);
-    const quantity = Math.max(0, safeNumber(document.getElementById('modalQuantityInput').value, 0));
-    const bucket = document.getElementById('modalBucketInput').value === 'income' ? 'income' : 'core';
-    if (!symbol) { showToast(LABELS.missingSymbol, { type: 'error' }); return; }
-    if (state.holdings.some((i) => normalizeSymbol(i.symbol) === symbol)) { showToast(`${symbol} ${LABELS.duplicateHolding}`, { type: 'error' }); return; }
-    const now = new Date().toISOString();
-    state.holdings = state.holdings.concat({ localId: state.nextId, symbol, quantity, bucket, taxRateOverride: '', dividendPerShareTtmOverride: '', dividendPerShareTtmOverrideTouched: false, createdAt: now, updatedAt: now });
-    removeRecordTombstone('holding', symbol);
-    state.quotes = mergeQuotes(state.quotes, { [symbol]: inferQuote(symbol) });
-    state.nextId += 1;
   }
   archiveCompletedYears(getTodayLabel());
   saveState();

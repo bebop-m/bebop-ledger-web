@@ -4,15 +4,11 @@ import {
   getLedgerCalendarDate, isCashModelActive, normalizeEconomicDividendEntries
 } from './compute.js';
 import {
-  addDaysToDateLabel, buildDividendSourceId, canonicalDividendSourceId, dividendIgnoreKey, formatDateLabel, normalizeQuoteDividendEvent,
+  addDaysToDateLabel, buildDividendSourceId, canonicalDividendSourceId, dividendIgnoreKey, formatDateLabel, formatLocalDate, normalizeQuoteDividendEvent,
   parsePercentOverride, resolveEffectivePayDate, resolveFxRate, roundMoney, safeNumber,
   sanitizeDailySnapshotEntry, sanitizeDividendLedgerEntry, sanitizeYearlyArchiveEntry,
   sanitizeYearlyHoldingsEntry
 } from './utils.js';
-
-function formatLocalDate(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
 
 function isDateOnOrBefore(value, limit) {
   const date = formatDateLabel(value);

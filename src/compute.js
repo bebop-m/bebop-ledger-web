@@ -2,7 +2,7 @@ import { state, DEFAULT_QUOTES, invalidateComputeCache, getComputeCache, setComp
 import {
   safeNumber, roundMoney, inferQuoteFromMap, resolveQuoteCurrency, resolveFxRate,
   parsePercentOverride, resolveManualDividendPerShareOverride,
-  normalizeDividendSource, normalizeDividendStatus, formatDateLabel,
+  normalizeDividendSource, normalizeDividendStatus, formatDateLabel, formatLocalDate,
   buildDividendSourceId, canonicalDividendSourceId, resolveEffectivePayDate
 } from './utils.js';
 import { COMPANY_COLORS, BUCKET_COLORS, LABELS, DIVIDEND_FILTER_KEYS, INCOME_START_YEAR } from './constants.js';
@@ -156,10 +156,6 @@ export function getBucketSummaryItems(holdings) {
   return Object.values(groups)
     .map((i) => ({ ...i, averageYield: i.marketValueCny > 0 ? i.totalDividendCny / i.marketValueCny : 0 }))
     .filter((i) => i.marketValueCny > 0);
-}
-
-function formatLocalDate(date = new Date()) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function getDateParts(value) {

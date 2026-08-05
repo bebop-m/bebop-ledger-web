@@ -101,6 +101,10 @@ export function formatTimestamp(isoString) {
   return `${LABELS.marketUpdated} ${month}-${day} ${hour}:${minute}`;
 }
 
+export function formatLocalDate(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 export function formatDateLabel(value) {
   if (value instanceof Date) {
     if (Number.isNaN(value.getTime())) return '';

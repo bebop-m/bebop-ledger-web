@@ -1,3 +1,72 @@
+/* ── 流式标尺 ─────────────────────────────────────────────
+   --fl-N = clamp(N*0.92px, N/3.9vw, N*1.35px)：N 为 390 设计宽下的像素，
+   430 实机上约为 N*1.1025。字号、间距、行高一律引用变量，禁止手写 clamp 三元组，
+   新尺寸先在这里加一档。 */
+:root {
+  --fl-n1: clamp(-1.35px, -0.2564vw, -0.92px);
+  --fl-n0p5: clamp(-0.675px, -0.1282vw, -0.46px);
+  --fl-n0p3: clamp(-0.405px, -0.0769vw, -0.276px);
+  --fl-0p5: clamp(0.46px, 0.1282vw, 0.675px);
+  --fl-1: clamp(0.92px, 0.2564vw, 1.35px);
+  --fl-2: clamp(1.84px, 0.5128vw, 2.7px);
+  --fl-2p5: clamp(2.3px, 0.641vw, 3.375px);
+  --fl-3: clamp(2.76px, 0.7692vw, 4.05px);
+  --fl-3p5: clamp(3.22px, 0.8974vw, 4.725px);
+  --fl-4: clamp(3.68px, 1.0256vw, 5.4px);
+  --fl-4p5: clamp(4.14px, 1.1538vw, 6.075px);
+  --fl-5: clamp(4.6px, 1.2821vw, 6.75px);
+  --fl-6: clamp(5.52px, 1.5385vw, 8.1px);
+  --fl-7: clamp(6.44px, 1.7949vw, 9.45px);
+  --fl-8: clamp(7.36px, 2.0513vw, 10.8px);
+  --fl-8p5: clamp(7.82px, 2.1795vw, 11.475px);
+  --fl-9: clamp(8.28px, 2.3077vw, 12.15px);
+  --fl-9p5: clamp(8.74px, 2.4359vw, 12.825px);
+  --fl-10: clamp(9.2px, 2.5641vw, 13.5px);
+  --fl-10p5: clamp(9.66px, 2.6923vw, 14.175px);
+  --fl-11: clamp(10.12px, 2.8205vw, 14.85px);
+  --fl-11p5: clamp(10.58px, 2.9487vw, 15.525px);
+  --fl-12: clamp(11.04px, 3.0769vw, 16.2px);
+  --fl-12p5: clamp(11.5px, 3.2051vw, 16.875px);
+  --fl-13: clamp(11.96px, 3.3333vw, 17.55px);
+  --fl-13p5: clamp(12.42px, 3.4615vw, 18.225px);
+  --fl-14: clamp(12.88px, 3.5897vw, 18.9px);
+  --fl-14p5: clamp(13.34px, 3.7179vw, 19.575px);
+  --fl-15: clamp(13.8px, 3.8462vw, 20.25px);
+  --fl-16: clamp(14.72px, 4.1026vw, 21.6px);
+  --fl-17: clamp(15.64px, 4.359vw, 22.95px);
+  --fl-18: clamp(16.56px, 4.6154vw, 24.3px);
+  --fl-19: clamp(17.48px, 4.8718vw, 25.65px);
+  --fl-20: clamp(18.4px, 5.1282vw, 27px);
+  --fl-21: clamp(19.32px, 5.3846vw, 28.35px);
+  --fl-22: clamp(20.24px, 5.641vw, 29.7px);
+  --fl-23: clamp(21.16px, 5.8974vw, 31.05px);
+  --fl-24: clamp(22.08px, 6.1538vw, 32.4px);
+  --fl-26: clamp(23.92px, 6.6667vw, 35.1px);
+  --fl-27: clamp(24.84px, 6.9231vw, 36.45px);
+  --fl-28: clamp(25.76px, 7.1795vw, 37.8px);
+  --fl-29: clamp(26.68px, 7.4359vw, 39.15px);
+  --fl-30: clamp(27.6px, 7.6923vw, 40.5px);
+  --fl-32: clamp(29.44px, 8.2051vw, 43.2px);
+  --fl-34: clamp(31.28px, 8.7179vw, 45.9px);
+  --fl-38: clamp(34.96px, 9.7436vw, 51.3px);
+  --fl-40: clamp(36.8px, 10.2564vw, 54px);
+  --fl-42: clamp(38.64px, 10.7692vw, 56.7px);
+  --fl-44: clamp(40.48px, 11.2821vw, 59.4px);
+  --fl-45: clamp(41.4px, 11.5385vw, 60.75px);
+  --fl-46: clamp(42.32px, 11.7949vw, 62.1px);
+  --fl-47: clamp(43.24px, 12.0513vw, 63.45px);
+  --fl-54: clamp(49.68px, 13.8462vw, 72.9px);
+  --fl-56: clamp(51.52px, 14.359vw, 75.6px);
+  --fl-58: clamp(53.36px, 14.8718vw, 78.3px);
+  --fl-96: clamp(88.32px, 24.6154vw, 129.6px);
+  --fl-120: clamp(110.4px, 30.7692vw, 162px);
+  --fl-128: clamp(117.76px, 32.8205vw, 172.8px);
+  --fl-214: clamp(196.88px, 54.8718vw, 288.9px);
+  --fl-220: clamp(202.4px, 56.4103vw, 297px);
+  --fl-250: clamp(230px, 64.1026vw, 337.5px);
+  --fl-280: clamp(257.6px, 71.7949vw, 378px);
+}
+
 :root {
   color-scheme: light;
   /* Swiss typographic tokens: black/white/gray hairline grid; red-up green-down are the only colors */
@@ -123,10 +192,6 @@ button:focus-visible {
   box-shadow: var(--ring-primary);
 }
 
-.circle-button:active,
-.sort-chip:active,
-.modal-button:active,
-.modal-bucket-button:active,
 .legend-toggle:active,
 .text-button:active,
 .summary-action-button:active,
@@ -152,12 +217,6 @@ svg {
   width: min(100%, 402px);
   margin: 0 auto;
   position: relative;
-}
-.sort-group,
-.legend-row,
-.modal-actions{
-  display: flex;
-  align-items: center;
 }
 
 .page-stack {
@@ -191,19 +250,9 @@ svg {
 .panel-bar--list.is-sort-open {
   padding-bottom: 92px;
 }
-.legend-label,
-.legend-value,
-.modal-note,
 .text-button {
   color: var(--muted);
   font-size: 13px;
-}
-.modal-note {
-  margin: 6px 0 0;
-}
-.sort-group,
-.modal-actions {
-  gap: 10px;
 }
 
 .text-button {
@@ -296,43 +345,6 @@ svg {
     transform var(--motion-base) var(--ease-soft);
 }
 
-.circle-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
-  flex: 0 0 44px;
-  border-radius: 50%;
-  background: var(--color-bg-muted);
-  box-shadow: inset 0 0 0 1px var(--line);
-  color: var(--color-text-secondary);
-  transition:
-    background-color var(--motion-quick) var(--ease-soft),
-    box-shadow var(--motion-quick) var(--ease-soft),
-    color var(--motion-quick) var(--ease-soft),
-    transform var(--motion-quick) var(--ease-soft);
-}
-
-#refreshButton {
-  transition:
-    background-color 90ms linear,
-    box-shadow 90ms linear,
-    color 90ms linear,
-    transform 80ms linear;
-  will-change: transform;
-}
-
-#refreshButton:active {
-  transform: scale(0.95);
-}
-
-#refreshButton.is-syncing svg {
-  animation: spin 800ms linear infinite;
-}
-
 .summary-action-button:not(.summary-action-button--cloud).is-syncing svg {
   animation: spin 800ms linear infinite;
 }
@@ -385,36 +397,6 @@ svg {
   }
 }
 
-.circle-button svg {
-  width: 18px;
-  height: 18px;
-}
-
-.sort-toggle-button.is-active {
-  background: var(--brand-soft);
-  color: var(--brand);
-}
-
-.sort-toggle-button {
-  transition:
-    background-color var(--motion-quick) var(--ease-soft),
-    box-shadow var(--motion-quick) var(--ease-soft),
-    color var(--motion-quick) var(--ease-soft),
-    transform var(--motion-base) var(--ease-soft),
-    opacity var(--motion-base) var(--ease-soft);
-}
-
-.sort-toggle-button.is-hidden-animated {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.85);
-  position: absolute;
-  visibility: hidden;
-}
-
-.circle-button .eye-shell,
-.circle-button .eye-core,
-.circle-button .eye-slash,
 .summary-action-button .eye-shell,
 .summary-action-button .eye-core,
 .summary-action-button .eye-slash {
@@ -424,38 +406,28 @@ svg {
     transform var(--motion-base) var(--ease-soft);
 }
 
-.circle-button .eye-core,
 .summary-action-button .eye-core {
   opacity: 1;
   transform: scale(1);
 }
 
-.circle-button .eye-slash,
 .summary-action-button .eye-slash {
   opacity: 0;
   transform: scale(0.72) rotate(-8deg);
 }
 
-.circle-button.is-hidden .eye-shell,
 .summary-action-button.is-hidden .eye-shell {
   transform: scale(0.98);
 }
 
-.circle-button.is-hidden .eye-core,
 .summary-action-button.is-hidden .eye-core {
   opacity: 0.18;
   transform: scale(0.58);
 }
 
-.circle-button.is-hidden .eye-slash,
 .summary-action-button.is-hidden .eye-slash {
   opacity: 1;
   transform: scale(1) rotate(0deg);
-}
-
-.circle-button:disabled {
-  opacity: 0.5;
-  cursor: default;
 }
 .privacy-hidden .dividend-status-button--value {
   color: transparent !important;
@@ -581,83 +553,8 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   margin-top: 14px;
 }/* 闁冲厜鍋撻柍鍏夊亾 Calendar refinements: YoY badge, month phase colors, big label/total 闁冲厜鍋撻柍鍏夊亾 *//* 闁冲厜鍋撻柍鍏夊亾 Month detail modal (compact) 闁冲厜鍋撻柍鍏夊亾 *//* 缂?鐎规瓕灏欓垾妯兼媼閵堝懎鐓傞悹?鐠?濮?闁煎浜滄慨鈺呭礂閵夈劌顦╃€垫澘鎳愰垾妯兼媼?鐠?闁?鐎瑰憡褰冮崣鏇㈠川婵犲啯寮撻梻鍕╁€栨导?鐠?闁?闁煎搫鍊搁〃鏃€锛愰崟顏勫挤 */
 
-.legend-list {
-  display: block;
-  overflow-anchor: none;
-}
-
-.legend-row {
-  --legend-row-padding-y: 8px;
-  display: block;
-  padding: var(--legend-row-padding-y) 0;
-  border-bottom: 1px solid var(--line-soft);
-  transition:
-    max-height var(--motion-base) var(--ease-soft),
-    padding-top var(--motion-base) var(--ease-soft),
-    padding-bottom var(--motion-base) var(--ease-soft),
-    border-color 180ms var(--ease-soft),
-    opacity 180ms var(--ease-soft),
-    transform var(--motion-base) var(--ease-soft);
-}
-
-.legend-row + .legend-row {
-  margin-top: 8px;
-  transition: margin-top var(--motion-base) var(--ease-soft);
-}
-
-.legend-row.is-entering {
-  animation: legend-row-in 200ms var(--ease-soft) both;
-}
-
-.legend-row-shell {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-@keyframes legend-row-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.legend-main {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.legend-label {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.legend-value {
-  flex: 0 0 auto;
-}
-
 .legend-toggle {
   margin-top: 12px;
-}
-
-@keyframes bucket-detail-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 #marketTimestamp {
@@ -665,36 +562,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.sort-group {
-  flex-wrap: wrap;
-}
-
-.sort-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 92px;
-  padding: 9px 12px;
-  border-radius: var(--radius-pill);
-  background: var(--color-bg-muted);
-  box-shadow: inset 0 0 0 1px var(--line);
-  color: var(--color-text-secondary);
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1;
-  transition:
-    background-color var(--motion-quick) var(--ease-soft),
-    box-shadow var(--motion-quick) var(--ease-soft),
-    color var(--motion-quick) var(--ease-soft),
-    transform var(--motion-quick) var(--ease-soft);
-}
-
-.sort-chip.is-active {
-  background: var(--brand-soft);
-  color: var(--brand);
 }
 
 .stock-list {
@@ -1147,19 +1014,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   color: #ffffff;
 }
 
-.modal-title {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.modal-note {
-  margin: 6px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.4;
-}
-
 .modal-input{
   width: 100%;
   height: 52px;
@@ -1174,58 +1028,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   margin-top: 16px;
 }
 
-.modal-bucket-group {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.modal-bucket-button {
-  min-height: 50px;
-  padding: 0 16px;
-  border: 1px solid rgba(26, 26, 26, 0.06);
-  border-radius: 16px;
-  background: var(--color-bg-muted);
-  color: #6c7c93;
-  font-size: 16px;
-  font-weight: 700;
-  text-align: center;
-  transition:
-    background-color var(--motion-quick) var(--ease-soft),
-    border-color var(--motion-quick) var(--ease-soft),
-    box-shadow var(--motion-quick) var(--ease-soft),
-    color var(--motion-quick) var(--ease-soft),
-    transform var(--motion-quick) var(--ease-soft);
-}
-
-.modal-bucket-button.is-core.is-active {
-  background: linear-gradient(180deg, rgba(26, 26, 26, 0.09) 0%, rgba(26, 26, 26, 0.038) 100%);
-  border-color: rgba(26, 26, 26, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.08);
-  color: #1f3556;
-}
-
-.modal-bucket-button.is-income.is-active {
-  background: linear-gradient(180deg, rgba(26, 26, 26, 0.11) 0%, rgba(26, 26, 26, 0.04) 100%);
-  border-color: rgba(26, 26, 26, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.08);
-  color: #855a32;
-}
-
-.modal-actions {
-  justify-content: space-between;
-  margin-top: 18px;
-}
-
-.modal-button {
-  flex: 1;
-  min-height: 48px;
-  border-radius: 16px;
-  font-size: 16px;
-  font-weight: 700;
-}
-
 .modal-button--secondary {
   background: var(--color-bg-muted);
   box-shadow: inset 0 0 0 1px var(--line);
@@ -1235,14 +1037,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .modal-button--primary {
   background: var(--brand);
   color: #ffffff;
-}
-
-.modal-button {
-  transition:
-    background-color var(--motion-quick) var(--ease-soft),
-    box-shadow var(--motion-quick) var(--ease-soft),
-    color var(--motion-quick) var(--ease-soft),
-    transform var(--motion-quick) var(--ease-soft);
 }
 
 @media (max-width: 560px) {
@@ -1262,19 +1056,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
     padding: 15px;
     border-radius: 22px;
     box-shadow: none;
-  }
-
-  .circle-button {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
-    flex-basis: 40px;
-  }
-
-  .circle-button svg {
-    width: 17px;
-    height: 17px;
   }
 
   .summary-action-button {
@@ -1316,26 +1097,8 @@ body:not(.privacy-hidden) .dividend-status-button--value {
     margin-top: 12px;
   }
 
-  .sort-chip {
-    flex: 1 1 0;
-    min-width: 0;
-    min-height: 40px;
-    padding: 0 12px;
-    border-radius: 16px;
-    font-size: 14px;
-  }
-
   .panel-bar--list.is-sort-open {
     padding-bottom: 88px;
-  }
-
-  .legend-row {
-    --legend-row-padding-y: 7px;
-    padding: 7px 0;
-  }
-
-  .legend-row + .legend-row {
-    margin-top: 6px;
   }
 
   .panel-bar--list {
@@ -1389,9 +1152,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
       transform var(--motion-quick) var(--ease-soft),
       visibility 0s linear var(--motion-quick);
   }
-  .legend-label,
-  .legend-value,
-  .modal-note,
   .text-button{
     font-size: 12px;
   }
@@ -1579,44 +1339,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   font-weight: 800;
   letter-spacing: 2px;
   color: var(--color-ink);
-}/* 閳光偓閳光偓 閸﹀棗鑸伴崝銊ょ稊閹稿鎸?閳光偓閳光偓 */
-
-
-.circle-button {
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  min-height: 38px;
-  flex: 0 0 38px;
-  border: var(--border-compact);
-  border-radius: 50%;
-  background: #fff;
-  color: var(--color-ink);
-  box-shadow: none;
-}
-
-.circle-button svg {
-  width: 18px;
-  height: 18px;
-}/* 閳光偓閳光偓 閹烘帒绨?chips 閳光偓閳光偓 */
-
-
-.sort-chip {
-  min-width: 0;
-  padding: 8px 12px;
-  border: var(--border-compact);
-  border-radius: var(--radius-chip);
-  background: #fff;
-  box-shadow: none;
-  color: var(--color-ink);
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.sort-chip.is-active {
-  background: var(--color-ink);
-  color: #fff;
-}/* 閳光偓閳光偓 閸掑棙顔岄幒褌娆㈤敍鍫ｅ亗閹垱妫╅崢鍡欑摣闁绱氶埞鈧埞鈧?*/
+}/* 閳光偓閳光偓 閸﹀棗鑸伴崝銊ょ稊閹稿鎸?閳光偓閳光偓 *//* 閳光偓閳光偓 閹烘帒绨?chips 閳光偓閳光偓 *//* 閳光偓閳光偓 閸掑棙顔岄幒褌娆㈤敍鍫ｅ亗閹垱妫╅崢鍡欑摣闁绱氶埞鈧埞鈧?*/
 
 
 .segmented-control {
@@ -1649,60 +1372,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   border: var(--border-thin);
   border-radius: var(--radius-card);
   background: #fff;
-}/* 閳光偓閳光偓 閹镐椒绮ㄧ紒鎾寸€崶鍙ョ伐閿涙艾宕熼懝鍙夋綀闁插秴鈪烽弶?閳光偓閳光偓 */
-
-
-.legend-bar {
-  display: inline-block;
-  width: 44px;
-  height: 8px;
-  border-radius: 4px;
-  background: var(--color-bg-muted);
-  overflow: hidden;
-  flex: 0 0 44px;
-}
-
-.legend-bar i {
-  display: block;
-  height: 100%;
-  background: var(--color-ink);
-  border-radius: 4px;
-}/* 閳光偓閳光偓 閼测剝浼呴弮銉ュ坊閸楋紕澧?閳光偓閳光偓 *//* 閳光偓閳光偓 quickAdd 闁瀚ㄥ鍦崶 閳光偓閳光偓 */
-
-
-.quick-add-options {
-  display: grid;
-  gap: 10px;
-}
-
-.quick-add-option {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 14px 16px;
-  border: var(--border-thin);
-  border-radius: var(--radius-control);
-  background: #fff;
-  text-align: left;
-  transition: transform 0.15s, background 0.15s;
-}
-
-.quick-add-option:active {
-  transform: scale(0.98);
-  background: var(--color-bg-muted);
-}
-
-.quick-add-option strong {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--color-ink);
-}
-
-.quick-add-option span {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-}/* 鈹€鈹€ 鑹插僵鏀舵暃锛氱孩鑹插彧鐣欑粰娑ㄨ穼/鏀剁泭/涓昏鍔?鈹€鈹€ *//* 鈹€鈹€ 鑲℃伅鏈堝崱锛氱櫧搴曞ⅷ绾匡紝褰撳墠鏈堢孩鐜?鈹€鈹€ *//* 鈹€鈹€ 绌烘€?鈹€鈹€ */
+}/* 閳光偓閳光偓 閹镐椒绮ㄧ紒鎾寸€崶鍙ョ伐閿涙艾宕熼懝鍙夋綀闁插秴鈪烽弶?閳光偓閳光偓 *//* 閳光偓閳光偓 閼测剝浼呴弮銉ュ坊閸楋紕澧?閳光偓閳光偓 *//* 閳光偓閳光偓 quickAdd 闁瀚ㄥ鍦崶 閳光偓閳光偓 *//* 鈹€鈹€ 鑹插僵鏀舵暃锛氱孩鑹插彧鐣欑粰娑ㄨ穼/鏀剁泭/涓昏鍔?鈹€鈹€ *//* 鈹€鈹€ 鑲℃伅鏈堝崱锛氱櫧搴曞ⅷ绾匡紝褰撳墠鏈堢孩鐜?鈹€鈹€ *//* 鈹€鈹€ 绌烘€?鈹€鈹€ */
 
 
 .empty-state {
@@ -1741,7 +1411,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   box-shadow: none;
 }
 
-.modal-title,
 .confirm-message {
   font-size: 16px;
   font-weight: 800;
@@ -1749,7 +1418,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   color: var(--color-ink);
 }
 
-.modal-note,
 .confirm-sub {
   color: var(--color-text-secondary);
   font-weight: 600;
@@ -1773,31 +1441,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .modal-input::placeholder {
   color: var(--color-text-hint);
   font-weight: 500;
-}
-
-.modal-bucket-button {
-  border: var(--border-compact);
-  border-radius: var(--radius-control);
-  background: #fff;
-  box-shadow: none;
-  color: var(--color-ink);
-  font-weight: 800;
-}
-
-.modal-bucket-button.is-active,
-.modal-bucket-button.is-core.is-active,
-.modal-bucket-button.is-income.is-active {
-  background: var(--color-ink);
-  border-color: var(--color-ink);
-  color: #fff;
-  box-shadow: none;
-}
-
-.modal-button {
-  border-radius: var(--radius-pill);
-  font-weight: 800;
-  letter-spacing: 1px;
-  box-shadow: none;
 }
 
 .modal-button--secondary {
@@ -1935,7 +1578,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   padding: 4px 0 10px;
 }
 
-.circle-button,
 .summary-action-button {
   border: none;
   background: none;
@@ -1960,18 +1602,11 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   padding: 14px 2px;
 }
 
-.legend-bar,
-.legend-bar i{
-  border-radius: 0;
-}
-
-.sort-chip,
 .segment-button{
   border: 1px solid var(--color-ink);
   border-radius: 0;
 }
 
-.sort-chip.is-active,
 .segment-button.is-active {
   background: var(--color-ink);
   color: #fff;
@@ -1991,8 +1626,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .modal-input,
-.modal-bucket-button,
-.quick-add-option,
 .toast {
   border-radius: 0;
 }
@@ -2001,11 +1634,6 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   border: 1px solid var(--color-ink);
 }
 
-.modal-bucket-button {
-  border: 1px solid var(--color-ink);
-}
-
-.modal-button,
 .confirm-button {
   border-radius: 0;
   letter-spacing: 2px;
@@ -2027,17 +1655,9 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   border: 1px solid var(--color-primary);
   background: var(--color-primary);
   color: #fff;
-}
-
-.quick-add-option {
-  border: 1px solid var(--color-ink);
-}/* 全局数字表格化 */ .home-hero-value, .legend-value {
+}/* 全局数字表格化 */ .home-hero-value {
   font-variant-numeric: tabular-nums;
-}/* Swiss: bucket chips + structure shell squared and monochrome */
-
-.legend-row-shell {
-  border-radius: 0;
-}/* Swiss: income year rows + record blocks squared */
+}/* Swiss: bucket chips + structure shell squared and monochrome *//* Swiss: income year rows + record blocks squared */
 .income-records,
 .income-overview-grid{
   border-radius: 0;
@@ -2084,16 +1704,11 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .top-bar { padding: 2px 0 8px; }
 .top-bar-title { font-size: 14px; font-weight: 700; letter-spacing: 1.5px; }
-.circle-button svg { width: 16px; height: 16px; }
-.circle-button { width: 32px; height: 32px; min-width: 32px; min-height: 32px; flex-basis: 32px; }
 .back-button { width: 32px; height: 32px; flex-basis: 32px; }
 .back-button svg { width: 18px; height: 18px; }/* -- 持仓页：削黑块、缩字阶 -- */
 
 
-.holding-card { padding: 12px 2px; }
-.legend-label { font-size: 12px; }
-.legend-value { font-size: 11.5px; }
-.legend-bar { width: 36px; height: 6px; flex-basis: 36px; }/* -- 股息日历：三栏排版式指标 -- */
+.holding-card { padding: 12px 2px; }/* -- 股息日历：三栏排版式指标 -- */
 
 
 .dividend-metric-grid {
@@ -2205,7 +1820,6 @@ button:focus-visible {
 .home-brand,
 .top-bar-title,
 .home-nav-title,
-.modal-title,
 .confirm-message {
   color: var(--color-ink-strong);
 }
@@ -2312,18 +1926,6 @@ button:focus-visible {
   border-bottom-color: var(--color-ink);
 }
 
-.circle-button {
-  background: rgba(246, 248, 250, 0.88);
-  box-shadow: inset 0 0 0 1px rgba(188, 198, 208, 0.58);
-  color: var(--color-ink);
-}
-
-.circle-button:hover,
-.circle-button:focus-visible {
-  color: var(--color-primary);
-  box-shadow: inset 0 0 0 1px rgba(217, 77, 63, 0.28);
-}
-
 .panel {
   border-top-color: var(--color-hairline);
 }
@@ -2331,9 +1933,6 @@ button:focus-visible {
 .holding-card{
   border-bottom-color: var(--color-hairline);
 }
-.legend-label,
-.legend-value,
-.modal-note,
 .text-button {
   color: var(--color-text-secondary);
 }
@@ -2341,18 +1940,11 @@ button:focus-visible {
   color: var(--color-ink-strong);
 }
 
-.segment-button,
-.sort-chip,
-.modal-bucket-button,
-.quick-add-option {
+.segment-button {
   border-color: rgba(34, 42, 51, 0.36);
 }
 
-.segment-button.is-active,
-.sort-chip.is-active,
-.modal-bucket-button.is-active,
-.modal-bucket-button.is-core.is-active,
-.modal-bucket-button.is-income.is-active {
+.segment-button.is-active {
   background: var(--color-ink);
   border-color: var(--color-ink);
   color: #fff;
@@ -2381,7 +1973,6 @@ button:focus-visible {
   box-shadow: 0 0 0 3px rgba(217, 77, 63, 0.1);
 }
 
-.modal-button,
 .confirm-button,
 .toast {
   border-radius: 6px;
@@ -2475,8 +2066,7 @@ body[data-active-page="home"] .page-stack {
   letter-spacing: 0;
 }
 
-.back-button,
-.circle-button {
+.back-button {
   width: 30px;
   height: 30px;
   min-width: 30px;
@@ -2484,19 +2074,11 @@ body[data-active-page="home"] .page-stack {
   flex-basis: 30px;
 }
 
-.back-button svg,
-.circle-button svg {
+.back-button svg {
   width: 18px;
   height: 18px;
 }
 
-.circle-button {
-  background: transparent;
-  box-shadow: none;
-}
-
-.circle-button:hover,
-.circle-button:focus-visible,
 .summary-action-button:hover,
 .summary-action-button:focus-visible {
   color: var(--color-ink);
@@ -2523,29 +2105,11 @@ body[data-active-page="home"] .page-stack {
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
 }
-.legend-label,
-.legend-value {
-  color: var(--color-text-secondary);
-}
-.dividend-status-button--value,
-.legend-value {
+.dividend-status-button--value {
   font-family: var(--font-number);
   font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }/* Holdings structure: home-style bucket summary, no framed chips */
-
-.legend-row {
-  padding: 9px 0;
-}
-
-.legend-bar,
-.legend-bar i {
-  border-radius: 999px;
-}
-
-.legend-bar i {
-  background: #b9835f;
-}
 
 .stock-list {
   gap: 0;
@@ -2585,8 +2149,7 @@ body[data-active-page="home"] .page-stack {
   border-bottom: 1px solid var(--color-hairline);
 }
 
-.segment-button,
-.sort-chip{
+.segment-button{
   border: 1px solid var(--color-hairline);
   border-radius: 0;
   background: transparent;
@@ -2594,8 +2157,7 @@ body[data-active-page="home"] .page-stack {
   color: var(--color-ink);
 }
 
-.segment-button.is-active,
-.sort-chip.is-active {
+.segment-button.is-active {
   border-color: var(--color-ink);
   background: transparent;
   color: var(--color-ink-strong);
@@ -3236,8 +2798,7 @@ body:not([data-active-page="home"]) .top-bar.panel-bar--list {
 
 body:not([data-active-page="home"]) .top-bar.panel-bar--list.is-sort-open { padding-bottom: 62px; }
 
-body:not([data-active-page="home"]) .back-button,
-body:not([data-active-page="home"]) .circle-button {
+body:not([data-active-page="home"]) .back-button {
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -3250,11 +2811,9 @@ body:not([data-active-page="home"]) .circle-button {
   transition: transform 100ms ease-out, background-color 120ms ease, border-color 120ms ease;
 }
 
-body:not([data-active-page="home"]) .back-button svg,
-body:not([data-active-page="home"]) .circle-button svg { width: 17px; height: 17px; }
+body:not([data-active-page="home"]) .back-button svg { width: 17px; height: 17px; }
 
-body:not([data-active-page="home"]) .back-button:active,
-body:not([data-active-page="home"]) .circle-button:active {
+body:not([data-active-page="home"]) .back-button:active {
   transform: scale(0.94);
   border-color: var(--ledger-iris);
   background: var(--ledger-iris-soft);
@@ -3289,45 +2848,6 @@ body:not([data-active-page="home"]) .diagnostics-button {
 body:not([data-active-page="home"]) .diagnostics-button strong {
   color: var(--ledger-warning);
   font-family: var(--font-data);
-}
-
-body:not([data-active-page="home"]) .top-bar > .sort-group {
-  position: absolute;
-  right: 0;
-  bottom: 12px;
-  left: 46px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 6px;
-  width: auto;
-  height: auto;
-  transition: opacity 160ms ease, transform 220ms var(--ease-soft);
-}
-
-body:not([data-active-page="home"]) .sort-group.is-collapsed {
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(-4px);
-}
-
-body:not([data-active-page="home"]) .sort-chip {
-  grid-column: auto !important;
-  width: auto;
-  min-width: 0;
-  min-height: 34px;
-  padding: 0 7px;
-  border: 1px solid var(--ledger-line);
-  border-radius: 17px;
-  background: transparent;
-  color: var(--ledger-muted);
-  font-size: 10px;
-  font-weight: 640;
-}
-
-body:not([data-active-page="home"]) .sort-chip.is-active {
-  border-color: var(--ledger-iris);
-  background: var(--ledger-iris-soft);
-  color: var(--ledger-iris-dark);
 }/* ── Shared ruled sections ── */
 
 
@@ -3364,16 +2884,6 @@ body:not([data-active-page="home"]) .fundamentals-content > .panel:first-child {
   border-bottom: 1px solid var(--ledger-line);
   background: transparent;
 }
-
-.legend-list { margin-top: 14px; }
-.legend-row { border-bottom: 1px solid var(--ledger-line); }
-.legend-row:last-child { border-bottom: 0; }
-.legend-row-shell { min-height: 38px; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; }
-.legend-main { min-width: 0; display: grid; grid-template-columns: 58px minmax(0, 1fr); align-items: center; gap: 10px; }
-.legend-bar { height: 2px; background: rgba(24, 25, 22, 0.1); }
-.legend-bar i { display: block; height: 100%; background: var(--ledger-iris); }
-.legend-label { overflow: hidden; color: var(--ledger-ink); font-size: 11px; font-weight: 610; text-overflow: ellipsis; white-space: nowrap; }
-.legend-value { color: var(--ledger-muted); font-family: var(--font-data); font-size: 10px; font-weight: 650; }
 .legend-toggle { min-height: 40px; padding: 0; color: var(--ledger-iris-dark); font-size: 10px; font-weight: 650; }
 
 .stock-list { display: grid; gap: 0; }
@@ -3450,9 +2960,7 @@ body:not([data-active-page="home"]) .fundamentals-content > .panel:first-child {
   backdrop-filter: blur(24px) saturate(145%);
 }
 
-.modal-title,
 .confirm-message { color: var(--ledger-ink); font-family: var(--font-display); font-size: 22px; font-weight: 710; letter-spacing: -0.035em; }
-.modal-note,
 .confirm-sub { color: var(--ledger-muted); font-size: 10.5px; line-height: 1.5; }
 .modal-input{
   min-height: 48px;
@@ -3466,29 +2974,14 @@ body:not([data-active-page="home"]) .fundamentals-content > .panel:first-child {
 }
 .modal-input:focus{ border-color: var(--ledger-iris); box-shadow: 0 0 0 3px rgba(105, 88, 232, 0.16); }
 
-.modal-bucket-group { gap: 7px; }
-.modal-bucket-button { min-height: 42px; border: 1px solid var(--ledger-line); border-radius: 10px; background: transparent; color: var(--ledger-muted); }
-.modal-bucket-button.is-active,
-.modal-bucket-button.is-core.is-active,
-.modal-bucket-button.is-income.is-active { border-color: var(--ledger-iris); background: var(--ledger-iris-soft); color: var(--ledger-iris-dark); }
-
-.modal-actions,
 .confirm-actions { gap: 8px; padding-top: 14px; }
-.modal-button,
 .confirm-button { min-height: 46px; border: 1px solid var(--ledger-line); border-radius: 12px; background: transparent; color: var(--ledger-ink); font-size: 12px; font-weight: 680; }
 .modal-button--primary,
 .confirm-button--ok { border-color: var(--ledger-iris); background: var(--ledger-iris); color: #fff; }
 .modal-button--secondary,
 .confirm-button--cancel { background: rgba(255, 255, 255, 0.52); color: var(--ledger-muted); }
 .confirm-button--danger { border-color: rgba(185, 66, 52, 0.36); background: rgba(185, 66, 52, 0.08); color: var(--ledger-gain); }
-.modal-button:active,
 .confirm-button:active { transform: scale(0.97); opacity: 1; }
-
-.quick-add-options { border-top: 1px solid var(--ledger-line-strong); }
-.quick-add-option { min-height: 58px; border: 0; border-bottom: 1px solid var(--ledger-line); border-radius: 0; background: transparent; }
-.quick-add-option:active { background: var(--ledger-iris-soft); }
-.quick-add-option strong { color: var(--ledger-ink); font-size: 13px; }
-.quick-add-option span { color: var(--ledger-muted); font-size: 10px; }
 
 .toast-container { right: 20px; bottom: calc(20px + env(safe-area-inset-bottom)); left: 20px; }
 .toast { border: 1px solid rgba(255, 255, 255, 0.55); border-radius: 12px; background: rgba(24, 25, 22, 0.9); color: #fff; box-shadow: 0 14px 32px rgba(24, 25, 22, 0.18); backdrop-filter: blur(18px); }/* Financial meaning colors stay semantic and small. */
@@ -3502,15 +2995,12 @@ body:not([data-active-page="home"]) .fundamentals-content > .panel:first-child {
 @media (max-width: 350px) {
   body:not([data-active-page="home"]) { padding-right: 16px; padding-left: 16px; }
   body:not([data-active-page="home"]) .top-bar { grid-template-columns: 34px minmax(0, 1fr) auto; column-gap: 7px; }
-  body:not([data-active-page="home"]) .back-button,
-  body:not([data-active-page="home"]) .circle-button { width: 34px; height: 34px; min-width: 34px; }
+  body:not([data-active-page="home"]) .back-button { width: 34px; height: 34px; min-width: 34px; }
   body:not([data-active-page="home"]) .diagnostics-button { padding: 0 7px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .back-button,
-  .circle-button,
-  .sort-group,
   .segment-button,
   .modal-sheet,
   .confirm-sheet { transition: none !important; animation: none !important; }
@@ -3688,8 +3178,7 @@ body:not([data-active-page="home"]) .top-bar {
   padding: 0 0 14px;
   border-bottom: 2px solid var(--ledger-ink);
 }
-body:not([data-active-page="home"]) .back-button,
-body:not([data-active-page="home"]) .circle-button {
+body:not([data-active-page="home"]) .back-button {
   width: 26px;
   height: 26px;
   min-width: 26px;
@@ -3720,8 +3209,6 @@ body:not([data-active-page="home"]) .panel {
 #holdingsPage .holding-swipe { border-bottom: 1px solid var(--ledger-line); }
 .holding-card { padding: 13px 0; border-bottom: 0; }
 .legend-toggle { width: 100%; padding: 15px 0; border-bottom: 1px solid var(--ledger-line); color: var(--ledger-iris); font-size: 11px; }
-.sort-group { top: 51px; right: 0; z-index: 8; border: 1px solid var(--ledger-ink); border-radius: 0; background: var(--ledger-paper); box-shadow: none; }
-.sort-chip { border-radius: 0; }
 .dividend-metric-grid { display: block; }
 #dividendFilterGroup.segmented-control { display: flex; gap: 20px; width: auto; margin: 0; border: 0; }
 #dividendFilterGroup.segmented-control .segment-button { flex: 0 0 auto; min-height: 40px; padding: 8px 0; color: var(--ledger-muted); font-size: 12px; font-weight: 600; }
@@ -3749,9 +3236,6 @@ body:not([data-active-page="home"]) .panel {
   box-shadow: none;
   backdrop-filter: none;
 }
-.modal-title-row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding-bottom: 13px; border-bottom: 1px solid var(--ledger-line); }
-.modal-title { color: var(--ledger-ink); font-size: 17px; }
-.modal-note { margin: 0; color: var(--ledger-soft); font-size: 8px; text-align: right; }
 .modal-input{
   min-height: 43px;
   padding: 0;
@@ -3764,13 +3248,10 @@ body:not([data-active-page="home"]) .panel {
   font-size: 15px;
 }
 .modal-input:focus{ border-color: var(--ledger-iris); box-shadow: none; }
-.modal-actions,.confirm-actions { gap: 0; }
-.modal-button,.confirm-button { min-height: 44px; border-radius: 0; box-shadow: none; }
+.confirm-actions { gap: 0; }
+.confirm-button { min-height: 44px; border-radius: 0; box-shadow: none; }
 .modal-button--primary,.confirm-button--ok { border-color: var(--ledger-iris); background: var(--ledger-iris); }
-.modal-button--secondary,.confirm-button--cancel { border-color: var(--ledger-ink); background: transparent; }.confirm-button--danger { border-color: var(--ledger-gain); background: transparent; color: var(--ledger-gain); }
-.modal-bucket-button { border-radius: 0; }
-.modal-bucket-button.is-active,.modal-bucket-button.is-core.is-active,.modal-bucket-button.is-income.is-active { border-color: var(--ledger-iris); background: var(--ledger-iris-pale); color: var(--ledger-iris); }/* 按钮数自适应：加了「删除」后是三个，写死两列会把「保存」挤到第二行。 */
-.quick-add-option { border-radius: 0; }
+.modal-button--secondary,.confirm-button--cancel { border-color: var(--ledger-ink); background: transparent; }.confirm-button--danger { border-color: var(--ledger-gain); background: transparent; color: var(--ledger-gain); }/* 按钮数自适应：加了「删除」后是三个，写死两列会把「保存」挤到第二行。 */
 .toast { border-radius: 0; box-shadow: none; }
 
 .is-gain,.is-positive { color: var(--ledger-gain) !important; }
@@ -3837,9 +3318,6 @@ body[data-active-page="home"] .home-nav-item { padding: clamp(9px, 1.25vh, 11px)
   box-shadow: 0 -12px 34px rgba(24,25,22,.12);
   backdrop-filter: blur(18px) saturate(125%);
 }
-.modal-title-row { padding: 0 0 8px; border: 0; }
-.modal-title { font-size: 19px; }
-.modal-note { max-width: 56%; font-size: 10px; }
 .modal-input{
   min-height: 43px;
   margin-top: 0;
@@ -3851,13 +3329,8 @@ body[data-active-page="home"] .home-nav-item { padding: clamp(9px, 1.25vh, 11px)
   box-shadow: none;
 }
 .modal-input:focus{ border-color: var(--ledger-iris); box-shadow: none; }
-.modal-bucket-group { gap: 4px; padding: 3px; border: 0; border-radius: 13px; background: rgba(24,25,22,.045); }
-.modal-bucket-button { min-height: 38px; border: 0; border-radius: 10px; background: transparent; }
-.modal-bucket-button.is-active,.modal-bucket-button.is-core.is-active,.modal-bucket-button.is-income.is-active { border: 0; border-radius: 10px; }
-.quick-add-options { border-top: 0; }
-.quick-add-option { min-height: 57px; padding: 0; border-bottom: 1px solid var(--ledger-line); border-radius: 10px; }
-.modal-actions,.confirm-actions { gap: 8px; }
-.modal-button,.confirm-button { border: 0; border-radius: 12px; }
+.confirm-actions { gap: 8px; }
+.confirm-button { border: 0; border-radius: 12px; }
 .modal-button--secondary,.confirm-button--cancel { background: transparent; }
 .modal-button--primary,.confirm-button--ok { background: var(--ledger-iris); }.confirm-button--danger { border: 0; background: transparent; }/* Month sheet: one calm header, then aligned company/date and amount/status rows. */
 
@@ -3922,38 +3395,8 @@ body[data-active-page="home"] .home-nav-list { margin-top: clamp(11px, 1.6vh, 16
 
 #recordsPage .top-bar { grid-template-columns: 9px minmax(0, 1fr); }
 #recordsPage .top-bar-heading { display: block; }
-#recordsPage .records-ledger-panel { padding-top: 25px !important; }/* Income actions and quick-add choices lose the remaining boxed controls. */
-
-.quick-add-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
-  margin-top: 12px;
-  border-top: 1px solid var(--ledger-line);
-  border-bottom: 1px solid var(--ledger-line);
-}
-.quick-add-option {
-  min-height: 88px;
-  display: grid;
-  align-content: center;
-  justify-items: center;
-  gap: 6px;
-  padding: 12px 9px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  text-align: center;
-}
-.quick-add-option + .quick-add-option { border-left: 1px solid var(--ledger-line); }/* 三项时第三项独占整行：否则它孤零零落在第二行左格，还会因为相邻选择器
-   在左边留一道无所依靠的竖线。「当前现金」是余额校准而非流水，独占一行也如实分组。 */
-
-.quick-add-options > .quick-add-option:nth-child(3):last-child {
-  grid-column: 1 / -1;
-  border-left: 0;
-  border-top: 1px solid var(--ledger-line);
-}
-.quick-add-option strong { font-size: 14px; }
-.quick-add-option span { max-width: 120px; line-height: 1.4; }/* Fundamental chart headlines follow the backup's reading hierarchy: primary metric first, companion second. */
+#recordsPage .records-ledger-panel { padding-top: 25px !important; }/* Income actions and quick-add choices lose the remaining boxed controls. *//* 三项时第三项独占整行：否则它孤零零落在第二行左格，还会因为相邻选择器
+   在左边留一道无所依靠的竖线。「当前现金」是余额校准而非流水，独占一行也如实分组。 *//* Fundamental chart headlines follow the backup's reading hierarchy: primary metric first, companion second. */
 
 @media (max-height: 700px) and (max-width: 430px) {
   body[data-active-page="home"] .home-hero { padding: 12px 0; }
@@ -4096,7 +3539,6 @@ body { background: var(--bg); color: var(--ink); }
 }/* zen 纪律补强：图标裸置、焦点描边转金 */
 
 
-.circle-button,
 .summary-action-button,
 .back-button,
 .diagnostics-button {
@@ -4125,10 +3567,10 @@ body[data-active-page="home"] #homePage {
   gap: 0;
   /* 竖向留白取「定稿值」与「设备安全区」的较大者：
      普通浏览器仍是 30/34，装成 PWA 后自动让开灵动岛与 Home 指示条 */
-  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
-  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
-  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
-  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  padding-top: max(var(--fl-14), env(safe-area-inset-top, 0px));
+  padding-right: max(var(--fl-26), env(safe-area-inset-right, 0px));
+  padding-bottom: max(var(--fl-34), env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--fl-26), env(safe-area-inset-left, 0px));
   min-height: 100dvh;
 }/* 分区只靠留白：清掉此前各层留在首页元素上的所有描边 */
 
@@ -4148,33 +3590,33 @@ body[data-active-page="home"] .home-top {
 body[data-active-page="home"] .home-brand {
   display: block;
   color: var(--hint);
-  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-size: var(--fl-9p5);
   font-weight: 600;
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  letter-spacing: var(--fl-4);
   text-transform: uppercase;
 }
 body[data-active-page="home"] .home-top-actions {
   display: flex;
   align-items: center;
-  gap: clamp(12.88px, 3.5897vw, 18.9px);
+  gap: var(--fl-14);
   color: var(--muted);
 }
 body[data-active-page="home"] .home-top-actions .summary-action-button {
-  width: clamp(15.64px, 4.359vw, 22.95px);
-  height: clamp(15.64px, 4.359vw, 22.95px);
+  width: var(--fl-17);
+  height: var(--fl-17);
   min-height: 0;
   padding: 0;
   color: var(--muted);
 }
 body[data-active-page="home"] .home-top-actions .summary-action-button svg {
-  width: clamp(15.64px, 4.359vw, 22.95px);
-  height: clamp(15.64px, 4.359vw, 22.95px);
+  width: var(--fl-17);
+  height: var(--fl-17);
 }/* 净资产 hero：整区居中 */
 
 
 body[data-active-page="home"] .home-hero {
   display: block;
-  margin-top: clamp(53.36px, 14.8718vw, 78.3px);
+  margin-top: var(--fl-58);
   padding: 0;
   text-align: center;
 }
@@ -4184,31 +3626,31 @@ body[data-active-page="home"] .home-hero-label {
   border: 0;
   background: none;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
-  line-height: clamp(21.16px, 5.8974vw, 31.05px);
+  font-size: var(--fl-10);
+  line-height: var(--fl-23);
   font-weight: 600;
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  letter-spacing: var(--fl-5);
 }
 body[data-active-page="home"] .home-hero-value {
   display: block;
-  margin-top: clamp(12.88px, 3.5897vw, 18.9px);
+  margin-top: var(--fl-14);
   color: var(--ink);
-  font-size: clamp(43.24px, 12.0513vw, 63.45px);
+  font-size: var(--fl-47);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+  letter-spacing: var(--fl-n1);
   font-variant-numeric: tabular-nums;
 }
 body[data-active-page="home"] .home-hero-value .home-hero-fraction {
   color: var(--label);
-  font-size: clamp(20.24px, 5.641vw, 29.7px);
+  font-size: var(--fl-22);
   font-weight: 600;
   letter-spacing: 0;
 }
 body[data-active-page="home"] .home-hero-meta {
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  margin: var(--fl-14) 0 0;
   color: var(--muted);
-  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-size: var(--fl-11p5);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -4228,7 +3670,7 @@ body[data-active-page="home"] .home-metrics {
 body[data-active-page="home"] .home-divi {
   display: block;
   width: 100%;
-  margin-top: clamp(49.68px, 13.8462vw, 72.9px);
+  margin-top: var(--fl-54);
   padding: 0;
   border: 0;
   background: none;
@@ -4237,27 +3679,27 @@ body[data-active-page="home"] .home-divi {
 body[data-active-page="home"] .home-divi-label {
   display: block;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
-  line-height: clamp(21.16px, 5.8974vw, 31.05px);
+  font-size: var(--fl-10);
+  line-height: var(--fl-23);
   font-weight: 600;
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  letter-spacing: var(--fl-5);
   font-variant-numeric: tabular-nums;
 }
 body[data-active-page="home"] .home-divi-value {
   display: block;
-  margin-top: clamp(9.2px, 2.5641vw, 13.5px);
+  margin-top: var(--fl-10);
   color: var(--divi-ink);
-  font-size: clamp(21.16px, 5.8974vw, 31.05px);
+  font-size: var(--fl-23);
   font-weight: 700;
-  letter-spacing: clamp(-0.405px, -0.0769vw, -0.276px);
+  letter-spacing: var(--fl-n0p3);
   font-variant-numeric: tabular-nums;
 }
 body[data-active-page="home"] .home-divi-thread {
   position: relative;
   display: block;
-  width: clamp(196.88px, 54.8718vw, 288.9px);
-  height: clamp(1.84px, 0.5128vw, 2.7px);
-  margin: clamp(16.56px, 4.6154vw, 24.3px) auto 0;
+  width: var(--fl-214);
+  height: var(--fl-2);
+  margin: var(--fl-18) auto 0;
   background: var(--track);
 }
 body[data-active-page="home"] .home-divi-thread i {
@@ -4272,42 +3714,42 @@ body[data-active-page="home"] .home-divi-thread i {
 body[data-active-page="home"] .home-month-track {
   display: flex;
   justify-content: center;
-  gap: clamp(13.8px, 3.8462vw, 20.25px);
-  margin-top: clamp(12.88px, 3.5897vw, 18.9px);
+  gap: var(--fl-15);
+  margin-top: var(--fl-14);
 }
 body[data-active-page="home"] .home-month {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(4.6px, 1.2821vw, 6.75px);
+  gap: var(--fl-5);
   height: auto;
   min-height: 0;
   padding: 0;
   border: 0;
   background: none;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 body[data-active-page="home"] .home-month i {
   display: block;
-  width: clamp(3.22px, 0.8974vw, 4.725px);
-  height: clamp(3.22px, 0.8974vw, 4.725px);
+  width: var(--fl-3p5);
+  height: var(--fl-3p5);
   border-radius: 50%;
   background: transparent;
 }
 body[data-active-page="home"] .home-month.has-pay i { background: var(--gold); }
 body[data-active-page="home"] .home-month.is-current {
   color: var(--ink);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 800;
 }
 body[data-active-page="home"] .home-month.is-current i {
-  width: clamp(4.14px, 1.1538vw, 6.075px);
-  height: clamp(4.14px, 1.1538vw, 6.075px);
+  width: var(--fl-4p5);
+  height: var(--fl-4p5);
   box-shadow: var(--glow);
-}/* 旧月份轴的 1×clamp(3.68px, 1.0256vw, 5.4px) 刻度线与选中横杠：定稿图只保留数字与金点 */
+}/* 旧月份轴的 1×var(--fl-4) 刻度线与选中横杠：定稿图只保留数字与金点 */
 
 body[data-active-page="home"] .home-month::before,
 body[data-active-page="home"] .home-month::after {
@@ -4317,9 +3759,9 @@ body[data-active-page="home"] .home-month::after {
 
 
 body[data-active-page="home"] .home-todo {
-  margin-top: clamp(42.32px, 11.7949vw, 62.1px);
+  margin-top: var(--fl-46);
   color: var(--muted);
-  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-size: var(--fl-11p5);
   font-weight: 600;
   line-height: 2.1;
   text-align: center;
@@ -4336,8 +3778,8 @@ body[data-active-page="home"] .home-nav-list {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: clamp(17.48px, 4.8718vw, 25.65px);
-  margin-top: clamp(38.64px, 10.7692vw, 56.7px);
+  gap: var(--fl-19);
+  margin-top: var(--fl-42);
   padding: 0;
   border: 0;
 }
@@ -4354,14 +3796,14 @@ body[data-active-page="home"] .home-nav-item {
 body[data-active-page="home"] .home-nav-item:active { background: none; }
 body[data-active-page="home"] .home-nav-title {
   color: var(--ink);
-  font-size: clamp(13.8px, 3.8462vw, 20.25px);
+  font-size: var(--fl-15);
   font-weight: 700;
-  letter-spacing: clamp(0.92px, 0.2564vw, 1.35px);
+  letter-spacing: var(--fl-1);
 }
 body[data-active-page="home"] .home-nav-side {
   display: block;
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }/* ＋记一笔：涨色文字键，全页唯一的动作 */
@@ -4370,24 +3812,24 @@ body[data-active-page="home"] .home-nav-side {
 body[data-active-page="home"] .home-quick-add {
   display: block;
   width: 100%;
-  margin-top: clamp(22.08px, 6.1538vw, 32.4px);
+  margin-top: var(--fl-24);
   padding: 0;
   border: 0;
   background: none;
   color: var(--up);
   font-family: inherit;
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 700;
-  letter-spacing: clamp(2.76px, 0.7692vw, 4.05px);
+  letter-spacing: var(--fl-3);
   text-align: center;
 }/* 矮屏收紧竖向留白，首页仍要一屏放得下 */
 
 
 @media (max-height: 760px) {
-  body[data-active-page="home"] .home-hero { margin-top: clamp(31.28px, 8.7179vw, 45.9px); }
-  body[data-active-page="home"] .home-divi { margin-top: clamp(29.44px, 8.2051vw, 43.2px); }
-  body[data-active-page="home"] .home-todo { margin-top: clamp(23.92px, 6.6667vw, 35.1px); }
-  body[data-active-page="home"] .home-nav-list { margin-top: clamp(23.92px, 6.6667vw, 35.1px); gap: clamp(13.8px, 3.8462vw, 20.25px); }
+  body[data-active-page="home"] .home-hero { margin-top: var(--fl-34); }
+  body[data-active-page="home"] .home-divi { margin-top: var(--fl-32); }
+  body[data-active-page="home"] .home-todo { margin-top: var(--fl-26); }
+  body[data-active-page="home"] .home-nav-list { margin-top: var(--fl-26); gap: var(--fl-15); }
 }/* ══════════════════════════════════════════════════════════════════
    B 簇 · 02-持仓页 / 03-持仓详情 / 04-持仓诊断 / 05-编辑抽屉
    按 designs/禅意UI/ 下 02–05 四个文件夹的 定稿图.html 重排。
@@ -4408,10 +3850,10 @@ body[data-active-page="holdings"] #holdingsPage {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
-  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
-  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
-  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  padding-top: max(var(--fl-14), env(safe-area-inset-top, 0px));
+  padding-right: max(var(--fl-26), env(safe-area-inset-right, 0px));
+  padding-bottom: max(var(--fl-34), env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--fl-26), env(safe-area-inset-left, 0px));
   min-height: 100dvh;
 }/* 分区只靠留白：清掉历史层留在持仓页元素上的所有描边与伪元素装饰。
    （唯一保留的伪元素是选中仓位的金点，下面用带 id 的选择器加回来） */
@@ -4430,13 +3872,13 @@ body[data-active-page="holdings"] #holdingsPage *::after {
 
 body[data-active-page="holdings"] .holdings-pagebar {
   display: grid;
-  grid-template-columns: clamp(51.52px, 14.359vw, 75.6px) 1fr clamp(51.52px, 14.359vw, 75.6px);
+  grid-template-columns: var(--fl-56) 1fr var(--fl-56);
   align-items: center;
   gap: 0;
   height: auto;
   /* 定稿图这条 21px 是返回箭头在 16px strut 里撑出的行盒；
      本项目字体栈不同，svg 自己只有 18px，显式补回来免得整页上缩 3px */
-  min-height: clamp(19.32px, 5.3846vw, 28.35px);
+  min-height: var(--fl-21);
   margin: 0;
   padding: 0;
   background: none;
@@ -4458,8 +3900,8 @@ body[data-active-page="holdings"] .holdings-pagebar .back-button {
   text-align: left;
 }
 body[data-active-page="holdings"] .holdings-pagebar .back-button svg {
-  width: clamp(16.56px, 4.6154vw, 24.3px);
-  height: clamp(16.56px, 4.6154vw, 24.3px);
+  width: var(--fl-18);
+  height: var(--fl-18);
 }
 body[data-active-page="holdings"] .holdings-page-name {
   display: block;
@@ -4468,10 +3910,10 @@ body[data-active-page="holdings"] .holdings-page-name {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-5);
   text-align: center;
 }
 body[data-active-page="holdings"] .holdings-pagebar .diagnostics-button {
@@ -4487,9 +3929,9 @@ body[data-active-page="holdings"] .holdings-pagebar .diagnostics-button {
   box-shadow: none;
   color: var(--muted);
   font-family: inherit;
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 700;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   letter-spacing: 0;
   text-align: right;
   white-space: nowrap;
@@ -4517,16 +3959,16 @@ body[data-active-page="holdings"] .holdings-pagebar-note {
   width: 100%;
   height: auto;
   min-height: 0;
-  margin: clamp(6.44px, 1.7949vw, 9.45px) 0 0;
+  margin: var(--fl-7) 0 0;
   padding: 0;
   border-radius: 0;
   background: none;
   box-shadow: none;
   color: var(--hint);
   font-family: inherit;
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
   letter-spacing: 0;
   text-align: center;
 }/* 行情停更：不引入新颜色（金色只给股息与选中记号，红绿只给盈亏），
@@ -4539,7 +3981,7 @@ body[data-active-page="holdings"] .holdings-pagebar-note.is-stale {
 
 body[data-active-page="holdings"] .holdings-hero {
   display: block;
-  margin: clamp(27.6px, 7.6923vw, 40.5px) 0 0;
+  margin: var(--fl-30) 0 0;
   padding: 0;
   background: none;
   text-align: center;
@@ -4549,37 +3991,37 @@ body[data-active-page="holdings"] .holdings-hero-label {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   /* 定稿图里这是 inline span，行盒被容器 16px 字号的 strut 撑到 21px；
      不显式写回来，整块竖向节奏会紧一截 */
-  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  line-height: var(--fl-21);
   font-weight: 600;
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  letter-spacing: var(--fl-5);
 }
 body[data-active-page="holdings"] .holdings-hero-value {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--ink);
-  font-size: clamp(34.96px, 9.7436vw, 51.3px);
+  font-size: var(--fl-38);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+  letter-spacing: var(--fl-n1);
 }
 body[data-active-page="holdings"] .holdings-hero-value .holdings-hero-fraction {
   color: var(--label);
-  font-size: clamp(17.48px, 4.8718vw, 25.65px);
+  font-size: var(--fl-19);
   font-weight: 600;
   letter-spacing: 0;
 }
 body[data-active-page="holdings"] .holdings-hero-meta {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-size: var(--fl-11p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }
 body[data-active-page="holdings"] .holdings-hero-meta strong { font-weight: 700; }
 body[data-active-page="holdings"] .holdings-hero-meta strong.is-market-up { color: var(--up); }
@@ -4589,13 +4031,13 @@ body[data-active-page="holdings"] .holdings-hero-meta strong.is-flat { color: va
 
 body[data-active-page="holdings"] .holdings-structure {
   display: block;
-  margin: clamp(23.92px, 6.6667vw, 35.1px) 0 0;
+  margin: var(--fl-26) 0 0;
   padding: 0;
   background: none;
 }
 body[data-active-page="holdings"] .holdings-structure .structure-bar {
   display: flex;
-  height: clamp(1.84px, 0.5128vw, 2.7px);
+  height: var(--fl-2);
   margin: 0;
   padding: 0;
   background: none;
@@ -4614,8 +4056,8 @@ body[data-active-page="holdings"] .holdings-structure .bucket-row {
      两个仓位标签本该同高，切换时也不该跳 */
   align-items: flex-start;
   justify-content: center;
-  gap: clamp(31.28px, 8.7179vw, 45.9px);
-  margin: clamp(11.96px, 3.3333vw, 17.55px) 0 0;
+  gap: var(--fl-34);
+  margin: var(--fl-13) 0 0;
   padding: 0;
 }
 body[data-active-page="holdings"] .holdings-structure .bucket {
@@ -4632,49 +4074,49 @@ body[data-active-page="holdings"] .holdings-structure .bucket {
   box-shadow: none;
   color: var(--muted);
   font-family: inherit;
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
   letter-spacing: 0;
   text-align: center;
 }
 body[data-active-page="holdings"] .holdings-structure .bucket strong {
   display: block;
-  margin: clamp(1.84px, 0.5128vw, 2.7px) 0 0;
+  margin: var(--fl-2) 0 0;
   color: var(--ink);
-  font-size: clamp(13.8px, 3.8462vw, 20.25px);
+  font-size: var(--fl-15);
   font-weight: 700;
-  line-height: clamp(18.4px, 5.1282vw, 27px);
+  line-height: var(--fl-20);
 }
 body[data-active-page="holdings"] .holdings-structure .bucket.is-active { color: var(--ink); }/* 选中记号：4px 金点下划。两个仓位都留位，只有选中的那颗着色，切换时不跳行 */
 
 body[data-active-page="holdings"] .holdings-structure .bucket-dot {
   display: block;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
-  margin: clamp(4.6px, 1.2821vw, 6.75px) auto 0;
+  width: var(--fl-4);
+  height: var(--fl-4);
+  margin: var(--fl-5) auto 0;
   border-radius: 50%;
   background: transparent;
 }
 body[data-active-page="holdings"] .holdings-structure .bucket.is-active .bucket-dot { background: var(--gold); }
 body[data-active-page="holdings"] .holdings-structure .bucket-detail {
   display: block;
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  margin: var(--fl-14) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   text-align: center;
 }
 body[data-active-page="holdings"] .holdings-structure .portfolio-line {
   display: block;
-  margin: clamp(16.56px, 4.6154vw, 24.3px) 0 0;
+  margin: var(--fl-18) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   text-align: center;
 }
 body[data-active-page="holdings"] .holdings-structure .bucket-detail strong,
@@ -4694,8 +4136,8 @@ body[data-active-page="holdings"] .holdings-list-head {
   /* 两个子项行高已各自钉死，再做基线对齐只会把行盒撑高 2px */
   align-items: flex-start;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
-  margin: clamp(29.44px, 8.2051vw, 43.2px) 0 0;
+  gap: var(--fl-10);
+  margin: var(--fl-32) 0 0;
   padding: 0;
   background: none;
 }
@@ -4704,10 +4146,10 @@ body[data-active-page="holdings"] .holdings-sec-label {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-4);
 }/* 旧层有一条 #holdingsSortLabel { display: none }，id 选择器压过类选择器，
    这里必须带上 id 才抢得回来 */
 
@@ -4724,9 +4166,9 @@ body[data-active-page="holdings"] #holdingsSortLabel.holdings-sort-action {
   box-shadow: none;
   color: var(--muted);
   font-family: inherit;
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 700;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   letter-spacing: 0;
   text-align: right;
   white-space: nowrap;
@@ -4736,8 +4178,8 @@ body[data-active-page="holdings"] #holdingsSortLabel.holdings-sort-action {
 body[data-active-page="holdings"] #stockList {
   display: flex;
   flex-direction: column;
-  gap: clamp(16.56px, 4.6154vw, 24.3px);
-  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  gap: var(--fl-18);
+  margin: var(--fl-16) 0 0;
   padding: 0;
   background: none;
 }
@@ -4756,7 +4198,7 @@ body[data-active-page="holdings"] #stockList .holding-swipe {
 body[data-active-page="holdings"] #stockList .holding-card {
   display: flex;
   flex-direction: column;
-  gap: clamp(2.76px, 0.7692vw, 4.05px);
+  gap: var(--fl-3);
   min-height: 0;
   margin: 0;
   padding: 0;
@@ -4770,7 +4212,7 @@ body[data-active-page="holdings"] .stock-main {
   /* 同上：名称 14.5px 与市值 14px 行高都是 19，顶对齐即视觉基线对齐 */
   align-items: flex-start;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   margin: 0;
   padding: 0;
 }
@@ -4779,10 +4221,10 @@ body[data-active-page="holdings"] .stock-name {
   margin: 0;
   padding: 0;
   color: var(--ink);
-  font-size: clamp(13.34px, 3.7179vw, 19.575px);
+  font-size: var(--fl-14p5);
   font-weight: 700;
-  line-height: clamp(17.48px, 4.8718vw, 25.65px);
-  letter-spacing: clamp(0.46px, 0.1282vw, 0.675px);
+  line-height: var(--fl-19);
+  letter-spacing: var(--fl-0p5);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4804,24 +4246,24 @@ body[data-active-page="holdings"] .stock-name-button {
   text-align: left;
 }
 body[data-active-page="holdings"] .stock-name .code {
-  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
+  margin-left: var(--fl-6);
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   /* 代码是拉丁字形、公司名是中文字形，落到两套字体度量上：不钉行高的话
      代码那个行内盒的降部会比中文 strut 还深，把整行从 19 撑到 21 */
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
   font-weight: 600;
-  letter-spacing: clamp(0.46px, 0.1282vw, 0.675px);
+  letter-spacing: var(--fl-0p5);
 }/* 有在途 / 已公告股息才点亮 */
 
 body[data-active-page="holdings"] .stock-name .divi-dot {
   display: inline-block;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
-  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
+  width: var(--fl-4);
+  height: var(--fl-4);
+  margin-left: var(--fl-6);
   border-radius: 50%;
   background: var(--gold);
-  vertical-align: clamp(2.3px, 0.641vw, 3.375px);
+  vertical-align: var(--fl-2p5);
 }
 body[data-active-page="holdings"] .stock-mv {
   display: block;
@@ -4837,9 +4279,9 @@ body[data-active-page="holdings"] .stock-mv {
   box-shadow: none;
   color: var(--ink);
   font-family: inherit;
-  font-size: clamp(12.88px, 3.5897vw, 18.9px);
+  font-size: var(--fl-14);
   font-weight: 700;
-  line-height: clamp(17.48px, 4.8718vw, 25.65px);
+  line-height: var(--fl-19);
   letter-spacing: 0;
   text-align: right;
   white-space: nowrap;
@@ -4848,13 +4290,13 @@ body[data-active-page="holdings"] .stock-sub {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   margin: 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }
 body[data-active-page="holdings"] .stock-sub-main {
   min-width: 0;
@@ -4893,28 +4335,27 @@ body[data-active-page="holdings"] .legend-toggle {
   width: 100%;
   height: auto;
   min-height: 0;
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  margin: var(--fl-22) 0 0;
   padding: 0;
   border-radius: 0;
   background: none;
   box-shadow: none;
   color: var(--muted);
   font-family: inherit;
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 700;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(0.92px, 0.2564vw, 1.35px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-1);
   text-align: center;
 }
-body[data-active-page="holdings"] .legend-toggle[hidden] { display: none; }
-body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/* 矮屏收紧竖向留白，持仓页仍要一屏放得下 */
+body[data-active-page="holdings"] .legend-toggle[hidden] { display: none; }/* 矮屏收紧竖向留白，持仓页仍要一屏放得下 */
 
 
 @media (max-height: 800px) {
-  body[data-active-page="holdings"] .holdings-hero { margin-top: clamp(18.4px, 5.1282vw, 27px); }
-  body[data-active-page="holdings"] .holdings-structure { margin-top: clamp(18.4px, 5.1282vw, 27px); }
-  body[data-active-page="holdings"] .holdings-list-head { margin-top: clamp(20.24px, 5.641vw, 29.7px); }
-  body[data-active-page="holdings"] #stockList { gap: clamp(12.88px, 3.5897vw, 18.9px); }
+  body[data-active-page="holdings"] .holdings-hero { margin-top: var(--fl-20); }
+  body[data-active-page="holdings"] .holdings-structure { margin-top: var(--fl-20); }
+  body[data-active-page="holdings"] .holdings-list-head { margin-top: var(--fl-22); }
+  body[data-active-page="holdings"] #stockList { gap: var(--fl-14); }
 }/* ══════════════════════════════════════════════════════════════════
    03 / 04 / 05 抽屉通用规格
    顶部圆角 22px、32×3 把手、无边框、背景页原位不动。
@@ -4940,8 +4381,8 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: clamp(12.88px, 3.5897vw, 18.9px) clamp(23.92px, 6.6667vw, 35.1px)
-    calc(clamp(27.6px, 7.6923vw, 40.5px) + env(safe-area-inset-bottom, 0px));
+  padding: var(--fl-14) var(--fl-26)
+    calc(var(--fl-30) + env(safe-area-inset-bottom, 0px));
   border: 0;
   border-radius: 22px 22px 0 0;
   background: var(--sheet);
@@ -4950,7 +4391,7 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   -webkit-backdrop-filter: none;
   color: var(--ink);
   /* 抽屉最多吃到 78dvh：背景页要留得住，才读得出是抽屉而不是新页面 */
-  max-height: min(78dvh, calc(100dvh - clamp(51.52px, 14.359vw, 75.6px)));
+  max-height: min(78dvh, calc(100dvh - var(--fl-56)));
   overflow-y: auto;
   font-variant-numeric: tabular-nums;
 }
@@ -4966,8 +4407,8 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
 }
 .zen-sheet .zen-sheet-handle {
   display: block;
-  width: clamp(29.44px, 8.2051vw, 43.2px);
-  height: clamp(2.76px, 0.7692vw, 4.05px);
+  width: var(--fl-32);
+  height: var(--fl-3);
   margin: 0 auto;
   border-radius: 2px;
   background: var(--track);
@@ -4976,7 +4417,7 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
 
 .zen-sheet .zen-sheet-title {
   display: block;
-  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
+  margin: var(--fl-20) 0 0;
   padding: 0;
   text-align: center;
 }
@@ -4985,19 +4426,19 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   /* 定稿图里是 inline span，行盒被 16px strut 撑到 21px */
-  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  line-height: var(--fl-21);
   font-weight: 600;
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  letter-spacing: var(--fl-5);
 }
 .zen-sheet .zen-sheet-note {
   display: block;
   max-width: none;
-  margin: clamp(6.44px, 1.7949vw, 9.45px) 0 0;
+  margin: var(--fl-7) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
   line-height: 1.6;
 }/* 动作行：居中排布、间距 46 的纯文字键，无色块底 */
@@ -5007,8 +4448,8 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: clamp(42.32px, 11.7949vw, 62.1px);
-  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  gap: var(--fl-46);
+  margin: var(--fl-28) 0 0;
   padding: 0;
 }
 .zen-sheet .zen-key {
@@ -5024,9 +4465,9 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   background: none;
   box-shadow: none;
   font-family: inherit;
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
-  letter-spacing: clamp(1.84px, 0.5128vw, 2.7px);
+  font-size: var(--fl-12);
+  line-height: var(--fl-16);
+  letter-spacing: var(--fl-2);
   text-align: center;
 }
 .zen-sheet .zen-key--delete { color: var(--up); font-weight: 700; }
@@ -5035,9 +4476,9 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
 
 .zen-sheet .zen-key-dot {
   display: block;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
-  margin: clamp(3.68px, 1.0256vw, 5.4px) auto 0;
+  width: var(--fl-4);
+  height: var(--fl-4);
+  margin: var(--fl-4) auto 0;
   border-radius: 50%;
   background: var(--gold);
 }/* ── 03-持仓详情 ── */
@@ -5047,8 +4488,8 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(16.56px, 4.6154vw, 24.3px);
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  gap: var(--fl-18);
+  margin: var(--fl-22) 0 0;
   padding: 0;
 }
 .zen-sheet--detail .zen-detail-head > div { min-width: 0; }
@@ -5056,56 +4497,56 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   display: block;
   margin: 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
-  letter-spacing: clamp(0.92px, 0.2564vw, 1.35px);
+  line-height: var(--fl-14);
+  letter-spacing: var(--fl-1);
 }
 .zen-sheet--detail .zen-detail-head h3 {
   display: block;
-  margin: clamp(3.68px, 1.0256vw, 5.4px) 0 0;
+  margin: var(--fl-4) 0 0;
   padding: 0;
   color: var(--ink);
-  font-size: clamp(16.56px, 4.6154vw, 24.3px);
+  font-size: var(--fl-18);
   font-weight: 800;
-  line-height: clamp(22.08px, 6.1538vw, 32.4px);
-  letter-spacing: clamp(0.46px, 0.1282vw, 0.675px);
+  line-height: var(--fl-24);
+  letter-spacing: var(--fl-0p5);
 }
 .zen-sheet--detail .zen-detail-weight {
   flex: none;
   color: var(--muted);
-  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-size: var(--fl-13);
   font-weight: 700;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
   white-space: nowrap;
 }
 .zen-sheet--detail .zen-detail-qty {
   display: block;
-  margin: clamp(22.08px, 6.1538vw, 32.4px) 0 0;
+  margin: var(--fl-24) 0 0;
   padding: 0;
   text-align: center;
 }
 .zen-sheet--detail .zen-detail-qty small {
   display: block;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
-  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  font-size: var(--fl-10);
+  line-height: var(--fl-21);
   font-weight: 600;
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  letter-spacing: var(--fl-4);
 }
 .zen-sheet--detail .zen-detail-qty strong {
   display: block;
-  margin: clamp(7.36px, 2.0513vw, 10.8px) 0 0;
+  margin: var(--fl-8) 0 0;
   color: var(--ink);
-  font-size: clamp(27.6px, 7.6923vw, 40.5px);
+  font-size: var(--fl-30);
   font-weight: 600;
-  line-height: clamp(36.8px, 10.2564vw, 54px);
-  letter-spacing: clamp(-0.675px, -0.1282vw, -0.46px);
+  line-height: var(--fl-40);
+  letter-spacing: var(--fl-n0p5);
 }
 .zen-sheet--detail .zen-detail-qty strong em {
-  margin-left: clamp(3.68px, 1.0256vw, 5.4px);
+  margin-left: var(--fl-4);
   color: var(--muted);
-  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-size: var(--fl-13);
   font-style: normal;
   font-weight: 600;
   letter-spacing: 0;
@@ -5113,21 +4554,21 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
 .zen-sheet--detail .zen-detail-rows {
   display: flex;
   flex-direction: column;
-  gap: clamp(11.96px, 3.3333vw, 17.55px);
-  margin: clamp(22.08px, 6.1538vw, 32.4px) 0 0;
+  gap: var(--fl-13);
+  margin: var(--fl-24) 0 0;
   padding: 0;
 }
 .zen-sheet--detail .zen-detail-rows > div {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(11.04px, 3.0769vw, 16.2px);
+  gap: var(--fl-12);
   margin: 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }
 .zen-sheet--detail .zen-detail-rows dt {
   margin: 0;
@@ -5144,10 +4585,10 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
 }
 .zen-sheet--detail .zen-detail-note {
   display: block;
-  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
+  margin: var(--fl-20) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
   line-height: 1.7;
   text-align: center;
@@ -5158,8 +4599,8 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(16.56px, 4.6154vw, 24.3px);
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  gap: var(--fl-18);
+  margin: var(--fl-22) 0 0;
   padding: 0;
 }
 .zen-sheet--diag .zen-diag-head > div { min-width: 0; }
@@ -5168,26 +4609,26 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   margin: 0;
   padding: 0;
   color: var(--ink);
-  font-size: clamp(13.8px, 3.8462vw, 20.25px);
+  font-size: var(--fl-15);
   font-weight: 800;
-  line-height: clamp(18.4px, 5.1282vw, 27px);
-  letter-spacing: clamp(0.92px, 0.2564vw, 1.35px);
+  line-height: var(--fl-20);
+  letter-spacing: var(--fl-1);
 }
 .zen-sheet--diag .zen-diag-head p {
   display: block;
-  margin: clamp(3.68px, 1.0256vw, 5.4px) 0 0;
+  margin: var(--fl-4) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }
 .zen-sheet--diag .zen-diag-count {
   flex: none;
   color: var(--up);
-  font-size: clamp(20.24px, 5.641vw, 29.7px);
+  font-size: var(--fl-22);
   font-weight: 700;
-  line-height: clamp(26.68px, 7.4359vw, 39.15px);
+  line-height: var(--fl-29);
 }/* 诊断项数由数据决定（真实账本能到二十几条），列表自己滚，
    「关 闭」必须钉在底部——跟着内容滚走就够不着了 */
 
@@ -5208,38 +4649,38 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
 .zen-sheet--diag .zen-sheet-actions { flex: none; }
 .zen-sheet--diag .zen-diag-group {
   display: block;
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  margin: var(--fl-22) 0 0;
   padding: 0;
 }
 .zen-sheet--diag .zen-diag-group-label {
   display: block;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
-  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  font-size: var(--fl-10);
+  line-height: var(--fl-21);
   font-weight: 600;
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  letter-spacing: var(--fl-4);
 }
 .zen-sheet--diag .zen-diag-group.is-critical .zen-diag-group-label { color: var(--up); }/* 计数不吃节标那 4px 字距，否则两位数会被拆成「1 0」 */
 
 .zen-sheet--diag .zen-diag-group-label b {
-  margin-left: clamp(3.68px, 1.0256vw, 5.4px);
+  margin-left: var(--fl-4);
   font-weight: inherit;
   letter-spacing: 0;
 }
 .zen-sheet--diag .zen-diag-items {
   display: flex;
   flex-direction: column;
-  gap: clamp(12.88px, 3.5897vw, 18.9px);
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  gap: var(--fl-14);
+  margin: var(--fl-12) 0 0;
   padding: 0;
 }
 .zen-sheet--diag .zen-diag-item {
   position: relative;
   display: block;
   margin: 0;
-  padding: 0 0 0 clamp(11.04px, 3.0769vw, 16.2px);
+  padding: 0 0 0 var(--fl-12);
   color: var(--muted);
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
   line-height: 1.65;
 }
@@ -5248,10 +4689,10 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
 .zen-sheet--diag .zen-diag-dot {
   position: absolute;
   left: 0;
-  top: clamp(6.44px, 1.7949vw, 9.45px);
+  top: var(--fl-7);
   display: block;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
+  width: var(--fl-4);
+  height: var(--fl-4);
   border-radius: 50%;
   background: var(--hint);
 }
@@ -5259,10 +4700,10 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
 .zen-sheet--diag .is-attention .zen-diag-dot { background: var(--gold); }
 .zen-sheet--diag .zen-diag-empty {
   display: block;
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  margin: var(--fl-22) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
   line-height: 1.65;
   text-align: center;
@@ -5270,10 +4711,10 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
 
 .zen-sheet--diag .zen-diag-muted {
   display: block;
-  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  margin: var(--fl-16) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
   line-height: 1.7;
   text-align: center;
@@ -5282,7 +4723,7 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
 
 .zen-sheet--edit .zen-edit-input {
   display: block;
-  margin: clamp(23.92px, 6.6667vw, 35.1px) 0 0;
+  margin: var(--fl-26) 0 0;
   padding: 0;
   text-align: center;
 }/* 值盒按内容收宽，金线贴着数字走——定稿图里 .value 就是个 inline-block */
@@ -5294,7 +4735,7 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   justify-content: center;
   max-width: 100%;
   margin: 0;
-  padding: 0 clamp(16.56px, 4.6154vw, 24.3px) clamp(7.36px, 2.0513vw, 10.8px);
+  padding: 0 var(--fl-18) var(--fl-8);
 }
 .zen-sheet--edit .zen-edit-field {
   flex: 0 1 auto;
@@ -5308,10 +4749,10 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   box-shadow: none;
   color: var(--ink);
   font-family: inherit;
-  font-size: clamp(31.28px, 8.7179vw, 45.9px);
+  font-size: var(--fl-34);
   font-weight: 600;
-  line-height: clamp(41.4px, 11.5385vw, 60.75px);
-  letter-spacing: clamp(-0.675px, -0.1282vw, -0.46px);
+  line-height: var(--fl-45);
+  letter-spacing: var(--fl-n0p5);
   text-align: center;
   appearance: none;
   -webkit-appearance: none;
@@ -5331,15 +4772,15 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
 }
 .zen-sheet--edit .zen-edit-field::placeholder {
   color: var(--hint);
-  font-size: clamp(14.72px, 4.1026vw, 21.6px);
+  font-size: var(--fl-16);
   font-weight: 600;
   letter-spacing: 0;
 }
 .zen-sheet--edit .zen-edit-unit {
   flex: none;
-  margin-left: clamp(3.68px, 1.0256vw, 5.4px);
+  margin-left: var(--fl-4);
   color: var(--muted);
-  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-size: var(--fl-13);
   font-style: normal;
   font-weight: 600;
   letter-spacing: 0;
@@ -5351,7 +4792,7 @@ body[data-active-page="holdings"] .holdings-legacy-controls { display: none; }/*
   right: 0;
   bottom: 0;
   display: block;
-  height: clamp(1.84px, 0.5128vw, 2.7px);
+  height: var(--fl-2);
   margin: 0;
   background: var(--gold);
 }/* ══════════════════════════════════════════════════════════════════
@@ -5374,10 +4815,10 @@ body[data-active-page="dividends"] #dividendCalendarPage {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
-  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
-  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
-  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  padding-top: max(var(--fl-14), env(safe-area-inset-top, 0px));
+  padding-right: max(var(--fl-26), env(safe-area-inset-right, 0px));
+  padding-bottom: max(var(--fl-34), env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--fl-26), env(safe-area-inset-left, 0px));
   min-height: 100dvh;
 }/* 分区只靠留白：清掉历史层留在本页元素上的所有描边与伪元素装饰 */
 
@@ -5402,11 +4843,11 @@ body[data-active-page="dividends"] #dividendCalendarListView {
 
 body[data-active-page="dividends"] .divi-pagebar {
   display: grid;
-  grid-template-columns: clamp(51.52px, 14.359vw, 75.6px) 1fr clamp(51.52px, 14.359vw, 75.6px);
+  grid-template-columns: var(--fl-56) 1fr var(--fl-56);
   align-items: center;
   gap: 0;
   height: auto;
-  min-height: clamp(19.32px, 5.3846vw, 28.35px);
+  min-height: var(--fl-21);
   margin: 0;
   padding: 0;
   background: none;
@@ -5428,8 +4869,8 @@ body[data-active-page="dividends"] .divi-pagebar .back-button {
   text-align: left;
 }
 body[data-active-page="dividends"] .divi-pagebar .back-button svg {
-  width: clamp(16.56px, 4.6154vw, 24.3px);
-  height: clamp(16.56px, 4.6154vw, 24.3px);
+  width: var(--fl-18);
+  height: var(--fl-18);
 }
 body[data-active-page="dividends"] .divi-page-name {
   display: block;
@@ -5438,10 +4879,10 @@ body[data-active-page="dividends"] .divi-page-name {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-5);
   text-align: center;
 }
 body[data-active-page="dividends"] .divi-pagebar-side {
@@ -5459,11 +4900,11 @@ body[data-active-page="dividends"] #dividendCalendarListView #dividendFilterGrou
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: clamp(23.92px, 6.6667vw, 35.1px);
+  gap: var(--fl-26);
   width: auto;
   height: auto;
   min-height: 0;
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  margin: var(--fl-22) 0 0;
   padding: 0;
   border-radius: 0;
   background: none;
@@ -5483,9 +4924,9 @@ body[data-active-page="dividends"] #dividendCalendarListView #dividendFilterGrou
   box-shadow: none;
   color: var(--hint);
   font-family: inherit;
-  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-size: var(--fl-11p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   letter-spacing: 0;
   text-align: center;
 }
@@ -5496,9 +4937,9 @@ body[data-active-page="dividends"] #dividendCalendarListView #dividendFilterGrou
 
 body[data-active-page="dividends"] #dividendCalendarListView #dividendFilterGroup .divi-filter-dot {
   display: block;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
-  margin: clamp(3.68px, 1.0256vw, 5.4px) auto 0;
+  width: var(--fl-4);
+  height: var(--fl-4);
+  margin: var(--fl-4) auto 0;
   border-radius: 50%;
   background: transparent;
 }
@@ -5514,7 +4955,7 @@ body[data-active-page="dividends"] #dividendMetricGrid {
 }
 body[data-active-page="dividends"] .divi-hero {
   display: block;
-  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  margin: var(--fl-28) 0 0;
   padding: 0;
   text-align: center;
 }
@@ -5523,30 +4964,30 @@ body[data-active-page="dividends"] .divi-hero-label {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   /* 定稿图里这是 inline span，行盒被容器 16px 字号的 strut 撑到 21px */
-  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  line-height: var(--fl-21);
   font-weight: 600;
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  letter-spacing: var(--fl-5);
 }
 body[data-active-page="dividends"] .divi-hero-value {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--ink);
-  font-size: clamp(34.96px, 9.7436vw, 51.3px);
+  font-size: var(--fl-38);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+  letter-spacing: var(--fl-n1);
 }
 body[data-active-page="dividends"] .divi-yoy {
   display: block;
-  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  margin: var(--fl-10) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }/* 同比百分比与叙述文字分色：涨红跌绿覆盖到百分比 */
 
 body[data-active-page="dividends"] .divi-yoy strong { font-weight: 700; }
@@ -5556,9 +4997,9 @@ body[data-active-page="dividends"] .divi-yoy strong.is-down { color: var(--down)
 
 body[data-active-page="dividends"] .divi-stack {
   display: flex;
-  width: clamp(257.6px, 71.7949vw, 378px);
-  height: clamp(1.84px, 0.5128vw, 2.7px);
-  margin: clamp(18.4px, 5.1282vw, 27px) auto 0;
+  width: var(--fl-280);
+  height: var(--fl-2);
+  margin: var(--fl-20) auto 0;
   padding: 0;
   background: none;
 }
@@ -5575,28 +5016,28 @@ body[data-active-page="dividends"] .divi-stack i.is-forecast { background: var(-
 body[data-active-page="dividends"] .divi-legend {
   display: flex;
   flex-direction: column;
-  gap: clamp(7.36px, 2.0513vw, 10.8px);
-  width: clamp(257.6px, 71.7949vw, 378px);
-  margin: clamp(12.88px, 3.5897vw, 18.9px) auto 0;
+  gap: var(--fl-8);
+  width: var(--fl-280);
+  margin: var(--fl-14) auto 0;
   padding: 0;
 }
 body[data-active-page="dividends"] .divi-legend-row {
   display: flex;
   align-items: baseline;
-  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  gap: var(--fl-8);
   margin: 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }
 body[data-active-page="dividends"] .divi-legend-row b {
   display: block;
   flex: none;
   align-self: center;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
+  width: var(--fl-4);
+  height: var(--fl-4);
   margin: 0;
   border-radius: 50%;
 }
@@ -5606,7 +5047,7 @@ body[data-active-page="dividends"] .divi-legend-row b.is-forecast { background: 
 body[data-active-page="dividends"] .divi-legend-row small {
   flex: 1;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
 }
 body[data-active-page="dividends"] .divi-legend-row strong {
@@ -5628,15 +5069,15 @@ body[data-active-page="dividends"] #dividendMonthGrid {
 body[data-active-page="dividends"] .divi-year {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: clamp(14.72px, 4.1026vw, 21.6px) clamp(5.52px, 1.5385vw, 8.1px);
-  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  gap: var(--fl-16) var(--fl-6);
+  margin: var(--fl-28) 0 0;
   padding: 0;
 }
 body[data-active-page="dividends"] .divi-ym {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(3.68px, 1.0256vw, 5.4px);
+  gap: var(--fl-4);
   width: auto;
   height: auto;
   min-width: 0;
@@ -5648,9 +5089,9 @@ body[data-active-page="dividends"] .divi-ym {
   box-shadow: none;
   color: var(--hint);
   font-family: inherit;
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
   letter-spacing: 0;
   text-align: center;
 }
@@ -5658,15 +5099,15 @@ body[data-active-page="dividends"] .divi-ym i {
   display: block;
   margin: 0;
   color: var(--muted);
-  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-size: var(--fl-9p5);
   font-style: normal;
   font-weight: 600;
-  line-height: clamp(11.96px, 3.3333vw, 17.55px);
+  line-height: var(--fl-13);
 }
 body[data-active-page="dividends"] .divi-ym b {
   display: block;
-  width: clamp(3.22px, 0.8974vw, 4.725px);
-  height: clamp(3.22px, 0.8974vw, 4.725px);
+  width: var(--fl-3p5);
+  height: var(--fl-3p5);
   margin: 0;
   border-radius: 50%;
   background: transparent;
@@ -5676,59 +5117,59 @@ body[data-active-page="dividends"] .divi-ym.is-past { opacity: .42; }
 body[data-active-page="dividends"] .divi-ym.is-current { color: var(--ink); font-weight: 800; }
 body[data-active-page="dividends"] .divi-ym.is-current i { color: var(--ink); font-weight: 700; }
 body[data-active-page="dividends"] .divi-ym.is-current b {
-  width: clamp(4.6px, 1.2821vw, 6.75px);
-  height: clamp(4.6px, 1.2821vw, 6.75px);
+  width: var(--fl-5);
+  height: var(--fl-5);
 }/* 待确认 / 近期 两段列表 */
 
 
 body[data-active-page="dividends"] .divi-list {
   display: block;
   flex: 1;
-  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  margin: var(--fl-28) 0 0;
   padding: 0;
 }
 body[data-active-page="dividends"] .divi-sec-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   margin: 0;
   padding: 0;
 }
-body[data-active-page="dividends"] .divi-sec-head.is-later { margin-top: clamp(23.92px, 6.6667vw, 35.1px); }
+body[data-active-page="dividends"] .divi-sec-head.is-later { margin-top: var(--fl-26); }
 body[data-active-page="dividends"] .divi-sec-label {
   display: block;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-4);
 }
 body[data-active-page="dividends"] .divi-sec-aside {
   display: block;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }
 body[data-active-page="dividends"] .divi-rows {
   display: flex;
   flex-direction: column;
-  gap: clamp(13.8px, 3.8462vw, 20.25px);
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  gap: var(--fl-15);
+  margin: var(--fl-14) 0 0;
   padding: 0;
 }
 body[data-active-page="dividends"] .divi-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   margin: 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }
 /* 可点行是 button：全局重置已抹掉边框底色，这里只补回块级占满与左对齐 */
 body[data-active-page="dividends"] .divi-row.is-clickable {
@@ -5737,11 +5178,11 @@ body[data-active-page="dividends"] .divi-row.is-clickable {
 }
 body[data-active-page="dividends"] .divi-row strong {
   color: var(--ink);
-  font-size: clamp(11.5px, 3.2051vw, 16.875px);
+  font-size: var(--fl-12p5);
   font-weight: 700;
 }
 body[data-active-page="dividends"] .divi-st {
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 700;
 }
 body[data-active-page="dividends"] .divi-st.is-due { color: var(--up); }
@@ -5752,7 +5193,7 @@ body[data-active-page="dividends"] .divi-list-empty {
   margin: 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
   line-height: 1.65;
   text-align: center;
@@ -5760,10 +5201,10 @@ body[data-active-page="dividends"] .divi-list-empty {
 
 
 @media (max-height: 800px) {
-  body[data-active-page="dividends"] .divi-hero { margin-top: clamp(18.4px, 5.1282vw, 27px); }
-  body[data-active-page="dividends"] .divi-year { margin-top: clamp(18.4px, 5.1282vw, 27px); }
-  body[data-active-page="dividends"] .divi-list { margin-top: clamp(20.24px, 5.641vw, 29.7px); }
-  body[data-active-page="dividends"] .divi-rows { gap: clamp(11.04px, 3.0769vw, 16.2px); }
+  body[data-active-page="dividends"] .divi-hero { margin-top: var(--fl-20); }
+  body[data-active-page="dividends"] .divi-year { margin-top: var(--fl-20); }
+  body[data-active-page="dividends"] .divi-list { margin-top: var(--fl-22); }
+  body[data-active-page="dividends"] .divi-rows { gap: var(--fl-12); }
 }/* ── 07-月明细抽屉 ── */
 
 
@@ -5771,8 +5212,8 @@ body[data-active-page="dividends"] .divi-list-empty {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(14.72px, 4.1026vw, 21.6px);
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  gap: var(--fl-16);
+  margin: var(--fl-22) 0 0;
   padding: 0;
 }
 .zen-sheet--month .zen-md-head h3 {
@@ -5780,41 +5221,41 @@ body[data-active-page="dividends"] .divi-list-empty {
   margin: 0;
   padding: 0;
   color: var(--ink);
-  font-size: clamp(16.56px, 4.6154vw, 24.3px);
+  font-size: var(--fl-18);
   font-weight: 800;
-  line-height: clamp(22.08px, 6.1538vw, 32.4px);
-  letter-spacing: clamp(0.92px, 0.2564vw, 1.35px);
+  line-height: var(--fl-24);
+  letter-spacing: var(--fl-1);
 }
 .zen-sheet--month .zen-md-head h3 small {
-  margin-left: clamp(7.36px, 2.0513vw, 10.8px);
+  margin-left: var(--fl-8);
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  letter-spacing: clamp(1.84px, 0.5128vw, 2.7px);
+  letter-spacing: var(--fl-2);
 }
 .zen-sheet--month .zen-md-head strong {
   flex: none;
   color: var(--ink);
-  font-size: clamp(16.56px, 4.6154vw, 24.3px);
+  font-size: var(--fl-18);
   font-weight: 700;
-  line-height: clamp(22.08px, 6.1538vw, 32.4px);
+  line-height: var(--fl-24);
   white-space: nowrap;
 }
 .zen-sheet--month .zen-md-summary {
   display: block;
-  margin: clamp(7.36px, 2.0513vw, 10.8px) 0 0;
+  margin: var(--fl-8) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }/* 收款进度金线：track 底 + 实色段 + 端点 7px 金点 */
 
 .zen-sheet--month .zen-md-thread {
   position: relative;
   display: block;
-  height: clamp(1.84px, 0.5128vw, 2.7px);
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  height: var(--fl-2);
+  margin: var(--fl-14) 0 0;
   padding: 0;
   background: var(--track);
 }
@@ -5829,8 +5270,8 @@ body[data-active-page="dividends"] .divi-list-empty {
   position: absolute;
   top: 50%;
   display: block;
-  width: clamp(6.44px, 1.7949vw, 9.45px);
-  height: clamp(6.44px, 1.7949vw, 9.45px);
+  width: var(--fl-7);
+  height: var(--fl-7);
   border-radius: 50%;
   background: var(--gold);
   transform: translate(-50%, -50%);
@@ -5839,26 +5280,26 @@ body[data-active-page="dividends"] .divi-list-empty {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin: clamp(8.28px, 2.3077vw, 12.15px) 0 0;
+  margin: var(--fl-9) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }
 .zen-sheet--month .zen-md-caption strong { color: var(--gold); font-weight: 700; }
 .zen-sheet--month .zen-md-rows {
   display: flex;
   flex-direction: column;
-  gap: clamp(14.72px, 4.1026vw, 21.6px);
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  gap: var(--fl-16);
+  margin: var(--fl-22) 0 0;
   padding: 0;
 }
 .zen-sheet--month .zen-md-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   width: 100%;
   height: auto;
   min-height: 0;
@@ -5875,38 +5316,38 @@ body[data-active-page="dividends"] .divi-list-empty {
 .zen-sheet--month .zen-md-co strong {
   display: block;
   color: var(--ink);
-  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-size: var(--fl-13);
   font-weight: 700;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
 }
 .zen-sheet--month .zen-md-co strong small {
-  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
+  margin-left: var(--fl-6);
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
 }
 .zen-sheet--month .zen-md-co > span {
   display: block;
-  margin-top: clamp(1.84px, 0.5128vw, 2.7px);
+  margin-top: var(--fl-2);
   color: var(--muted);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }
 .zen-sheet--month .zen-md-side { display: block; flex: none; text-align: right; }
 .zen-sheet--month .zen-md-side strong {
   display: block;
   color: var(--ink);
-  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-size: var(--fl-13);
   font-weight: 700;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
 }
 .zen-sheet--month .zen-md-side > span {
   display: block;
-  margin-top: clamp(1.84px, 0.5128vw, 2.7px);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  margin-top: var(--fl-2);
+  font-size: var(--fl-10p5);
   font-weight: 700;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }/* 五态状态词 */
 
 .zen-sheet--month .zen-md-side .is-paid { color: var(--gold); }
@@ -5916,10 +5357,10 @@ body[data-active-page="dividends"] .divi-list-empty {
 .zen-sheet--month .zen-md-side .is-forecast { color: var(--hint); }
 .zen-sheet--month .zen-md-empty {
   display: block;
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  margin: var(--fl-22) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
   line-height: 1.65;
   text-align: center;
@@ -5947,21 +5388,21 @@ body[data-active-page="dividends"] .divi-list-empty {
 .zen-sheet--receipt .zen-rc-fields {
   display: flex;
   flex-direction: column;
-  gap: clamp(13.8px, 3.8462vw, 20.25px);
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  gap: var(--fl-15);
+  margin: var(--fl-22) 0 0;
   padding: 0;
 }
 .zen-sheet--receipt .zen-rc-field {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(11.04px, 3.0769vw, 16.2px);
+  gap: var(--fl-12);
   margin: 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
 }
 .zen-sheet--receipt .zen-rc-field > span:first-child { flex: none; }/* 日期与备注：输入框裸置成右对齐的正文，无框无底 */
 
@@ -5978,9 +5419,9 @@ body[data-active-page="dividends"] .divi-list-empty {
   box-shadow: none;
   color: var(--ink);
   font-family: inherit;
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 700;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
   letter-spacing: 0;
   text-align: right;
   appearance: none;
@@ -6006,7 +5447,7 @@ body[data-active-page="dividends"] .divi-list-empty {
   flex: none;
   align-items: flex-start;
   justify-content: flex-end;
-  gap: clamp(14.72px, 4.1026vw, 21.6px);
+  gap: var(--fl-16);
   margin: 0;
   padding: 0;
 }
@@ -6024,18 +5465,18 @@ body[data-active-page="dividends"] .divi-list-empty {
   box-shadow: none;
   color: var(--hint);
   font-family: inherit;
-  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-size: var(--fl-11p5);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
   letter-spacing: 0;
   text-align: center;
 }
 .zen-sheet--receipt .zen-rc-cur.is-active { color: var(--ink); font-weight: 700; }
 .zen-sheet--receipt .zen-rc-cur i {
   display: block;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
-  margin: clamp(2.76px, 0.7692vw, 4.05px) auto 0;
+  width: var(--fl-4);
+  height: var(--fl-4);
+  margin: var(--fl-3) auto 0;
   border-radius: 50%;
   background: transparent;
 }
@@ -6050,12 +5491,12 @@ body[data-active-page="dividends"] .divi-list-empty {
   justify-content: flex-end;
   max-width: 60%;
   margin: 0;
-  padding: 0 clamp(7.36px, 2.0513vw, 10.8px) clamp(3.68px, 1.0256vw, 5.4px);
+  padding: 0 var(--fl-8) var(--fl-4);
 }
 .zen-sheet--receipt .zen-rc-money em {
   flex: none;
   color: var(--ink);
-  font-size: clamp(12.88px, 3.5897vw, 18.9px);
+  font-size: var(--fl-14);
   font-style: normal;
   font-weight: 700;
   letter-spacing: 0;
@@ -6073,9 +5514,9 @@ body[data-active-page="dividends"] .divi-list-empty {
   box-shadow: none;
   color: var(--ink);
   font-family: inherit;
-  font-size: clamp(18.4px, 5.1282vw, 27px);
+  font-size: var(--fl-20);
   font-weight: 700;
-  line-height: clamp(24.84px, 6.9231vw, 36.45px);
+  line-height: var(--fl-27);
   letter-spacing: 0;
   text-align: right;
   appearance: none;
@@ -6100,7 +5541,7 @@ body[data-active-page="dividends"] .divi-list-empty {
   right: 0;
   bottom: 0;
   display: block;
-  height: clamp(1.84px, 0.5128vw, 2.7px);
+  height: var(--fl-2);
   margin: 0;
   background: var(--gold);
 }/* 折算行：人民币时整行隐藏（hidden 属性），外币时明示汇率与日期 */
@@ -6110,9 +5551,9 @@ body[data-active-page="dividends"] .divi-list-empty {
   margin: clamp(-1.84px, -0.5128vw, -1.24px) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   text-align: center;
 }
 .zen-sheet--receipt .zen-rc-conv[hidden] { display: none; }
@@ -6124,25 +5565,25 @@ body[data-active-page="dividends"] .divi-list-empty {
   width: 100%;
   height: auto;
   min-height: 0;
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  margin: var(--fl-22) 0 0;
   padding: 0;
   border-radius: 0;
   background: none;
   box-shadow: none;
   color: var(--muted);
   font-family: inherit;
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 700;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
   letter-spacing: 0;
   text-align: center;
 }
 .zen-sheet--receipt .zen-rc-confirm.is-on { color: var(--ink); }
 .zen-sheet--receipt .zen-rc-confirm b {
   display: inline-block;
-  width: clamp(8.28px, 2.3077vw, 12.15px);
-  height: clamp(8.28px, 2.3077vw, 12.15px);
-  margin-right: clamp(7.36px, 2.0513vw, 10.8px);
+  width: var(--fl-9);
+  height: var(--fl-9);
+  margin-right: var(--fl-8);
   border-radius: 50%;
   background: var(--track);
   vertical-align: -1px;
@@ -6167,10 +5608,10 @@ body[data-active-page="income"] #incomeSummaryPage {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
-  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
-  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
-  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  padding-top: max(var(--fl-14), env(safe-area-inset-top, 0px));
+  padding-right: max(var(--fl-26), env(safe-area-inset-right, 0px));
+  padding-bottom: max(var(--fl-34), env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--fl-26), env(safe-area-inset-left, 0px));
   min-height: 100dvh;
 }/* 分区只靠留白：清掉历史层留在本页元素上的所有描边与伪元素装饰 */
 
@@ -6188,11 +5629,11 @@ body[data-active-page="income"] #incomeSummaryPage *::after {
 
 body[data-active-page="income"] .income-pagebar {
   display: grid;
-  grid-template-columns: clamp(51.52px, 14.359vw, 75.6px) 1fr clamp(51.52px, 14.359vw, 75.6px);
+  grid-template-columns: var(--fl-56) 1fr var(--fl-56);
   align-items: center;
   gap: 0;
   height: auto;
-  min-height: clamp(19.32px, 5.3846vw, 28.35px);
+  min-height: var(--fl-21);
   margin: 0;
   padding: 0;
   background: none;
@@ -6214,8 +5655,8 @@ body[data-active-page="income"] .income-pagebar .back-button {
   text-align: left;
 }
 body[data-active-page="income"] .income-pagebar .back-button svg {
-  width: clamp(16.56px, 4.6154vw, 24.3px);
-  height: clamp(16.56px, 4.6154vw, 24.3px);
+  width: var(--fl-18);
+  height: var(--fl-18);
 }
 body[data-active-page="income"] .income-page-name {
   display: block;
@@ -6224,10 +5665,10 @@ body[data-active-page="income"] .income-page-name {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-5);
   text-align: center;
 }
 body[data-active-page="income"] .income-pagebar-side {
@@ -6250,7 +5691,7 @@ body[data-active-page="income"] #incomeOverviewGrid {
 }
 body[data-active-page="income"] .inc-hero {
   display: block;
-  margin: clamp(27.6px, 7.6923vw, 40.5px) 0 0;
+  margin: var(--fl-30) 0 0;
   padding: 0;
   text-align: center;
 }
@@ -6259,32 +5700,32 @@ body[data-active-page="income"] .inc-hero-label {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   /* 定稿图里是 inline span，行盒被容器 16px 字号的 strut 撑到 21px */
-  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  line-height: var(--fl-21);
   font-weight: 600;
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  letter-spacing: var(--fl-5);
 }
 body[data-active-page="income"] .inc-hero-value {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--ink);
-  font-size: clamp(34.96px, 9.7436vw, 51.3px);
+  font-size: var(--fl-38);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+  letter-spacing: var(--fl-n1);
 }
 body[data-active-page="income"] .inc-hero-value.is-gain { color: var(--up); }
 body[data-active-page="income"] .inc-hero-value.is-loss { color: var(--down); }
 body[data-active-page="income"] .inc-hero-meta {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-size: var(--fl-11p5);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }/* 金额后的百分比与金额同色：红涨绿跌要覆盖到百分比 */
 
 body[data-active-page="income"] .inc-hero-meta strong { font-weight: 700; }
@@ -6292,10 +5733,10 @@ body[data-active-page="income"] .inc-hero-meta strong.is-gain { color: var(--up)
 body[data-active-page="income"] .inc-hero-meta strong.is-loss { color: var(--down); }
 body[data-active-page="income"] .inc-ctx {
   display: block;
-  margin: clamp(16.56px, 4.6154vw, 24.3px) 0 0;
+  margin: var(--fl-18) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
   line-height: 1.8;
   text-align: center;
@@ -6310,37 +5751,37 @@ body[data-active-page="income"] .inc-sec-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   margin: 0;
   padding: 0;
 }
 body[data-active-page="income"] .inc-sec-label {
   display: block;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  line-height: var(--fl-14);
+  letter-spacing: var(--fl-4);
 }
 body[data-active-page="income"] .inc-sec-aside {
   display: block;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }/* 历年趋势：墨线＝资金收益率（逐点标值），金线＝股息收益率，零轴发丝线 */
 
 
 body[data-active-page="income"] #incomeTrend {
   display: block;
   gap: 0;
-  margin: clamp(27.6px, 7.6923vw, 40.5px) 0 0;
+  margin: var(--fl-30) 0 0;
   padding: 0;
   background: none;
 }
 body[data-active-page="income"] .inc-trend-chart {
   display: block;
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  margin: var(--fl-14) 0 0;
   padding: 0;
 }
 body[data-active-page="income"] .inc-trend-svg,
@@ -6391,37 +5832,37 @@ body[data-active-page="income"] .inc-trend-years text.inc-yr.is-current {
 }
 body[data-active-page="income"] .inc-trend-legend {
   display: block;
-  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  margin: var(--fl-10) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
   text-align: center;
 }
 body[data-active-page="income"] .inc-trend-legend i,
 body[data-active-page="income"] .inc-trend-legend b {
   display: inline-block;
-  width: clamp(11.04px, 3.0769vw, 16.2px);
+  width: var(--fl-12);
   height: 2px;
   vertical-align: 3px;
 }
 body[data-active-page="income"] .inc-trend-legend i {
-  margin: 0 clamp(3.68px, 1.0256vw, 5.4px) 0 0;
+  margin: 0 var(--fl-4) 0 0;
   background: var(--chart-line);
 }
 body[data-active-page="income"] .inc-trend-legend b {
-  margin: 0 clamp(3.68px, 1.0256vw, 5.4px) 0 clamp(11.04px, 3.0769vw, 16.2px);
+  margin: 0 var(--fl-4) 0 var(--fl-12);
   background: var(--chart-gold);
 }
 body[data-active-page="income"] .inc-trend-cagr {
   display: block;
-  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  margin: var(--fl-10) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   text-align: center;
 }
 body[data-active-page="income"] .inc-trend-cagr strong { font-weight: 700; color: var(--ink); }
@@ -6429,10 +5870,10 @@ body[data-active-page="income"] .inc-trend-cagr strong.is-gain { color: var(--up
 body[data-active-page="income"] .inc-trend-cagr strong.is-loss { color: var(--down); }
 body[data-active-page="income"] .inc-trend-empty {
   display: block;
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  margin: var(--fl-14) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
   line-height: 1.7;
   text-align: center;
@@ -6444,22 +5885,22 @@ body[data-active-page="income"] #incomeYearList {
   flex: 1;
   flex-direction: column;
   gap: 0;
-  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  margin: var(--fl-28) 0 0;
   padding: 0;
   background: none;
 }
 body[data-active-page="income"] .inc-year-rows {
   display: flex;
   flex-direction: column;
-  gap: clamp(14.72px, 4.1026vw, 21.6px);
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  gap: var(--fl-16);
+  margin: var(--fl-14) 0 0;
   padding: 0;
 }
 body[data-active-page="income"] .inc-year {
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: clamp(2.76px, 0.7692vw, 4.05px);
+  gap: var(--fl-3);
   width: 100%;
   height: auto;
   min-height: 0;
@@ -6474,35 +5915,35 @@ body[data-active-page="income"] .inc-year-main {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
 }
 body[data-active-page="income"] .inc-year-yy {
   display: block;
   color: var(--ink);
-  font-size: clamp(12.88px, 3.5897vw, 18.9px);
+  font-size: var(--fl-14);
   font-weight: 700;
-  line-height: clamp(17.48px, 4.8718vw, 25.65px);
+  line-height: var(--fl-19);
 }
 body[data-active-page="income"] .inc-year-yy small {
-  margin-left: clamp(6.44px, 1.7949vw, 9.45px);
+  margin-left: var(--fl-7);
   color: var(--hint);
-  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-size: var(--fl-9p5);
   font-weight: 600;
-  letter-spacing: clamp(0.46px, 0.1282vw, 0.675px);
+  letter-spacing: var(--fl-0p5);
 }
 body[data-active-page="income"] .inc-year-yv {
   display: block;
   color: var(--ink);
-  font-size: clamp(12.42px, 3.4615vw, 18.225px);
+  font-size: var(--fl-13p5);
   font-weight: 700;
-  line-height: clamp(17.48px, 4.8718vw, 25.65px);
+  line-height: var(--fl-19);
   white-space: nowrap;
 }
 body[data-active-page="income"] .inc-year-yv.is-gain { color: var(--up); }
 body[data-active-page="income"] .inc-year-yv.is-loss { color: var(--down); }
 body[data-active-page="income"] .inc-year-yv em {
-  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  margin-left: var(--fl-6);
+  font-size: var(--fl-11);
   font-style: normal;
   font-weight: 600;
 }
@@ -6510,11 +5951,11 @@ body[data-active-page="income"] .inc-year-sub {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   color: var(--muted);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }
 body[data-active-page="income"] .inc-year-acts {
   display: block;
@@ -6530,17 +5971,17 @@ body[data-active-page="income"] .inc-year-acts {
   box-shadow: none;
   color: var(--hint);
   font-family: inherit;
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   white-space: nowrap;
 }
 body[data-active-page="income"] .inc-year-foot {
   display: block;
-  margin: clamp(16.56px, 4.6154vw, 24.3px) 0 0;
+  margin: var(--fl-18) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
   line-height: 1.7;
   text-align: center;
@@ -6548,10 +5989,10 @@ body[data-active-page="income"] .inc-year-foot {
 
 
 @media (max-height: 820px) {
-  body[data-active-page="income"] .inc-hero { margin-top: clamp(18.4px, 5.1282vw, 27px); }
-  body[data-active-page="income"] #incomeTrend { margin-top: clamp(18.4px, 5.1282vw, 27px); }
-  body[data-active-page="income"] #incomeYearList { margin-top: clamp(18.4px, 5.1282vw, 27px); }
-  body[data-active-page="income"] .inc-year-rows { gap: clamp(11.04px, 3.0769vw, 16.2px); }
+  body[data-active-page="income"] .inc-hero { margin-top: var(--fl-20); }
+  body[data-active-page="income"] #incomeTrend { margin-top: var(--fl-20); }
+  body[data-active-page="income"] #incomeYearList { margin-top: var(--fl-20); }
+  body[data-active-page="income"] .inc-year-rows { gap: var(--fl-12); }
 }/* ── 10-年度回顾 ──
    定稿图本身就是一张 1150px 高的长页（快照+年鉴并入本页），
    不做单屏约束，纵向滚动是设计本意。 */
@@ -6568,10 +6009,10 @@ body[data-active-page="annual"] #annualReviewPage {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
-  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
-  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
-  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  padding-top: max(var(--fl-14), env(safe-area-inset-top, 0px));
+  padding-right: max(var(--fl-26), env(safe-area-inset-right, 0px));
+  padding-bottom: max(var(--fl-34), env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--fl-26), env(safe-area-inset-left, 0px));
   min-height: 100dvh;
 }
 body[data-active-page="annual"] #annualReviewPage,
@@ -6586,11 +6027,11 @@ body[data-active-page="annual"] #annualReviewPage *::after {
 }
 body[data-active-page="annual"] .annual-pagebar {
   display: grid;
-  grid-template-columns: clamp(51.52px, 14.359vw, 75.6px) 1fr clamp(51.52px, 14.359vw, 75.6px);
+  grid-template-columns: var(--fl-56) 1fr var(--fl-56);
   align-items: center;
   gap: 0;
   height: auto;
-  min-height: clamp(19.32px, 5.3846vw, 28.35px);
+  min-height: var(--fl-21);
   margin: 0;
   padding: 0;
   background: none;
@@ -6612,8 +6053,8 @@ body[data-active-page="annual"] .annual-pagebar .back-button {
   text-align: left;
 }
 body[data-active-page="annual"] .annual-pagebar .back-button svg {
-  width: clamp(16.56px, 4.6154vw, 24.3px);
-  height: clamp(16.56px, 4.6154vw, 24.3px);
+  width: var(--fl-18);
+  height: var(--fl-18);
 }
 body[data-active-page="annual"] .annual-page-name {
   display: block;
@@ -6622,10 +6063,10 @@ body[data-active-page="annual"] .annual-page-name {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-5);
   text-align: center;
 }
 body[data-active-page="annual"] .annual-share-entry {
@@ -6641,9 +6082,9 @@ body[data-active-page="annual"] .annual-share-entry {
   box-shadow: none;
   color: var(--muted);
   font-family: inherit;
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 700;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   text-align: right;
 }
 body[data-active-page="annual"] .annual-review-content {
@@ -6660,8 +6101,8 @@ body[data-active-page="annual"] .ann-years {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: clamp(18.4px, 5.1282vw, 27px);
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  gap: var(--fl-20);
+  margin: var(--fl-22) 0 0;
   padding: 0;
 }
 body[data-active-page="annual"] .ann-years button {
@@ -6678,9 +6119,9 @@ body[data-active-page="annual"] .ann-years button {
   box-shadow: none;
   color: var(--hint);
   font-family: inherit;
-  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-size: var(--fl-11p5);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
   text-align: center;
 }
 body[data-active-page="annual"] .ann-years button.is-active {
@@ -6689,9 +6130,9 @@ body[data-active-page="annual"] .ann-years button.is-active {
 }
 body[data-active-page="annual"] .ann-years button i {
   display: block;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
-  margin: clamp(3.68px, 1.0256vw, 5.4px) auto 0;
+  width: var(--fl-4);
+  height: var(--fl-4);
+  margin: var(--fl-4) auto 0;
   border-radius: 50%;
   background: transparent;
 }
@@ -6700,7 +6141,7 @@ body[data-active-page="annual"] .ann-years button.is-active i { background: var(
 
 body[data-active-page="annual"] .ann-hero {
   display: block;
-  margin: clamp(27.6px, 7.6923vw, 40.5px) 0 0;
+  margin: var(--fl-30) 0 0;
   padding: 0;
   text-align: center;
 }
@@ -6709,87 +6150,87 @@ body[data-active-page="annual"] .ann-hero-label {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
-  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  font-size: var(--fl-10);
+  line-height: var(--fl-21);
   font-weight: 600;
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  letter-spacing: var(--fl-5);
 }
 body[data-active-page="annual"] .ann-hero-value {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--ink);
-  font-size: clamp(34.96px, 9.7436vw, 51.3px);
+  font-size: var(--fl-38);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+  letter-spacing: var(--fl-n1);
 }
 body[data-active-page="annual"] .ann-hero-value.is-gain { color: var(--up); }
 body[data-active-page="annual"] .ann-hero-value.is-loss { color: var(--down); }
 body[data-active-page="annual"] .ann-hero-meta {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-size: var(--fl-11p5);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }/* 四指标格 */
 
 
 body[data-active-page="annual"] .ann-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(9.2px, 2.5641vw, 13.5px) clamp(7.36px, 2.0513vw, 10.8px);
-  margin: clamp(22.08px, 6.1538vw, 32.4px) 0 0;
+  gap: var(--fl-10) var(--fl-8);
+  margin: var(--fl-24) 0 0;
   padding: 0;
   text-align: center;
 }
 body[data-active-page="annual"] .ann-metrics > span {
   display: block;
   color: var(--hint);
-  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-size: var(--fl-9p5);
   font-weight: 600;
-  line-height: clamp(11.96px, 3.3333vw, 17.55px);
+  line-height: var(--fl-13);
 }
 body[data-active-page="annual"] .ann-metrics strong {
   display: block;
-  margin-top: clamp(2.76px, 0.7692vw, 4.05px);
+  margin-top: var(--fl-3);
   color: var(--ink);
-  font-size: clamp(11.5px, 3.2051vw, 16.875px);
+  font-size: var(--fl-12p5);
   font-weight: 700;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
 }
 body[data-active-page="annual"] .ann-metrics strong.is-gain { color: var(--up); }
 body[data-active-page="annual"] .ann-metrics strong.is-loss { color: var(--down); }
 
 body[data-active-page="annual"] .ann-block {
   display: block;
-  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  margin: var(--fl-28) 0 0;
   padding: 0;
 }
 body[data-active-page="annual"] .ann-sec-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   margin: 0;
   padding: 0;
 }
 body[data-active-page="annual"] .ann-sec-label {
   display: block;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  line-height: var(--fl-14);
+  letter-spacing: var(--fl-4);
 }
 body[data-active-page="annual"] .ann-sec-aside {
   display: block;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }/* 收益归因：2px 四段线 + 四行 pp 拆分（四项相加 = 本年收益率） */
 
 
@@ -6797,7 +6238,7 @@ body[data-active-page="annual"] .ann-attr-bar {
   display: flex;
   width: 100%;
   height: 2px;
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  margin: var(--fl-14) 0 0;
   padding: 0;
   background: var(--track);
 }
@@ -6814,27 +6255,27 @@ body[data-active-page="annual"] .ann-attr-bar i.is-fx { background: var(--track)
 body[data-active-page="annual"] .ann-attr-rows {
   display: flex;
   flex-direction: column;
-  gap: clamp(10.12px, 2.8205vw, 14.85px);
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  gap: var(--fl-11);
+  margin: var(--fl-14) 0 0;
   padding: 0;
 }
 body[data-active-page="annual"] .ann-attr-row {
   display: flex;
   align-items: baseline;
-  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  gap: var(--fl-8);
   margin: 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-size: var(--fl-11p5);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }
 body[data-active-page="annual"] .ann-attr-row b {
   display: block;
   flex: none;
   align-self: center;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
+  width: var(--fl-4);
+  height: var(--fl-4);
   margin: 0;
   border-radius: 50%;
 }
@@ -6845,7 +6286,7 @@ body[data-active-page="annual"] .ann-attr-row b.is-fx { background: var(--track)
 body[data-active-page="annual"] .ann-attr-row small {
   flex: 1;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
 }
 body[data-active-page="annual"] .ann-attr-row small.is-gain { color: var(--up); }
@@ -6859,10 +6300,10 @@ body[data-active-page="annual"] .ann-attr-row strong.is-gain { color: var(--up);
 body[data-active-page="annual"] .ann-attr-row strong.is-loss { color: var(--down); }
 body[data-active-page="annual"] .ann-attr-note {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-size: var(--fl-9p5);
   font-weight: 600;
   line-height: 1.7;
   text-align: center;
@@ -6872,15 +6313,15 @@ body[data-active-page="annual"] .ann-attr-note {
 body[data-active-page="annual"] .ann-hold {
   display: flex;
   align-items: center;
-  gap: clamp(16.56px, 4.6154vw, 24.3px);
-  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  gap: var(--fl-18);
+  margin: var(--fl-16) 0 0;
   padding: 0;
 }
 body[data-active-page="annual"] .ann-donut {
   position: relative;
   flex: none;
-  width: clamp(117.76px, 32.8205vw, 172.8px);
-  height: clamp(117.76px, 32.8205vw, 172.8px);
+  width: var(--fl-128);
+  height: var(--fl-128);
 }
 body[data-active-page="annual"] .ann-donut svg {
   display: block;
@@ -6902,24 +6343,24 @@ body[data-active-page="annual"] .ann-donut-center {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(1.84px, 0.5128vw, 2.7px);
+  gap: var(--fl-2);
 }
 body[data-active-page="annual"] .ann-donut-center small {
   color: var(--hint);
-  font-size: clamp(8.28px, 2.3077vw, 12.15px);
+  font-size: var(--fl-9);
   font-weight: 600;
-  letter-spacing: clamp(0.92px, 0.2564vw, 1.35px);
+  letter-spacing: var(--fl-1);
 }
 body[data-active-page="annual"] .ann-donut-center strong {
   color: var(--ink);
-  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-size: var(--fl-13);
   font-weight: 700;
 }
 body[data-active-page="annual"] .ann-hold-legend {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  gap: var(--fl-8);
   min-width: 0;
   margin: 0;
   padding: 0;
@@ -6927,20 +6368,20 @@ body[data-active-page="annual"] .ann-hold-legend {
 body[data-active-page="annual"] .ann-hold-row {
   display: flex;
   align-items: baseline;
-  gap: clamp(6.44px, 1.7949vw, 9.45px);
+  gap: var(--fl-7);
   margin: 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }
 body[data-active-page="annual"] .ann-hold-row b {
   display: block;
   flex: none;
   align-self: center;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
+  width: var(--fl-4);
+  height: var(--fl-4);
   margin: 0;
   border-radius: 50%;
 }
@@ -6966,9 +6407,9 @@ body[data-active-page="annual"] .ann-hold-row.is-rest .ann-hold-co {
 body[data-active-page="annual"] .ann-hold-pc { flex: none; }
 body[data-active-page="annual"] .ann-hold-chg {
   flex: none;
-  width: clamp(40.48px, 11.2821vw, 59.4px);
+  width: var(--fl-44);
   color: var(--gold);
-  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-size: var(--fl-9p5);
   font-weight: 700;
   text-align: right;
 }/* 展开后图例远高于 128px 圆环，居中会把环甩到中段——展开态改顶对齐 */
@@ -6992,10 +6433,10 @@ body[data-active-page="annual"] .ann-hold-row.is-toggle .ann-hold-co {
 }
 body[data-active-page="annual"] .ann-hold-note {
   display: block;
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  margin: var(--fl-14) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
   line-height: 1.7;
   text-align: center;
@@ -7005,23 +6446,23 @@ body[data-active-page="annual"] .ann-hold-note {
 body[data-active-page="annual"] .ann-months {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: clamp(4.6px, 1.2821vw, 6.75px);
+  gap: var(--fl-5);
   align-items: end;
-  height: clamp(51.52px, 14.359vw, 75.6px);
-  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
-  padding: 0 clamp(5.52px, 1.5385vw, 8.1px);
+  height: var(--fl-56);
+  margin: var(--fl-16) 0 0;
+  padding: 0 var(--fl-6);
 }
 body[data-active-page="annual"] .ann-months span {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-end;
-  gap: clamp(3.68px, 1.0256vw, 5.4px);
+  gap: var(--fl-4);
   height: 100%;
 }
 body[data-active-page="annual"] .ann-months i {
   display: block;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
+  width: var(--fl-4);
   height: var(--v);
   border-radius: 2px;
   background: var(--gold);
@@ -7030,20 +6471,20 @@ body[data-active-page="annual"] .ann-months i {
 body[data-active-page="annual"] .ann-months span.is-current i { opacity: 1; }
 body[data-active-page="annual"] .ann-months small {
   color: var(--hint);
-  font-size: clamp(7.82px, 2.1795vw, 11.475px);
+  font-size: var(--fl-8p5);
   font-weight: 600;
-  line-height: clamp(10.12px, 2.8205vw, 14.85px);
+  line-height: var(--fl-11);
 }
 body[data-active-page="annual"] .ann-months-total {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }
 body[data-active-page="annual"] .ann-months-total strong { color: var(--ink); font-weight: 700; }/* 交易复盘：日期 + 买红卖绿 + 公司 + 金额 */
 
@@ -7051,21 +6492,21 @@ body[data-active-page="annual"] .ann-months-total strong { color: var(--ink); fo
 body[data-active-page="annual"] .ann-trades {
   display: flex;
   flex-direction: column;
-  gap: clamp(11.96px, 3.3333vw, 17.55px);
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  gap: var(--fl-13);
+  margin: var(--fl-14) 0 0;
   padding: 0;
 }
 body[data-active-page="annual"] .ann-trade-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   margin: 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }
 body[data-active-page="annual"] .ann-trade-row em {
   font-style: normal;
@@ -7076,21 +6517,21 @@ body[data-active-page="annual"] .ann-trade-row em.is-sell { color: var(--down); 
 body[data-active-page="annual"] .ann-trade-row strong { color: var(--ink); font-weight: 700; }
 body[data-active-page="annual"] .ann-trade-sum {
   display: block;
-  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  margin: var(--fl-16) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   text-align: center;
 }
 body[data-active-page="annual"] .ann-empty,
 body[data-active-page="annual"] .ann-empty-line {
   display: block;
-  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  margin: var(--fl-16) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
   line-height: 1.7;
   text-align: center;
@@ -7101,54 +6542,54 @@ body[data-active-page="annual"] .ann-empty-line {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(11.04px, 3.0769vw, 16.2px);
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  gap: var(--fl-12);
+  margin: var(--fl-22) 0 0;
   padding: 0;
 }
 .zen-sheet--backfill .zen-bf-head h3 {
   margin: 0;
   padding: 0;
   color: var(--ink);
-  font-size: clamp(14.72px, 4.1026vw, 21.6px);
+  font-size: var(--fl-16);
   font-weight: 800;
-  line-height: clamp(20.24px, 5.641vw, 29.7px);
-  letter-spacing: clamp(0.46px, 0.1282vw, 0.675px);
+  line-height: var(--fl-22);
+  letter-spacing: var(--fl-0p5);
 }
 .zen-sheet--backfill .zen-bf-tag {
   flex: none;
   color: var(--label);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(1.84px, 0.5128vw, 2.7px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-2);
 }
 .zen-sheet--backfill .zen-bf-sub {
   display: block;
-  margin: clamp(6.44px, 1.7949vw, 9.45px) 0 0;
+  margin: var(--fl-7) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
   line-height: 1.6;
 }
 .zen-sheet--backfill .zen-bf-fields {
   display: flex;
   flex-direction: column;
-  gap: clamp(11.96px, 3.3333vw, 17.55px);
-  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
+  gap: var(--fl-13);
+  margin: var(--fl-20) 0 0;
   padding: 0;
 }
 .zen-sheet--backfill .zen-bf-field {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   margin: 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }
 .zen-sheet--backfill .zen-bf-label {
   flex: 1;
@@ -7158,9 +6599,9 @@ body[data-active-page="annual"] .ann-empty-line {
   text-overflow: ellipsis;
 }
 .zen-sheet--backfill .zen-bf-auto {
-  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
+  margin-left: var(--fl-6);
   color: var(--hint);
-  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-size: var(--fl-9p5);
   font-weight: 600;
 }/* 托线用实心块而不是 border——边框在本套设计里是红线 */
 
@@ -7168,9 +6609,9 @@ body[data-active-page="annual"] .ann-empty-line {
   position: relative;
   flex: none;
   display: block;
-  width: clamp(110.4px, 30.7692vw, 162px);
+  width: var(--fl-120);
   margin: 0;
-  padding: 0 clamp(5.52px, 1.5385vw, 8.1px) clamp(2.76px, 0.7692vw, 4.05px);
+  padding: 0 var(--fl-6) var(--fl-3);
 }
 .zen-sheet--backfill .zen-bf-input {
   display: block;
@@ -7184,9 +6625,9 @@ body[data-active-page="annual"] .ann-empty-line {
   box-shadow: none;
   color: var(--ink);
   font-family: inherit;
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 700;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
   text-align: right;
   appearance: none;
   -webkit-appearance: none;
@@ -7220,15 +6661,15 @@ body[data-active-page="annual"] .ann-empty-line {
 }/* 聚焦项转 2px 金线 */
 
 .zen-sheet--backfill .zen-bf-value:focus-within .zen-bf-line {
-  height: clamp(1.84px, 0.5128vw, 2.7px);
+  height: var(--fl-2);
   background: var(--gold);
 }
 .zen-sheet--backfill .zen-bf-warn {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--up);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
   line-height: 1.6;
 }/* ── 11-分享卡抽屉 ──
@@ -7258,9 +6699,9 @@ body[data-active-page="annual"] .ann-empty-line {
   --gold: #c19a45;
   --track: #eae4d4;
   display: block;
-  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
-  padding: clamp(22.08px, 6.1538vw, 32.4px) clamp(18.4px, 5.1282vw, 27px);
-  border-radius: clamp(14.72px, 4.1026vw, 21.6px);
+  margin: var(--fl-20) 0 0;
+  padding: var(--fl-24) var(--fl-20);
+  border-radius: var(--fl-16);
   background: var(--sc-card);
   box-shadow: 0 1px 2px rgba(59, 54, 46, .05), 0 8px 24px rgba(59, 54, 46, .08);
   color: var(--sc-ink);
@@ -7269,45 +6710,45 @@ body[data-active-page="annual"] .ann-empty-line {
 .zen-sheet--share .sc-brand {
   display: block;
   color: var(--sc-hint);
-  font-size: clamp(8.28px, 2.3077vw, 12.15px);
+  font-size: var(--fl-9);
   font-weight: 600;
-  line-height: clamp(11.96px, 3.3333vw, 17.55px);
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  line-height: var(--fl-13);
+  letter-spacing: var(--fl-4);
   text-transform: uppercase;
 }
 .zen-sheet--share .sc-label {
   display: block;
-  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  margin: var(--fl-16) 0 0;
   color: var(--sc-label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  line-height: var(--fl-14);
+  letter-spacing: var(--fl-5);
 }
 .zen-sheet--share .sc-value {
   display: block;
-  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  margin: var(--fl-10) 0 0;
   color: var(--sc-ink);
-  font-size: clamp(31.28px, 8.7179vw, 45.9px);
+  font-size: var(--fl-34);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+  letter-spacing: var(--fl-n1);
 }
 .zen-sheet--share .sc-value.is-gain { color: var(--sc-up); }
 .zen-sheet--share .sc-value.is-loss { color: var(--sc-down); }
 .zen-sheet--share .sc-meta {
   display: block;
-  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  margin: var(--fl-10) 0 0;
   color: var(--sc-muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }
 .zen-sheet--share .sc-bar {
   display: flex;
-  width: clamp(202.4px, 56.4103vw, 297px);
+  width: var(--fl-220);
   height: 2px;
-  margin: clamp(16.56px, 4.6154vw, 24.3px) auto 0;
+  margin: var(--fl-18) auto 0;
   background: var(--sc-track);
 }
 .zen-sheet--share .sc-bar i { display: block; height: 100%; }
@@ -7317,9 +6758,9 @@ body[data-active-page="annual"] .ann-empty-line {
 .zen-sheet--share .sc-bar i.is-fx { background: var(--sc-track); }
 .zen-sheet--share .sc-attr {
   display: block;
-  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  margin: var(--fl-10) 0 0;
   color: var(--sc-muted);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
   line-height: 1.6;
 }
@@ -7327,21 +6768,21 @@ body[data-active-page="annual"] .ann-empty-line {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: clamp(16.56px, 4.6154vw, 24.3px) 0 0;
+  margin: var(--fl-18) 0 0;
 }
 .zen-sheet--share .sc-hold svg {
   display: block;
   flex: none;
-  width: clamp(88.32px, 24.6154vw, 129.6px);
-  height: clamp(88.32px, 24.6154vw, 129.6px);
+  width: var(--fl-96);
+  height: var(--fl-96);
   transform: rotate(-90deg);
 }/* 持仓默认全展开：两列排开，行数多也不会把卡片撑成一条长柱 */
 
 .zen-sheet--share .sc-hold-legend {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(5.52px, 1.5385vw, 8.1px) clamp(12.88px, 3.5897vw, 18.9px);
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  gap: var(--fl-6) var(--fl-14);
+  margin: var(--fl-14) 0 0;
   text-align: left;
 }
 .zen-sheet--share .sc-hold-legend .co {
@@ -7354,18 +6795,18 @@ body[data-active-page="annual"] .ann-empty-line {
 .zen-sheet--share .sc-hold-legend > div {
   display: flex;
   align-items: baseline;
-  gap: clamp(5.52px, 1.5385vw, 8.1px);
+  gap: var(--fl-6);
   color: var(--sc-muted);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }
 .zen-sheet--share .sc-hold-legend b {
   display: block;
   flex: none;
   align-self: center;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
+  width: var(--fl-4);
+  height: var(--fl-4);
   border-radius: 50%;
 }
 .zen-sheet--share .sc-hold-legend .pc {
@@ -7375,12 +6816,12 @@ body[data-active-page="annual"] .ann-empty-line {
 .zen-sheet--share .sc-hold-legend .is-rest { color: var(--sc-hint); }
 .zen-sheet--share .sc-foot {
   display: block;
-  margin: clamp(16.56px, 4.6154vw, 24.3px) 0 0;
+  margin: var(--fl-18) 0 0;
   color: var(--sc-hint);
-  font-size: clamp(8.28px, 2.3077vw, 12.15px);
+  font-size: var(--fl-9);
   font-weight: 600;
-  line-height: clamp(11.96px, 3.3333vw, 17.55px);
-  letter-spacing: clamp(1.84px, 0.5128vw, 2.7px);
+  line-height: var(--fl-13);
+  letter-spacing: var(--fl-2);
 }/* ══════════════════════════════════════════════════════════════════
    E 簇 · 13-资金与交易 / 14-记一笔 / 15-交易 / 16-出入金
    按 designs/禅意UI/ 下 13–16 四个文件夹的 定稿图.html 重排。
@@ -7402,10 +6843,10 @@ body[data-active-page="records"] #recordsPage {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
-  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
-  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
-  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  padding-top: max(var(--fl-14), env(safe-area-inset-top, 0px));
+  padding-right: max(var(--fl-26), env(safe-area-inset-right, 0px));
+  padding-bottom: max(var(--fl-34), env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--fl-26), env(safe-area-inset-left, 0px));
   min-height: 100dvh;
 }/* 分区只靠留白：清掉历史层留在本页元素上的所有描边与伪元素装饰 */
 
@@ -7423,11 +6864,11 @@ body[data-active-page="records"] #recordsPage *::after {
 
 body[data-active-page="records"] #recordsPage .ledger-page-head {
   display: grid;
-  grid-template-columns: clamp(51.52px, 14.359vw, 75.6px) 1fr clamp(51.52px, 14.359vw, 75.6px);
+  grid-template-columns: var(--fl-56) 1fr var(--fl-56);
   align-items: center;
   gap: 0;
   height: auto;
-  min-height: clamp(19.32px, 5.3846vw, 28.35px);
+  min-height: var(--fl-21);
   margin: 0;
   padding: 0;
   background: none;
@@ -7449,8 +6890,8 @@ body[data-active-page="records"] #recordsPage .back-button {
   text-align: left;
 }
 body[data-active-page="records"] #recordsPage .back-button svg {
-  width: clamp(16.56px, 4.6154vw, 24.3px);
-  height: clamp(16.56px, 4.6154vw, 24.3px);
+  width: var(--fl-18);
+  height: var(--fl-18);
 }
 body[data-active-page="records"] #recordsPage .top-bar-heading {
   display: block;
@@ -7466,10 +6907,10 @@ body[data-active-page="records"] #recordsPage .top-bar-title {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-5);
   text-align: center;
 }/* 宿主容器交出边距：整页边距由 #recordsPage 一处控制 */
 
@@ -7491,7 +6932,7 @@ body[data-active-page="records"] #incomeRecordsList {
 
 body[data-active-page="records"] .rec-hero {
   display: block;
-  margin: clamp(27.6px, 7.6923vw, 40.5px) 0 0;
+  margin: var(--fl-30) 0 0;
   padding: 0;
   text-align: center;
 }
@@ -7500,30 +6941,30 @@ body[data-active-page="records"] .rec-hero-label {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   /* 定稿图里是 inline span，行盒被容器 16px 字号的 strut 撑到 21px */
-  line-height: clamp(19.32px, 5.3846vw, 28.35px);
+  line-height: var(--fl-21);
   font-weight: 600;
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  letter-spacing: var(--fl-5);
 }
 body[data-active-page="records"] .rec-hero-value {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--ink);
-  font-size: clamp(34.96px, 9.7436vw, 51.3px);
+  font-size: var(--fl-38);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+  letter-spacing: var(--fl-n1);
 }
 body[data-active-page="records"] .rec-hero-meta {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-size: var(--fl-11p5);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }/* 现金余额：hero 下的次级焦点，整块可点开校准 */
 
 
@@ -7533,7 +6974,7 @@ body[data-active-page="records"] .rec-cash {
   width: 100%;
   height: auto;
   min-height: 0;
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
+  margin: var(--fl-22) 0 0;
   padding: 0;
   border-radius: 0;
   background: none;
@@ -7544,27 +6985,27 @@ body[data-active-page="records"] .rec-cash {
 body[data-active-page="records"] .rec-cash-label {
   display: block;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(19.32px, 5.3846vw, 28.35px);
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  line-height: var(--fl-21);
+  letter-spacing: var(--fl-4);
 }
 body[data-active-page="records"] .rec-cash-value {
   display: block;
-  margin: clamp(6.44px, 1.7949vw, 9.45px) 0 0;
+  margin: var(--fl-7) 0 0;
   color: var(--ink);
-  font-size: clamp(18.4px, 5.1282vw, 27px);
+  font-size: var(--fl-20);
   font-weight: 700;
   line-height: 1;
-  letter-spacing: clamp(-0.405px, -0.0769vw, -0.276px);
+  letter-spacing: var(--fl-n0p3);
 }
 body[data-active-page="records"] .rec-cash-sub {
   display: block;
-  margin: clamp(4.6px, 1.2821vw, 6.75px) 0 0;
+  margin: var(--fl-5) 0 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }/* 「点击校准」是本页唯一的金色记号（选中/可操作），与股息金保持同一族 */
 
 body[data-active-page="records"] .rec-cash-sub b { color: var(--gold); font-weight: 700; }/* 四类计数：一行居中，不做成格子 */
@@ -7574,20 +7015,20 @@ body[data-active-page="records"] .rec-counts {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: clamp(20.24px, 5.641vw, 29.7px);
-  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
+  gap: var(--fl-22);
+  margin: var(--fl-20) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }
 body[data-active-page="records"] .rec-counts strong { color: var(--muted); font-weight: 700; }/* 三段流水 */
 
 
 body[data-active-page="records"] .rec-flow {
   display: block;
-  margin: clamp(23.92px, 6.6667vw, 35.1px) 0 0;
+  margin: var(--fl-26) 0 0;
   padding: 0;
 }/* 末段吃掉剩余高度，底部留白不塌 */
 
@@ -7596,30 +7037,30 @@ body[data-active-page="records"] .rec-sec-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   margin: 0;
   padding: 0;
 }
 body[data-active-page="records"] .rec-sec-label {
   display: block;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  line-height: var(--fl-14);
+  letter-spacing: var(--fl-4);
 }
 body[data-active-page="records"] .rec-sec-aside {
   display: block;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }
 body[data-active-page="records"] .rec-rows {
   display: flex;
   flex-direction: column;
-  gap: clamp(12.88px, 3.5897vw, 18.9px);
-  margin: clamp(11.96px, 3.3333vw, 17.55px) 0 0;
+  gap: var(--fl-14);
+  margin: var(--fl-13) 0 0;
   padding: 0;
 }
 body[data-active-page="records"] .rec-row {
@@ -7627,7 +7068,7 @@ body[data-active-page="records"] .rec-row {
   flex: none;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   width: 100%;
   height: auto;
   min-height: 0;
@@ -7638,9 +7079,9 @@ body[data-active-page="records"] .rec-row {
   box-shadow: none;
   color: var(--muted);
   font-family: inherit;
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
   text-align: left;
 }
 body[data-active-page="records"] .rec-row-main { display: block; min-width: 0; }
@@ -7650,11 +7091,11 @@ body[data-active-page="records"] .rec-row-main .is-buy { color: var(--up); font-
 body[data-active-page="records"] .rec-row-main .is-sell { color: var(--down); font-style: normal; font-weight: 700; }
 body[data-active-page="records"] .rec-row-detail {
   display: block;
-  margin: clamp(1.84px, 0.5128vw, 2.7px) 0 0;
+  margin: var(--fl-2) 0 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }
 body[data-active-page="records"] .rec-row-amt {
   display: block;
@@ -7669,36 +7110,36 @@ body[data-active-page="records"] .rec-more {
   width: 100%;
   height: auto;
   min-height: 0;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   border-radius: 0;
   background: none;
   box-shadow: none;
   color: var(--hint);
   font-family: inherit;
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 700;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(0.92px, 0.2564vw, 1.35px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-1);
   text-align: center;
 }
 body[data-active-page="records"] .rec-empty {
   display: block;
-  margin: clamp(11.96px, 3.3333vw, 17.55px) 0 0;
+  margin: var(--fl-13) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
 }/* 矮屏收紧竖向节奏，三段流水仍要一屏放得下 */
 
 
 @media (max-height: 820px) and (max-width: 430px) {
-  body[data-active-page="records"] .rec-hero { margin-top: clamp(18.4px, 5.1282vw, 27px); }
-  body[data-active-page="records"] .rec-cash { margin-top: clamp(14.72px, 4.1026vw, 21.6px); }
-  body[data-active-page="records"] .rec-counts { margin-top: clamp(12.88px, 3.5897vw, 18.9px); }
-  body[data-active-page="records"] .rec-flow { margin-top: clamp(16.56px, 4.6154vw, 24.3px); }
-  body[data-active-page="records"] .rec-rows { gap: clamp(10.12px, 2.8205vw, 14.85px); }
+  body[data-active-page="records"] .rec-hero { margin-top: var(--fl-20); }
+  body[data-active-page="records"] .rec-cash { margin-top: var(--fl-16); }
+  body[data-active-page="records"] .rec-counts { margin-top: var(--fl-14); }
+  body[data-active-page="records"] .rec-flow { margin-top: var(--fl-18); }
+  body[data-active-page="records"] .rec-rows { gap: var(--fl-11); }
 }/* ══════════════════════════════════════════════════════════════════
    14 / 15 / 16 抽屉
    通用形制（22px 顶圆角 / 32×3 把手 / 无色块底 / 居中三键）已在
@@ -7711,8 +7152,8 @@ body[data-active-page="records"] .rec-empty {
 .zen-sheet--quick .zen-qa-options {
   display: flex;
   flex-direction: column;
-  gap: clamp(20.24px, 5.641vw, 29.7px);
-  margin: clamp(22.08px, 6.1538vw, 32.4px) 0 0;
+  gap: var(--fl-22);
+  margin: var(--fl-24) 0 0;
   padding: 0;
 }
 .zen-sheet--quick .zen-qa-option {
@@ -7732,24 +7173,24 @@ body[data-active-page="records"] .rec-empty {
 .zen-sheet--quick .zen-qa-option strong {
   display: block;
   color: var(--ink);
-  font-size: clamp(12.88px, 3.5897vw, 18.9px);
+  font-size: var(--fl-14);
   font-weight: 800;
-  line-height: clamp(18.4px, 5.1282vw, 27px);
-  letter-spacing: clamp(1.84px, 0.5128vw, 2.7px);
+  line-height: var(--fl-20);
+  letter-spacing: var(--fl-2);
 }
 .zen-sheet--quick .zen-qa-option span {
   display: block;
-  margin: clamp(3.68px, 1.0256vw, 5.4px) 0 0;
+  margin: var(--fl-4) 0 0;
   color: var(--muted);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }
 .zen-sheet--quick .zen-qa-dot {
   display: block;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
-  margin: clamp(4.6px, 1.2821vw, 6.75px) auto 0;
+  width: var(--fl-4);
+  height: var(--fl-4);
+  margin: var(--fl-5) auto 0;
   border-radius: 50%;
   background: var(--gold);
 }/* ── 15-交易 / 16-出入金 / 当前现金：同一套字段形制 ── */
@@ -7758,21 +7199,21 @@ body[data-active-page="records"] .rec-empty {
 .zen-sheet--form .zen-form {
   display: flex;
   flex-direction: column;
-  gap: clamp(12.88px, 3.5897vw, 18.9px);
-  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
+  gap: var(--fl-14);
+  margin: var(--fl-20) 0 0;
   padding: 0;
 }
 .zen-sheet--form .zen-form-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(11.04px, 3.0769vw, 16.2px);
+  gap: var(--fl-12);
   margin: 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
 }
 .zen-sheet--form .zen-form-row > span:first-child { flex: none; }/* 输入框裸置成右对齐的正文，无框无底 */
 
@@ -7789,9 +7230,9 @@ body[data-active-page="records"] .rec-empty {
   box-shadow: none;
   color: var(--ink);
   font-family: inherit;
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 700;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
   letter-spacing: 0;
   text-align: right;
   appearance: none;
@@ -7826,7 +7267,7 @@ body[data-active-page="records"] .rec-empty {
   justify-content: flex-end;
   max-width: 60%;
   margin: 0;
-  padding: 0 clamp(7.36px, 2.0513vw, 10.8px) clamp(3.68px, 1.0256vw, 5.4px);
+  padding: 0 var(--fl-8) var(--fl-4);
 }
 .zen-sheet--form .zen-form-amount {
   flex: 0 1 auto;
@@ -7842,9 +7283,9 @@ body[data-active-page="records"] .rec-empty {
   box-shadow: none;
   color: var(--ink);
   font-family: inherit;
-  font-size: clamp(18.4px, 5.1282vw, 27px);
+  font-size: var(--fl-20);
   font-weight: 700;
-  line-height: clamp(24.84px, 6.9231vw, 36.45px);
+  line-height: var(--fl-27);
   letter-spacing: 0;
   text-align: right;
   appearance: none;
@@ -7869,7 +7310,7 @@ body[data-active-page="records"] .rec-empty {
   right: 0;
   bottom: 0;
   display: block;
-  height: clamp(1.84px, 0.5128vw, 2.7px);
+  height: var(--fl-2);
   margin: 0;
   background: var(--gold);
 }/* 识别行 / 成交额折算行：居中 10px 小字，紧贴上一行 */
@@ -7880,18 +7321,18 @@ body[data-active-page="records"] .rec-empty {
   margin: clamp(-3.68px, -1.0256vw, -2.5px) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   text-align: center;
 }
 .zen-sheet--form .zen-form-hint b { color: var(--muted); font-weight: 700; }
 .zen-sheet--form .zen-form-foot {
   display: block;
-  margin: clamp(14.72px, 4.1026vw, 21.6px) 0 0;
+  margin: var(--fl-16) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
   line-height: 1.7;
   text-align: center;
@@ -7903,7 +7344,7 @@ body[data-active-page="records"] .rec-empty {
   flex: none;
   align-items: flex-start;
   justify-content: flex-end;
-  gap: clamp(14.72px, 4.1026vw, 21.6px);
+  gap: var(--fl-16);
   margin: 0;
   padding: 0;
 }
@@ -7921,18 +7362,18 @@ body[data-active-page="records"] .rec-empty {
   box-shadow: none;
   color: var(--hint);
   font-family: inherit;
-  font-size: clamp(10.58px, 2.9487vw, 15.525px);
+  font-size: var(--fl-11p5);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
   letter-spacing: 0;
   text-align: center;
 }
 .zen-sheet--form .zen-seg-key.is-active { color: var(--ink); font-weight: 700; }
 .zen-sheet--form .zen-seg-dot {
   display: block;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
-  margin: clamp(2.76px, 0.7692vw, 4.05px) auto 0;
+  width: var(--fl-4);
+  height: var(--fl-4);
+  margin: var(--fl-3) auto 0;
   border-radius: 50%;
   background: transparent;
 }
@@ -7957,10 +7398,10 @@ body[data-active-page="fundamentals"] #fundamentalsPage {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding-top: max(clamp(12.88px, 3.5897vw, 18.9px), env(safe-area-inset-top, 0px));
-  padding-right: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-right, 0px));
-  padding-bottom: max(clamp(31.28px, 8.7179vw, 45.9px), env(safe-area-inset-bottom, 0px));
-  padding-left: max(clamp(23.92px, 6.6667vw, 35.1px), env(safe-area-inset-left, 0px));
+  padding-top: max(var(--fl-14), env(safe-area-inset-top, 0px));
+  padding-right: max(var(--fl-26), env(safe-area-inset-right, 0px));
+  padding-bottom: max(var(--fl-34), env(safe-area-inset-bottom, 0px));
+  padding-left: max(var(--fl-26), env(safe-area-inset-left, 0px));
   min-height: 100dvh;
 }/* 分区只靠留白：清掉历史层留在本页元素上的所有描边与伪元素装饰 */
 
@@ -7978,11 +7419,11 @@ body[data-active-page="fundamentals"] #fundamentalsPage *::after {
 
 body[data-active-page="fundamentals"] .fund-pagebar {
   display: grid;
-  grid-template-columns: clamp(51.52px, 14.359vw, 75.6px) 1fr clamp(51.52px, 14.359vw, 75.6px);
+  grid-template-columns: var(--fl-56) 1fr var(--fl-56);
   align-items: center;
   gap: 0;
   height: auto;
-  min-height: clamp(19.32px, 5.3846vw, 28.35px);
+  min-height: var(--fl-21);
   margin: 0;
   padding: 0;
   background: none;
@@ -8004,8 +7445,8 @@ body[data-active-page="fundamentals"] .fund-pagebar .back-button {
   text-align: left;
 }
 body[data-active-page="fundamentals"] .fund-pagebar .back-button svg {
-  width: clamp(16.56px, 4.6154vw, 24.3px);
-  height: clamp(16.56px, 4.6154vw, 24.3px);
+  width: var(--fl-18);
+  height: var(--fl-18);
 }
 body[data-active-page="fundamentals"] .fund-page-name {
   display: block;
@@ -8014,10 +7455,10 @@ body[data-active-page="fundamentals"] .fund-page-name {
   margin: 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(19.32px, 5.3846vw, 28.35px);
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  line-height: var(--fl-21);
+  letter-spacing: var(--fl-5);
   text-align: center;
 }
 body[data-active-page="fundamentals"] .fund-pagebar-side {
@@ -8028,12 +7469,12 @@ body[data-active-page="fundamentals"] .fund-pagebar-note {
   width: 100%;
   height: auto;
   min-height: 0;
-  margin: clamp(6.44px, 1.7949vw, 9.45px) 0 0;
+  margin: var(--fl-7) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
   text-align: center;
 }/* 宿主容器交出边距：整页边距由 #fundamentalsPage 一处控制 */
 
@@ -8054,9 +7495,9 @@ body[data-active-page="fundamentals"] .fundamentals-content {
 
 body[data-active-page="fundamentals"] .fu-rank {
   display: flex;
-  gap: clamp(18.4px, 5.1282vw, 27px);
-  margin: clamp(20.24px, 5.641vw, 29.7px) 0 0;
-  padding: 0 0 clamp(3.68px, 1.0256vw, 5.4px);
+  gap: var(--fl-20);
+  margin: var(--fl-22) 0 0;
+  padding: 0 0 var(--fl-4);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -8075,28 +7516,28 @@ body[data-active-page="fundamentals"] .fu-rank-item {
   box-shadow: none;
   color: var(--hint);
   font-family: inherit;
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
   white-space: nowrap;
   text-align: center;
 }
 body[data-active-page="fundamentals"] .fu-rank-item strong {
   display: block;
-  margin: clamp(2.76px, 0.7692vw, 4.05px) 0 0;
+  margin: var(--fl-3) 0 0;
   color: var(--muted);
-  font-size: clamp(11.5px, 3.2051vw, 16.875px);
+  font-size: var(--fl-12p5);
   font-weight: 700;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
 }
 body[data-active-page="fundamentals"] .fu-rank-item.is-active { color: var(--muted); }
 body[data-active-page="fundamentals"] .fu-rank-item.is-active strong { color: var(--ink); }/* 选中记号：4px 金点下划，与全局同一套。用真元素而非伪元素，绕开本页的清装饰规则 */
 
 body[data-active-page="fundamentals"] .fu-rank-dot {
   display: none;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
-  margin: clamp(3.68px, 1.0256vw, 5.4px) auto 0;
+  width: var(--fl-4);
+  height: var(--fl-4);
+  margin: var(--fl-4) auto 0;
   border-radius: 50%;
   background: var(--gold);
 }
@@ -8105,7 +7546,7 @@ body[data-active-page="fundamentals"] .fu-rank-item.is-active .fu-rank-dot { dis
 
 body[data-active-page="fundamentals"] .fu-co {
   display: block;
-  margin: clamp(22.08px, 6.1538vw, 32.4px) 0 0;
+  margin: var(--fl-24) 0 0;
   text-align: center;
 }
 body[data-active-page="fundamentals"] .fu-co-name {
@@ -8121,78 +7562,78 @@ body[data-active-page="fundamentals"] .fu-co-name {
   box-shadow: none;
   color: var(--ink);
   font-family: inherit;
-  font-size: clamp(17.48px, 4.8718vw, 25.65px);
+  font-size: var(--fl-19);
   font-weight: 800;
-  line-height: clamp(24.84px, 6.9231vw, 36.45px);
-  letter-spacing: clamp(0.46px, 0.1282vw, 0.675px);
+  line-height: var(--fl-27);
+  letter-spacing: var(--fl-0p5);
   text-align: center;
 }
 body[data-active-page="fundamentals"] .fu-co-name svg {
   /* 全局把 svg 设成了 block，这里不改回 inline-block 箭头会自己换行 */
   display: inline-block;
-  width: clamp(12.88px, 3.5897vw, 18.9px);
-  height: clamp(12.88px, 3.5897vw, 18.9px);
-  margin-left: clamp(4.6px, 1.2821vw, 6.75px);
+  width: var(--fl-14);
+  height: var(--fl-14);
+  margin-left: var(--fl-5);
   color: var(--muted);
   vertical-align: -2px;
 }
 body[data-active-page="fundamentals"] .fu-co-sub {
   display: block;
-  margin: clamp(5.52px, 1.5385vw, 8.1px) 0 0;
+  margin: var(--fl-6) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }/* 公式块：历史经营回报参考 = 股息 + 增长（+ 净回购） */
 
 
 body[data-active-page="fundamentals"] .fu-formula {
   display: block;
-  margin: clamp(22.08px, 6.1538vw, 32.4px) 0 0;
+  margin: var(--fl-24) 0 0;
   padding: 0;
   text-align: center;
 }
 body[data-active-page="fundamentals"] .fu-f-label {
   display: block;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(19.32px, 5.3846vw, 28.35px);
-  letter-spacing: clamp(4.6px, 1.2821vw, 6.75px);
+  line-height: var(--fl-21);
+  letter-spacing: var(--fl-5);
 }
 body[data-active-page="fundamentals"] .fu-f-value {
   display: block;
-  margin: clamp(9.2px, 2.5641vw, 13.5px) 0 0;
+  margin: var(--fl-10) 0 0;
   color: var(--ink);
-  font-size: clamp(31.28px, 8.7179vw, 45.9px);
+  font-size: var(--fl-34);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: clamp(-1.35px, -0.2564vw, -0.92px);
+  letter-spacing: var(--fl-n1);
 }
 body[data-active-page="fundamentals"] .fu-f-value em {
   font-style: normal;
   color: var(--label);
-  font-size: clamp(12.88px, 3.5897vw, 18.9px);
+  font-size: var(--fl-14);
   font-weight: 600;
   letter-spacing: 0;
 }
 body[data-active-page="fundamentals"] .fu-f-note {
   display: block;
-  margin: clamp(8.28px, 2.3077vw, 12.15px) 0 0;
+  margin: var(--fl-9) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }/* 构成线：2px 高、三段实色、无端点（端点金点是进度线的记号，这里是构成不是进度） */
 
 body[data-active-page="fundamentals"] .fu-f-stack {
   display: flex;
-  width: clamp(230px, 64.1026vw, 337.5px);
+  width: var(--fl-250);
   max-width: 100%;
-  height: clamp(1.84px, 0.5128vw, 2.7px);
-  margin: clamp(14.72px, 4.1026vw, 21.6px) auto 0;
+  height: var(--fl-2);
+  margin: var(--fl-16) auto 0;
   padding: 0;
 }
 body[data-active-page="fundamentals"] .fu-f-stack i {
@@ -8208,48 +7649,48 @@ body[data-active-page="fundamentals"] .fu-f-rows .is-buyback { background: var(-
 body[data-active-page="fundamentals"] .fu-f-rows {
   display: flex;
   flex-direction: column;
-  gap: clamp(7.36px, 2.0513vw, 10.8px);
-  width: clamp(230px, 64.1026vw, 337.5px);
+  gap: var(--fl-8);
+  width: var(--fl-250);
   max-width: 100%;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) auto 0;
+  margin: var(--fl-12) auto 0;
   padding: 0;
 }
 body[data-active-page="fundamentals"] .fu-f-rows > div {
   display: flex;
   align-items: baseline;
-  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  gap: var(--fl-8);
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }
 body[data-active-page="fundamentals"] .fu-f-rows b {
   display: block;
   flex: none;
   align-self: center;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
+  width: var(--fl-4);
+  height: var(--fl-4);
   border-radius: 50%;
 }
 body[data-active-page="fundamentals"] .fu-f-rows small { flex: 1; }
 body[data-active-page="fundamentals"] .fu-f-rows strong { color: var(--ink); font-weight: 700; }
 body[data-active-page="fundamentals"] .fu-f-method {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-size: var(--fl-9p5);
   font-weight: 600;
   line-height: 1.7;
 }
 body[data-active-page="fundamentals"] .fu-f-anchor {
   display: block;
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  margin: var(--fl-14) 0 0;
   padding: 0;
   color: var(--muted);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }
 body[data-active-page="fundamentals"] .fu-f-anchor strong { color: var(--ink); font-weight: 700; }/* 节标行：左节标、右小注，无 rule */
 
@@ -8258,60 +7699,60 @@ body[data-active-page="fundamentals"] .fu-sec-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  gap: var(--fl-8);
   margin: 0;
   padding: 0;
 }
 body[data-active-page="fundamentals"] .fu-sec-label {
   display: block;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-4);
 }
 body[data-active-page="fundamentals"] .fu-sec-aside {
   display: block;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   text-align: right;
 }/* 估值节：两根「贵 ⇄ 便宜」标尺，点越靠右越便宜 */
 
 
 body[data-active-page="fundamentals"] .fu-val {
   display: block;
-  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  margin: var(--fl-28) 0 0;
 }
 body[data-active-page="fundamentals"] .fu-val-rows {
   display: flex;
   flex-direction: column;
-  gap: clamp(16.56px, 4.6154vw, 24.3px);
-  margin: clamp(12.88px, 3.5897vw, 18.9px) 0 0;
+  gap: var(--fl-18);
+  margin: var(--fl-14) 0 0;
 }
 body[data-active-page="fundamentals"] .fu-val-row {
   display: flex;
   flex-direction: column;
-  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  gap: var(--fl-8);
 }
 body[data-active-page="fundamentals"] .fu-val-main {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  gap: var(--fl-8);
   color: var(--muted);
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
 }
 body[data-active-page="fundamentals"] .fu-val-v {
   color: var(--ink);
-  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-size: var(--fl-13);
   font-weight: 700;
 }
 body[data-active-page="fundamentals"] .fu-val-p {
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   white-space: nowrap;
 }/* 结论词只有「便宜的一侧」着金；贵/居中保持 hint 叙述色 */
 
@@ -8320,7 +7761,7 @@ body[data-active-page="fundamentals"] .fu-val-p strong.is-cheap { color: var(--g
 body[data-active-page="fundamentals"] .fu-val-scale {
   position: relative;
   display: block;
-  height: clamp(1.84px, 0.5128vw, 2.7px);
+  height: var(--fl-2);
   margin: 0;
   padding: 0;
   background: var(--track);
@@ -8329,8 +7770,8 @@ body[data-active-page="fundamentals"] .fu-val-scale i {
   position: absolute;
   top: 50%;
   display: block;
-  width: clamp(6.44px, 1.7949vw, 9.45px);
-  height: clamp(6.44px, 1.7949vw, 9.45px);
+  width: var(--fl-7);
+  height: var(--fl-7);
   border-radius: 50%;
   background: var(--gold);
   transform: translate(-50%, -50%);
@@ -8340,36 +7781,36 @@ body[data-active-page="fundamentals"] .fu-val-ends {
   align-items: baseline;
   justify-content: space-between;
   color: var(--hint);
-  font-size: clamp(8.28px, 2.3077vw, 12.15px);
+  font-size: var(--fl-9);
   font-weight: 600;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
 }/* 每股分红 / EPS 两张线图：min–max 自适应量程，逐点标值，当年点加大加深 */
 
 
 body[data-active-page="fundamentals"] .fu-bars {
   display: block;
-  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  margin: var(--fl-28) 0 0;
 }
 body[data-active-page="fundamentals"] .fu-latest {
   display: block;
   color: var(--ink);
-  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-size: var(--fl-13);
   font-weight: 700;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
   white-space: nowrap;
 }/* 红涨绿跌覆盖到 EPS 同比：金额与百分比同段同色 */
 
 body[data-active-page="fundamentals"] .fu-latest.is-up { color: var(--up); }
 body[data-active-page="fundamentals"] .fu-latest.is-down { color: var(--down); }
 body[data-active-page="fundamentals"] .fu-latest small {
-  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
+  margin-left: var(--fl-6);
   color: var(--muted);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
 }
 body[data-active-page="fundamentals"] .fu-line {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
 }
 body[data-active-page="fundamentals"] .fu-line svg {
   display: block;
@@ -8398,20 +7839,20 @@ body[data-active-page="fundamentals"] .fu-bar-stats {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: clamp(27.6px, 7.6923vw, 40.5px);
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  gap: var(--fl-30);
+  margin: var(--fl-12) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }
 body[data-active-page="fundamentals"] .fu-bar-stats strong { color: var(--muted); font-weight: 700; }/* 年度数据明细：一行折叠，展开为历年表 */
 
 
 body[data-active-page="fundamentals"] .fu-fold {
   display: block;
-  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  margin: var(--fl-28) 0 0;
   padding: 0;
   background: none;
   box-shadow: none;
@@ -8420,7 +7861,7 @@ body[data-active-page="fundamentals"] .fu-fold > summary {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(7.36px, 2.0513vw, 10.8px);
+  gap: var(--fl-8);
   margin: 0;
   padding: 0;
   background: none;
@@ -8432,13 +7873,13 @@ body[data-active-page="fundamentals"] .fu-fold > summary::marker { content: ""; 
 body[data-active-page="fundamentals"] .fu-fold-arr {
   display: block;
   color: var(--hint);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
 }
 body[data-active-page="fundamentals"] .fu-table {
   display: block;
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  margin: var(--fl-12) 0 0;
   padding: 0;
   background: none;
   box-shadow: none;
@@ -8447,12 +7888,12 @@ body[data-active-page="fundamentals"] .fu-table-row {
   display: grid;
   grid-template-columns: 1.05fr 1fr 1fr 1fr 1fr 1fr;
   align-items: baseline;
-  gap: clamp(3.68px, 1.0256vw, 5.4px);
-  padding: clamp(4.6px, 1.2821vw, 6.75px) 0;
+  gap: var(--fl-4);
+  padding: var(--fl-5) 0;
   color: var(--muted);
-  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-size: var(--fl-9p5);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
+  line-height: var(--fl-15);
   text-align: right;
 }
 body[data-active-page="fundamentals"] .fu-table-row > div:first-child { text-align: left; }
@@ -8462,9 +7903,9 @@ body[data-active-page="fundamentals"] .fu-table-row.is-head {
 }
 body[data-active-page="fundamentals"] .fu-table-row .is-year { color: var(--ink); font-weight: 700; }
 body[data-active-page="fundamentals"] .fu-table-row .is-year small {
-  margin-left: clamp(2.76px, 0.7692vw, 4.05px);
+  margin-left: var(--fl-3);
   color: var(--hint);
-  font-size: clamp(7.36px, 2.0513vw, 10.8px);
+  font-size: var(--fl-8);
   font-weight: 600;
 }/* 财报日历：当前公司整行金色，点其他行切公司并滚回顶 */
 
@@ -8472,19 +7913,19 @@ body[data-active-page="fundamentals"] .fu-table-row .is-year small {
 body[data-active-page="fundamentals"] .fu-cal {
   display: block;
   flex: 1;
-  margin: clamp(25.76px, 7.1795vw, 37.8px) 0 0;
+  margin: var(--fl-28) 0 0;
 }
 body[data-active-page="fundamentals"] .fu-cal-rows {
   display: flex;
   flex-direction: column;
-  gap: clamp(11.96px, 3.3333vw, 17.55px);
-  margin: clamp(11.96px, 3.3333vw, 17.55px) 0 0;
+  gap: var(--fl-13);
+  margin: var(--fl-13) 0 0;
 }
 body[data-active-page="fundamentals"] .fu-cal-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   width: 100%;
   height: auto;
   min-height: 0;
@@ -8495,26 +7936,26 @@ body[data-active-page="fundamentals"] .fu-cal-row {
   box-shadow: none;
   color: var(--muted);
   font-family: inherit;
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
   text-align: left;
 }
 body[data-active-page="fundamentals"] .fu-cal-row strong { color: var(--ink); font-weight: 700; }
 body[data-active-page="fundamentals"] .fu-cal-row.is-self strong { color: var(--gold); }
 body[data-active-page="fundamentals"] .fu-cal-type {
   color: var(--hint);
-  font-size: clamp(9.66px, 2.6923vw, 14.175px);
+  font-size: var(--fl-10p5);
   white-space: nowrap;
 }
 body[data-active-page="fundamentals"] .fu-cal-empty {
   display: block;
-  margin: clamp(11.96px, 3.3333vw, 17.55px) 0 0;
+  margin: var(--fl-13) 0 0;
   padding: 0;
   color: var(--hint);
-  font-size: clamp(10.12px, 2.8205vw, 14.85px);
+  font-size: var(--fl-11);
   font-weight: 600;
-  line-height: clamp(14.72px, 4.1026vw, 21.6px);
+  line-height: var(--fl-16);
 }/* ── 18-选择公司抽屉 ── */
 
 
@@ -8525,26 +7966,26 @@ body[data-active-page="fundamentals"] .fu-cal-empty {
 }
 .zen-sheet--picker .zen-fp-group {
   display: block;
-  margin: clamp(18.4px, 5.1282vw, 27px) 0 0;
+  margin: var(--fl-20) 0 0;
   padding: 0;
   color: var(--label);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
-  line-height: clamp(13.8px, 3.8462vw, 20.25px);
-  letter-spacing: clamp(3.68px, 1.0256vw, 5.4px);
+  line-height: var(--fl-15);
+  letter-spacing: var(--fl-4);
 }
 .zen-sheet--picker .zen-fp-rows {
   display: flex;
   flex-direction: column;
-  gap: clamp(12.88px, 3.5897vw, 18.9px);
-  margin: clamp(11.04px, 3.0769vw, 16.2px) 0 0;
+  gap: var(--fl-14);
+  margin: var(--fl-12) 0 0;
   padding: 0;
 }
 .zen-sheet--picker .zen-fp-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: clamp(9.2px, 2.5641vw, 13.5px);
+  gap: var(--fl-10);
   width: 100%;
   height: auto;
   min-height: 0;
@@ -8555,9 +7996,9 @@ body[data-active-page="fundamentals"] .fu-cal-empty {
   box-shadow: none;
   color: var(--muted);
   font-family: inherit;
-  font-size: clamp(11.04px, 3.0769vw, 16.2px);
+  font-size: var(--fl-12);
   font-weight: 600;
-  line-height: clamp(15.64px, 4.359vw, 22.95px);
+  line-height: var(--fl-17);
   text-align: left;
 }
 .zen-sheet--picker .zen-fp-name {
@@ -8566,21 +8007,21 @@ body[data-active-page="fundamentals"] .fu-cal-empty {
 }
 .zen-sheet--picker .zen-fp-name strong {
   color: var(--ink);
-  font-size: clamp(11.96px, 3.3333vw, 17.55px);
+  font-size: var(--fl-13);
   font-weight: 700;
 }
 .zen-sheet--picker .zen-fp-name small {
-  margin-left: clamp(5.52px, 1.5385vw, 8.1px);
+  margin-left: var(--fl-6);
   color: var(--hint);
-  font-size: clamp(9.2px, 2.5641vw, 13.5px);
+  font-size: var(--fl-10);
   font-weight: 600;
 }/* 当前项记号：名后 4px 金点，与全局选中记号同一套 */
 
 .zen-sheet--picker .zen-fp-dot {
   display: inline-block;
-  width: clamp(3.68px, 1.0256vw, 5.4px);
-  height: clamp(3.68px, 1.0256vw, 5.4px);
-  margin-left: clamp(6.44px, 1.7949vw, 9.45px);
+  width: var(--fl-4);
+  height: var(--fl-4);
+  margin-left: var(--fl-7);
   border-radius: 50%;
   background: var(--gold);
   vertical-align: 2.5px;
@@ -8596,8 +8037,8 @@ body[data-active-page="fundamentals"] .fu-cal-empty {
 .zen-sheet--picker .zen-fp-side small {
   display: block;
   color: var(--gold);
-  font-size: clamp(8.74px, 2.4359vw, 12.825px);
+  font-size: var(--fl-9p5);
   font-weight: 700;
-  line-height: clamp(12.88px, 3.5897vw, 18.9px);
+  line-height: var(--fl-14);
   text-align: right;
 }

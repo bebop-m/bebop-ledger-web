@@ -40,7 +40,6 @@ export const DIVIDEND_FILTER_KEYS = new Set(['all', 'core', 'income']);
 export const TENCENT_REQUEST_TIMEOUT_MS = 8000;
 export const HOLDING_ENTER_STAGGER_MS = 25;
 export const HOLDING_ENTER_STAGGER_MAX_MS = 400;
-export const LEGEND_ENTER_STAGGER_MS = 30;
 export const TOAST_DEFAULT_DURATION_MS = 2200;
 export const HOLDING_REMOVAL_FALLBACK_MS = 260;
 export const SWIPE_SUPPRESS_CLICK_MS = 280;
