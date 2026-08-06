@@ -439,11 +439,11 @@ function renderMonthDetailModal() {
         <h3 id="monthDetailTitle">${escapeHtml(detail.title)}${detail.phase === 'current' ? '<small>当月</small>' : ''}</h3>
         <strong>${escapeHtml(detail.total)}</strong>
       </header>
-      <p class="zen-md-summary">${escapeHtml(detail.summary)}</p>
+      ${detail.summary ? `<p class="zen-md-summary">${escapeHtml(detail.summary)}</p>` : ''}
       <div class="zen-md-thread" role="img" aria-label="收款进度 ${escapeHtml(detail.receivedPercentText)}">
         <i style="width:${fill}%"></i><b style="left:${fill}%"></b>
       </div>
-      <p class="zen-md-caption"><span>收款进度</span><strong>${escapeHtml(detail.receivedPercentText)}</strong></p>
+      ${detail.receivedRatio > 0 ? `<p class="zen-md-caption"><strong>已到账 ${escapeHtml(detail.receivedPercentText)}</strong></p>` : ''}
       <div class="zen-md-rows">${detail.body}</div>
       <div class="zen-sheet-actions">
         <button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button>

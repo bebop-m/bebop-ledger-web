@@ -464,30 +464,48 @@ function formatDividendRowDate(entry) {
   return parts.length >= 3 ? `${Number(parts[1])}月${Number(parts[2])}日` : '';
 }
 
+/* 持有整年 TTM ¥ = TTM 每股股息 × 现持股数（税后）合计，跟随仓位筛选。
+   全 app 此口径只在股息日历出现（信息收敛 2026-08 裁决）。 */
+function getTtmDividendCny(filterKey) {
+  const computed = computeHoldings();
+  if (filterKey !== 'core' && filterKey !== 'income') return safeNumber(computed.totalDividendCny, 0);
+  const hit = getBucketSummaryItems(computed.holdings).find((item) => item.key === filterKey);
+  return hit ? safeNumber(hit.totalDividendCny, 0) : 0;
+}
+
 function renderDividendMetricGrid(model) {
   const m = model.metrics;
   /* 三个互斥的桶，相加恒等于「预计全年」：
-     已到账（钱已入账）→ 在途（已公告/待核对，等着到账）→ 预估（按往年节奏推算）。 */
+     已到账（钱已入账）→ 在途（已公告/待核对，等着到账）→ 预估（按往年节奏推算）。
+     词条自明，灰色小字说明退场；零值行不上屏（在途大多数时候为 0）。 */
   const pipelineCny = Math.max(0, m.committedCny - m.receivedCny);
   const width = (value) => (m.projectedCny > 0 ? Math.max(0, safeNumber(value, 0) / m.projectedCny * 100) : 0).toFixed(2);
   const receivedPct = Math.round(m.projectedCny > 0 ? Math.min(1, Math.max(0, m.receivedCny / m.projectedCny)) * 100 : 0);
-  const legendRow = (tone, name, note, value) => `<div class="divi-legend-row">
-      <b class="is-${tone}" aria-hidden="true"></b><span>${escapeHtml(name)}</span><small>${escapeHtml(note)}</small><strong>${escapeHtml(formatDisplayMoney(value, 'CNY'))}</strong>
-    </div>`;
+  const legendRow = (tone, name, value) => (safeNumber(value, 0) > 0 ? `<div class="divi-legend-row">
+      <b class="is-${tone}" aria-hidden="true"></b><span>${escapeHtml(name)}</span><strong>${escapeHtml(formatDisplayMoney(value, 'CNY'))}</strong>
+    </div>` : '');
+  const ttmCny = getTtmDividendCny(model.filterKey);
+  /* 随注：上年无数据时同比子句整句消失，只留股息率（与 hero 同口径） */
+  const yoyLine = buildDividendYoyLine(m.projectedYoy);
+  const metaParts = [];
+  if (yoyLine) metaParts.push(yoyLine);
+  if (m.projectedYieldRate !== null && m.projectedYieldRate !== undefined) metaParts.push(`股息率 ${escapeHtml(`${(m.projectedYieldRate * 100).toFixed(1)}%`)}`);
   refs.dividendMetricGrid.innerHTML = `
     <div class="divi-hero">
       <span class="divi-hero-label">预计全年</span>
       <strong class="divi-hero-value">${escapeHtml(formatDisplayMoney(m.projectedCny, 'CNY'))}</strong>
-      <p class="divi-yoy">${buildDividendYoyLine(m.projectedYoy)}${m.projectedYieldRate !== null && m.projectedYieldRate !== undefined
-        ? ` · 股息率 ${escapeHtml(`${(m.projectedYieldRate * 100).toFixed(1)}%`)}` : ''}</p>
+      ${metaParts.length ? `<p class="divi-yoy">${metaParts.join(' · ')}</p>` : ''}
     </div>
     <div class="divi-stack" role="img" aria-label="构成：已到账 ${receivedPct}%，其余在途与预估">
       <i class="is-received" style="width:${width(m.receivedCny)}%"></i><i class="is-pipeline" style="width:${width(pipelineCny)}%"></i><i class="is-forecast" style="width:${width(m.forecastCny)}%"></i>
     </div>
     <div class="divi-legend">
-      ${legendRow('received', '已到账', '钱已入账', m.receivedCny)}
-      ${legendRow('pipeline', '在途', '已公告 · 等待到账', pipelineCny)}
-      ${legendRow('forecast', '预估', '按往年节奏推算', m.forecastCny)}
+      ${legendRow('received', '已到账', m.receivedCny)}
+      ${legendRow('pipeline', '在途', pipelineCny)}
+      ${legendRow('forecast', '预估', m.forecastCny)}
+      ${ttmCny > 0 ? `<div class="divi-legend-row divi-legend-row--ttm">
+      <b class="is-ttm" aria-hidden="true"></b><span>持有整年 TTM</span><strong>${escapeHtml(formatZenMoney(ttmCny))}</strong>
+    </div>` : ''}
     </div>`;
 }
 
@@ -511,7 +529,7 @@ function buildDividendRow(entry) {
     : '';
   return `<${tag} class="divi-row${clickable ? ' is-clickable' : ''}"${attrs}>
     <span>${escapeHtml(formatDividendRowDate(entry))} <strong>${escapeHtml(entry.name || entry.symbol)}</strong></span>
-    <span><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong> <span class="divi-st is-${status.tone}">${escapeHtml(status.text)}</span></span>
+    <span><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong>${status.tone === 'paid' ? '' : ` <span class="divi-st is-${status.tone}">${escapeHtml(status.text)}</span>`}</span>
   </${tag}>`;
 }
 
@@ -519,14 +537,20 @@ const DIVIDEND_LIST_LIMIT = 6;
 const DIVIDEND_DUE_LIMIT = 3;
 
 function renderDividendMonths(model) {
+  /* 月度节奏条：线高=当月金额（√ 标尺），实金=已发生月，浅金=未来月，
+     无派息月只留 2px 底座；12 个金额数字退场，点月进月明细看数。 */
+  const maxMonthCny = Math.max(0, ...model.months.map((item) => safeNumber(item.totalCny, 0)));
   const cells = model.months.map((item) => {
-    const hasPay = safeNumber(item.totalCny, 0) > 0;
+    const amount = safeNumber(item.totalCny, 0);
+    const hasPay = amount > 0;
+    const height = hasPay && maxMonthCny > 0 ? Math.max(3, Math.round(Math.sqrt(amount / maxMonthCny) * 46)) : 2;
+    const toneClass = hasPay ? (item.phase === 'future' ? 'is-est' : 'is-done') : 'is-zero';
     const classes = ['divi-ym'];
     if (item.phase === 'past') classes.push('is-past');
     if (item.phase === 'current') classes.push('is-current');
     if (hasPay) classes.push('has-pay');
     return `<button class="${classes.join(' ')}" type="button" data-dividend-month="${item.month}" aria-label="查看 ${item.month} 月逐笔股息">
-      <span>${String(item.month).padStart(2, '0')}</span><i>${escapeHtml(formatMonthCellAmount(item.totalCny))}</i><b aria-hidden="true"></b>
+      <i class="divi-tick ${toneClass}" style="height:${height}px" aria-hidden="true"></i><span>${String(item.month).padStart(2, '0')}</span><b aria-hidden="true"></b>
     </button>`;
   }).join('');
 
@@ -557,7 +581,7 @@ function renderDividendMonths(model) {
     .slice(0, recentLimit);
   const recent = settled.length ? settled : fallback;
   const recentSection = recent.length ? `
-    <div class="sec-head${due.length ? ' is-later' : ''}"><span class="sec-label">近期</span><span class="sec-aside">${settled.length ? '' : '按往年节奏推算'}</span></div>
+    <div class="sec-head${due.length ? ' is-later' : ''}"><span class="sec-label">近期</span><span class="sec-aside">${settled.length ? `<button class="divi-all-link" type="button" data-divi-all-records>全部 ${computeDividendRecords(new Date().getFullYear()).count} 笔 →</button>` : '按往年节奏推算'}</span></div>
     <div class="divi-rows">${recent.map(buildDividendRow).join('')}</div>` : '';
 
   refs.dividendMonthGrid.innerHTML = `
@@ -594,7 +618,7 @@ export function buildDividendMonthDetail(month) {
     .sort((a, b) => `${a.payDate}|${a.symbol}`.localeCompare(`${b.payDate}|${b.symbol}`));
   const summaryParts = [];
   if (item) {
-    summaryParts.push(`${LABELS.dividendReceivedStatus} ${formatDisplayMoney(item.receivedCny, 'CNY')}`);
+    if (item.receivedCny > 0) summaryParts.push(`${LABELS.dividendReceivedStatus} ${formatDisplayMoney(item.receivedCny, 'CNY')}`);
     if (item.dueCny > 0) summaryParts.push(`待核对 ${formatDisplayMoney(item.dueCny, 'CNY')}`);
     /* upcomingCny 已含 dueCny，这里必须减掉，否则同一笔钱在「待核对」和「在途」里各出现一次。
        三项互不重叠且相加等于当月合计。 */
@@ -617,8 +641,8 @@ export function buildDividendMonthDetail(month) {
           ? ` type="button" data-modal-action="edit-dividend-ledger" data-source-id="${escapeHtml(entry.sourceId)}" aria-label="编辑 ${escapeHtml(entry.name)} 股息"`
           : '';
         return `<${tag} class="zen-md-row${clickable ? ' is-clickable' : ''}"${attrs}>
-          <span class="zen-md-co"><strong>${escapeHtml(entry.name)}<small>${escapeHtml(entry.symbol)}</small></strong><span>${escapeHtml(getMonthDetailDateShort(entry))}</span></span>
-          <span class="zen-md-side"><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong><span class="is-${status.tone}">${escapeHtml(status.text)}</span></span>
+          <span class="zen-md-co"><strong>${escapeHtml(entry.name)}</strong><span>${escapeHtml(getMonthDetailDateShort(entry))}</span></span>
+          <span class="zen-md-side"><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong>${status.tone === 'paid' ? '' : `<span class="is-${status.tone}">${escapeHtml(status.text)}</span>`}</span>
         </${tag}>`;
       }).join('')
     : `<p class="zen-md-empty">${escapeHtml(LABELS.dividendEmptyTitle)}</p>`;
@@ -628,7 +652,7 @@ export function buildDividendMonthDetail(month) {
     title: `${month}${LABELS.dividendMonthSuffix}`,
     phase: item ? item.phase : 'future',
     total: item ? formatDisplayMoney(item.totalCny, 'CNY') : formatDisplayMoney(0, 'CNY'),
-    summary: summaryParts.join(' · '),
+    summary: item && item.totalCny > 0 && item.receivedCny >= item.totalCny ? '' : summaryParts.join(' · '),
     receivedRatio,
     receivedPercentText: `${Math.round(receivedRatio * 100)}%`,
     hasConfirmable: entries.some((entry) => !entry.isForecast && !(entry.isAnnounced || entry.status === 'announced') && entry.sourceId),

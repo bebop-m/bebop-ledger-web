@@ -113,6 +113,7 @@ refs.dividendMonthGrid.addEventListener('click', (event) => {
     openModal('dividendLedger', { sourceId: row.dataset.sourceId });
     return;
   }
+  if (event.target.closest('[data-divi-all-records]')) { navigateTo('records'); return; }
   const btn = event.target.closest('[data-dividend-month]');
   if (!btn) return;
   const month = Math.floor(safeNumber(btn.dataset.dividendMonth, 0));

@@ -2386,6 +2386,7 @@ body[data-active-page="home"] .home-month.is-current > b {
   --hint: #c2b9a6;
   --label: #b0a78f;
   --gold: #c19a45;
+  --gold-soft: #dcc492;
   --track: #eae4d4;
   --up: #bf5a42;
   --down: #6a8b74;
@@ -2457,6 +2458,7 @@ body[data-active-page="home"] .home-month.is-current > b {
     --hint: #5f594c;
     --label: #8f887a;
     --gold: #d3a84f;
+    --gold-soft: #b9974a;
     --track: #3a352c;
     --up: #e07a5f;
     --down: #7fae8e;
@@ -5394,6 +5396,7 @@ body[data-active-page="annual"] .ann-empty-line {
   --hint: #c2b9a6;
   --label: #b0a78f;
   --gold: #c19a45;
+  --gold-soft: #dcc492;
   --track: #eae4d4;
   display: block;
   margin: var(--fl-20) 0 0;
@@ -6661,3 +6664,47 @@ body[data-active-page="income"] .inc-hero-action {
 }
 /* button 版节标是收缩宽度，需显式占满整行才能继承居中 */
 body[data-active-page="income"] button.inc-hero-label { display: block; width: 100%; text-align: center; }
+
+/* ══════════════ 信息收敛 2026-08 · 06-股息日历 + 07-月明细 ══════════════ */
+/* 月度节奏条：一行 12 格取代两行点阵；线高=金额，本月金点 */
+body[data-active-page="dividends"] .divi-year {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 0; height: auto; min-height: 0; margin: var(--fl-26) 0 0; padding: 0 var(--fl-5);
+}
+body[data-active-page="dividends"] .divi-ym {
+  display: flex; flex: 1 1 0; flex-direction: column; align-items: center; justify-content: flex-end;
+  width: auto; height: auto; min-height: 0; margin: 0; padding: 0;
+  border: none; border-radius: 0; background: none; box-shadow: none; font-family: inherit;
+}
+body[data-active-page="dividends"] .divi-ym .divi-tick { display: block; width: 3px; margin: 0 auto; border-radius: 1.5px; }
+body[data-active-page="dividends"] .divi-tick.is-done { background: var(--gold); }
+body[data-active-page="dividends"] .divi-tick.is-est { background: var(--gold-soft); }
+body[data-active-page="dividends"] .divi-tick.is-zero { background: var(--track); }
+body[data-active-page="dividends"] .divi-ym > span {
+  display: block; margin: var(--fl-7) 0 0; padding: 0; color: var(--hint);
+  font-size: var(--fl-10); font-weight: 600; line-height: 1; letter-spacing: 0;
+}
+body[data-active-page="dividends"] .divi-ym.is-current > span { color: var(--ink); font-weight: 800; }
+body[data-active-page="dividends"] .divi-ym > i:not(.divi-tick) { display: none; }
+body[data-active-page="dividends"] .divi-ym > b {
+  display: none; width: 4px; height: 4px; margin: var(--fl-4) auto 0; border-radius: 50%; background: var(--gold);
+}
+body[data-active-page="dividends"] .divi-ym.is-current > b { display: block; }
+/* 三段图例去小字说明后回到两列节奏；TTM 参考行淡点、加一档间距 */
+body[data-active-page="dividends"] .divi-legend-row { display: flex; align-items: center; gap: var(--fl-10); }
+body[data-active-page="dividends"] .divi-legend-row > strong { margin-left: auto; }
+body[data-active-page="dividends"] .divi-legend-row--ttm { margin-top: var(--fl-7); color: var(--muted); }
+body[data-active-page="dividends"] .divi-legend-row--ttm b.is-ttm { background: var(--hint); }
+body[data-active-page="dividends"] .divi-legend-row--ttm > strong { color: var(--ink); }
+body[data-active-page="dividends"] .divi-all-link {
+  display: inline-block; height: auto; min-height: 0; margin: 0; padding: 0;
+  border: none; border-radius: 0; background: none; box-shadow: none;
+  color: var(--muted); font-family: inherit; font-size: var(--fl-11); font-weight: 700; line-height: inherit;
+}
+/* 月明细：进度读数并进线尾，收款进度标签退场 */
+.zen-sheet--month .zen-md-caption { justify-content: flex-end; }
+/* 节奏条修正：过去月不再降透明（线要实金）；金点全月占位对齐基线，只有本月上色 */
+body[data-active-page="dividends"] .divi-ym.is-past { opacity: 1; }
+body[data-active-page="dividends"] .divi-ym > b { display: block; background: transparent; }
+body[data-active-page="dividends"] .divi-ym.has-pay > b { background: transparent; }
+body[data-active-page="dividends"] .divi-ym.is-current > b { display: block; background: var(--gold); }
