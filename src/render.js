@@ -691,20 +691,20 @@ function getIncomeSecHead(label, aside = '') {
 function renderIncomeOverview(model) {
   const row = model.current;
   if (!row || !row.capitalReturnAvailable) {
+    /* 空态=邀请：不解释机制，直接给动作，点了进上年的回填抽屉 */
     refs.incomeOverviewGrid.innerHTML = `<section class="inc-hero">
       <span class="inc-hero-label">${model.currentYear} · 资金收益</span>
       <strong class="inc-hero-value">待回填</strong>
-      <p class="inc-hero-meta">回填 ${model.currentYear - 1} 年末净值后，这里显示今年至今的资金收益</p>
+      <button class="inc-hero-action" type="button" data-income-manual-year="${model.currentYear - 1}">回填 ${model.currentYear - 1} 年末净值 →</button>
     </section>`;
     return;
   }
   const tone = getReturnTone(row.capitalReturnCny);
-  // 「已含股息」只在现金进了净值链时才成立，否则股息不在净值内，如实少说一句
-  const scopeText = row.capitalReturnIncludesDividend ? '净值链口径 · 已含股息与汇率' : '净值链口径 · 已含汇率';
+  /* 口径句（净值链/含股息汇率/记账分界）收进点按：点节标弹 methodInfo */
   refs.incomeOverviewGrid.innerHTML = `<section class="inc-hero">
-      <span class="inc-hero-label">${model.currentYear} · 资金收益</span>
+      <button class="inc-hero-label" type="button" data-income-action="method">${model.currentYear} · 资金收益</button>
       <strong class="inc-hero-value ${tone}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}</strong>
-      <p class="inc-hero-meta"><strong class="${getReturnTone(row.capitalReturnRate)}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</strong> · ${escapeHtml(scopeText)}</p>
+      <p class="inc-hero-meta"><strong class="${getReturnTone(row.capitalReturnRate)}">${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</strong></p>
     </section>
     <p class="inc-ctx">年初 ${escapeHtml(formatIncomeMoney(row.yearStartNetCny))} → 当前 ${escapeHtml(formatIncomeMoney(row.yearEndNetCny))} · 净注入 <b>${escapeHtml(formatIncomeSignedMoney(row.netInflowCny))}</b></p>`;
 }
@@ -764,8 +764,7 @@ function renderIncomeTrend(model) {
   const values = keys.flatMap((key) => rows.map((row) => getTrendValue(row, key)).filter((value) => value !== null));
   const pointCounts = keys.map((key) => rows.filter((row) => getTrendValue(row, key) !== null).length);
   if (!values.length || !pointCounts.some((count) => count >= 2)) {
-    refs.incomeTrend.innerHTML = `${getIncomeSecHead('历年趋势')}
-      <p class="inc-trend-empty">至少两个年度有收益率后，才会绘制可比较的趋势</p>`;
+    refs.incomeTrend.innerHTML = ''; // 段落只在有话说时存在：不足两个年度整段消失
     return;
   }
   const minValue = Math.min(0, ...values);
@@ -819,43 +818,30 @@ function renderIncomeTrend(model) {
     ${cagrLine}`;
 }
 
-/* 年份行脚注：只留口径声明（哪几年是手工基准、逐笔记账从哪年起），
-   都从实时数据里取，不写死年份。「点年份行查看年度回顾」这类教学文案已删——
-   行本身可点，学一次就会，长期只是灰噪声。 */
-function getIncomeYearFoot(model) {
-  const manualYears = model.rows.filter((row) => row.hasManualBackfill).map((row) => row.year);
-  const ledgerYears = model.trendRows
-    .filter((row) => row.fieldSources && row.fieldSources.dividendCny === 'ledger')
-    .map((row) => row.year);
-  const parts = [];
-  if (manualYears.length) {
-    const min = Math.min(...manualYears);
-    const max = Math.max(...manualYears);
-    parts.push(`${min === max ? min : `${min}–${max}`} 为年度手工基准`);
-  }
-  if (ledgerYears.length) parts.push(`逐笔记账自 ${Math.min(...ledgerYears)} 起`);
-  return parts.length ? `<p class="inc-year-foot">${parts.join(' · ')}</p>` : '';
-}
 
 function renderIncomeYearList(model) {
   if (!model.rows.length) {
-    refs.incomeYearList.innerHTML = `${getIncomeSecHead('年度明细')}
-      <p class="inc-trend-empty">回填历史年度后会显示年度列表</p>`;
+    refs.incomeYearList.innerHTML = '';
     return;
   }
   const rows = model.rows.map((row) => {
     const isCurrent = row.year === model.currentYear;
     const tag = isCurrent ? '进行中' : (row.hasManualBackfill ? '手工基准' : '自动统计');
+    const pending = isCurrent && !row.capitalReturnAvailable;
     const sub = isCurrent
       ? `股息 ${formatIncomeMoney(row.dividendCny)} · 净注入 ${formatIncomeSignedMoney(row.netInflowCny)}`
       : `股息 ${formatIncomeMoney(row.dividendCny)} · 年末 ${formatIncomeMoney(row.yearEndNetCny)}`;
+    /* 「待回填 待回填」双写收敛成一个动作词；进行中且已有收益时右侧不放动作 */
     const act = isCurrent
-      ? '<span class="inc-year-acts"></span>'
+      ? (pending ? `<button class="inc-year-acts" type="button" data-income-manual-year="${row.year - 1}" aria-label="回填 ${row.year - 1} 年末净值">回填</button>` : '<span class="inc-year-acts"></span>')
       : `<button class="inc-year-acts" type="button" data-income-manual-year="${row.year}" aria-label="回填 ${row.year} 年度数据">回填</button>`;
+    const yv = pending
+      ? '<span class="inc-year-yv">待回填</span>'
+      : `<span class="inc-year-yv ${getReturnTone(row.capitalReturnCny)}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}<em>${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</em></span>`;
     return `<div class="inc-year" role="button" tabindex="0" data-annual-year="${row.year}" aria-label="查看 ${row.year} 年度回顾">
       <span class="inc-year-main">
         <span class="inc-year-yy">${row.year}<small>${tag}</small></span>
-        <span class="inc-year-yv ${getReturnTone(row.capitalReturnCny)}">${escapeHtml(formatIncomeSignedMoney(row.capitalReturnCny))}<em>${escapeHtml(formatIncomeRate(row.capitalReturnRate))}</em></span>
+        ${yv}
       </span>
       <span class="inc-year-sub">
         <span>${escapeHtml(sub)}</span>${act}
@@ -863,8 +849,7 @@ function renderIncomeYearList(model) {
     </div>`;
   }).join('');
   refs.incomeYearList.innerHTML = `${getIncomeSecHead('年度明细')}
-    <div class="inc-year-rows">${rows}</div>
-    ${getIncomeYearFoot(model)}`;
+    <div class="inc-year-rows">${rows}</div>`;
 }
 
 

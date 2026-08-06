@@ -228,9 +228,24 @@ function renderFieldEditModal() {
     </section>`;
 }
 
+/* 口径说明（信息收敛 2026-08）：界面不解释算法，解释收进点按。
+   payload = { title, lines[] }，纯展示、单键关闭。 */
+function renderMethodInfoModal() {
+  const payload = state.modalPayload || {};
+  const lines = Array.isArray(payload.lines) ? payload.lines : [];
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet zen-sheet zen-sheet--method" role="dialog" aria-modal="true" aria-labelledby="zenSheetTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <div class="zen-sheet-title"><span class="zen-sheet-title-text" id="zenSheetTitle">${escapeHtml(payload.title || '口径说明')}</span></div>
+      <div class="zen-method-lines">${lines.map((line) => `<p>${escapeHtml(line)}</p>`).join('')}</div>
+      <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
+    </section>`;
+}
+
 function renderModal() {
   if (!state.modal) { refs.modalRoot.innerHTML = ''; return; }
   if (FIELD_EDIT_SHEETS[state.modal]) { renderFieldEditModal(); return; }
+  if (state.modal === 'methodInfo') { renderMethodInfoModal(); return; }
   if (state.modal === 'monthDetail') { renderMonthDetailModal(); return; }
   if (state.modal === 'dividendLedger') { renderDividendLedgerModal(); return; }
   if (state.modal === 'holdingDetail') { renderHoldingDetailModal(); return; }

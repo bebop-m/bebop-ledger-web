@@ -177,6 +177,22 @@ refs.incomeYearList.addEventListener('keydown', (event) => {
   openAnnualReviewForYear(Math.floor(safeNumber(row.dataset.annualYear, 0)));
 });
 
+// 收益明细 hero：空态「回填」动作 + 点节标看口径（信息收敛 2026-08）
+if (refs.incomeOverviewGrid) refs.incomeOverviewGrid.addEventListener('click', (event) => {
+  const backfill = event.target.closest('[data-income-manual-year]');
+  if (backfill) { openYearlyBackfill(Math.floor(safeNumber(backfill.dataset.incomeManualYear, 0))); return; }
+  if (event.target.closest('[data-income-action="method"]')) {
+    openModal('methodInfo', {
+      title: '资金收益 · 口径',
+      lines: [
+        '净值链口径：本年收益 = 当前净值 − 年初净值 − 净注入',
+        '股息与汇率变动已包含在净值内（现金未入净值链时股息除外）',
+        '2025 为年度手工基准，逐笔记账自 2026 起'
+      ]
+    });
+  }
+});
+
 if (refs.annualShareButton) {
   refs.annualShareButton.addEventListener('click', () => openModal('annualShare', { year: state.activeAnnualYear }));
 }

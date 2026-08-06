@@ -6641,3 +6641,23 @@ body[data-active-page="records"] .rec-cash {
 body[data-active-page="records"] .rec-cash strong { color: var(--ink); font-weight: 700; }
 body[data-active-page="records"] .rec-cash b { color: var(--gold); font-weight: 700; }
 body[data-active-page="records"] .rec-cash--setup { color: var(--gold); font-weight: 700; }
+
+/* ══════════════ 信息收敛 2026-08 · 09-收益明细 ══════════════
+   口径句收进点按（methodInfo 抽屉）；空态变单一金色动作；
+   趋势/脚注空段由渲染层直接不输出。 */
+body[data-active-page="income"] .inc-hero-label { background: none; border: none; padding: 0; font-family: inherit; }
+body[data-active-page="income"] .inc-hero-action {
+  display: inline-block; height: auto; min-height: 0; margin: var(--fl-16) 0 0; padding: 0;
+  border: none; border-radius: 0; background: none; box-shadow: none;
+  color: var(--gold); font-family: inherit; font-size: var(--fl-12); font-weight: 700; line-height: var(--fl-17);
+}
+.zen-sheet--method .zen-method-lines {
+  display: flex; flex-direction: column; gap: var(--fl-7);
+  margin: var(--fl-18) auto 0; padding: 0; max-width: 30em;
+}
+.zen-sheet--method .zen-method-lines p {
+  margin: 0; padding: 0; color: var(--muted);
+  font-size: var(--fl-12); font-weight: 600; line-height: 1.7; text-align: center;
+}
+/* button 版节标是收缩宽度，需显式占满整行才能继承居中 */
+body[data-active-page="income"] button.inc-hero-label { display: block; width: 100%; text-align: center; }

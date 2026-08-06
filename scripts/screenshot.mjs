@@ -83,6 +83,7 @@ try {
    所以入口除了选择器还要记它挂在哪一页，出图时先导航再点。 */
 const MODAL_TARGETS = {
   quickAdd: { sel: '#quickAddButton' },
+  methodInfo: { nav: 'income', sel: '.inc-hero-label' },
   month: { sel: '.home-month' },
   liability: { sel: '.home-hero-label' },
   holdingDetail: { nav: 'holdings', sel: '.stock-name-button' },
