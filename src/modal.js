@@ -892,11 +892,11 @@ function renderHoldingDetailModal() {
         <small>当前持股</small><strong>${escapeHtml(quantity)}<em>股</em></strong>
       </button>
       <dl class="zen-detail-rows">
-        ${row('现价', state.showAmounts ? formatDisplayMoney(item.price, item.currency) : MASK_AMOUNT)}
+        ${row('现价', state.showAmounts ? formatDisplayMoney(item.price, item.currency, 2) : MASK_AMOUNT)}
         ${row('持仓市值', zenMoney(item.marketValueCny))}
         ${baselineQuantity !== quantity ? row('交易起点基准股数', baselineQuantity) : ''}
         ${editRow('股息税率', item.taxRateKnown ? `${taxPercent}%` : '未设置（按 0% 估算）', 'tax')}
-        ${editRow('每股 TTM 股息', state.showAmounts ? formatDisplayMoney(item.effectiveDividendPerShareTtm, item.currency) : MASK_AMOUNT, 'dividend')}
+        ${editRow('每股 TTM 股息', state.showAmounts ? formatDisplayMoney(item.effectiveDividendPerShareTtm, item.currency, 2) : MASK_AMOUNT, 'dividend')}
         ${row('TTM 股息（税后）', zenMoney(item.netAnnualDividendCny))}
       </dl>
       ${item.dividendPerShareTtmOverrideTouched === true ? '<p class="zen-detail-note">每股股息为手动覆写</p>' : ''}

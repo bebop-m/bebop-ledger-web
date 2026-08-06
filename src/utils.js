@@ -71,12 +71,14 @@ export function signPrefix(value) {
   return n > 0 ? '+' : n < 0 ? SIGN_MINUS : '';
 }
 
-export function formatMoney(value, currency) {
+/* 2026-08 全局去角分：金额默认整数元（角分无实质意义、每屏都在添噪）。
+   需要小数的地方显式传 decimals：股价、每股股息、首页 hero 的小数尾巴。 */
+export function formatMoney(value, currency, decimals = 0) {
   const amount = safeNumber(value, 0);
   const sign = amount < 0 ? SIGN_MINUS : '';
   const absolute = Math.abs(amount);
   const symbols = { CNY: '\u00a5', USD: '$', HKD: 'HK$' };
-  return `${sign}${symbols[currency] || ''}${absolute.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `${sign}${symbols[currency] || ''}${absolute.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
 }
 
 export function formatPlainPrice(value) {

@@ -6754,3 +6754,31 @@ body[data-active-page="annual"] .ann-hero-sub.is-loss { color: var(--down); }
 /* 单屏微调：8 行逐股后页高 946>932，行距与随注间距各收一档 */
 body[data-active-page="holdings"] #stockList { gap: var(--fl-16); }
 body[data-active-page="holdings"] .mv-line { margin-top: var(--fl-14); }
+
+/* ══════════════ 真机反馈 2026-08-06 第二轮 ══════════════ */
+/* 股息日历：在途行高亮（金额转金、加重）+ 上下各让一档间距 */
+body[data-active-page="dividends"] .divi-legend-row.is-live { margin: var(--fl-7) 0; }
+body[data-active-page="dividends"] .divi-legend-row.is-live > span { color: var(--ink); font-weight: 800; }
+body[data-active-page="dividends"] .divi-legend-row.is-live > strong { color: var(--gold); font-weight: 800; }
+/* TTM 行与上方同间距（撤掉此前的额外 7px） */
+body[data-active-page="dividends"] .divi-legend-row--ttm { margin-top: 0; }
+/* 节奏条分层：底=浅金（未到部分），内芯=实金（已到账占比），零月留底座 */
+body[data-active-page="dividends"] .divi-ym .divi-tick { position: relative; overflow: hidden; background: var(--gold-soft); }
+body[data-active-page="dividends"] .divi-ym .divi-tick.is-zero { background: var(--track); }
+body[data-active-page="dividends"] .divi-ym .divi-tick .divi-tick-fill {
+  position: absolute; top: auto; right: 0; bottom: 0; left: 0;
+  display: block; width: auto; margin: 0; border-radius: 1.5px; background: var(--gold);
+}
+/* 持仓：双仓百分比即 hero */
+body[data-active-page="holdings"] .holdings-hero { display: none; }
+body[data-active-page="holdings"] .holdings-structure { margin-top: var(--fl-30); }
+body[data-active-page="holdings"] .holdings-structure .bucket-row--hero { margin-top: 0; gap: var(--fl-44, 44px); }
+body[data-active-page="holdings"] .bucket-row--hero .bucket strong { font-size: var(--fl-34); margin-top: var(--fl-7); }
+body[data-active-page="holdings"] .bucket-row--hero + .structure-bar { margin-top: var(--fl-18); }
+/* 逐股：名称下现价随注 */
+body[data-active-page="holdings"] .stock-name .stock-price {
+  display: block; margin: var(--fl-2) 0 0; padding: 0; color: var(--hint);
+  font-size: var(--fl-10p5); font-weight: 600; line-height: var(--fl-15); letter-spacing: 0;
+}
+/* 年度回顾：金额不换行（净注入的 + 曾把数字挤到第二行） */
+body[data-active-page="annual"] .ann-metrics strong { white-space: nowrap; }

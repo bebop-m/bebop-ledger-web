@@ -22,15 +22,15 @@ import {
 } from './constants.js';
 
 /* ── Format helpers that depend on state ── */
-export function formatDisplayMoney(value, currency = 'CNY') {
-  return state.showAmounts ? formatMoney(value, currency) : MASK_AMOUNT;
+export function formatDisplayMoney(value, currency = 'CNY', decimals = 0) {
+  return state.showAmounts ? formatMoney(value, currency, decimals) : MASK_AMOUNT;
 }
 
 function getHoldingTitleDivider() { return '\u00b7'; }
 
 function formatLedgerMoney(value, currency = 'CNY', fractionClass = '') {
   if (!state.showAmounts) return `<span>${MASK_AMOUNT}</span>`;
-  const formatted = formatMoney(value, currency);
+  const formatted = formatMoney(value, currency, 2); // 首页 hero 的小数尾巴是定稿形态，不随全局去角分
   const match = formatted.match(/^(.*?)([.,]\d{2})$/);
   if (!match) return `<span>${escapeHtml(formatted)}</span>`;
   return `<span>${escapeHtml(match[1])}</span><small${fractionClass ? ` class="${fractionClass}"` : ''}>${escapeHtml(match[2])}</small>`;
@@ -287,7 +287,7 @@ function formatZenPercent(value) {
    市值与今日涨跌降为 renderBucketsView 里的一行随注（02-v3 裁决）。 */
 export function renderHoldingsHero() {
   if (!refs.holdingsHero) return;
-  refs.holdingsHero.innerHTML = '<span class="holdings-hero-label">仓位结构</span>';
+  refs.holdingsHero.innerHTML = ''; // 双仓百分比自己当 hero，不再立「仓位结构」节标（真机反馈 2026-08-06）
 }
 
 /* ── 仓位结构 ──
@@ -331,8 +331,8 @@ export function renderBucketsView(segments, holdings, summary, opts = {}) {
     : base > 0 ? `${pnl > 0 ? '+' : pnl < 0 ? SIGN_MINUS : ''}${Math.abs(pnl / base * 100).toFixed(2)}%` : '';
   const mvLine = `<p class="mv-line">市值 <strong>${escapeHtml(formatZenMoney(summary.totalMarketValueCny))}</strong>${pnlText ? ` · 今日 <strong class="${pnlTone}">${escapeHtml(pnlText)}</strong>` : ''}</p>`;
   refs.bucketTrack.innerHTML = `
+    <div class="bucket-row bucket-row--hero">${buttons}</div>
     <div class="structure-bar" aria-hidden="true">${bar}</div>
-    <div class="bucket-row">${buttons}</div>
     ${detail}
     ${mvLine}`;
 }
@@ -474,7 +474,7 @@ function renderDividendMetricGrid(model) {
   const pipelineCny = Math.max(0, m.committedCny - m.receivedCny);
   const width = (value) => (m.projectedCny > 0 ? Math.max(0, safeNumber(value, 0) / m.projectedCny * 100) : 0).toFixed(2);
   const receivedPct = Math.round(m.projectedCny > 0 ? Math.min(1, Math.max(0, m.receivedCny / m.projectedCny)) * 100 : 0);
-  const legendRow = (tone, name, value) => (safeNumber(value, 0) > 0 ? `<div class="divi-legend-row">
+  const legendRow = (tone, name, value) => (safeNumber(value, 0) > 0 ? `<div class="divi-legend-row${tone === 'pipeline' ? ' is-live' : ''}">
       <b class="is-${tone}" aria-hidden="true"></b><span>${escapeHtml(name)}</span><strong>${escapeHtml(formatDisplayMoney(value, 'CNY'))}</strong>
     </div>` : '');
   const ttmCny = getTtmDividendCny(model.filterKey);
@@ -497,7 +497,7 @@ function renderDividendMetricGrid(model) {
       ${legendRow('pipeline', '在途', pipelineCny)}
       ${legendRow('forecast', '预估', m.forecastCny)}
       ${ttmCny > 0 ? `<div class="divi-legend-row divi-legend-row--ttm">
-      <b class="is-ttm" aria-hidden="true"></b><span>持有整年 TTM</span><strong>${escapeHtml(formatZenMoney(ttmCny))}</strong>
+      <b class="is-ttm" aria-hidden="true"></b><span>TTM</span><strong>${escapeHtml(formatZenMoney(ttmCny))}</strong>
     </div>` : ''}
     </div>`;
 }
@@ -537,13 +537,15 @@ function renderDividendMonths(model) {
     const amount = safeNumber(item.totalCny, 0);
     const hasPay = amount > 0;
     const height = hasPay && maxMonthCny > 0 ? Math.max(3, Math.round(Math.sqrt(amount / maxMonthCny) * 46)) : 2;
-    const toneClass = hasPay ? (item.phase === 'future' ? 'is-est' : 'is-done') : 'is-zero';
+    /* 实金只画已到账的部分：8 月一笔没到就该是整根浅金（真机反馈 2026-08-06）。
+       无派息月只留 2px 底座。 */
+    const receivedShare = hasPay ? Math.min(1, Math.max(0, safeNumber(item.receivedCny, 0) / amount)) : 0;
     const classes = ['divi-ym'];
     if (item.phase === 'past') classes.push('is-past');
     if (item.phase === 'current') classes.push('is-current');
     if (hasPay) classes.push('has-pay');
     return `<button class="${classes.join(' ')}" type="button" data-dividend-month="${item.month}" aria-label="查看 ${item.month} 月逐笔股息">
-      <i class="divi-tick ${toneClass}" style="height:${height}px" aria-hidden="true"></i><span>${String(item.month).padStart(2, '0')}</span><b aria-hidden="true"></b>
+      <i class="divi-tick${hasPay ? '' : ' is-zero'}" style="height:${height}px" aria-hidden="true">${receivedShare > 0 ? `<b class="divi-tick-fill" style="height:${(receivedShare * 100).toFixed(1)}%"></b>` : ''}</i><span>${String(item.month).padStart(2, '0')}</span><b aria-hidden="true"></b>
     </button>`;
   }).join('');
 
@@ -1415,7 +1417,7 @@ function getHoldingMarkup(item, index, opts = {}) {
   return `<div class="holding-swipe${animate ? ' is-entering' : ''}" data-id="${item.localId}" style="--holding-swipe-offset:0px;animation-delay:${v.staggerDelay}ms;">
     <article class="holding-card stock" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
       <div class="stock-main">
-        <span class="stock-name"><button class="stock-name-button" type="button" data-action="view-holding" aria-label="查看 ${escapeHtml(item.name)} 持仓详情">${escapeHtml(item.name)}</button>${v.hasDividendEvent ? '<i class="divi-dot" title="有在途或已公告股息"></i>' : ''}</span>
+        <span class="stock-name"><button class="stock-name-button" type="button" data-action="view-holding" aria-label="查看 ${escapeHtml(item.name)} 持仓详情">${escapeHtml(item.name)}</button>${v.hasDividendEvent ? '<i class="divi-dot" title="有在途或已公告股息"></i>' : ''}<span class="stock-price">现价 ${escapeHtml(v.priceText)}</span></span>
         <span class="stock-side"><b class="stock-mv stock-side-key">${escapeHtml(v.sortKeyText)}</b><span class="weight">${escapeHtml(v.weightText)}</span></span>
       </div>
     </article></div>`;

@@ -16,8 +16,8 @@ export const GITHUB_TOKEN_STORAGE_KEY = 'bebop-ledger-github-token-v2';
 export const TENCENT_REALTIME_ENDPOINT = 'https://qt.gtimg.cn/q=';
 export const TENCENT_BATCH_SIZE = 60;
 export const PORTFOLIO_SNAPSHOT_VERSION = 5;
-// 折叠时露出几行：逐股行收敛成单行后同屏放得下 8 行（信息收敛 2026-08）
-export const LEGEND_COLLAPSED_COUNT = 8;
+// 折叠时露出几行：行带现价随注后 6 行是 932 单屏的上限（真机反馈 2026-08-06）
+export const LEGEND_COLLAPSED_COUNT = 6;
 export const LEGEND_TOGGLE_ANIMATION_MS = 220;
 /* 隐私遮罩：金额、价格、数量一律四点，全 app 只此一种 */
 export const MASK_AMOUNT = '••••';
