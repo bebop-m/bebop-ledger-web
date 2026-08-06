@@ -447,12 +447,6 @@ function buildDividendYoyLine(yoy) {
   return `<strong class="is-${up ? 'up' : 'down'}">${escapeHtml(`${up ? '+' : SIGN_MINUS}${formatPercent(Math.abs(yoy))}`)}</strong> · ${escapeHtml(LABELS.dividendVsLastYear)}`;
 }
 
-// 月点阵格子里的金额：无派息写破折号，掩码态收成短点串，免得 6 列被撑破。
-function formatMonthCellAmount(value) {
-  if (!state.showAmounts) return MASK_AMOUNT;
-  const amount = safeNumber(value, 0);
-  return amount > 0 ? Math.round(amount).toLocaleString('en-US') : '—';
-}
 
 function formatDividendRowDate(entry) {
   const value = entry.receivedDate || entry.payDate || entry.exDate || '';
@@ -995,6 +989,7 @@ const ANNUAL_DONUT_C = 2 * Math.PI * ANNUAL_DONUT_R;
 const ANNUAL_MONTH_LABELS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
 
 function formatAnnualRate(value) {
+  if (!state.showAmounts) return MASK_AMOUNT; // 与收益明细同规：掩码盖到收益率
   if (value === null || value === undefined || !Number.isFinite(Number(value))) return '—';
   return `${signPrefix(value)}${Math.abs(Number(value) * 100).toFixed(1)}%`;
 }

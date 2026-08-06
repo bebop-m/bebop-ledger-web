@@ -204,14 +204,14 @@ function inPageAudit() {
     // 只取当前可见页面内的元素：隐藏页面属于尚未施工的旧版，不该参与等比判定
     关键字号: [
       '.home-hero-value', '.home-divi-value', '.home-nav-title',
-      '.holdings-hero-value', '.page-name', '.sec-label', '.stock-name',
+      '.bucket-row--hero .bucket strong', '.page-name', '.sec-label', '.stock-name', '.stock-side-key',
       '.zen-sheet-title-text', '.zen-detail-qty strong', '.zen-diag-count', '.zen-edit-field',
       '.divi-hero-value', '.page-name', '.sec-label', '.divi-filter',
       '.zen-md-head h3', '.zen-md-side strong', '.zen-rc-cur', '.zen-rc-confirm',
       '.inc-hero-value', '.page-name', '.sec-label', '.inc-year-yy',
       '.ann-hero-value', '.page-name', '.sec-label', '.ann-metrics strong',
       '.zen-bf-head h3', '.zen-bf-input', '.sc-value', '.sc-label',
-      '.rec-hero-value', '.rec-cash-value', '.sec-label', '.rec-row-amt',
+      '.rec-hero-value', '.rec-cash strong', '.sec-label', '.rec-row-amt',
       '.zen-qa-option strong', '.zen-form-amount', '.zen-form-row > span:first-child',
       '.page-name', '.fu-co-name', '.fu-f-value', '.sec-label', '.zen-fp-name strong'
     ]
@@ -228,9 +228,11 @@ const MODAL_TARGETS = {
   liability: { sel: '.home-hero-label' },
   holdingDetail: { nav: 'holdings', sel: '.stock-name-button' },
   diagnostics: { nav: 'holdings', sel: '#diagnosticsButton' },
-  quantity: { nav: 'holdings', sel: '[data-action="edit-quantity"]' },
-  tax: { nav: 'holdings', sel: '[data-action="edit-tax"]' },
-  dividendEdit: { nav: 'holdings', sel: '[data-action="edit-dividend"]' },
+  quantity: { nav: 'holdings', sel: '.stock-name-button', then: '[data-detail-edit="quantity"]' },
+  tax: { nav: 'holdings', sel: '.stock-name-button', then: '[data-detail-edit="tax"]' },
+  dividendEdit: { nav: 'holdings', sel: '.stock-name-button', then: '[data-detail-edit="dividend"]' },
+  methodInfo: { nav: 'income', sel: '.inc-hero-label' },
+  fundMethod: { nav: 'fundamentals', sel: '[data-fund-method]' },
   monthDetail: { nav: 'dividends', sel: '.divi-ym.has-pay' },
   dividendReceipt: { nav: 'dividends', sel: '.divi-ym.has-pay', then: '.zen-md-row.is-clickable' },
   annual: { nav: 'income', sel: '.inc-year' },
