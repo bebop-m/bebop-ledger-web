@@ -84,6 +84,7 @@ try {
 const MODAL_TARGETS = {
   quickAdd: { sel: '#quickAddButton' },
   methodInfo: { nav: 'income', sel: '.inc-hero-label' },
+  fundMethod: { nav: 'fundamentals', sel: '[data-fund-method]' },
   month: { sel: '.home-month' },
   liability: { sel: '.home-hero-label' },
   holdingDetail: { nav: 'holdings', sel: '.stock-name-button' },

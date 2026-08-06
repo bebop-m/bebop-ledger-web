@@ -423,12 +423,13 @@ function buildRankTrack(rank, symbol) {
     </button>`).join('')}</div>`;
 }
 
-function buildCompanyHead(company) {
+function buildCompanyHead(company, rank = []) {
+  /* 排名从公式块上移到这里贴着代码；币种说明收进「口径与置信度」抽屉 */
+  const index = rank.findIndex((item) => item.symbol === company.symbol);
+  const rankPart = index >= 0 && rank.length > 1 ? ` · ${rank.length} 家中第 ${index + 1}` : '';
   return `<div class="fu-co">
       <button class="fu-co-name" type="button" data-fund-picker-open aria-haspopup="dialog">${escapeHtml(getCompanyDisplayName(company))}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 9.5 12 15l5.5-5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
-      <p class="fu-co-sub">${escapeHtml(company.symbol)}${company.statementCurrency && company.statementCurrency !== company.currency
-        ? ` · 股息 ${escapeHtml(company.currency)} · 财报 ${escapeHtml(company.statementCurrency)}`
-        : ` · ${escapeHtml(company.currency)}`}</p>
+      <p class="fu-co-sub">${escapeHtml(company.symbol)}${rankPart}</p>
     </div>`;
 }
 
@@ -442,6 +443,7 @@ function buildFormulaSection(company, rank) {
   ];
   if (model.mode === 'profitBridge') parts.push({ key: 'buyback', label: '净回购', value: model.netBuybackYield });
   const denominator = parts.reduce((sum, item) => sum + Math.abs(safeNumber(item.value, 0)), 0) || 1;
+  /* 方法论文案由 getFundamentalsMethodPayload 供口径抽屉使用，页面不再直书 */
   const confidenceLabel = model.confidence === 'high' ? '高' : model.confidence === 'medium' ? '中' : '低';
   const dividendNote = model.dividendYear
     ? `股息按 ${model.dividendYear} 年常规派息 ÷ 现价${model.specialExcluded ? '，已剔除特别股息' : ''}`
@@ -449,21 +451,13 @@ function buildFormulaSection(company, rank) {
   const growthNote = model.mode === 'profitBridge'
     ? `净利润 ${model.growthSpan} 年年化 · 股本 ${model.buybackSpan} 年变化 · 置信度 ${confidenceLabel}`
     : `EPS ${model.growthSpan} 年年化，已含回购 · 置信度 ${confidenceLabel}`;
-  const portfolioRate = getPortfolioReturnSummary().all;
-  const index = rank.findIndex((item) => item.symbol === company.symbol);
-  const anchorParts = [];
-  /* 「组合经营回报」而非「组合加权」：这是所持公司的历史经营成绩（市值加权），
-     与账户收益率无关——买入价与买入时机都不参与计算，别让它冒充你的收益率。 */
-  if (portfolioRate !== null) anchorParts.push(`组合经营回报 ${escapeHtml(formatPercentValue(portfolioRate))}/年`);
-  if (index >= 0 && rank.length > 1) anchorParts.push(`本公司列 ${rank.length} 家中第 ${index + 1}`);
   return `<section class="fu-formula">
       <span class="fu-f-label">历史经营回报参考</span>
       <strong class="fu-f-value">${model.historicalReturn === null ? '—' : `≈ ${escapeHtml(formatSignedPercent(model.historicalReturn))}`}<em>/年</em></strong>
       <p class="fu-f-note">股息 + 增长${model.mode === 'profitBridge' ? ' + 净回购' : ''} · 历史参考，并非未来预测</p>
       <div class="fu-f-stack">${parts.map((item) => `<i class="is-${item.key}" style="width:${(Math.abs(safeNumber(item.value, 0)) / denominator * 100).toFixed(2)}%"></i>`).join('')}</div>
       <div class="fu-f-rows">${parts.map((item) => `<div><b class="is-${item.key}"></b><span>${escapeHtml(item.label)}</span><small></small><strong>${item.value === null ? '—' : escapeHtml(formatSignedPercent(item.value))}</strong></div>`).join('')}</div>
-      <p class="fu-f-method">${escapeHtml(dividendNote)}<br>${escapeHtml(growthNote)}</p>
-      ${anchorParts.length ? `<p class="fu-f-anchor">${anchorParts.join(' · ')}</p>` : ''}
+      <button class="fu-f-method-link" type="button" data-fund-method>口径与置信度 ›</button>
     </section>`;
 }
 
@@ -516,7 +510,7 @@ function buildValuationSection(company) {
   }
   if (!rows.length) return '';
   return `<section class="fu-val">
-      <div class="sec-head"><span class="sec-label">估值</span><span class="sec-aside">${headYears ? `近 ${headYears} 年分位 · ` : ''}点越靠右越便宜</span></div>
+      <div class="sec-head"><span class="sec-label">估值</span><span class="sec-aside"></span></div>
       <div class="fu-val-rows">${rows.join('')}</div>
     </section>`;
 }
@@ -559,10 +553,13 @@ function buildDividendLine(company, visible) {
   if (!points.length) return '';
   const latest = visible.filter((row) => isFiniteValue(row.dividendPerShare)).slice(-1)[0];
   const streak = getGrowthStreak(visible, 'dividendPerShare');
+  const hasSpecial = isFiniteValue(latest.specialDividendPerShare) && Number(latest.specialDividendPerShare) > 0;
+  /* 判词是回答，数字是脚注：「连增 N 年」上移到节标；同屏第四次出现的股息率删；
+     特别股息只在非零时立牌（信息收敛 2026-08） */
   return `<section class="fu-bars">
-      <div class="sec-head"><span class="sec-label">每股分红</span><span class="fu-latest">${escapeHtml(formatMetricValue(latest.dividendPerShare, 'money'))} ${escapeHtml(company.currency)}<small>${latest.year} 股息率 ${escapeHtml(formatMetricValue(latest.dividendYield, 'percent'))}</small></span></div>
+      <div class="sec-head"><span class="sec-label">每股分红</span><span class="fu-latest">${escapeHtml(formatMetricValue(latest.dividendPerShare, 'money'))} ${escapeHtml(company.currency)}${streak > 0 ? ` · <strong class="fu-streak">连增 ${streak} 年</strong>` : ''}</span></div>
       ${buildZenLineSvg(points, 'gold', '每股分红历年走势')}
-      <p class="fu-bar-stats"><span>特别股息 <strong>${escapeHtml(formatMetricValue(latest.specialDividendPerShare, 'money'))}</strong></span><span>连续增长 <strong>${streak > 0 ? `${streak} 年` : '—'}</strong></span></p>
+      ${hasSpecial ? `<p class="fu-bar-stats"><span>特别股息 <strong>${escapeHtml(formatMetricValue(latest.specialDividendPerShare, 'money'))}</strong></span></p>` : ''}
     </section>`;
 }
 
@@ -610,6 +607,31 @@ function getEmptyStateMarkup() {
   </div>`;
 }
 
+/* 「口径与置信度」抽屉内容：界面上不解释算法，解释收进点按（信息收敛 2026-08）。
+   逐公司动态生成：派息口径、增长口径、置信度、组合经营回报、币种折算、估值分位。 */
+export function getFundamentalsMethodPayload() {
+  const { holdings, others } = getGroupedCompanies();
+  const company = holdings.concat(others).find((item) => item.symbol === _selectedSymbol) || null;
+  const model = company ? getCompanyReturnModel(company.symbol) : null;
+  const lines = [];
+  if (model) {
+    const confidenceLabel = model.confidence === 'high' ? '高' : model.confidence === 'medium' ? '中' : '低';
+    lines.push(model.dividendYear
+      ? `股息按 ${model.dividendYear} 年常规派息 ÷ 现价${model.specialExcluded ? '，已剔除特别股息' : ''}`
+      : '近两年无派息，股息按 0 计');
+    lines.push(model.mode === 'profitBridge'
+      ? `净利润 ${model.growthSpan} 年年化 · 股本 ${model.buybackSpan} 年变化 · 置信度 ${confidenceLabel}`
+      : `EPS ${model.growthSpan} 年年化，已含回购 · 置信度 ${confidenceLabel}`);
+  }
+  const portfolioRate = getPortfolioReturnSummary().all;
+  if (portfolioRate !== null) lines.push(`组合经营回报 ${formatPercentValue(portfolioRate)}/年——市值加权的历史经营成绩，不是账户收益率`);
+  if (company && company.statementCurrency && company.statementCurrency !== company.currency) {
+    lines.push(`股息按 ${company.currency}、财报按 ${company.statementCurrency}，金额按当前汇率折算`);
+  }
+  lines.push('全部为年报口径；估值分位与公司自身近年历史比较，点越靠右越便宜');
+  return { title: '经营回报 · 口径与置信度', lines };
+}
+
 export function renderFundamentalsPage() {
   if (!refs.fundamentalsContent) return;
   // 首次进入时懒加载；失败后不自动重试，避免循环。
@@ -633,7 +655,7 @@ export function renderFundamentalsPage() {
 
   refs.fundamentalsContent.innerHTML = `
     ${buildRankTrack(rank, company.symbol)}
-    ${buildCompanyHead(company)}
+    ${buildCompanyHead(company, rank)}
     ${buildFormulaSection(company, rank)}
     ${buildValuationSection(company)}
     ${buildDividendLine(company, visible)}
@@ -653,7 +675,7 @@ export function renderFundamentalsPage() {
   if (refs.fundamentalsNote) {
     const updated = _data && _data.updatedAt ? formatDateLabel(_data.updatedAt).slice(5) : '';
     refs.fundamentalsNote.textContent = updated
-      ? `年报口径 · 数据更新 ${updated} · 按经营回报排序`
-      : '年报口径 · 按经营回报排序';
+      ? `数据更新 ${updated} · 按经营回报排序`
+      : '按经营回报排序';
   }
 }

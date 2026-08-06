@@ -22,7 +22,7 @@ import {
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
 import { syncPortfolioToCloud, handleImportFile } from './sync.js';
-import { loadFundamentals, selectFundamentalsSymbol } from './fundamentals.js';
+import { loadFundamentals, selectFundamentalsSymbol, getFundamentalsMethodPayload } from './fundamentals.js';
 import { loadReportCalendar } from './report-calendar.js';
 
 /* ── Page Navigation ── */
@@ -94,6 +94,7 @@ if (refs.fundamentalsContent) refs.fundamentalsContent.addEventListener('click',
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
   }
+  if (event.target.closest('[data-fund-method]')) { openModal('methodInfo', getFundamentalsMethodPayload()); return; }
   if (event.target.closest('[data-fund-picker-open]')) openModal('fundPicker');
 });
 

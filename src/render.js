@@ -438,7 +438,7 @@ export function renderPageChrome() {
 // 同比行：百分比随涨跌着色，其余为叙述色（全局纪律「红涨绿跌覆盖到百分比」）。
 function buildDividendYoyLine(yoy) {
   if (yoy === null || yoy === undefined || !Number.isFinite(Number(yoy))) {
-    return escapeHtml(LABELS.dividendNoCompare);
+    return ''; // 无数据的句子整句消失（信息收敛：空态不立牌）
   }
   const up = yoy >= 0;
   return `<strong class="is-${up ? 'up' : 'down'}">${escapeHtml(`${up ? '+' : SIGN_MINUS}${formatPercent(Math.abs(yoy))}`)}</strong> · ${escapeHtml(LABELS.dividendVsLastYear)}`;
@@ -1116,8 +1116,6 @@ export function renderAnnualReviewPage() {
     : '';
   const maxDividend = Math.max(1, ...annals.dividendMonths.map((value) => safeNumber(value, 0)));
   const currentMonth = annals.isCurrentYear ? new Date().getMonth() : -1;
-  const buyCount = annals.trades.filter((trade) => trade.side === 'buy').length;
-  const sellCount = annals.trades.filter((trade) => trade.side === 'sell').length;
   const tradeRows = annals.trades.length
     ? annals.trades.slice().reverse().map((trade) => `<div class="ann-trade-row">
         <span>${escapeHtml(trade.date.slice(5).replace('-', '/'))} <em class="${trade.side === 'sell' ? 'is-sell' : 'is-buy'}">${trade.side === 'sell' ? '卖出' : '买入'}</em> <strong>${escapeHtml(trade.name)}</strong></span>
@@ -1133,20 +1131,19 @@ export function renderAnnualReviewPage() {
     <section class="ann-hero">
       <span class="ann-hero-label">本年收益率</span>
       <strong class="ann-hero-value ${getReturnTone(annals.returnRate)}">${escapeHtml(formatAnnualRate(annals.returnRate))}</strong>
+      <p class="ann-hero-sub ${getReturnTone(row.capitalReturnCny)}">${escapeHtml(formatAnnualSignedMoney(row.capitalReturnCny))}</p>
       <p class="ann-hero-meta">${escapeHtml(scopeText)} · 年初 ${escapeHtml(formatIncomeMoney(row.yearStartNetCny))} → ${annals.isCurrentYear ? '当前' : '年末'} ${escapeHtml(formatIncomeMoney(row.yearEndNetCny))}</p>
     </section>
     <div class="ann-metrics">
       <span>股息收入<strong>${escapeHtml(formatIncomeMoney(row.dividendCny))}</strong></span>
-      <span>资金收益<strong class="${getReturnTone(row.capitalReturnCny)}">${escapeHtml(formatAnnualSignedMoney(row.capitalReturnCny))}</strong></span>
       <span>净注入<strong>${escapeHtml(formatAnnualSignedMoney(row.netInflowCny))}</strong></span>
       <span>当年交易<strong>${annals.trades.length} 笔</strong></span>
     </div>
+    ${attrItems ? `
     <section class="ann-block">
       ${getAnnualSecHead('收益归因', attrItems ? `合计 ${escapeHtml(formatAnnualRate(annals.returnRate))} · ${escapeHtml(formatAnnualSignedMoney(row.capitalReturnCny))}` : '')}
-      ${attrItems
-        ? `<div class="ann-attr-bar">${attrBar}</div><div class="ann-attr-rows">${attrRows}</div>${coverageNote}`
-        : '<p class="ann-empty-line">缺少年初持仓快照或年界汇率，本年暂时拆不出归因</p>'}
-    </section>
+      <div class="ann-attr-bar">${attrBar}</div><div class="ann-attr-rows">${attrRows}</div>${coverageNote}
+    </section>` : ''}
     <section class="ann-block">
       ${getAnnualSecHead('年度持仓', annals.holdings.hasData ? `${annals.holdings.count} 项 · ${escapeHtml(formatDisplayMoney(annals.holdings.total, 'CNY'))}` : '')}
       ${annals.holdings.hasData
@@ -1154,14 +1151,12 @@ export function renderAnnualReviewPage() {
         : '<p class="ann-empty-line">该年暂无持仓快照</p>'}
     </section>
     <section class="ann-block">
-      ${getAnnualSecHead('当年股息现金流')}
+      ${getAnnualSecHead('当年股息现金流', `${annals.isCurrentYear ? '已确认' : '全年确认'} ${escapeHtml(formatIncomeMoney(row.dividendCny))}`)}
       <div class="ann-months">${annals.dividendMonths.map((value, index) => `<span class="${index === currentMonth ? 'is-current' : ''}"><i style="--v:${Math.max(2, safeNumber(value, 0) / maxDividend * 100).toFixed(1)}%"></i><small>${ANNUAL_MONTH_LABELS[index]}</small></span>`).join('')}</div>
-      <p class="ann-months-total"><span>${annals.isCurrentYear ? '本年已确认股息' : '全年确认股息'}</span><strong>${escapeHtml(formatIncomeMoney(row.dividendCny))}</strong></p>
     </section>
     <section class="ann-block">
       ${getAnnualSecHead('交易复盘', annals.trades.length ? `${annals.trades.length} 笔` : '')}
       <div class="ann-trades">${tradeRows}</div>
-      ${annals.trades.length ? `<p class="ann-trade-sum">全年 ${annals.trades.length} 笔 · 买入 ${buyCount} · 卖出 ${sellCount}</p>` : ''}
     </section>`;
 }
 
@@ -1220,7 +1215,7 @@ function getShareCardMarkup(share) {
     .map((item) => `<i class="is-${item.key}" style="width:${(Math.abs(item.amount) / totalAbs * 100).toFixed(2)}%"></i>`).join('');
   const splitText = share.attrItems.length
     ? `收益率拆分：${share.attrItems.map((item) => `${item.label.replace('收入', '').replace('增长', '').replace('变动', '').trim()} ${formatSharePercent(item.rate).replace('%', '')}`).join(' · ')}（合计 ${formatSharePercent(share.returnRate)}）`
-    : '归因数据不足，本卡只展示收益率与持仓占比';
+    : '';
   const segs = share.top.map((item, index) => ({ pct: item.pct, color: SHARE_DONUT_COLORS[index] }));
   if (share.restPct > 0.0001) segs.push({ pct: share.restPct, color: SHARE_DONUT_COLORS[5] });
   const circumference = 2 * Math.PI * 38;
@@ -1242,7 +1237,7 @@ function getShareCardMarkup(share) {
       <strong class="sc-value ${getReturnTone(share.returnRate)}">${escapeHtml(formatSharePercent(share.returnRate))}</strong>
       <p class="sc-meta">股息收益率 ${escapeHtml(formatSharePlainPercent(share.dividendYieldRate))}${escapeHtml(cumulativeText)}</p>
       ${share.attrItems.length ? `<div class="sc-bar">${bar}</div>` : ''}
-      <p class="sc-attr">${escapeHtml(splitText)}</p>
+      ${splitText ? `<p class="sc-attr">${escapeHtml(splitText)}</p>` : ''}
       ${segs.length ? `<div class="sc-hold">
         <svg viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="持仓占比">${arcs}</svg>
       </div>

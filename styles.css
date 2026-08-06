@@ -6736,3 +6736,21 @@ body[data-active-page="holdings"] .stock-side .weight { display: block; margin: 
 /* 03-详情：可点域与手动覆写标注 */
 .zen-sheet--detail .zen-detail-qty { display: block; width: 100%; margin: 0; padding: 0; border: none; background: none; font-family: inherit; text-align: center; }
 .zen-sheet--detail .zen-detail-edit { margin: 0; padding: 0; border: none; background: none; color: inherit; font: inherit; }
+
+/* ══════════════ 信息收敛 2026-08 · 17-基本面 + 10-年度回顾 ══════════════ */
+body[data-active-page="fundamentals"] .fu-f-method-link {
+  display: block; width: 100%; height: auto; min-height: 0; margin: var(--fl-12) 0 0; padding: 0;
+  border: none; border-radius: 0; background: none; box-shadow: none;
+  color: var(--gold); font-family: inherit; font-size: var(--fl-11); font-weight: 700;
+  line-height: var(--fl-16); text-align: center;
+}
+body[data-active-page="fundamentals"] .fu-streak { color: var(--gold); font-weight: 800; }
+body[data-active-page="annual"] .ann-hero-sub {
+  display: block; margin: var(--fl-10) 0 0; padding: 0; text-align: center;
+  font-size: var(--fl-13); font-weight: 700; line-height: var(--fl-18);
+}
+body[data-active-page="annual"] .ann-hero-sub.is-gain { color: var(--up); }
+body[data-active-page="annual"] .ann-hero-sub.is-loss { color: var(--down); }
+/* 单屏微调：8 行逐股后页高 946>932，行距与随注间距各收一档 */
+body[data-active-page="holdings"] #stockList { gap: var(--fl-16); }
+body[data-active-page="holdings"] .mv-line { margin-top: var(--fl-14); }
