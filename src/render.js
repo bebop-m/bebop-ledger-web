@@ -69,7 +69,8 @@ export function toggleDividendTooltip(button) {
 
 /* ── Home Dashboard ── */
 export function renderHomePage(summary) {
-  const calendarModel = computeDividendCalendar();
+  // 首页口径恒为全部：日历页的仓位筛选不外溢（真机反馈 2026-08-06，筛选曾把首页本年股息带成打工仓值）
+  const calendarModel = computeDividendCalendar(new Date(), 'all');
   const incomeModel = computeIncomeSummary();
   const bucketItems = getBucketSummaryItems(summary.holdings);
   const totalMv = bucketItems.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0) || 1;
@@ -487,7 +488,7 @@ function renderDividendMetricGrid(model) {
   if (m.projectedYieldRate !== null && m.projectedYieldRate !== undefined) metaParts.push(`股息率 ${escapeHtml(`${(m.projectedYieldRate * 100).toFixed(1)}%`)}`);
   refs.dividendMetricGrid.innerHTML = `
     <div class="divi-hero">
-      <span class="divi-hero-label">预计全年</span>
+      <span class="divi-hero-label">预计全年${model.filterKey === 'core' ? ' · 核心仓' : model.filterKey === 'income' ? ' · 打工仓' : ''}</span>
       <strong class="divi-hero-value">${escapeHtml(formatDisplayMoney(m.projectedCny, 'CNY'))}</strong>
       ${metaParts.length ? `<p class="divi-yoy">${metaParts.join(' · ')}</p>` : ''}
     </div>
@@ -1381,7 +1382,7 @@ export function getAnnualShareCardMarkup(year) {
 export function getPendingDividendSymbols() {
   const live = new Set(['pending', 'due', 'announced']);
   const symbols = new Set();
-  computeDividendCalendar().allDetails.forEach((entry) => {
+  computeDividendCalendar(new Date(), 'all').allDetails.forEach((entry) => {
     if (entry && live.has(entry.status)) symbols.add(entry.symbol);
   });
   return symbols;
