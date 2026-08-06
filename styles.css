@@ -142,7 +142,7 @@ body {
   body {
     padding-top: 32px;
     padding-bottom: calc(110px + env(safe-area-inset-bottom));
-  }/* 闁归潧顑嗗┃鈧俊妤€妫欓悘锕傛晬濮橆剙寮块幖瀛樻⒒閺併倝宕娆戭伇闁稿繋娴囬蹇涙儍閸曨剙顫岀憸?*/
+  }/* 桌面宽屏：给单列应用一个居中的纸面卡片外框 */
 
   
   .app-shell::before {
@@ -510,7 +510,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   background: #ffffff;
   color: var(--brand);
   box-shadow: none;
-}/* 闁衡偓閸撲焦鎶勬慨鐟版处閳ь兛绱槐鎷屻亹閹惧啿瀣€闁衡偓閸撲焦鎶?hero 濞戞挸顑嗛弻鐔兼儍閸曨偄袟濞达絾绮嶉悥?+ 妤犵偞娼欑€规娊寮版惔锝囩煄闁硅埖锚瑜版棃宕犻崫鍕暥闁汇劌瀚导鎰板礂闁垮鍩夐柕?*/
+}/* 收益总览：hero 主数 + 年度明细（墨线时代布局，后被 zen 层覆盖） */
 
 .income-overview-grid {
   margin-top: 16px;
@@ -533,7 +533,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 }
 
 .is-positive { color: #2f8254 !important; }
-.is-negative { color: #bc473c !important; }/* 闁烩晛鐗呯花顓㈡煀瀹ュ牆顥忛柨娑樻箯 闁兼祴鈧尙鐦庨柟顖ｅ灲缁辨岸鏁嶅宕囶洶闂?缂佺虎婢佺槐婵囩韫囨稒灏?缂備浇锟ラ埀?*/
+.is-negative { color: #bc473c !important; }/* 盈亏色：A 股惯例红涨绿跌 */
 
 .is-gain { color: #bc473c !important; }
 .is-loss { color: #2f8254 !important; }
@@ -551,7 +551,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
   gap: 10px;
   margin-top: 14px;
-}/* 闁冲厜鍋撻柍鍏夊亾 Calendar refinements: YoY badge, month phase colors, big label/total 闁冲厜鍋撻柍鍏夊亾 *//* 闁冲厜鍋撻柍鍏夊亾 Month detail modal (compact) 闁冲厜鍋撻柍鍏夊亾 *//* 缂?鐎规瓕灏欓垾妯兼媼閵堝懎鐓傞悹?鐠?濮?闁煎浜滄慨鈺呭礂閵夈劌顦╃€垫澘鎳愰垾妯兼媼?鐠?闁?鐎瑰憡褰冮崣鏇㈠川婵犲啯寮撻梻鍕╁€栨导?鐠?闁?闁煎搫鍊搁〃鏃€锛愰崟顏勫挤 */
+}/* ── Calendar refinements: YoY badge, month phase colors, big label/total ── *//* ── Month detail modal (compact) ── *//* 图例展开开关 */
 
 .legend-toggle {
   margin-top: 12px;
@@ -1167,10 +1167,9 @@ body:not(.privacy-hidden) .dividend-status-button--value {
     grid-template-columns: 1fr;
   }
 
-}/* 閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜
-   婢с劎鍤庣紒鍕鐏炲偊绱橮hase 3閿涘绱伴弬鎵波閺嬪嫭鐗卞?+ 闁鏆€缂佸嫪娆㈢憰鍡欐磰閵?
-   Phase 5 濞撳懐鎮婇弮褑顫夐崚娆忔倵閿涘本婀扮仦鍌氬祮閺堚偓缂佸牆鑸伴幀浣碘偓?
-   閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜閳烘劏鏅查埡鎰ㄦ櫜 *//* 閳光偓閳光偓 鐏忓繗濡弽鍥╊劮閿涙艾鍙忔惔鏃傛暏缂佺喍绔撮惃?11px 鐎硅棄鐡х捄婵囩垼缁?閳光偓閳光偓 */
+}/* ════════════════════════════════════════════════════════════
+   墨线组件层（Phase 3）：结构样式 + 组件覆盖
+   ════════════════════════════════════════════════════════════ *//* ── 小标签：全应用统一的 11px 宽字距标签 ── */
 .home-hero-label{
   margin: 0;
   font-size: 11px;
@@ -1178,7 +1177,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   letter-spacing: 2px;
   color: var(--color-text-hint);
   text-transform: uppercase;
-}/* 閳光偓閳光偓 妞ょ敻娼扮€圭懓娅?閳光偓閳光偓 */
+}/* ── 页面栈 ── */
 
 
 .page-stack {
@@ -1192,7 +1191,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   border-radius: var(--radius-card);
   background: #fff;
   box-shadow: none;
-}/* 閳光偓閳光偓 妫ｆ牠銆夋い鎯邦攽 閳光偓閳光偓 */
+}/* ── 首页顶栏 ── */
 
 
 .home-top {
@@ -1231,7 +1230,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .summary-action-button svg {
   width: 20px;
   height: 20px;
-}/* 閳光偓閳光偓 妫ｆ牠銆?Hero閿涙艾鐪虫稉顓炪亣閺佹澘鐡?閳光偓閳光偓 */
+}/* ── 首页 Hero：居中大数字 ── */
 
 
 .home-hero {
@@ -1253,7 +1252,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   letter-spacing: -1px;
   color: var(--color-ink);
   font-variant-numeric: tabular-nums;
-}/* 閳光偓閳光偓 妫ｆ牠銆夐悞锔惧仯娑撹宕遍敍?px 缁顢?閳光偓閳光偓 *//* 閳光偓閳光偓 妫ｆ牠銆夎箛顐︹偓鐔稿瘹閺嶅洩顢?閳光偓閳光偓 *//* 閳光偓閳光偓 妫ｆ牠銆夊〒鍛礋瀵繐鐡欐い闈涘弳閸?閳光偓閳光偓 */
+}/* ── 首页焦点卡 ── *//* ── 首页快速指标行 ── *//* ── 首页导航：子页入口 ── */
 
 
 .home-nav-list {
@@ -1297,7 +1296,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   width: 15px;
   height: 15px;
   color: var(--color-ink);
-}/* 閳光偓閳光偓 鐠侀绔寸粭鏃囧厡閸ュ绱伴崗銊ョ潌閸烆垯绔寸痪銏ｅ娑撴槒顢戦崝?閳光偓閳光偓 *//* 閳光偓閳光偓 鐎涙劙銆夋い鑸电埉 閳光偓閳光偓 */
+}/* ── 记一笔胶囊：全屏唯一红色主行动 ── *//* ── 子页顶栏 ── */
 
 
 .top-bar {
@@ -1339,7 +1338,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
   font-weight: 800;
   letter-spacing: 2px;
   color: var(--color-ink);
-}/* 閳光偓閳光偓 閸﹀棗鑸伴崝銊ょ稊閹稿鎸?閳光偓閳光偓 *//* 閳光偓閳光偓 閹烘帒绨?chips 閳光偓閳光偓 *//* 閳光偓閳光偓 閸掑棙顔岄幒褌娆㈤敍鍫ｅ亗閹垱妫╅崢鍡欑摣闁绱氶埞鈧埞鈧?*/
+}/* ── 圆形动作按钮 ── *//* ── 排序 chips ── *//* ── 分段控件（股息日历筛选） ── */
 
 
 .segmented-control {
@@ -1365,14 +1364,14 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 .segment-button.is-active {
   background: var(--color-ink);
   color: #fff;
-}/* 閳光偓閳光偓 閺€鍓佹抄妞ら潧浼愰崗閿嬪瘻闁?閳光偓閳光偓 *//* 閳光偓閳光偓 閹镐椒绮ㄩ崡?閳光偓閳光偓 */
+}/* ── 收益页工具按钮 ── *//* ── 持仓卡 ── */
 
 
 .holding-card {
   border: var(--border-thin);
   border-radius: var(--radius-card);
   background: #fff;
-}/* 閳光偓閳光偓 閹镐椒绮ㄧ紒鎾寸€崶鍙ョ伐閿涙艾宕熼懝鍙夋綀闁插秴鈪烽弶?閳光偓閳光偓 *//* 閳光偓閳光偓 閼测剝浼呴弮銉ュ坊閸楋紕澧?閳光偓閳光偓 *//* 閳光偓閳光偓 quickAdd 闁瀚ㄥ鍦崶 閳光偓閳光偓 *//* 鈹€鈹€ 鑹插僵鏀舵暃锛氱孩鑹插彧鐣欑粰娑ㄨ穼/鏀剁泭/涓昏鍔?鈹€鈹€ *//* 鈹€鈹€ 鑲℃伅鏈堝崱锛氱櫧搴曞ⅷ绾匡紝褰撳墠鏈堢孩鐜?鈹€鈹€ *//* 鈹€鈹€ 绌烘€?鈹€鈹€ */
+}/* ── 持仓结构与图例：单色权重墨条 ── *//* ── 股息日历卡片 ── *//* ── quickAdd 选项 ── *//* ── 色彩收敛：红色只留给涨跌/收益/主行动 ── *//* ── 股息月卡：白底墨线，当前月红点 ── *//* ── 空态 ── */
 
 
 .empty-state {
@@ -1389,7 +1388,7 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .empty-state-note {
   color: var(--color-text-secondary);
-}/* 鈹€鈹€ 鑲℃伅鐜囩姸鎬佽壊鏀舵暃锛氭甯告€佺敤澧ㄨ壊锛屽紓甯告€佷繚鐣欏姛鑳借壊 鈹€鈹€ */
+}/* ── 股息率状态色收敛：正常态用墨色，异常态保留功能色 ── */
 
 
 .dividend-status-button--value.is-fresh {
@@ -1398,8 +1397,9 @@ body:not(.privacy-hidden) .dividend-status-button--value {
 
 .dividend-status-button--value.is-manual {
   color: var(--color-text-secondary);
-}/* 鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲
-   寮圭獥 / 纭 / Toast 澧ㄧ嚎鍖栵紙Phase 4锛?   鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲 */
+}/* ════════════════════════════════════════════════════════════
+   弹窗 / 确认 / Toast 墨线化（Phase 4）
+   ════════════════════════════════════════════════════════════ */
 
 
 
