@@ -314,7 +314,7 @@ export function renderBucketsView(segments, holdings, summary, opts = {}) {
     const isActive = state.activeBucketKey === key;
     // 金点用真元素而不是 ::after：机检把带背景的伪元素一律当旧层装饰报出来，
     // 而这颗点是设计要求的选中记号，得让它能和残留区分开
-    return `<button class="bucket${isActive ? ' is-active' : ''}" type="button" data-bucket-toggle="${key}" aria-pressed="${isActive}">${escapeHtml(item.label)}<strong>${formatZenPercent(share(item))}</strong><i class="bucket-dot" aria-hidden="true"></i></button>`;
+    return `<button class="bucket${isActive ? ' is-active' : ''}" type="button" data-bucket-toggle="${key}" aria-pressed="${isActive}"><span class="bucket-label">${escapeHtml(item.label)}<i class="bucket-dot" aria-hidden="true"></i></span><strong>${formatZenPercent(share(item))}</strong></button>`;
   }).join('');
   /* 点开的仓明细只留市值与项数：股息口径全归股息日历（TTM）与首页（本年） */
   const activeCount = active

@@ -6782,3 +6782,19 @@ body[data-active-page="holdings"] .stock-name .stock-price {
 }
 /* 年度回顾：金额不换行（净注入的 + 曾把数字挤到第二行） */
 body[data-active-page="annual"] .ann-metrics strong { white-space: nowrap; }
+
+/* ══ 复盘修正 2026-08-06：双仓 hero 只改了字号没重排配件 ══ */
+/* 金点改内联在标签字后（原「数字下方 5px」与 34px 大字相撞）；标签随 hero 等比放大 */
+body[data-active-page="holdings"] .bucket-row--hero .bucket-label {
+  display: block; font-size: var(--fl-13); font-weight: 700; letter-spacing: var(--fl-2); line-height: var(--fl-18);
+}
+body[data-active-page="holdings"] .holdings-structure .bucket-dot {
+  display: inline-block; width: var(--fl-4); height: var(--fl-4);
+  margin: 0 0 0 var(--fl-5); border-radius: 50%; background: transparent; vertical-align: var(--fl-2);
+}
+body[data-active-page="holdings"] .bucket-row--hero .bucket strong { margin-top: var(--fl-5); }
+/* 占比数字：迁出 .stock-sub 时丢了原字号字重，这里补回并按新语境加重 */
+body[data-active-page="holdings"] .stock-side .weight {
+  display: block; margin: var(--fl-2) 0 0; color: var(--muted);
+  font-size: var(--fl-11p5); font-weight: 800; line-height: var(--fl-15); letter-spacing: 0;
+}
