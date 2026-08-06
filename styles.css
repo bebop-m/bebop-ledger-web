@@ -6708,3 +6708,31 @@ body[data-active-page="dividends"] .divi-ym.is-past { opacity: 1; }
 body[data-active-page="dividends"] .divi-ym > b { display: block; background: transparent; }
 body[data-active-page="dividends"] .divi-ym.has-pay > b { background: transparent; }
 body[data-active-page="dividends"] .divi-ym.is-current > b { display: block; background: var(--gold); }
+
+/* ══════════════ 信息收敛 2026-08 · 02-持仓 + 03-详情 + 04-诊断 ══════════════ */
+/* hero 让位仓位结构：双仓大字、明细行瘦身、市值随注行 */
+body[data-active-page="holdings"] .bucket strong { font-size: var(--fl-26); }
+body[data-active-page="holdings"] .mv-line {
+  display: block; margin: var(--fl-18) 0 0; padding: 0; text-align: center;
+  color: var(--muted); font-size: var(--fl-11); font-weight: 600; line-height: var(--fl-16);
+}
+body[data-active-page="holdings"] .mv-line strong { color: var(--ink); font-weight: 700; }
+body[data-active-page="holdings"] .mv-line strong.is-market-up { color: var(--up); }
+body[data-active-page="holdings"] .mv-line strong.is-market-down { color: var(--down); }
+/* 排序键统一金色高亮：按钮与每行排序键值同色（金=选中记号既有语义） */
+body[data-active-page="holdings"] .holdings-sort-action { color: var(--gold); font-weight: 800; }
+body[data-active-page="holdings"] .stock-side { display: block; flex: none; text-align: right; }
+body[data-active-page="holdings"] .stock-side .stock-side-key { display: block; color: var(--gold); }
+body[data-active-page="holdings"] .stock-side .weight { display: block; margin: var(--fl-2) 0 0; }
+/* 04-诊断：按公司分组 */
+.zen-sheet--diag .zen-diag-co { display: flex; flex-direction: column; gap: var(--fl-4); }
+.zen-sheet--diag .zen-diag-co > strong { color: var(--ink); font-size: var(--fl-13); font-weight: 800; }
+.zen-sheet--diag .zen-diag-issue {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--fl-12);
+  color: var(--muted); font-size: var(--fl-11p5); font-weight: 600; line-height: var(--fl-17);
+}
+.zen-sheet--diag .zen-diag-issue em { flex: none; color: var(--hint); font-style: normal; font-weight: 600; }
+.zen-sheet--diag .zen-diag-items { display: flex; flex-direction: column; gap: var(--fl-13); }
+/* 03-详情：可点域与手动覆写标注 */
+.zen-sheet--detail .zen-detail-qty { display: block; width: 100%; margin: 0; padding: 0; border: none; background: none; font-family: inherit; text-align: center; }
+.zen-sheet--detail .zen-detail-edit { margin: 0; padding: 0; border: none; background: none; color: inherit; font: inherit; }

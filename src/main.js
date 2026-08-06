@@ -297,6 +297,24 @@ refs.stockList.addEventListener('click', (event) => {
   if (action === 'edit-dividend') { openModal('dividend', { localId, name: computed ? computed.name : holding.symbol, currency: computed ? computed.currency : 'HKD', value: holding.dividendPerShareTtmOverride }); }
 });
 
+/* 持仓详情抽屉里的可点域：持股数 / 税率 / 每股股息。
+   逐股行收敛成单行后，编辑入口从行上移到这里（03 裁决，原有交互不丢）。 */
+refs.modalRoot.addEventListener('click', (event) => {
+  const edit = event.target.closest('[data-detail-edit]');
+  if (!edit || state.modal !== 'holdingDetail') return;
+  const localId = safeNumber(state.modalPayload && state.modalPayload.localId, 0);
+  const holding = state.holdings.find((i) => i.localId === localId); if (!holding) return;
+  const computed = computeHoldings().holdings.find((i) => i.localId === localId);
+  const kind = edit.dataset.detailEdit;
+  if (kind === 'quantity') {
+    // 现金模式下持仓只能通过交易调整，点数量直接开一笔预填该股票的交易
+    if (isCashModelActive()) { openModal('trade', { symbol: holding.symbol }); return; }
+    openModal('quantity', { localId, name: computed ? computed.name : holding.symbol, value: holding.quantity }); return;
+  }
+  if (kind === 'tax') { openModal('tax', { localId, name: computed ? computed.name : holding.symbol, value: holding.taxRateOverride }); return; }
+  if (kind === 'dividend') openModal('dividend', { localId, name: computed ? computed.name : holding.symbol, currency: computed ? computed.currency : 'HKD', value: holding.dividendPerShareTtmOverride });
+});
+
 /* ── 二级页左缘右滑返回 ──
    只从屏幕左缘起手；横向意图明确后 1:1 跟手，并结合距离和释放速度决定返回。 */
 const EDGE_BACK_START_PX = 28;

@@ -283,28 +283,16 @@ function formatZenPercent(value) {
   return `${(safeNumber(value, 0) * 100).toFixed(1)}%`;
 }
 
-/* 居中 hero：股票市值 + 今日涨跌。涨跌额与其后的百分比同属一段、同色。 */
-export function renderHoldingsHero(summary) {
+/* hero 让位给仓位结构：市值大数的户口在首页（净资产），本页只留节标。
+   市值与今日涨跌降为 renderBucketsView 里的一行随注（02-v3 裁决）。 */
+export function renderHoldingsHero() {
   if (!refs.holdingsHero) return;
-  const pnl = safeNumber(summary.totalDailyPnlCny, 0);
-  const hasPnl = summary.holdings.some((item) => safeNumber(item.previousClose, 0) > 0);
-  const pnlText = hasPnl && state.showAmounts ? formatDailyPnl(pnl, summary.dailyPnlBaseCny) : '';
-  const arrow = pnl > 0 ? '▲' : pnl < 0 ? '▼' : '';
-  const tone = pnl > 0 ? 'is-market-up' : pnl < 0 ? 'is-market-down' : 'is-flat';
-  /* 三种空要分开：掩码遮住的数字不是「行情没更新」，直接落到待更新文案会被读成数据故障。
-     掩码态用中性色的掩码串，连涨跌方向一起遮住。 */
-  const meta = pnlText
-    ? `今日 <strong class="${tone}">${arrow} ${escapeHtml(pnlText)}</strong>`
-    : hasPnl ? `今日 <strong class="is-flat">${MASK_AMOUNT}</strong>` : '今日行情待更新';
-  refs.holdingsHero.innerHTML = `
-    <span class="holdings-hero-label">股票市值</span>
-    <strong class="holdings-hero-value">${formatLedgerMoney(summary.totalMarketValueCny, 'CNY', 'holdings-hero-fraction')}</strong>
-    <p class="holdings-hero-meta">${meta}</p>`;
+  refs.holdingsHero.innerHTML = '<span class="holdings-hero-label">仓位结构</span>';
 }
 
 /* ── 仓位结构 ──
-   两段线（墨=核心 / 金=打工）→ 两个可切换仓位 → 选中仓明细行 → 组合行。
-   旧版的三列 return-bar 与左右色块图例都收敛到这四行里，市值不重复（已在 hero）。 */
+   两段线（墨=核心 / 金=打工）→ 两个可切换仓位（大字）→ 选中仓明细行（市值·项数）
+   → 市值随注行。原「组合年化」金色常驻行已裁撤：TTM 口径唯一出现处=股息日历。 */
 export function renderBucketsView(segments, holdings, summary, opts = {}) {
   if (!refs.bucketTrack) return;
   const items = getBucketSummaryItems(holdings);
@@ -316,11 +304,6 @@ export function renderBucketsView(segments, holdings, summary, opts = {}) {
   const find = (key) => items.find((item) => item.key === key) || null;
   const share = (item) => (total > 0 && item ? item.marketValueCny / total : 0);
   const active = find(state.activeBucketKey);
-  const hasUnknownTax = holdings.some((item) => !item.taxRateKnown && safeNumber(item.quantity, 0) > 0);
-  const dividendLabel = hasUnknownTax ? '年化股息' : '税后年化';
-  /* 组合行的标签点破口径：这里是「按当前持仓 × 近 12 个月每股股息」的前瞻年化，
-     与首页/股息日历的「本年股息」（自然年现金流）不是一回事，两个数天然不等。 */
-  const portfolioLabel = hasUnknownTax ? '组合年化' : '组合税后年化';
   const bar = ['core', 'income'].map((key) => {
     const item = find(key);
     return item ? `<i class="seg-${key}" style="width:${(share(item) * 100).toFixed(2)}%"></i>` : '';
@@ -333,14 +316,25 @@ export function renderBucketsView(segments, holdings, summary, opts = {}) {
     // 而这颗点是设计要求的选中记号，得让它能和残留区分开
     return `<button class="bucket${isActive ? ' is-active' : ''}" type="button" data-bucket-toggle="${key}" aria-pressed="${isActive}">${escapeHtml(item.label)}<strong>${formatZenPercent(share(item))}</strong><i class="bucket-dot" aria-hidden="true"></i></button>`;
   }).join('');
+  /* 点开的仓明细只留市值与项数：股息口径全归股息日历（TTM）与首页（本年） */
+  const activeCount = active
+    ? holdings.filter((item) => (item.bucket === 'income' ? 'income' : 'core') === active.key && safeNumber(item.quantity, 0) > 0).length
+    : 0;
   const detail = active
-    ? `<p class="bucket-detail">${escapeHtml(active.label)} <strong>${escapeHtml(formatZenMoney(active.marketValueCny))}</strong> · ${dividendLabel} <strong>${escapeHtml(formatZenMoney(active.totalDividendCny))}</strong> · 股息率 <strong>${formatZenPercent(active.averageYield)}</strong></p>`
+    ? `<p class="bucket-detail">${escapeHtml(active.label)} <strong>${escapeHtml(formatZenMoney(active.marketValueCny))}</strong> · ${activeCount} 项</p>`
     : '';
+  /* 市值与今日涨跌降为一行随注，涨跌只留百分比（额度与首页 hero 几乎同值，不再重复） */
+  const pnl = safeNumber(summary.totalDailyPnlCny, 0);
+  const base = safeNumber(summary.dailyPnlBaseCny, 0);
+  const pnlTone = pnl > 0 ? 'is-market-up' : pnl < 0 ? 'is-market-down' : 'is-flat';
+  const pnlText = !state.showAmounts ? MASK_AMOUNT
+    : base > 0 ? `${pnl > 0 ? '+' : pnl < 0 ? SIGN_MINUS : ''}${Math.abs(pnl / base * 100).toFixed(2)}%` : '';
+  const mvLine = `<p class="mv-line">市值 <strong>${escapeHtml(formatZenMoney(summary.totalMarketValueCny))}</strong>${pnlText ? ` · 今日 <strong class="${pnlTone}">${escapeHtml(pnlText)}</strong>` : ''}</p>`;
   refs.bucketTrack.innerHTML = `
     <div class="structure-bar" aria-hidden="true">${bar}</div>
     <div class="bucket-row">${buttons}</div>
     ${detail}
-    <p class="portfolio-line">${portfolioLabel} <b>${escapeHtml(formatZenMoney(summary.totalDividendCny))}</b> · 股息率 <strong>${formatZenPercent(total > 0 ? summary.totalDividendCny / total : 0)}</strong></p>`;
+    ${mvLine}`;
 }
 
 export function patchBucketsView(segments, holdings, summary) {
@@ -379,7 +373,7 @@ export function getSortFieldLabel(field) {
 /* 按钮上的短名：定稿图写的是「按市值 ↓」，不是完整字段名 */
 function getSortActionLabel(field) {
   if (field === 'effectiveYield') return '股息率';
-  if (field === 'netAnnualDividendCny') return '年股息';
+  if (field === 'netAnnualDividendCny') return 'TTM';
   return '市值';
 }
 
@@ -401,18 +395,17 @@ function getMarketStaleDays() {
 
 export function renderTimestamp() {
   if (!refs.marketTimestamp) return;
-  const count = computeHoldings().holdings.length;
   // formatTimestamp 给的是「行情更新 07-24 09:32」，定稿图这行只写「行情 07-24 09:32」
   const stamp = formatTimestamp(state.lastUpdatedAt);
   const short = stamp.startsWith(LABELS.marketUpdated) ? `行情${stamp.slice(LABELS.marketUpdated.length)}` : stamp;
   const staleDays = getMarketStaleDays();
   // 「点此打开诊断」删去：右上角已有「诊断 N」按钮，可点性不靠这行字教
-  const parts = staleDays > 0 ? [short, `停更 ${staleDays} 天`, `${count} 项`] : [short, `${count} 项`];
+  const parts = staleDays > 0 ? [short, `停更 ${staleDays} 天`] : [short];
   refs.marketTimestamp.textContent = parts.join(' · ');
   refs.marketTimestamp.classList.toggle('is-stale', staleDays > 0);
   refs.marketTimestamp.setAttribute('aria-label', staleDays > 0
-    ? `行情已停更 ${staleDays} 天，打开持仓诊断，当前 ${count} 项持仓`
-    : `打开持仓诊断，当前 ${count} 项持仓`);
+    ? `行情已停更 ${staleDays} 天，打开持仓诊断`
+    : '打开持仓诊断');
 }
 
 export function renderPrivacyButton() {
@@ -1392,12 +1385,20 @@ export function getPendingDividendSymbols() {
   return symbols;
 }
 
+/* 行随排序换装：右列主数 = 当前排序键的值，金色（金=选中记号的既有语义） */
+function getSortKeyText(item) {
+  if (state.sortField === 'effectiveYield') return formatZenPercent(item.effectiveYield);
+  if (state.sortField === 'netAnnualDividendCny') return formatZenMoney(item.netAnnualDividendCny);
+  return formatZenMoney(item.marketValueCny);
+}
+
 function getHoldingViewModel(item, index = 0, opts = {}) {
   const tooltipLines = buildDividendTooltipLines(item);
   const statusKey = normalizeDividendStatus(item.dividendStatus, 'missing');
   return {
     priceText: state.showAmounts ? formatPlainPrice(item.price) : MASK_AMOUNT,
     marketValueText: formatZenMoney(item.marketValueCny),
+    sortKeyText: getSortKeyText(item),
     annualDividendText: formatZenMoney(item.netAnnualDividendCny),
     quantityText: state.showAmounts ? String(item.quantity) : MASK_AMOUNT,
     weightText: formatZenPercent(item.holdingWeight),
@@ -1412,19 +1413,15 @@ function getHoldingViewModel(item, index = 0, opts = {}) {
   };
 }
 
-/* 两层行：名称+代码（+金点）｜市值 · 右；现价·年化·率 ｜ 权重右。
-   四个可点域保留：名称→详情，年化→税率，率→每股股息，市值→数量（现金模式开交易）。 */
+/* 单行逐股：名称（+金点）｜排序键值（金）+ 占比。代码与现价/年化/股息率
+   的编辑入口都在持仓详情抽屉（点名称）——03 裁决：行从 5 个数据点减到 2 个。 */
 function getHoldingMarkup(item, index, opts = {}) {
   const { animate = true } = opts, v = getHoldingViewModel(item, index, opts);
   return `<div class="holding-swipe${animate ? ' is-entering' : ''}" data-id="${item.localId}" style="--holding-swipe-offset:0px;animation-delay:${v.staggerDelay}ms;">
     <article class="holding-card stock" data-id="${item.localId}" data-dividend-status="${escapeHtml(item.dividendStatus || 'missing')}">
       <div class="stock-main">
-        <span class="stock-name"><button class="stock-name-button" type="button" data-action="view-holding" aria-label="查看 ${escapeHtml(item.name)} 持仓详情">${escapeHtml(item.name)}</button><span class="code">${escapeHtml(item.symbol)}</span>${v.hasDividendEvent ? '<i class="divi-dot" title="有在途或已公告股息"></i>' : ''}</span>
-        <button class="stock-mv" type="button" data-action="edit-quantity" data-holding-field="marketValue" aria-label="编辑 ${escapeHtml(item.name)} 持股数量">${escapeHtml(v.marketValueText)}</button>
-      </div>
-      <div class="stock-sub">
-        <span class="stock-sub-main">现价 <span data-holding-field="price">${escapeHtml(v.priceText)}</span> · ${escapeHtml(v.annualDividendLabel)} <button type="button" data-action="edit-tax" data-holding-field="annualDividend" aria-label="设置股息税率">${escapeHtml(v.annualDividendText)}</button> · 股息率 <button type="button" data-action="edit-dividend" data-holding-field="effectiveYieldValue" aria-label="覆写每股股息">${escapeHtml(v.yieldText)}</button></span>
-        <span class="weight" data-holding-field="weight">${escapeHtml(v.weightText)}</span>
+        <span class="stock-name"><button class="stock-name-button" type="button" data-action="view-holding" aria-label="查看 ${escapeHtml(item.name)} 持仓详情">${escapeHtml(item.name)}</button>${v.hasDividendEvent ? '<i class="divi-dot" title="有在途或已公告股息"></i>' : ''}</span>
+        <span class="stock-side"><b class="stock-mv stock-side-key">${escapeHtml(v.sortKeyText)}</b><span class="weight">${escapeHtml(v.weightText)}</span></span>
       </div>
     </article></div>`;
 }

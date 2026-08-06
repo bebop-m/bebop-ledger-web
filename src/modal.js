@@ -295,7 +295,6 @@ function renderQuickAddModal() {
       <div class="zen-sheet-handle" aria-hidden="true"></div>
       <div class="zen-sheet-title">
         <span class="zen-sheet-title-text" id="zenQuickTitle">记一笔</span>
-        <p class="zen-sheet-note">选择要记录或校准的项目</p>
       </div>
       <div class="zen-qa-options">
         ${option('open-trade', '交 易', '买入 / 卖出一笔股票', true)}
@@ -329,7 +328,7 @@ function renderSortHoldingsModal() {
       <div class="zen-qa-options">
         ${option('marketValueCny', '市 值')}
         ${option('effectiveYield', '股 息 率')}
-        ${option('netAnnualDividendCny', '年 股 息')}
+        ${option('netAnnualDividendCny', 'TTM 股 息')}
       </div>
       <div class="zen-sheet-actions">
         <button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">取 消</button>
@@ -560,11 +559,30 @@ function renderDividendLedgerModal() {
    每项两行：结论（公司名加粗）+ 依据行，左侧 4px 色点悬挂缩进。诊断规则本身不动。 */
 function renderDiagnosticsModal() {
   const model = getPortfolioDiagnostics();
+  /* 按公司分组：名字是扫描锚点，一家的多条告警收在一个名字下；
+     「依据：」前缀退场，证据压成行右证据位（条目均为年报口径）。 */
+  const compactEvidence = (text) => String(text || '')
+    .replace(/^依据：\s*/, '')
+    .replace(/^\d{4} 财年覆盖\s*/, '')
+    .replace(/^\d{4} 财年同比下降\s*/, '−')
+    .replace(/^\d{4} 财年下降\s*/, '−')
+    .replace(/^\d{4} 财年\s*/, '')
+    .replace(/^自动基本面没有找到常规派息记录$/, '无派息记录');
   const group = (label, items, className) => {
     if (!items.length) return '';
+    const byCo = new Map();
+    items.forEach((item) => {
+      const key = String(item.name || '');
+      if (!byCo.has(key)) byCo.set(key, []);
+      byCo.get(key).push(item);
+    });
+    const rows = Array.from(byCo.entries()).map(([name, list]) => `<div class="zen-diag-co">
+        <strong>${escapeHtml(name)}</strong>
+        ${list.map((item) => `<span class="zen-diag-issue"><span>${escapeHtml(item.title)}</span><em>${escapeHtml(compactEvidence(item.evidence))}</em></span>`).join('')}
+      </div>`).join('');
     return `<div class="zen-diag-group ${className}">
       <span class="zen-diag-group-label">${escapeHtml(label)}<b>· ${items.length}</b></span>
-      <div class="zen-diag-items">${items.map((item) => `<div class="zen-diag-item"><i class="zen-diag-dot" aria-hidden="true"></i><strong>${escapeHtml(item.name)}</strong> ${escapeHtml(item.title)}<br>依据：${escapeHtml(item.evidence)}</div>`).join('')}</div>
+      <div class="zen-diag-items">${rows}</div>
     </div>`;
   };
   /* 小仓位被门槛静默时如实交代一句：否则「为什么茅台报了、这只没报」无从判断。
@@ -585,13 +603,12 @@ function renderDiagnosticsModal() {
       mutedNote
     ].join('');
   }
-  /* 抬头大数与页头角标同源（严重档），不然一个页面两个「诊断 N」对不上。
-     关注 / 数据质量的条数由下面各组自己的标签交代。 */
+  /* 抬头大数与页头角标同源（严重档）。「只列异常·全部自动计算」的契约进口径，不再立牌。 */
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
     <section class="modal-sheet zen-sheet zen-sheet--diag" role="dialog" aria-modal="true" aria-labelledby="diagnosticsTitle">
       <div class="zen-sheet-handle" aria-hidden="true"></div>
       <header class="zen-diag-head">
-        <div><h3 id="diagnosticsTitle">持仓诊断</h3><p>只列异常 · 全部自动计算</p></div>
+        <h3 id="diagnosticsTitle">持仓诊断</h3>
         <strong class="zen-diag-count">${model.criticalCount}</strong>
       </header>
       <div class="zen-diag-body">${body}</div>
@@ -855,11 +872,15 @@ function renderHoldingDetailModal() {
   }
   const taxPercent = Math.min(100, Math.max(0, safeNumber(item.taxRateOverride, 0)));
   const bucketLabel = item.bucket === 'income' ? LABELS.income : LABELS.core;
-  const sourceLabel = item.dividendPerShareTtmOverrideTouched === true ? '手动每股股息' : '自动行情';
   const quantity = formatHoldingQuantity(item.quantity);
   const baselineHolding = state.holdings.find((holding) => holding.localId === localId);
   const baselineQuantity = formatHoldingQuantity(baselineHolding && baselineHolding.quantity);
+  // 抽屉里金额到元即可，分位进无价值（03 裁决）
+  const zenMoney = (value) => (state.showAmounts
+    ? `${safeNumber(value, 0) < 0 ? '−' : ''}¥${Math.round(Math.abs(safeNumber(value, 0))).toLocaleString('en-US')}`
+    : MASK_AMOUNT);
   const row = (label, value) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`;
+  const editRow = (label, value, kind) => `<div><dt>${escapeHtml(label)}</dt><dd><button type="button" class="zen-detail-edit" data-detail-edit="${kind}">${escapeHtml(value)}</button></dd></div>`;
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
     <section class="modal-sheet zen-sheet zen-sheet--detail" role="dialog" aria-modal="true" aria-labelledby="holdingDetailTitle">
       <div class="zen-sheet-handle" aria-hidden="true"></div>
@@ -867,19 +888,18 @@ function renderHoldingDetailModal() {
         <div><small>${escapeHtml(item.symbol)} · ${escapeHtml(bucketLabel)}</small><h3 id="holdingDetailTitle">${escapeHtml(item.name)}</h3></div>
         <span class="zen-detail-weight">${escapeHtml((safeNumber(item.holdingWeight, 0) * 100).toFixed(1))}%</span>
       </header>
-      <div class="zen-detail-qty">
+      <button class="zen-detail-qty" type="button" data-detail-edit="quantity">
         <small>当前持股</small><strong>${escapeHtml(quantity)}<em>股</em></strong>
-      </div>
+      </button>
       <dl class="zen-detail-rows">
         ${row('现价', state.showAmounts ? formatDisplayMoney(item.price, item.currency) : MASK_AMOUNT)}
-        ${row('持仓市值', formatDisplayMoney(item.marketValueCny, 'CNY'))}
-        ${row('交易起点基准股数', baselineQuantity)}
-        ${row('股息税率', item.taxRateKnown ? `${taxPercent}%` : '未设置（按 0% 估算）')}
-        ${row('每股 TTM 股息', state.showAmounts ? formatDisplayMoney(item.effectiveDividendPerShareTtm, item.currency) : MASK_AMOUNT)}
-        ${row('税前年化股息', formatDisplayMoney(item.grossAnnualDividendCny, 'CNY'))}
-        ${row('税后年化股息', formatDisplayMoney(item.netAnnualDividendCny, 'CNY'))}
+        ${row('持仓市值', zenMoney(item.marketValueCny))}
+        ${baselineQuantity !== quantity ? row('交易起点基准股数', baselineQuantity) : ''}
+        ${editRow('股息税率', item.taxRateKnown ? `${taxPercent}%` : '未设置（按 0% 估算）', 'tax')}
+        ${editRow('每股 TTM 股息', state.showAmounts ? formatDisplayMoney(item.effectiveDividendPerShareTtm, item.currency) : MASK_AMOUNT, 'dividend')}
+        ${row('TTM 股息（税后）', zenMoney(item.netAnnualDividendCny))}
       </dl>
-      <p class="zen-detail-note">${escapeHtml(sourceLabel)} · 按当前汇率折人民币</p>
+      ${item.dividendPerShareTtmOverrideTouched === true ? '<p class="zen-detail-note">每股股息为手动覆写</p>' : ''}
       <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
     </section>`;
 }

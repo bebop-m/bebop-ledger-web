@@ -16,8 +16,8 @@ export const GITHUB_TOKEN_STORAGE_KEY = 'bebop-ledger-github-token-v2';
 export const TENCENT_REALTIME_ENDPOINT = 'https://qt.gtimg.cn/q=';
 export const TENCENT_BATCH_SIZE = 60;
 export const PORTFOLIO_SNAPSHOT_VERSION = 5;
-// 折叠时露出几行：02-持仓页定稿图画的是 6 行 + 「展开全部 N 项」
-export const LEGEND_COLLAPSED_COUNT = 6;
+// 折叠时露出几行：逐股行收敛成单行后同屏放得下 8 行（信息收敛 2026-08）
+export const LEGEND_COLLAPSED_COUNT = 8;
 export const LEGEND_TOGGLE_ANIMATION_MS = 220;
 /* 隐私遮罩：金额、价格、数量一律四点，全 app 只此一种 */
 export const MASK_AMOUNT = '••••';
@@ -93,7 +93,7 @@ export const LABELS = {
   waitingForUpdate: '\u7b49\u5f85\u884c\u60c5\u66f4\u65b0',
   sortMarketValue: '\u6301\u4ed3\u5e02\u503c',
   sortDividendYield: '\u80a1\u606f\u7387',
-  sortDividendAmount: '\u5e74\u5316\u80a1\u606f',
+  sortDividendAmount: 'TTM \u80a1\u606f',
   core: '\u6838\u5fc3\u4ed3',
   income: '\u6253\u5de5\u4ed3',
   cancel: '\u53d6\u6d88',
