@@ -917,7 +917,7 @@ function renderCashFlowRow(entry) {
 
 function renderDividendFlowRow(entry) {
   return `<button class="rec-row" type="button" data-dividend-source-id="${escapeHtml(entry.sourceId)}">
-      <span class="rec-row-main">${escapeHtml(getRecordDayLabel(entry.date))} 股息 · <strong>${escapeHtml(entry.name || entry.symbol)}</strong>${getRecordDetailMarkup(entry.note)}</span>
+      <span class="rec-row-main">${escapeHtml(getRecordDayLabel(entry.date))} <strong>${escapeHtml(entry.name || entry.symbol)}</strong>${getRecordDetailMarkup(entry.note)}</span>
       <span class="rec-row-amt">${escapeHtml(formatIncomeSignedMoney(entry.amountCny))}</span>
     </button>`;
 }
@@ -925,11 +925,10 @@ function renderDividendFlowRow(entry) {
 /* 一段流水：节标 + 右笔数 + 默认 3 行 + 展开键。
    折叠只是渲染层状态（mutable），不写进快照，也不参与云同步。 */
 function renderRecordFlow(key, label, aside, records, emptyText, rowMarkup) {
+  if (!records.length) return ''; // 段落随数据出生：0 笔时整段不存在
   const expanded = mutable.recordsExpanded[key] === true;
   const shown = expanded ? records : records.slice(0, RECORD_FOLD_LIMIT);
-  const body = records.length
-    ? `<div class="rec-rows">${shown.map(rowMarkup).join('')}</div>`
-    : `<p class="rec-empty">${escapeHtml(emptyText)}</p>`;
+  const body = `<div class="rec-rows">${shown.map(rowMarkup).join('')}</div>`;
   const more = records.length > RECORD_FOLD_LIMIT
     ? `<button class="rec-more" type="button" data-records-expand="${key}">${expanded ? '收 起' : `展开全部 ${records.length} 笔`}</button>`
     : '';
@@ -939,18 +938,15 @@ function renderRecordFlow(key, label, aside, records, emptyText, rowMarkup) {
     </section>`;
 }
 
-// 现金余额：从收益明细迁到本页作次级焦点，点击开 openingCash 校准
+// 现金余额：hero 下降为一行随注，点击开 openingCash 校准；未设置时只留一个金色动作
 function renderRecordsCash() {
   const active = isCashModelActive();
+  if (!active) {
+    return `<button class="rec-cash rec-cash--setup" type="button" data-records-action="calibrate-cash">校准现金余额 →</button>`;
+  }
   const asOf = String(state.currentCashAsOfDate || '');
-  const sub = active && asOf.length >= 10
-    ? `基准日 ${escapeHtml(`${asOf.slice(5, 7)}-${asOf.slice(8, 10)}`)} · <b>点击校准</b>`
-    : '<b>点击校准</b>';
-  return `<button class="rec-cash" type="button" data-records-action="calibrate-cash">
-      <span class="rec-cash-label">现金余额</span>
-      <strong class="rec-cash-value">${escapeHtml(active ? formatDisplayMoney(computeCashBalance(), 'CNY') : '未设置')}</strong>
-      <span class="rec-cash-sub">${sub}</span>
-    </button>`;
+  const asOfPart = asOf.length >= 10 ? ` · 基准日 ${escapeHtml(`${asOf.slice(5, 7)}-${asOf.slice(8, 10)}`)}` : '';
+  return `<button class="rec-cash" type="button" data-records-action="calibrate-cash">现金 <strong>${escapeHtml(formatDisplayMoney(computeCashBalance(), 'CNY'))}</strong>${asOfPart} · <b>校准 ›</b></button>`;
 }
 
 export function renderIncomeRecords() {
@@ -959,18 +955,20 @@ export function renderIncomeRecords() {
   const cash = computeCashFlowRecords(year);
   const dividends = computeDividendRecords(year);
   const trades = computeTradeSummary(year);
-  const buyCount = trades.records.filter((entry) => entry.side !== 'sell').length;
-  const sellCount = trades.records.length - buyCount;
+  /* 零值子句不上屏：hero 已写净注入，随注只挑有话说的部分 */
+  const metaParts = [];
+  if (cash.depositCny > 0) metaParts.push(`入金 ${escapeHtml(formatDisplayMoney(cash.depositCny, 'CNY'))}`);
+  if (cash.withdrawalCny > 0) metaParts.push(`出金 ${escapeHtml(formatDisplayMoney(cash.withdrawalCny, 'CNY'))}`);
+  if (cash.count > 0) metaParts.push(`${cash.count} 笔`);
   refs.incomeRecordsList.innerHTML = `<section class="rec-hero">
       <span class="rec-hero-label">${year} · 净注入</span>
       <strong class="rec-hero-value">${escapeHtml(formatIncomeSignedMoney(cash.netInflowCny))}</strong>
-      <p class="rec-hero-meta">入金 ${escapeHtml(formatDisplayMoney(cash.depositCny, 'CNY'))} · 出金 ${escapeHtml(formatDisplayMoney(cash.withdrawalCny, 'CNY'))} · ${cash.count} 笔</p>
+      ${metaParts.length ? `<p class="rec-hero-meta">${metaParts.join(' · ')}</p>` : ''}
     </section>
     ${renderRecordsCash()}
-    <p class="rec-counts"><span>买入 <strong>${buyCount}</strong></span><span>卖出 <strong>${sellCount}</strong></span><span>出入金 <strong>${cash.count}</strong></span><span>股息 <strong>${dividends.count}</strong></span></p>
-    ${renderRecordFlow('trade', '买卖流水', `${trades.count} 笔`, trades.records, '本年还没有买卖记录', renderTradeFlowRow)}
-    ${renderRecordFlow('cash', '出入金流水', `${cash.count} 笔`, cash.records, '本年还没有出入金', renderCashFlowRow)}
-    ${renderRecordFlow('dividend', '股息入账', `${dividends.count} 笔 · ${escapeHtml(formatDisplayMoney(dividends.totalCny, 'CNY'))}`, dividends.records, '本年还没有确认到账的股息', renderDividendFlowRow)}`;
+    ${renderRecordFlow('trade', '买卖流水', `${trades.count} 笔`, trades.records, '', renderTradeFlowRow)}
+    ${renderRecordFlow('cash', '出入金流水', `${cash.count} 笔 · ${escapeHtml(formatIncomeSignedMoney(cash.netInflowCny))}`, cash.records, '', renderCashFlowRow)}
+    ${renderRecordFlow('dividend', '股息入账', `${dividends.count} 笔 · ${escapeHtml(formatDisplayMoney(dividends.totalCny, 'CNY'))}`, dividends.records, '', renderDividendFlowRow)}`;
 }
 
 export function renderIncomeSummaryPage() {

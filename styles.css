@@ -6628,3 +6628,16 @@ body[data-active-page="fundamentals"] .fu-cal-empty {
   line-height: var(--fl-14);
   text-align: right;
 }
+
+/* ══════════════ 信息收敛 2026-08 · 13-资金与交易 ══════════════
+   决策见 designs/信息收敛-2026-08/README.md 裁决记录。现金余额从第二个
+   大字 hero 降为一行随注；计数行、零值段落由渲染层直接不输出。 */
+body[data-active-page="records"] .rec-cash {
+  display: block; flex: none; width: 100%; height: auto; min-height: 0;
+  margin: var(--fl-16) 0 0; padding: 0; border: none; border-radius: 0;
+  background: none; box-shadow: none; color: var(--muted); font-family: inherit;
+  font-size: var(--fl-12); font-weight: 600; line-height: var(--fl-17); text-align: center;
+}
+body[data-active-page="records"] .rec-cash strong { color: var(--ink); font-weight: 700; }
+body[data-active-page="records"] .rec-cash b { color: var(--gold); font-weight: 700; }
+body[data-active-page="records"] .rec-cash--setup { color: var(--gold); font-weight: 700; }
