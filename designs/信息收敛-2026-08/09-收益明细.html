@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>信息收敛 · 收益明细 · 改前改后</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 1180px; margin: 0 auto 24px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 1180px; margin: 0 auto; }
+.col { flex: 0 0 390px; }
+.col-tag { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 4px; color: #999; margin-bottom: 12px; }
+.phone { width: 390px; border-radius: 24px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); }
+.phone img { display: block; width: 100%; height: auto; }
+.notes { flex: 1; min-width: 250px; font-size: 12px; line-height: 1.7; color: #555; }
+.notes h2 { font-size: 12.5px; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; color: #333; }
+.notes .sec { margin-top: 18px; }
+.notes ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.notes li { padding-left: 14px; position: relative; }
+.notes li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: #c19a45; }
+.notes li.cut::before { background: #bf5a42; }
+.notes b { color: #333; }
+
+/* ── 素禅 token ── */
+.screen {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --gold-soft: #dcc492; --track: #eae4d4;
+  --up: #bf5a42; --down: #6a8b74;
+  min-height: 845px; display: flex; flex-direction: column;
+  padding: 28px 26px 34px; background: var(--bg); color: var(--ink);
+}
+.num { font-variant-numeric: tabular-nums; }
+
+.pagebar { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; }
+.pagebar .back { color: var(--muted); }
+.pagebar .back svg { width: 18px; height: 18px; }
+.pagebar .page-name { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+
+.page-hero { margin-top: 64px; text-align: center; }
+.page-hero .hero-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.page-hero .hero-value { display: block; margin-top: 16px; font-size: 44px; font-weight: 700; letter-spacing: 2px; line-height: 1; }
+.page-hero .hero-action { display: inline-block; margin-top: 18px; font-size: 12px; font-weight: 700; color: var(--gold); }
+
+.years { margin-top: 72px; flex: 1; }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.year-row { margin-top: 18px; }
+.year-main { display: flex; align-items: baseline; gap: 9px; }
+.year-main .yr { font-size: 21px; font-weight: 800; }
+.year-main .state { font-size: 11px; font-weight: 600; color: var(--muted); }
+.year-main .side { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--gold); }
+.year-sub { margin-top: 5px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.hint-line { margin-top: 40px; text-align: center; font-size: 11px; font-weight: 600; color: var(--hint); }
+</style>
+</head>
+<body>
+<div class="canvas-head">
+  <h1>09 · 收益明细 — 信息收敛 改前 → 改后</h1>
+  <p>本页职责一句话：<b>「今年到现在，钱赚了多少」</b>。空段落整段消失，空态变成一个明确的动作。</p>
+</div>
+<div class="board">
+  <div class="col">
+    <div class="col-tag">改 前</div>
+    <div class="phone"><img src="../../screenshots/home-income-light-430x932.png" alt="收益明细 改前"></div>
+  </div>
+  <div class="col">
+    <div class="col-tag">改 后</div>
+    <div class="phone">
+      <div class="screen">
+        <header class="pagebar">
+          <span class="back"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="page-name">收益明细</span>
+          <span></span>
+        </header>
+
+        <section class="page-hero">
+          <span class="hero-label">2026 · 资金收益</span>
+          <span class="hero-value">待回填</span>
+          <span class="hero-action">回填 2025 年末净值 →</span>
+        </section>
+
+        <section class="years">
+          <div class="sec-head"><span class="sec-label">年度明细</span></div>
+          <div class="year-row">
+            <div class="year-main"><span class="yr num">2026</span><span class="state">进行中</span><span class="side">回填</span></div>
+            <p class="year-sub num">股息 ¥4,280.01 · 净注入 ¥0.00</p>
+          </div>
+          <p class="hint-line">逐笔记账自 2026 起</p>
+        </section>
+      </div>
+    </div>
+  </div>
+  <div class="notes">
+    <h2>去掉</h2>
+    <ul>
+      <li class="cut"><b>「历年趋势」空段</b>（节标 + 「至少两个年度……」说明）——段落只在有话说时存在，凑满两个年度自动出现，空态不立牌子。</li>
+      <li class="cut"><b>hero 下的解释长句</b>「回填 2025 年末净值后，这里显示今年至今的资金收益」——空态不解释机制，直接给动作：金色「回填 2025 年末净值 →」，点了就进回填抽屉。</li>
+      <li class="cut"><b>年度行右侧「待回填 待回填」双写</b>——只留一个「回填」动作词。</li>
+    </ul>
+    <div class="sec">
+      <h2>改成 / 新展示逻辑</h2>
+      <ul>
+        <li><b>空态 = 邀请</b>：整页只剩「待回填」大字 + 一个动作 + 一行年度记录，回填完成的那一刻 hero 变成本年资金收益率大字（既有计算链，不新增口径）。</li>
+        <li>有收益率后：年度行右侧显示「+X.X% · ¥XX,XXX」，两个年度起「历年趋势」段自动回来——出现条件写进验收标准。</li>
+        <li>年度回顾入口不变：点年度行整行进入（原有交互）。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>

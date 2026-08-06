@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>信息收敛 · 公司基本面 · 改前改后</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 1180px; margin: 0 auto 24px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 1180px; margin: 0 auto; }
+.col { flex: 0 0 390px; }
+.col-tag { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 4px; color: #999; margin-bottom: 12px; }
+.phone { width: 390px; border-radius: 24px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); }
+.phone img { display: block; width: 100%; height: auto; }
+.notes { flex: 1; min-width: 250px; font-size: 12px; line-height: 1.7; color: #555; }
+.notes h2 { font-size: 12.5px; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; color: #333; }
+.notes .sec { margin-top: 18px; }
+.notes ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.notes li { padding-left: 14px; position: relative; }
+.notes li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: #c19a45; }
+.notes li.cut::before { background: #bf5a42; }
+.notes b { color: #333; }
+
+/* ── 素禅 token ── */
+.screen {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --gold-soft: #dcc492; --track: #eae4d4;
+  --up: #bf5a42; --down: #6a8b74;
+  --chart-gold: #dcc492; --chart-gold-dot: #c9a558;
+  min-height: 845px; display: flex; flex-direction: column;
+  padding: 28px 26px 30px; background: var(--bg); color: var(--ink);
+}
+.num { font-variant-numeric: tabular-nums; }
+
+.pagebar { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; }
+.pagebar .back { color: var(--muted); }
+.pagebar .back svg { width: 18px; height: 18px; }
+.pagebar .page-name { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.pagebar-note { margin-top: 7px; text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); }
+
+/* 公司横滚 */
+.scroller { display: flex; gap: 26px; margin-top: 22px; overflow: hidden; }
+.co { flex: none; text-align: center; }
+.co .co-name { font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.co .co-val { margin-top: 3px; font-size: 15px; font-weight: 700; color: var(--muted); }
+.co.is-active .co-name, .co.is-active .co-val { color: var(--ink); }
+.co.is-active::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 5px auto 0; }
+
+/* 公司名 + 排名 */
+.company { margin-top: 26px; text-align: center; }
+.company h3 { font-size: 22px; font-weight: 800; letter-spacing: 1px; }
+.company h3 small { font-size: 12px; color: var(--muted); font-weight: 700; }
+.company p { margin-top: 7px; font-size: 11px; font-weight: 600; color: var(--muted); }
+
+/* hero */
+.page-hero { margin-top: 26px; text-align: center; }
+.page-hero .hero-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.page-hero .hero-value { display: block; margin-top: 10px; font-size: 36px; font-weight: 600; line-height: 1; }
+.page-hero .hero-value small { font-size: 17px; color: var(--label); font-weight: 600; }
+.page-hero .hero-meta { margin-top: 10px; font-size: 11px; font-weight: 600; color: var(--muted); }
+
+/* 三成分 */
+.mix { margin-top: 16px; }
+.mix-bar { display: flex; height: 2px; }
+.mix-bar .m1 { background: var(--gold); }
+.mix-bar .m2 { background: var(--ink); }
+.mix-bar .m3 { background: var(--gold-soft); }
+.mix-rows { margin-top: 13px; display: flex; flex-direction: column; gap: 10px; }
+.mix-row { display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 700; }
+.mix-row i { flex: none; width: 6px; height: 6px; border-radius: 50%; }
+.mix-row.r1 i { background: var(--gold); }
+.mix-row.r2 i { background: var(--ink); }
+.mix-row.r3 i { background: var(--gold-soft); }
+.mix-row .v { margin-left: auto; }
+.method-link { margin-top: 12px; text-align: center; font-size: 11px; font-weight: 700; color: var(--gold); }
+
+/* 估值 */
+.valuation { margin-top: 26px; }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.sec-side { font-size: 11px; font-weight: 700; color: var(--muted); }
+.sec-side b { color: var(--gold); }
+.scale-row { margin-top: 15px; }
+.scale-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; font-weight: 700; }
+.scale-head .verdict { font-size: 11px; color: var(--muted); }
+.scale-head .verdict b { color: var(--gold); font-weight: 800; }
+.scale-track { position: relative; height: 2px; background: var(--track); margin-top: 9px; }
+.scale-track i { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 7px; height: 7px; border-radius: 50%; background: var(--chart-gold-dot); }
+.scale-ends { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; font-weight: 600; color: var(--hint); }
+
+/* 分红 */
+.payout { margin-top: 26px; flex: 1; }
+.chart { margin-top: 8px; }
+.chart svg { display: block; width: 100%; height: auto; }
+</style>
+</head>
+<body>
+<div class="canvas-head">
+  <h1>17 · 公司基本面 — 信息收敛 改前 → 改后</h1>
+  <p>本页职责一句话：<b>「这家公司还值不值得拿」</b>。方法论收进点按抽屉，整页回到 932 单屏内。</p>
+</div>
+<div class="board">
+  <div class="col">
+    <div class="col-tag">改 前</div>
+    <div class="phone"><img src="../../screenshots/home-fundamentals-light-430x932.png" alt="公司基本面 改前"></div>
+  </div>
+  <div class="col">
+    <div class="col-tag">改 后</div>
+    <div class="phone">
+      <div class="screen">
+        <header class="pagebar">
+          <span class="back"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="page-name">公司基本面</span>
+          <span></span>
+        </header>
+        <p class="pagebar-note num">数据更新 08-05 · 按经营回报排序</p>
+
+        <div class="scroller num">
+          <div class="co"><div class="co-name">中国电信</div><div class="co-val">12.9%</div></div>
+          <div class="co"><div class="co-name">长城汽车</div><div class="co-val">12.3%</div></div>
+          <div class="co is-active"><div class="co-name">腾讯控股</div><div class="co-val">8.9%</div></div>
+          <div class="co"><div class="co-name">中国移动</div><div class="co-val">8.9%</div></div>
+          <div class="co"><div class="co-name">时代集团控股</div><div class="co-val">8.6%</div></div>
+          <div class="co"><div class="co-name">金茂物业</div><div class="co-val">8.5%</div></div>
+        </div>
+
+        <div class="company">
+          <h3>腾讯控股 <small>⌄</small></h3>
+          <p class="num">00700.HK · 25 家中第 14</p>
+        </div>
+
+        <section class="page-hero">
+          <span class="hero-label">历史经营回报参考</span>
+          <span class="hero-value num">≈ 8.9%<small>/年</small></span>
+          <p class="hero-meta">股息 + 增长 + 净回购 · 历史参考，并非未来预测</p>
+        </section>
+
+        <div class="mix num">
+          <div class="mix-bar"><span class="m1" style="width:10%"></span><span class="m2" style="width:69%"></span><span class="m3" style="width:21%"></span></div>
+          <div class="mix-rows">
+            <div class="mix-row r1"><i></i>股息率<span class="v">0.9%</span></div>
+            <div class="mix-row r2"><i></i>净利润增长<span class="v">6.1%</span></div>
+            <div class="mix-row r3"><i></i>净回购<span class="v">1.9%</span></div>
+          </div>
+          <p class="method-link">口径与置信度 ›</p>
+        </div>
+
+        <section class="valuation">
+          <div class="sec-head"><span class="sec-label">估值</span></div>
+          <div class="scale-row num">
+            <div class="scale-head"><span>市盈率 17.1 倍</span><span class="verdict">50% 分位 · 居中</span></div>
+            <div class="scale-track"><i style="left:50%"></i></div>
+            <div class="scale-ends"><span>贵</span><span>便宜</span></div>
+          </div>
+          <div class="scale-row num">
+            <div class="scale-head"><span>股息率 0.9%</span><span class="verdict">91% 分位 · <b>偏便宜</b></span></div>
+            <div class="scale-track"><i style="left:91%"></i></div>
+            <div class="scale-ends"><span>贵</span><span>便宜</span></div>
+          </div>
+        </section>
+
+        <section class="payout">
+          <div class="sec-head"><span class="sec-label">每股分红</span><span class="sec-side num">4.5 HKD · <b>连增 3 年</b></span></div>
+          <div class="chart">
+            <svg viewBox="0 0 338 158" xmlns="http://www.w3.org/2000/svg">
+              <polyline points="36,126 130,100 224,69 318,32" fill="none" stroke="#dcc492" stroke-width="1.6"/>
+              <circle cx="36" cy="126" r="3.4" fill="#c9a558"/>
+              <circle cx="130" cy="100" r="3.4" fill="#c9a558"/>
+              <circle cx="224" cy="69" r="3.4" fill="#c9a558"/>
+              <circle cx="318" cy="32" r="3.4" fill="#c9a558"/>
+              <text x="36" y="110" text-anchor="middle" font-size="12" font-weight="600" fill="#8a7d69">1.6</text>
+              <text x="130" y="84" text-anchor="middle" font-size="12" font-weight="600" fill="#8a7d69">2.4</text>
+              <text x="224" y="53" text-anchor="middle" font-size="12" font-weight="600" fill="#8a7d69">3.4</text>
+              <text x="318" y="18" text-anchor="middle" font-size="13" font-weight="700" fill="#3b362e">4.5</text>
+              <text x="36" y="150" text-anchor="middle" font-size="11" font-weight="600" fill="#c2b9a6">2022</text>
+              <text x="130" y="150" text-anchor="middle" font-size="11" font-weight="600" fill="#c2b9a6">2023</text>
+              <text x="224" y="150" text-anchor="middle" font-size="11" font-weight="600" fill="#c2b9a6">2024</text>
+              <text x="318" y="150" text-anchor="middle" font-size="12" font-weight="700" fill="#3b362e">2025</text>
+            </svg>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+  <div class="notes">
+    <h2>去掉</h2>
+    <ul>
+      <li class="cut"><b>方法论两行</b>「股息按 2025 年常规派息 ÷ 现价」「净利润 3 年年化 · 股本 3 年变化 · 置信度 中」——收进金色「口径与置信度 ›」点按抽屉，界面不解释算法。</li>
+      <li class="cut"><b>「组合经营回报 12.7%/年」</b>——户口在首页导航摘要（同一个数），本页只留「25 家中第 14」贴在公司代码旁。</li>
+      <li class="cut"><b>估值节标的教学句</b>「近 11 年分位 · 点越靠右越便宜」——两端「贵 / 便宜」已经在教方向，不用再上一课。</li>
+      <li class="cut"><b>币种说明「股息 HKD · 财报 CNY」</b>——收进口径抽屉，代码行只留 00700.HK。</li>
+      <li class="cut"><b>分红节标里的「2025 股息率 0.8%」</b>——同屏第四次出现的股息率，删；「特别股息 —」零值项不再立牌。</li>
+    </ul>
+    <div class="sec">
+      <h2>改成 / 新展示逻辑</h2>
+      <ul>
+        <li>全页唯一保留的警示：<b>「历史参考，并非未来预测」</b>（一页至多一条警示）。</li>
+        <li>「连增 3 年」上移到分红节标当判词——判词是回答，数字是脚注。</li>
+        <li><b>整页回到 932 单屏内</b>：年度数据明细折叠行照旧收在页尾（点开才展开，不占首屏）。</li>
+        <li>横滚、估值双尺、分红折线全部保留——它们直接回答「还值不值得拿」。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>

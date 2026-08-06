@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>信息收敛 · 资金与交易 · 改前改后</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 1180px; margin: 0 auto 24px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 1180px; margin: 0 auto; }
+.col { flex: 0 0 390px; }
+.col-tag { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 4px; color: #999; margin-bottom: 12px; }
+.phone { width: 390px; border-radius: 24px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); }
+.phone img { display: block; width: 100%; height: auto; }
+.notes { flex: 1; min-width: 250px; font-size: 12px; line-height: 1.7; color: #555; }
+.notes h2 { font-size: 12.5px; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; color: #333; }
+.notes .sec { margin-top: 18px; }
+.notes ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.notes li { padding-left: 14px; position: relative; }
+.notes li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: #c19a45; }
+.notes li.cut::before { background: #bf5a42; }
+.notes b { color: #333; }
+
+/* ── 素禅 token ── */
+.screen {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --gold-soft: #dcc492; --track: #eae4d4;
+  --up: #bf5a42; --down: #6a8b74;
+  min-height: 845px; display: flex; flex-direction: column;
+  padding: 28px 26px 34px; background: var(--bg); color: var(--ink);
+}
+.num { font-variant-numeric: tabular-nums; }
+
+.pagebar { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; }
+.pagebar .back { color: var(--muted); }
+.pagebar .back svg { width: 18px; height: 18px; }
+.pagebar .page-name { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+
+.page-hero { margin-top: 56px; text-align: center; }
+.page-hero .hero-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.page-hero .hero-value { display: block; margin-top: 14px; font-size: 40px; font-weight: 600; letter-spacing: -0.5px; line-height: 1; }
+.page-hero .hero-value small { font-size: 20px; font-weight: 600; color: var(--label); letter-spacing: 0; }
+.page-hero .hero-action { display: inline-block; margin-top: 18px; font-size: 12px; font-weight: 700; color: var(--gold); }
+
+.dividends { margin-top: 64px; flex: 1; }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.sec-side { font-size: 11px; font-weight: 700; color: var(--muted); }
+.flow-list { margin-top: 18px; display: flex; flex-direction: column; gap: 19px; }
+.flow-row { display: flex; align-items: baseline; gap: 9px; }
+.flow-row .date { font-size: 12px; font-weight: 600; color: var(--muted); }
+.flow-row .name { font-size: 14.5px; font-weight: 700; }
+.flow-row .amt { margin-left: auto; font-size: 14.5px; font-weight: 700; }
+.expand { margin-top: 24px; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="canvas-head">
+  <h1>13 · 资金与交易 — 信息收敛 改前 → 改后</h1>
+  <p>本页职责一句话：<b>「今年钱和股的进出流水」</b>。零值脚手架全部拆掉，段落只在有流水时出现。</p>
+</div>
+<div class="board">
+  <div class="col">
+    <div class="col-tag">改 前</div>
+    <div class="phone"><img src="../../screenshots/home-records-light-430x932.png" alt="资金与交易 改前"></div>
+  </div>
+  <div class="col">
+    <div class="col-tag">改 后</div>
+    <div class="phone">
+      <div class="screen">
+        <header class="pagebar">
+          <span class="back"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="page-name">资金与交易</span>
+          <span></span>
+        </header>
+
+        <section class="page-hero">
+          <span class="hero-label">2026 · 净注入</span>
+          <span class="hero-value num">¥0<small>.00</small></span>
+          <span class="hero-action">校准现金余额 →</span>
+        </section>
+
+        <section class="dividends">
+          <div class="sec-head"><span class="sec-label">股息入账</span><span class="sec-side num">17 笔 · ¥4,280.01</span></div>
+          <div class="flow-list num">
+            <div class="flow-row"><span class="date">06/29</span><span class="name">美的集团</span><span class="amt">+¥380.00</span></div>
+            <div class="flow-row"><span class="date">06/26</span><span class="name">贵州茅台</span><span class="amt">+¥2,802.42</span></div>
+            <div class="flow-row"><span class="date">06/17</span><span class="name">建发物业</span><span class="amt">+¥18.40</span></div>
+            <div class="flow-row"><span class="date">06/15</span><span class="name">港股通红利ETF华泰柏瑞</span><span class="amt">+¥1.00</span></div>
+            <div class="flow-row"><span class="date">06/05</span><span class="name">雅戈尔</span><span class="amt">+¥20.00</span></div>
+            <div class="flow-row"><span class="date">06/05</span><span class="name">九兴控股</span><span class="amt">+¥85.56</span></div>
+          </div>
+          <p class="expand">展开全部 17 笔</p>
+        </section>
+      </div>
+    </div>
+  </div>
+  <div class="notes">
+    <h2>去掉</h2>
+    <ul>
+      <li class="cut"><b>随注「入金 ¥0.00 · 出金 ¥0.00 · 0 笔」</b>——hero 已经写了 ¥0.00，零值随注是同一句话说三遍。有出入金时随注自动回来。</li>
+      <li class="cut"><b>计数行「买入 0 卖出 0 出入金 0 股息 17」</b>——整行删除。计数由各段节标携带（「股息入账 17 笔 · ¥4,280.01」就是样板）。</li>
+      <li class="cut"><b>「买卖流水 0 笔 + 本年还没有买卖记录」「出入金流水 0 笔 + 本年还没有出入金」两个空段</b>——「0 笔」和「还没有」是同一件事的两种说法，占了四行。段落只在有流水时出现。</li>
+      <li class="cut"><b>「现金余额 未设置」大字块</b>——未设置不配大字。收成一行金色动作「校准现金余额 →」，设置后变一行随注「现金 ¥X,XXX」。</li>
+      <li class="cut"><b>每行「股息 ·」前缀</b>——节标已写明「股息入账」，行内不逐行重复类型。</li>
+    </ul>
+    <div class="sec">
+      <h2>改成 / 新展示逻辑</h2>
+      <ul>
+        <li><b>段落随数据出生</b>：产生买卖/出入金后，对应段自动出现，节标带「N 笔 · 净额」，行式与股息入账一致。</li>
+        <li>空出的一屏留白是有意的：这页在年初大多数时候就该这么安静。</li>
+        <li>记一笔入口不变（首页「＋记一笔」），本页各流水行仍可点开编辑（原有交互）。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>

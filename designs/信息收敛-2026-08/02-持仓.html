@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>信息收敛 · 持仓 · 改前改后</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 1180px; margin: 0 auto 24px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 1180px; margin: 0 auto; }
+.col { flex: 0 0 390px; }
+.col-tag { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 4px; color: #999; margin-bottom: 12px; }
+.phone { width: 390px; border-radius: 24px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); }
+.phone img { display: block; width: 100%; height: auto; }
+.notes { flex: 1; min-width: 250px; font-size: 12px; line-height: 1.7; color: #555; }
+.notes h2 { font-size: 12.5px; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; color: #333; }
+.notes .sec { margin-top: 18px; }
+.notes ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.notes li { padding-left: 14px; position: relative; }
+.notes li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: #c19a45; }
+.notes li.cut::before { background: #bf5a42; }
+.notes b { color: #333; }
+
+/* ── 素禅 token ── */
+.screen {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --gold-soft: #dcc492; --track: #eae4d4;
+  --up: #bf5a42; --down: #6a8b74;
+  min-height: 845px; display: flex; flex-direction: column;
+  padding: 28px 26px 34px; background: var(--bg); color: var(--ink);
+}
+.num { font-variant-numeric: tabular-nums; }
+.is-down { color: var(--down); }
+
+.pagebar { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; }
+.pagebar .back { color: var(--muted); }
+.pagebar .back svg { width: 18px; height: 18px; }
+.pagebar .page-name { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.pagebar .diag { text-align: right; font-size: 11px; font-weight: 700; color: var(--muted); }
+.pagebar .diag b { color: var(--up); font-weight: 800; }
+.pagebar-note { margin-top: 7px; text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); }
+
+/* 仓位结构 = 本页 hero */
+.structure { margin-top: 34px; text-align: center; }
+.structure .hero-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.structure-bar { display: flex; height: 2px; margin-top: 18px; }
+.structure-bar .seg-core { background: var(--ink); }
+.structure-bar .seg-income { background: var(--gold); }
+.bucket-row { display: flex; justify-content: center; gap: 44px; margin-top: 16px; }
+.bucket { text-align: center; font-size: 10.5px; font-weight: 600; color: var(--muted); }
+.bucket strong { display: block; font-size: 27px; font-weight: 600; letter-spacing: -0.5px; color: var(--ink); margin-top: 5px; }
+.bucket.is-active { color: var(--ink); }
+.bucket.is-active::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 6px auto 0; }
+.bucket-detail { margin-top: 15px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.bucket-detail strong { color: var(--ink); font-weight: 700; }
+.mv-line { margin-top: 20px; font-size: 11px; font-weight: 600; color: var(--muted); }
+.mv-line strong { color: var(--ink); font-weight: 700; }
+
+/* 逐股：一行一股，右列 = 当前排序键 */
+.holdings { margin-top: 36px; flex: 1; }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.sort-action { font-size: 11px; font-weight: 700; color: var(--muted); }
+.stock-list { margin-top: 18px; display: flex; flex-direction: column; gap: 21px; }
+.stock { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.stock-name { font-size: 15.5px; font-weight: 700; }
+.stock-name small { margin-left: 7px; font-size: 10.5px; font-weight: 600; color: var(--hint); letter-spacing: 0.5px; }
+.stock-side { text-align: right; }
+.stock-side strong { display: block; font-size: 15.5px; font-weight: 700; }
+.stock-side span { display: block; margin-top: 2px; font-size: 10.5px; font-weight: 600; color: var(--hint); }
+.expand { margin-top: 24px; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="canvas-head">
+  <h1>02 · 持仓 — 信息收敛 改前 → 改后</h1>
+  <p>本页职责一句话：<b>「我的钱分布在哪」</b>。hero 让位给仓位结构；市值大数的户口在首页，不再重复。</p>
+</div>
+<div class="board">
+  <div class="col">
+    <div class="col-tag">改 前</div>
+    <div class="phone"><img src="../../screenshots/home-holdings-light-430x932.png" alt="持仓 改前"></div>
+  </div>
+  <div class="col">
+    <div class="col-tag">改 后</div>
+    <div class="phone">
+      <div class="screen">
+        <header class="pagebar">
+          <span class="back"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="page-name">持仓</span>
+          <span class="diag">诊断 <b>6</b></span>
+        </header>
+        <p class="pagebar-note num">行情 08-05 23:25</p>
+
+        <section class="structure">
+          <span class="hero-label">仓位结构</span>
+          <div class="structure-bar"><span class="seg-core" style="width:61.9%"></span><span class="seg-income" style="width:38.1%"></span></div>
+          <div class="bucket-row">
+            <div class="bucket is-active">核心仓<strong class="num">61.9%</strong></div>
+            <div class="bucket">打工仓<strong class="num">38.1%</strong></div>
+          </div>
+          <p class="bucket-detail num">核心仓 <strong>¥173,009</strong> · 预计全年股息 <strong>¥5,654</strong></p>
+          <p class="mv-line num">市值 <strong>¥279,691</strong> · 今日 <span class="is-down">−0.46%</span></p>
+        </section>
+
+        <section class="holdings">
+          <div class="sec-head"><span class="sec-label">逐股</span><span class="sort-action">按市值 ↓</span></div>
+          <div class="stock-list">
+            <div class="stock"><span class="stock-name">贵州茅台<small>600519.SH</small></span><span class="stock-side num"><strong>¥130,645</strong><span>46.7%</span></span></div>
+            <div class="stock"><span class="stock-name">拼多多<small>PDD</small></span><span class="stock-side num"><strong>¥61,762</strong><span>22.1%</span></span></div>
+            <div class="stock"><span class="stock-name">腾讯控股<small>00700.HK</small></span><span class="stock-side num"><strong>¥42,364</strong><span>15.1%</span></span></div>
+            <div class="stock"><span class="stock-name">京东集团-SW<small>09618.HK</small></span><span class="stock-side num"><strong>¥11,189</strong><span>4.0%</span></span></div>
+            <div class="stock"><span class="stock-name">美的集团<small>000333.SZ</small></span><span class="stock-side num"><strong>¥8,547</strong><span>3.1%</span></span></div>
+            <div class="stock"><span class="stock-name">康方生物<small>09926.HK</small></span><span class="stock-side num"><strong>¥8,220</strong><span>2.9%</span></span></div>
+            <div class="stock"><span class="stock-name">中国电信<small>00728.HK</small></span><span class="stock-side num"><strong>¥6,110</strong><span>2.2%</span></span></div>
+            <div class="stock"><span class="stock-name">长城汽车<small>02333.HK</small></span><span class="stock-side num"><strong>¥5,894</strong><span>2.1%</span></span></div>
+          </div>
+          <p class="expand">展开全部 24 项</p>
+        </section>
+      </div>
+    </div>
+  </div>
+  <div class="notes">
+    <h2>去掉</h2>
+    <ul>
+      <li class="cut"><b>「股票市值 ¥279,691」大字 hero</b>——与首页净资产几乎同值同级，户口制：一个数字只在一页当 hero。市值与今日涨跌降为一行随注。</li>
+      <li class="cut"><b>「组合年化 ¥7,613 · 股息率 2.7%」整行</b>——TTM 前瞻年化口径全 app 裁撤，股息只留「本年」一个口径（与首页、股息日历同源）。</li>
+      <li class="cut"><b>核心仓统计常驻行</b>——点仓位段才展开一行明细（改后图为点开态），默认不占版面。</li>
+      <li class="cut"><b>每股副行「现价 · 年化 · 股息率」</b>——三个数进持仓详情抽屉（点股票名，原有交互），行从 5 个数据点减到 2 个。</li>
+      <li class="cut"><b>行情注的「· 24 项」</b>——数量已在「展开全部 24 项」。</li>
+    </ul>
+    <div class="sec">
+      <h2>改成 / 新展示逻辑</h2>
+      <ul>
+        <li>hero 让位给本页职责：<b>仓位结构双数字</b>（核心 / 打工），金点=选中，点段展开该仓明细。</li>
+        <li><b>行随排序换装</b>：逐股右列永远显示当前排序键的值——按市值→市值+占比；切「按年化」→年化+股息率。副行不再需要。</li>
+        <li>行瘦身后同屏从 6 行变 8 行，展开前能看到更多。</li>
+        <li>停更提醒保留：超过 1 天时行情注显示「停更 N 天」（警示类信息不裁）。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>

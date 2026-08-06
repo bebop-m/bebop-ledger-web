@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>信息收敛 · 股息日历 · 改前改后</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: #e6e7e9; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: #222;
+  padding: 36px 32px 56px;
+}
+.canvas-head { max-width: 1180px; margin: 0 auto 24px; }
+.canvas-head h1 { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+.canvas-head p { margin-top: 6px; font-size: 12px; color: #777; }
+.board { display: flex; gap: 36px; align-items: flex-start; max-width: 1180px; margin: 0 auto; }
+.col { flex: 0 0 390px; }
+.col-tag { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 4px; color: #999; margin-bottom: 12px; }
+.phone { width: 390px; border-radius: 24px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.10), 0 16px 40px rgba(0,0,0,.12); }
+.phone img { display: block; width: 100%; height: auto; }
+.notes { flex: 1; min-width: 250px; font-size: 12px; line-height: 1.7; color: #555; }
+.notes h2 { font-size: 12.5px; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; color: #333; }
+.notes .sec { margin-top: 18px; }
+.notes ul { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+.notes li { padding-left: 14px; position: relative; }
+.notes li::before { content: ""; position: absolute; left: 0; top: 8px; width: 4px; height: 4px; border-radius: 50%; background: #c19a45; }
+.notes li.cut::before { background: #bf5a42; }
+.notes b { color: #333; }
+
+/* ── 素禅 token ── */
+.screen {
+  --bg: #faf8f3; --ink: #3b362e;
+  --muted: #a89d86; --hint: #c2b9a6; --label: #b0a78f;
+  --gold: #c19a45; --gold-soft: #dcc492; --track: #eae4d4;
+  --up: #bf5a42; --down: #6a8b74;
+  min-height: 845px; display: flex; flex-direction: column;
+  padding: 28px 26px 34px; background: var(--bg); color: var(--ink);
+}
+.num { font-variant-numeric: tabular-nums; }
+
+.pagebar { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; }
+.pagebar .back { color: var(--muted); }
+.pagebar .back svg { width: 18px; height: 18px; }
+.pagebar .page-name { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+
+.filters { display: flex; justify-content: center; gap: 30px; margin-top: 26px; }
+.filter { font-size: 13px; font-weight: 700; color: var(--hint); text-align: center; }
+.filter.is-active { color: var(--ink); }
+.filter.is-active::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 6px auto 0; }
+
+.page-hero { margin-top: 34px; text-align: center; }
+.page-hero .hero-label { font-size: 10px; font-weight: 600; letter-spacing: 5px; color: var(--label); }
+.page-hero .hero-value { display: block; margin-top: 12px; font-size: 38px; font-weight: 600; letter-spacing: -1px; line-height: 1; }
+.page-hero .hero-value small { font-size: 19px; font-weight: 600; color: var(--label); letter-spacing: 0; }
+.page-hero .hero-meta { margin-top: 12px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+
+.pace { margin-top: 22px; }
+.pace-bar { display: flex; height: 2px; background: var(--track); position: relative; }
+.pace-bar .done { background: var(--gold); }
+.pace-bar .dot { position: absolute; top: 50%; transform: translate(-50%, -50%); width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+.split-rows { margin-top: 20px; display: flex; flex-direction: column; gap: 13px; }
+.split-row { display: flex; align-items: baseline; gap: 10px; font-size: 13px; font-weight: 700; }
+.split-row i { flex: none; width: 6px; height: 6px; border-radius: 50%; align-self: center; }
+.split-row .amt { margin-left: auto; font-size: 14px; }
+.split-row.done i { background: var(--gold); }
+.split-row.est i { background: var(--gold-soft); }
+.split-row.est { color: var(--muted); }
+
+/* 月度节奏条：高度=金额，实金=已到账，浅金=预估 */
+.rhythm { margin-top: 34px; }
+.rhythm-ticks { display: flex; justify-content: space-between; align-items: flex-end; height: 50px; padding: 0 6px; }
+.rhythm-ticks i { width: 3px; border-radius: 1.5px; }
+.rhythm-ticks i.done { background: var(--gold); }
+.rhythm-ticks i.est { background: var(--gold-soft); }
+.rhythm-ticks i.zero { background: var(--track); }
+.rhythm-months { display: flex; justify-content: space-between; margin-top: 9px; padding: 0 1px; }
+.rhythm-months span { width: 22px; text-align: center; font-size: 10px; font-weight: 600; color: var(--hint); }
+.rhythm-months span.is-now { color: var(--ink); font-weight: 800; }
+.rhythm-months span.is-now::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 4px auto 0; }
+
+.recent { margin-top: 36px; flex: 1; }
+.sec-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sec-label { font-size: 10px; font-weight: 600; letter-spacing: 4px; color: var(--label); }
+.sec-side { font-size: 11px; font-weight: 700; color: var(--muted); }
+.recent-list { margin-top: 18px; display: flex; flex-direction: column; gap: 19px; }
+.recent-row { display: flex; align-items: baseline; gap: 9px; }
+.recent-row .date { font-size: 12px; font-weight: 600; color: var(--muted); }
+.recent-row .name { font-size: 14.5px; font-weight: 700; }
+.recent-row .amt { margin-left: auto; font-size: 14.5px; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="canvas-head">
+  <h1>06 · 股息日历 — 信息收敛 改前 → 改后</h1>
+  <p>本页职责一句话：<b>「今年股息现金流走到哪了」</b>。月份点阵的 12 个数字换成节奏条，说明文字全部退场。</p>
+</div>
+<div class="board">
+  <div class="col">
+    <div class="col-tag">改 前</div>
+    <div class="phone"><img src="../../screenshots/home-dividends-light-430x932.png" alt="股息日历 改前"></div>
+  </div>
+  <div class="col">
+    <div class="col-tag">改 后</div>
+    <div class="phone">
+      <div class="screen">
+        <header class="pagebar">
+          <span class="back"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <span class="page-name">股息日历</span>
+          <span></span>
+        </header>
+
+        <div class="filters">
+          <span class="filter is-active">全部</span>
+          <span class="filter">核心仓</span>
+          <span class="filter">打工仓</span>
+        </div>
+
+        <section class="page-hero">
+          <span class="hero-label">预计全年</span>
+          <span class="hero-value num">¥7,301<small>.50</small></span>
+          <p class="hero-meta num">已到账 59%</p>
+        </section>
+
+        <div class="pace">
+          <div class="pace-bar"><span class="done" style="width:59%"></span><span class="dot" style="left:59%"></span></div>
+          <div class="split-rows num">
+            <div class="split-row done"><i></i>已到账<span class="amt">¥4,280.01</span></div>
+            <div class="split-row est"><i></i>预估<span class="amt">¥3,021.49</span></div>
+          </div>
+        </div>
+
+        <section class="rhythm">
+          <div class="rhythm-ticks">
+            <i class="done" style="height:8px"></i>
+            <i class="done" style="height:2px"></i>
+            <i class="done" style="height:3px"></i>
+            <i class="done" style="height:14px"></i>
+            <i class="done" style="height:3px"></i>
+            <i class="done" style="height:46px"></i>
+            <i class="zero" style="height:2px"></i>
+            <i class="est" style="height:12px"></i>
+            <i class="est" style="height:4px"></i>
+            <i class="est" style="height:12px"></i>
+            <i class="est" style="height:7px"></i>
+            <i class="est" style="height:37px"></i>
+          </div>
+          <div class="rhythm-months num">
+            <span>01</span><span>02</span><span>03</span><span>04</span><span>05</span><span>06</span>
+            <span>07</span><span class="is-now">08</span><span>09</span><span>10</span><span>11</span><span>12</span>
+          </div>
+        </section>
+
+        <section class="recent">
+          <div class="sec-head"><span class="sec-label">最近到账</span><span class="sec-side">全部 17 笔 →</span></div>
+          <div class="recent-list num">
+            <div class="recent-row"><span class="date">6月29日</span><span class="name">美的集团</span><span class="amt">¥380.00</span></div>
+            <div class="recent-row"><span class="date">6月26日</span><span class="name">贵州茅台</span><span class="amt">¥2,802.42</span></div>
+            <div class="recent-row"><span class="date">6月17日</span><span class="name">建发物业</span><span class="amt">¥18.40</span></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+  <div class="notes">
+    <h2>去掉</h2>
+    <ul>
+      <li class="cut"><b>随注「上年无数据 · 股息率 2.6%」</b>——无数据的句子整句消失（有上年数据时显示同比，本随注改为「已到账 59%」给进度线一个读数）；股息率口径不再出现在本页。</li>
+      <li class="cut"><b>三段的灰色小字说明</b>（钱已入账 / 已公告·等待到账 / 按往年节奏推算）——词条自明，口径解释收进月明细抽屉。</li>
+      <li class="cut"><b>「在途 ¥0.00」零值行</b>——有公告未到账时才出现，零不占行。</li>
+      <li class="cut"><b>月份点阵的 12 个金额数字</b>（101 / 1 / 9 / 364 …）——一屏少 12 个数，金额进月明细（点月即看，原有交互）。</li>
+      <li class="cut"><b>每行「已到账」标签</b>——节标已经写明「最近到账」，行内不再逐行重复。</li>
+    </ul>
+    <div class="sec">
+      <h2>改成 / 新展示逻辑</h2>
+      <ul>
+        <li><b>月度节奏条</b>：细竖线高度=当月金额，实金=已到账，浅金=预估，空月只留底座；本月金点标记。分布节奏一眼可读，还不用读 12 个数。</li>
+        <li>近期改为<b>「最近到账」三行</b>，右上「全部 17 笔 →」跳资金与交易——流水的户口在那页，这里只留引子。</li>
+        <li>hero 与首页「本年股息」同口径同数源，全 app 唯一。</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</body>
+</html>
