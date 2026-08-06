@@ -165,9 +165,11 @@ function renderHomeMetrics(calendarModel, summary) {
      \u91d1\u989d\u524d\u7f00\u300c\u7ea6\u300d\u4e0e\u53e5\u5c3e\u300c\u9884\u8ba1\u5230\u8d26\u300d\u4e00\u8d77\uff0c\u628a\u4e0d\u786e\u5b9a\u6027\u8bf4\u6e05\u695a\u3002 */
   const nextIsEstimate = Boolean(nextDividend && nextDividend.isForecast);
   const nextAmountText = nextDividend ? formatDisplayMoney(nextDividend.netCny, 'CNY') : '';
-  const nextLine = nextDividend
-    ? `${nextDate.month}${nextDate.day}\u65e5 ${escapeHtml(nextName)} <strong>${escapeHtml(nextIsEstimate ? `\u7ea6${nextAmountText}` : nextAmountText)}</strong> ${nextIsEstimate ? '\u9884\u8ba1\u5230\u8d26' : '\u5230\u8d26'}`
-    : '\u8fd1\u671f\u6682\u65e0\u5728\u9014\u80a1\u606f';
+  const nextMonth = nextDividend ? Math.floor(safeNumber(String(nextDividend.payDate || nextDividend.exDate || '').slice(5, 7), 0)) : 0;
+  /* 这行自禅意首版起一直是纯文本；真机反馈 2026-08-06 接上点击——走月点同一条路由 */
+  const nextLine = nextDividend && nextMonth >= 1 && nextMonth <= 12
+    ? `<button class="home-todo-line" type="button" data-home-dividend-month="${nextMonth}" aria-label="查看 ${nextMonth} 月股息明细">${nextDate.month}${nextDate.day}日 ${escapeHtml(nextName)} <strong>${escapeHtml(nextIsEstimate ? `约${nextAmountText}` : nextAmountText)}</strong> ${nextIsEstimate ? '预计到账' : '到账'}</button>`
+    : (nextDividend ? `${nextDate.month}${nextDate.day}日 ${escapeHtml(nextName)} <strong>${escapeHtml(nextAmountText)}</strong> 到账` : '近期暂无在途股息');
   // \u7b2c\u4e8c\u884c\uff1a\u4e0b\u4e00\u573a\u8d22\u62a5\uff08\u5f85\u786e\u8ba4\u7b14\u6570\u5df2\u5728\u80a1\u606f\u65e5\u5386\u5165\u53e3\u6458\u8981\u91cc\uff09
   const nextReport = getUpcomingReportEvents()[0] || null;
   const reportDate = getHomeEventDateParts(nextReport && nextReport.reportDate);
@@ -617,8 +619,11 @@ export function buildDividendMonthDetail(month) {
     if (item.dueCny > 0) summaryParts.push(`待核对 ${formatDisplayMoney(item.dueCny, 'CNY')}`);
     /* upcomingCny 已含 dueCny，这里必须减掉，否则同一笔钱在「待核对」和「在途」里各出现一次。
        三项互不重叠且相加等于当月合计。 */
-    const restUpcomingCny = Math.max(0, item.upcomingCny - item.dueCny);
-    if (restUpcomingCny > 0) summaryParts.push(`在途 ${formatDisplayMoney(restUpcomingCny, 'CNY')}`);
+    /* upcomingCny 含 due 与 forecast；此前小结把预估并进「在途」统称，与页面词表冲突，拆开各报各的 */
+    const forecastCny = entries.reduce((sum, entry) => sum + (entry.isForecast ? safeNumber(entry.netCny, 0) : 0), 0);
+    const transitCny = Math.max(0, item.upcomingCny - item.dueCny - forecastCny);
+    if (transitCny > 0) summaryParts.push(`在途 ${formatDisplayMoney(transitCny, 'CNY')}`);
+    if (forecastCny > 0) summaryParts.push(`预估 ${formatDisplayMoney(forecastCny, 'CNY')}`);
   }
   const statusOf = (entry) => {
     if (entry.isForecast) return { text: '预估', tone: 'forecast' };

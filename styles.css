@@ -6798,3 +6798,10 @@ body[data-active-page="holdings"] .stock-side .weight {
   display: block; margin: var(--fl-2) 0 0; color: var(--muted);
   font-size: var(--fl-11p5); font-weight: 800; line-height: var(--fl-15); letter-spacing: 0;
 }
+
+/* 首页待办首行接上点击（视觉与纯文本一致，不动首页定稿观感） */
+body[data-active-page="home"] .home-todo .home-todo-line {
+  display: inline; width: auto; height: auto; min-height: 0; margin: 0; padding: 0;
+  border: none; border-radius: 0; background: none; box-shadow: none;
+  color: inherit; font: inherit; letter-spacing: inherit; text-align: inherit;
+}
