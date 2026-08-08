@@ -100,6 +100,7 @@ const MODAL_TARGETS = {
   yearlyManual: { nav: 'income', sel: '[data-income-manual-year]' },
   annualShare: { nav: 'income', sel: '.inc-year', then: '#annualShareButton' },
   trade: { sel: '#quickAddButton', then: '[data-modal-action="open-trade"]' },
+  ipoTrade: { sel: '#quickAddButton', then: '[data-modal-action="open-ipo-trade"]' },
   cashFlow: { sel: '#quickAddButton', then: '[data-modal-action="open-cash-flow"]' },
   openingCash: { nav: 'records', sel: '.rec-cash' },
   fundPicker: { nav: 'fundamentals', sel: '.fu-co-name' },

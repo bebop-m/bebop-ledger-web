@@ -500,3 +500,51 @@ test('holding gold dot lights up only for live dividend events', () => {
   assert.ok(forecastOnly.length > 0 && forecastOnly.every((e) => e.status === 'forecast'), '此例应只剩预估条目');
   assert.ok(!getPendingDividendSymbols().has('TEST.HK'), '节奏预估不该点亮金点');
 });
+
+test('normalizeSymbol：转债归市与显式后缀', async () => {
+  const { normalizeSymbol } = await import('../src/utils.js');
+  // 沪市可转债/可交换债 11x → .SH（此前被 ^[569] 规则错归深市）
+  assert.equal(normalizeSymbol('110043'), '110043.SH');
+  assert.equal(normalizeSymbol('113050'), '113050.SH');
+  assert.equal(normalizeSymbol('118000'), '118000.SH');
+  // 深市转债 12x → .SZ
+  assert.equal(normalizeSymbol('123123'), '123123.SZ');
+  assert.equal(normalizeSymbol('127045'), '127045.SZ');
+  // 显式后缀是兜底自救通道，不得被覆写
+  assert.equal(normalizeSymbol('110043.SH'), '110043.SH');
+  assert.equal(normalizeSymbol('123123.sz'), '123123.SZ');
+  // 既有归市回归不变
+  assert.equal(normalizeSymbol('600519'), '600519.SH');
+  assert.equal(normalizeSymbol('000651'), '000651.SZ');
+  assert.equal(normalizeSymbol('510300'), '510300.SH');
+  assert.equal(normalizeSymbol('900948'), '900948.SH');
+  assert.equal(normalizeSymbol('300750'), '300750.SZ');
+  assert.equal(normalizeSymbol('00700'), '00700.HK');
+});
+
+test('股息日历回看模式：已结年份不掺节奏预估，月份全为过去时', () => {
+  applyTestSnapshot({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 10, bucket: 'core' }],
+    quotes: {
+      'TEST.HK': {
+        name: 'Test', price: 10, currency: 'HKD',
+        // 往年节奏：实时模式下会据此生成 forecast 条目
+        dividends: [{ exDate: '2024-06-02', payDate: '2024-06-20', amountPerShare: 1, currency: 'HKD' }],
+        dividendPerShareTtm: 1
+      }
+    },
+    dividendLedger: [{
+      id: 'div_2025', sourceId: 'TEST.HK|2025-06-02|1|HKD', symbol: 'TEST.HK',
+      exDate: '2025-06-02', payDate: '2025-06-20', amountPerShare: 1, currency: 'HKD',
+      shares: 10, fxRate: 1, taxRate: 0, grossCny: 10, netCny: 10,
+      bucket: 'core', receiptStatus: 'received', confidence: 'manual', confirmed: true
+    }]
+  });
+  const model = computeDividendCalendar('2025-12-31', 'all', { closedYear: true });
+  assert.equal(model.year, 2025);
+  assert.ok(model.allDetails.length > 0, '该年确认过的台账条目应在列');
+  assert.ok(model.allDetails.every((entry) => !entry.isForecast), '已结年份不该出现节奏预估');
+  assert.equal(model.metrics.forecastCny, 0);
+  assert.ok(model.months.every((item) => item.phase === 'past'), '已结年份 12 个月都是过去时');
+  assert.equal(model.months[5].receivedCny, 10, '6 月应落着那笔已确认股息');
+});

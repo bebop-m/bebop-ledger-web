@@ -142,3 +142,26 @@ class MergeEventListsCrossCurrencyTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NormalizeSymbolTest(unittest.TestCase):
+    """与 src/utils.js normalizeSymbol 保持同一归市规则（转债修复后）。"""
+
+    def test_sh_convertible_bonds(self):
+        for code in ("110043", "113050", "118000"):
+            self.assertEqual(market.normalize_symbol(code), f"{code}.SH")
+
+    def test_sz_convertible_bonds(self):
+        for code in ("123123", "127045", "128100"):
+            self.assertEqual(market.normalize_symbol(code), f"{code}.SZ")
+
+    def test_explicit_suffix_not_overwritten(self):
+        self.assertEqual(market.normalize_symbol("110043.SH"), "110043.SH")
+        self.assertEqual(market.normalize_symbol("123123.sz"), "123123.SZ")
+
+    def test_existing_mappings_unchanged(self):
+        self.assertEqual(market.normalize_symbol("600519"), "600519.SH")
+        self.assertEqual(market.normalize_symbol("000651"), "000651.SZ")
+        self.assertEqual(market.normalize_symbol("510300"), "510300.SH")
+        self.assertEqual(market.normalize_symbol("300750"), "300750.SZ")
+        self.assertEqual(market.normalize_symbol("00700"), "00700.HK")

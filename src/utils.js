@@ -285,14 +285,20 @@ export function buildDividendTooltipHtml(lines) {
 export function normalizeSymbol(rawSymbol) {
   const value = String(rawSymbol || '').trim().toUpperCase();
   if (!value) return '';
-  const normalizeCnSuffix = (digits) => (/^[569]/.test(digits) ? `${digits}.SH` : `${digits}.SZ`);
+  // 沪市：股票 6xx、基金 5xx、B股 9xx、可转债/可交换债 11x、申购配股 7xx；其余 6 位默认深市（含 12x 深转债）。
+  const normalizeCnSuffix = (digits) => (/^(11|5|6|7|9)/.test(digits) ? `${digits}.SH` : `${digits}.SZ`);
   if (/^\d{6}\.SS$/.test(value)) return value.replace('.SS', '.SH');
   if (/^\d{5}\.HK$/.test(value)) return value;
-  if (/^\d{6}\.(SH|SZ)$/.test(value)) return normalizeCnSuffix(value.slice(0, 6));
+  if (/^\d{6}\.(SH|SZ)$/.test(value)) return value;
   if (/^[A-Z][A-Z0-9.-]*$/.test(value)) return value;
   if (/^\d{5}$/.test(value)) return `${value}.HK`;
   if (/^\d{6}$/.test(value)) return normalizeCnSuffix(value);
   return value;
+}
+
+// 可转债/可交换债：沪 11x、深 12x。代码即身份，用于交易抽屉的打新默认值。
+export function isConvertibleBondSymbol(symbol) {
+  return /^1[12]\d{4}\.(SH|SZ)$/.test(normalizeSymbol(symbol));
 }
 
 export function chunkSymbols(items, size) {
@@ -563,6 +569,7 @@ export function sanitizeTradeEntry(item, index = 0) {
     cashTrackedCny: item.cashTrackedCny === null || item.cashTrackedCny === undefined
       ? null : roundMoney(item.cashTrackedCny),
     bucket: item.bucket === 'income' ? 'income' : 'core',
+    isIpo: item.isIpo === true,
     note: typeof item.note === 'string' ? item.note : ''
   };
 }

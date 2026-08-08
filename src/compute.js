@@ -607,7 +607,10 @@ function dedupeDividendEntries(entries) {
   return normalizeEconomicDividendEntries(entries);
 }
 
-export function computeDividendCalendar(today = new Date(), filterKeyOverride = null) {
+/* options.closedYear：按「已结年份」回看——节奏预估是面向未来的推算，
+   对已经走完的年份只会捏造出没发生过的钱，整段跳过；月份也不再有「当前月」。 */
+export function computeDividendCalendar(today = new Date(), filterKeyOverride = null, options = {}) {
+  const closedYear = options.closedYear === true;
   const todayLabel = typeof today === 'string' ? formatDateLabel(today) : formatLocalDate(today);
   const todayParts = getDateParts(todayLabel) || getDateParts(formatLocalDate());
   const year = todayParts ? todayParts.year : new Date().getFullYear();
@@ -618,7 +621,7 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
     .map((entry) => buildLedgerDividendEntry(entry, year, todayLabel))
     .filter(Boolean);
   const announcedEntries = buildAnnouncedDividendEntries(summary, year, todayLabel);
-  const forecastEntries = buildForecastDividendEntries(summary, year, todayLabel, [...ledgerEntries, ...announcedEntries]);
+  const forecastEntries = closedYear ? [] : buildForecastDividendEntries(summary, year, todayLabel, [...ledgerEntries, ...announcedEntries]);
   const entries = dedupeDividendEntries([...ledgerEntries, ...announcedEntries, ...forecastEntries])
     .filter((entry) => matchesDividendFilter(entry, filterKey))
     .sort((a, b) => `${a.payDate}|${a.status}|${a.symbol}`.localeCompare(`${b.payDate}|${b.status}|${b.symbol}`));
@@ -692,7 +695,8 @@ export function computeDividendCalendar(today = new Date(), filterKeyOverride = 
       marketValueCny: roundMoney(filteredMarketValueCny),
       projectedYieldRate
     },
-    months: buildDividendMonthItems(entries, currentMonth),
+    // 已结年份的 12 个月全是过去时，传 13 让 phase 判定越过所有月份。
+    months: buildDividendMonthItems(entries, closedYear ? 13 : currentMonth),
     allDetails: entries
   };
 }

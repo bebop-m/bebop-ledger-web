@@ -17,7 +17,7 @@ import {
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
   setModalCashFlowTypeSelection,
-  setModalTradeSideSelection, toggleDividendConfirm, updateTradeQuoteInfo, updateTradeAmountInfo, syncZenEditWidth,
+  setModalTradeSideSelection, setModalBucketSelection, setModalTradeIpoSelection, toggleDividendConfirm, updateTradeQuoteInfo, updateTradeAmountInfo, syncZenEditWidth,
   setReceiptCurrency, toggleReceiptConfirmed, updateReceiptConversion
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
@@ -32,6 +32,8 @@ function navigateTo(page, options = {}) {
   if (!PAGE_KEYS.has(page) || state.activePage === page) return;
   if (options.recordHistory !== false && state.activePage) pageHistory.push(state.activePage);
   closeActiveDividendTooltip(true);
+  // 股息日历的回看年份只在年度回顾点进来那一跳生效，任何正常导航都回到当年实时模式
+  if (page === 'dividends') mutable.dividendViewYear = options.dividendViewYear || null;
   state.activePage = page;
   saveState();
   renderApp({ incremental: true, animateHoldingReflow: false });
@@ -205,6 +207,11 @@ if (refs.annualReviewContent) refs.annualReviewContent.addEventListener('click',
     renderApp({ incremental: true, animateHoldingReflow: false });
     return;
   }
+  const dividendsLink = event.target.closest('[data-annual-dividends]');
+  if (dividendsLink) {
+    navigateTo('dividends', { dividendViewYear: Math.floor(safeNumber(dividendsLink.dataset.annualDividends, 0)) || null });
+    return;
+  }
   const button = event.target.closest('[data-annual-select]');
   if (!button) return;
   const year = Math.floor(safeNumber(button.dataset.annualSelect, 0));
@@ -214,6 +221,14 @@ if (refs.annualReviewContent) refs.annualReviewContent.addEventListener('click',
   mutable.annualHoldingsExpanded = false;
   saveState();
   renderApp({ incremental: true, animateHoldingReflow: false });
+});
+
+if (refs.annualReviewContent) refs.annualReviewContent.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  const link = event.target.closest('[data-annual-dividends]');
+  if (!link) return;
+  event.preventDefault();
+  navigateTo('dividends', { dividendViewYear: Math.floor(safeNumber(link.dataset.annualDividends, 0)) || null });
 });
 
 if (refs.incomeRecordsList) refs.incomeRecordsList.addEventListener('click', (event) => {
@@ -500,6 +515,8 @@ refs.stockList.addEventListener('touchcancel', settleHoldingSwipe, { passive: tr
 /* ── Modal click delegation ── */
 refs.modalRoot.addEventListener('click', (event) => {
   const cf = event.target.closest('[data-cash-flow-type]'); if (cf) { setModalCashFlowTypeSelection(cf.dataset.cashFlowType); return; }
+  const bb = event.target.closest('[data-bucket-option]'); if (bb) { setModalBucketSelection(bb.dataset.bucketOption); return; }
+  const ti = event.target.closest('[data-trade-ipo]'); if (ti) { setModalTradeIpoSelection(ti.dataset.tradeIpo); return; }
   const ts = event.target.closest('[data-trade-side]'); if (ts) { setModalTradeSideSelection(ts.dataset.tradeSide); return; }
   const dc = event.target.closest('[data-dividend-currency]'); if (dc) { setReceiptCurrency(dc.dataset.dividendCurrency); return; }
   const a = event.target.closest('[data-modal-action]'); if (!a) return;
@@ -515,6 +532,8 @@ refs.modalRoot.addEventListener('click', (event) => {
   }
   if (t === 'sort-holdings') { applyHoldingSortSelection(a.dataset.sortField); closeModal(); return; }
   if (t === 'open-trade') { openModal('trade'); return; }
+  // 打新入口：同一个交易抽屉，类型预设为打新且不再被代码输入自动改写
+  if (t === 'open-ipo-trade') { openModal('trade', { isIpo: true, ipoTouched: true }); return; }
   if (t === 'open-cash-flow') { openModal('cashFlow'); return; }
   if (t === 'open-current-cash') { openModal('openingCash'); return; }
   if (t === 'save-share-card') { generateAnnualShareCard(); return; }

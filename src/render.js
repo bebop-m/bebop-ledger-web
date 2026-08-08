@@ -463,7 +463,21 @@ function getTtmDividendCny(filterKey) {
   return hit ? safeNumber(hit.totalDividendCny, 0) : 0;
 }
 
-function renderDividendMetricGrid(model) {
+/* 股息日历的回看模式：从年度回顾点进来的历史年份。当年（或未设置）一律走实时模式，
+   所以「回看」只会出现在已经走完的年份上，预估/在途这些未来时态自然缺席。 */
+export function getDividendViewYear() {
+  const year = mutable.dividendViewYear;
+  return year && year !== new Date().getFullYear() ? year : null;
+}
+
+function getActiveDividendCalendarModel() {
+  const viewYear = getDividendViewYear();
+  return viewYear
+    ? computeDividendCalendar(`${viewYear}-12-31`, null, { closedYear: true })
+    : computeDividendCalendar();
+}
+
+function renderDividendMetricGrid(model, viewYear = null) {
   const m = model.metrics;
   /* 三个互斥的桶，相加恒等于「预计全年」：
      已到账（钱已入账）→ 在途（已公告/待核对，等着到账）→ 预估（按往年节奏推算）。
@@ -474,15 +488,17 @@ function renderDividendMetricGrid(model) {
   const legendRow = (tone, name, value) => (safeNumber(value, 0) > 0 ? `<div class="divi-legend-row${tone === 'pipeline' ? ' is-live' : ''}">
       <b class="is-${tone}" aria-hidden="true"></b><span>${escapeHtml(name)}</span><strong>${escapeHtml(formatDisplayMoney(value, 'CNY'))}</strong>
     </div>` : '');
-  const ttmCny = getTtmDividendCny(model.filterKey);
+  /* 回看模式的股息率分母是「当前」市值，对历史年份口径错配，连同 TTM 一起退场；
+     同比（该年 vs 前一年）口径不受影响，保留。 */
+  const ttmCny = viewYear ? 0 : getTtmDividendCny(model.filterKey);
   /* 随注：上年无数据时同比子句整句消失，只留股息率（与 hero 同口径） */
   const yoyLine = buildDividendYoyLine(m.projectedYoy);
   const metaParts = [];
   if (yoyLine) metaParts.push(yoyLine);
-  if (m.projectedYieldRate !== null && m.projectedYieldRate !== undefined) metaParts.push(`股息率 ${escapeHtml(`${(m.projectedYieldRate * 100).toFixed(1)}%`)}`);
+  if (!viewYear && m.projectedYieldRate !== null && m.projectedYieldRate !== undefined) metaParts.push(`股息率 ${escapeHtml(`${(m.projectedYieldRate * 100).toFixed(1)}%`)}`);
   refs.dividendMetricGrid.innerHTML = `
     <div class="divi-hero">
-      <span class="divi-hero-label">预计全年${model.filterKey === 'core' ? ' · 核心仓' : model.filterKey === 'income' ? ' · 打工仓' : ''}</span>
+      <span class="divi-hero-label">${viewYear ? '全年股息' : '预计全年'}${model.filterKey === 'core' ? ' · 核心仓' : model.filterKey === 'income' ? ' · 打工仓' : ''}</span>
       <strong class="divi-hero-value">${escapeHtml(formatDisplayMoney(m.projectedCny, 'CNY'))}</strong>
       ${metaParts.length ? `<p class="divi-yoy">${metaParts.join(' · ')}</p>` : ''}
     </div>
@@ -526,7 +542,7 @@ function buildDividendRow(entry) {
 const DIVIDEND_LIST_LIMIT = 6;
 const DIVIDEND_DUE_LIMIT = 3;
 
-function renderDividendMonths(model) {
+function renderDividendMonths(model, viewYear = null) {
   /* 月度节奏条：线高=当月金额（√ 标尺），实金=已发生月，浅金=未来月，
      无派息月只留 2px 底座；12 个金额数字退场，点月进月明细看数。 */
   const maxMonthCny = Math.max(0, ...model.months.map((item) => safeNumber(item.totalCny, 0)));
@@ -573,7 +589,7 @@ function renderDividendMonths(model) {
     .slice(0, recentLimit);
   const recent = settled.length ? settled : fallback;
   const recentSection = recent.length ? `
-    <div class="sec-head${due.length ? ' is-later' : ''}"><span class="sec-label">近期</span><span class="sec-aside">${settled.length ? `<button class="divi-all-link" type="button" data-divi-all-records>全部 ${computeDividendRecords(new Date().getFullYear()).count} 笔 →</button>` : '按往年节奏推算'}</span></div>
+    <div class="sec-head${due.length ? ' is-later' : ''}"><span class="sec-label">近期</span><span class="sec-aside">${settled.length ? `<button class="divi-all-link" type="button" data-divi-all-records>全部 ${computeDividendRecords(viewYear || new Date().getFullYear()).count} 笔 →</button>` : '按往年节奏推算'}</span></div>
     <div class="divi-rows">${recent.map(buildDividendRow).join('')}</div>` : '';
 
   refs.dividendMonthGrid.innerHTML = `
@@ -603,7 +619,8 @@ function getMonthDetailDateShort(entry) {
    抬头（月份＋当月合计）→ 小结行 → 收款进度金线 → 逐笔行（五态状态词）。
    可点行（非预估、非已公告）进 08-股息到账。 */
 export function buildDividendMonthDetail(month) {
-  const model = computeDividendCalendar();
+  const viewYear = getDividendViewYear();
+  const model = getActiveDividendCalendarModel();
   const item = model.months[month - 1] || null;
   const entries = model.allDetails
     .filter((entry) => entry.month === month)
@@ -644,7 +661,7 @@ export function buildDividendMonthDetail(month) {
   const receivedRatio = item && item.totalCny > 0
     ? Math.min(1, Math.max(0, item.receivedCny / item.totalCny)) : 0;
   return {
-    title: `${month}${LABELS.dividendMonthSuffix}`,
+    title: `${viewYear ? `${viewYear} · ` : ''}${month}${LABELS.dividendMonthSuffix}`,
     phase: item ? item.phase : 'future',
     total: item ? formatDisplayMoney(item.totalCny, 'CNY') : formatDisplayMoney(0, 'CNY'),
     summary: item && item.totalCny > 0 && item.receivedCny >= item.totalCny ? '' : summaryParts.join(' · '),
@@ -656,8 +673,11 @@ export function buildDividendMonthDetail(month) {
 }
 
 export function renderDividendCalendarPage() {
-  const model = computeDividendCalendar();
-  if (refs.dividendCalendarYear) refs.dividendCalendarYear.textContent = '';
+  const viewYear = getDividendViewYear();
+  const model = getActiveDividendCalendarModel();
+  // 回看模式把年份写进页名，回到实时模式还原
+  const pageName = document.querySelector('#dividendCalendarPage .page-name');
+  if (pageName) pageName.textContent = viewYear ? `${viewYear} 股息日历` : '股息日历';
   refs.dividendFilterButtons.forEach((button) => {
     const isActive = button.dataset.dividendFilter === model.filterKey;
     button.classList.toggle('is-active', isActive);
@@ -666,8 +686,8 @@ export function renderDividendCalendarPage() {
   refs.dividendCalendarListView.hidden = false;
   refs.dividendMonthDetailView.hidden = true;
   refs.dividendMonthDetailView.innerHTML = '';
-  renderDividendMetricGrid(model);
-  renderDividendMonths(model);
+  renderDividendMetricGrid(model, viewYear);
+  renderDividendMonths(model, viewYear);
 }
 
 
@@ -1119,11 +1139,20 @@ export function renderAnnualReviewPage() {
     : '';
   const maxDividend = Math.max(1, ...annals.dividendMonths.map((value) => safeNumber(value, 0)));
   const currentMonth = annals.isCurrentYear ? new Date().getMonth() : -1;
+  // 有逐笔台账数据的年份才做成入口（2026 记账起点之前只有年度手工基准，点进去是空的）
+  const dividendsLinkable = annals.dividendMonths.some((value) => safeNumber(value, 0) > 0);
+  // 打新收益：只聚合标了「打新」的卖出；该年没有打新卖出时显示「—」而不是 +¥0。
+  const annualIpoPnl = annals.hasIpoSells ? annals.ipoRealizedPnlCny : null;
+  // 卖出行在成交额后亮已实现盈亏；成本不完整（含期初基准股）时不显示，维持成交额单值。
   const tradeRows = annals.trades.length
-    ? annals.trades.slice().reverse().map((trade) => `<div class="ann-trade-row">
+    ? annals.trades.slice().reverse().map((trade) => {
+        const showPnl = trade.side === 'sell' && trade.realizedPnlComplete && trade.realizedPnlCny !== null;
+        const pnlHtml = showPnl ? ` <b class="ann-trade-pnl ${getReturnTone(trade.realizedPnlCny)}">${escapeHtml(formatAnnualSignedMoney(trade.realizedPnlCny))}</b>` : '';
+        return `<div class="ann-trade-row">
         <span>${escapeHtml(trade.date.slice(5).replace('-', '/'))} <em class="${trade.side === 'sell' ? 'is-sell' : 'is-buy'}">${trade.side === 'sell' ? '卖出' : '买入'}</em> <strong>${escapeHtml(trade.name)}</strong></span>
-        <span>${escapeHtml(formatDisplayMoney(trade.valueCny, 'CNY'))}</span>
-      </div>`).join('')
+        <span>${escapeHtml(formatDisplayMoney(trade.valueCny, 'CNY'))}${pnlHtml}</span>
+      </div>`;
+      }).join('')
     : '<p class="ann-empty-line">该年暂无交易记录</p>';
   const scopeText = annals.isCurrentYear
     ? `截至 ${annals.today.slice(0, 7).replace('-', '/')}`
@@ -1141,6 +1170,7 @@ export function renderAnnualReviewPage() {
       <span>股息收入<strong>${escapeHtml(formatIncomeMoney(row.dividendCny))}</strong></span>
       <span>净注入<strong>${escapeHtml(formatAnnualSignedMoney(row.netInflowCny))}</strong></span>
       <span>当年交易<strong>${annals.trades.length} 笔</strong></span>
+      <span>打新收益<strong class="${getReturnTone(annualIpoPnl)}">${escapeHtml(formatAnnualSignedMoney(annualIpoPnl))}</strong></span>
     </div>
     ${attrItems ? `
     <section class="ann-block">
@@ -1153,8 +1183,8 @@ export function renderAnnualReviewPage() {
         ? `${getAnnualDonutMarkup(annals.holdings)}${getAnnualHoldingsNote(annals.holdings)}`
         : '<p class="ann-empty-line">该年暂无持仓快照</p>'}
     </section>
-    <section class="ann-block">
-      ${getAnnualSecHead('当年股息现金流', `${annals.isCurrentYear ? '已确认' : '全年确认'} ${escapeHtml(formatIncomeMoney(row.dividendCny))}`)}
+    <section class="ann-block${dividendsLinkable ? ' ann-block--link' : ''}"${dividendsLinkable ? ` data-annual-dividends="${annals.year}" role="button" tabindex="0" aria-label="查看 ${annals.year} 年股息日历"` : ''}>
+      ${getAnnualSecHead('当年股息现金流', `${annals.isCurrentYear ? '已确认' : '全年确认'} ${escapeHtml(formatIncomeMoney(row.dividendCny))}${dividendsLinkable ? ' →' : ''}`)}
       <div class="ann-months">${annals.dividendMonths.map((value, index) => `<span class="${index === currentMonth ? 'is-current' : ''}"><i style="--v:${Math.max(2, safeNumber(value, 0) / maxDividend * 100).toFixed(1)}%"></i><small>${ANNUAL_MONTH_LABELS[index]}</small></span>`).join('')}</div>
     </section>
     <section class="ann-block">

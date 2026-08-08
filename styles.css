@@ -4930,7 +4930,13 @@ body[data-active-page="annual"] .ann-block {
   display: block;
   margin: var(--fl-28) 0 0;
   padding: 0;
-}/* 收益归因：2px 四段线 + 四行 pp 拆分（四项相加 = 本年收益率） */
+}
+/* 股息现金流小节整块可点进当年股息日历；按压反馈跟全局轻点一致 */
+body[data-active-page="annual"] .ann-block--link {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+body[data-active-page="annual"] .ann-block--link:active { opacity: 0.6; }/* 收益归因：2px 四段线 + 四行 pp 拆分（四项相加 = 本年收益率） */
 
 
 body[data-active-page="annual"] .ann-attr-bar {
@@ -5214,6 +5220,10 @@ body[data-active-page="annual"] .ann-trade-row em {
 body[data-active-page="annual"] .ann-trade-row em.is-buy { color: var(--up); }
 body[data-active-page="annual"] .ann-trade-row em.is-sell { color: var(--down); }
 body[data-active-page="annual"] .ann-trade-row strong { color: var(--ink); font-weight: 700; }
+/* 卖出行的已实现盈亏：跟在成交额后，红绿随 tone，成本不完整的行不出这个元素 */
+body[data-active-page="annual"] .ann-trade-pnl { font-weight: 700; }
+body[data-active-page="annual"] .ann-trade-pnl.is-gain { color: var(--up); }
+body[data-active-page="annual"] .ann-trade-pnl.is-loss { color: var(--down); }
 body[data-active-page="annual"] .ann-trade-sum {
   display: block;
   margin: var(--fl-16) 0 0;

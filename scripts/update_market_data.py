@@ -70,14 +70,15 @@ def normalize_symbol(raw_symbol):
     value = str(raw_symbol or '').strip().upper()
     if not value:
         return ''
+    # 沪市：股票 6xx、基金 5xx、B股 9xx、可转债/可交换债 11x、申购配股 7xx；其余 6 位默认深市（含 12x 深转债）。与 src/utils.js normalizeSymbol 保持一致。
     def normalize_cn_suffix(digits):
-        return f'{digits}.SH' if re.match(r'^[569]', digits) else f'{digits}.SZ'
+        return f'{digits}.SH' if re.match(r'^(11|5|6|7|9)', digits) else f'{digits}.SZ'
     if re.fullmatch(r'\d{6}\.SS', value):
         return value.replace('.SS', '.SH')
     if re.fullmatch(r'\d{5}\.HK', value):
         return value
     if re.fullmatch(r'\d{6}\.(SH|SZ)', value):
-        return normalize_cn_suffix(value[:6])
+        return value
     if re.fullmatch(r'[A-Z][A-Z0-9.-]*', value):
         return value
     if re.fullmatch(r'\d{5}', value):

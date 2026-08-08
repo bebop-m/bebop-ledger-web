@@ -1,11 +1,12 @@
 import {
-  state, refs, saveState, showToast, setCurrentCashBalance,
+  state, refs, saveState, showToast, setCurrentCashBalance, invalidateComputeCache,
   ignoreDividendLedgerEntry, addRecordTombstone, removeRecordTombstone, adjustCashForRecordChange
 } from './state.js';
+import { loadTencentQuoteBatch } from './network.js';
 import {
   safeNumber, escapeHtml, normalizeSymbol, sanitizePerShareOverrideInput,
   mergeQuotes, sanitizeCashFlowEntry, sanitizeTradeEntry, formatDateLabel,
-  resolveQuoteCurrency, resolveFxRate, resolveEffectivePayDate
+  resolveQuoteCurrency, resolveFxRate, resolveEffectivePayDate, isConvertibleBondSymbol
 } from './utils.js';
 import { LABELS, MASK_AMOUNT } from './constants.js';
 import {
@@ -21,6 +22,8 @@ import { getPortfolioDiagnostics } from './diagnostics.js';
 import { archiveCompletedYears } from './revenue.js';
 
 let _keydownHandler = null;
+let _quoteFetchTimer = null;
+const _quoteFetchAttempted = new Set();
 
 export function openModal(type, payload = {}) {
   if (_keydownHandler) document.removeEventListener('keydown', _keydownHandler, true);
@@ -43,11 +46,32 @@ function handleModalKeydown(event) {
 
 export function closeModal() {
   if (_keydownHandler) { document.removeEventListener('keydown', _keydownHandler, true); _keydownHandler = null; }
+  if (_quoteFetchTimer) { window.clearTimeout(_quoteFetchTimer); _quoteFetchTimer = null; }
+  _quoteFetchAttempted.clear();
   const mask = refs.modalRoot.querySelector('.modal-mask'), sheet = refs.modalRoot.querySelector('.modal-sheet');
   if (mask && sheet) {
     mask.classList.add('is-closing'); sheet.classList.add('is-closing');
     sheet.addEventListener('animationend', () => { state.modal = null; state.modalPayload = null; document.body.classList.remove('modal-open'); refs.modalRoot.innerHTML = ''; }, { once: true });
   } else { state.modal = null; state.modalPayload = null; document.body.classList.remove('modal-open'); refs.modalRoot.innerHTML = ''; }
+}
+
+// f6059cb 清死代码时误删了这个处理器，归入开关死了两天——恢复原文，不是新逻辑
+export function setModalBucketSelection(next) {
+  const bucket = next === 'income' ? 'income' : 'core';
+  const input = document.getElementById('modalBucketInput'); if (input) input.value = bucket;
+  Array.from(document.querySelectorAll('[data-bucket-option]')).forEach((b) => {
+    const a = b.dataset.bucketOption === bucket; b.classList.toggle('is-active', a); b.setAttribute('aria-pressed', a ? 'true' : 'false');
+  });
+}
+
+/* 打新开关：转债代码（11x/12x）自动跳到「打新」，手动点过之后就不再自动改。 */
+export function setModalTradeIpoSelection(next, { manual = true } = {}) {
+  const kind = next === 'ipo' ? 'ipo' : 'normal';
+  if (manual) state.modalPayload = { ...(state.modalPayload || {}), ipoTouched: true };
+  const input = document.getElementById('modalTradeIpoInput'); if (input) input.value = kind;
+  Array.from(document.querySelectorAll('[data-trade-ipo]')).forEach((b) => {
+    const a = b.dataset.tradeIpo === kind; b.classList.toggle('is-active', a); b.setAttribute('aria-pressed', a ? 'true' : 'false');
+  });
 }
 
 export function setModalCashFlowTypeSelection(next) {
@@ -149,7 +173,7 @@ export function updateTradeAmountInfo() {
   if (label) label.textContent = getTradePriceLabel(symbolInput ? symbolInput.value : '');
   const shares = Math.max(0, safeNumber(document.getElementById('modalTradeSharesInput').value, 0));
   const price = Math.max(0, safeNumber(document.getElementById('modalTradePriceInput').value, 0));
-  const fee = Math.max(0, safeNumber(document.getElementById('modalTradeFeeInput').value, 0));
+  const fee = Math.max(0, safeNumber(document.getElementById('modalTradeFeeInput')?.value, 0));
   if (shares <= 0 || price <= 0) {
     line.textContent = '填入股数与成交价后自动折算成交额';
     return;
@@ -158,6 +182,27 @@ export function updateTradeAmountInfo() {
   const cny = gross * resolveFxRate(currency, state.rates);
   const native = currency === 'CNY' ? '' : `${formatDisplayMoney(gross, currency)} ≈ `;
   line.innerHTML = `成交额 ${escapeHtml(native)}<b>${escapeHtml(formatDisplayMoney(cny, 'CNY'))}</b>${fee > 0 ? ` · 费用 ${escapeHtml(formatDisplayMoney(fee, 'CNY'))}` : ''}`;
+}
+
+/* 本地行情字典没命中的新代码（转债、新股都算），防抖单只去腾讯拉一次。
+   拉到就并入 state.quotes 刷新识别行；拉不到静默保持「未识别到行情」，
+   截图回归的 --block-external 模式下请求必失败，同样走静默分支。 */
+function scheduleTradeQuoteFetch(symbol) {
+  if (!/\.(SH|SZ|HK)$/.test(symbol)) return;
+  if (_quoteFetchAttempted.has(symbol)) return;
+  if (_quoteFetchTimer) window.clearTimeout(_quoteFetchTimer);
+  _quoteFetchTimer = window.setTimeout(async () => {
+    _quoteFetchTimer = null;
+    _quoteFetchAttempted.add(symbol);
+    try {
+      const quotes = await loadTencentQuoteBatch([symbol]);
+      if (!quotes[symbol]) return;
+      invalidateComputeCache();
+      state.quotes = mergeQuotes(state.quotes, quotes);
+      const input = document.getElementById('modalTradeSymbolInput');
+      if (input && normalizeSymbol(input.value) === symbol) updateTradeQuoteInfo();
+    } catch (_) { /* 静默：识别行维持手动填写提示 */ }
+  }, 500);
 }
 
 // 股票代码输入变化时，刷新行情提示，并在新增交易且价格为空时自动带出现价。
@@ -172,6 +217,11 @@ export function updateTradeQuoteInfo() {
   if (priceInput && isNew && !priceInput.value) {
     const price = safeNumber(inferQuote(symbol).price, 0);
     if (price > 0) priceInput.value = String(price);
+  }
+  if (symbol && safeNumber(inferQuote(symbol).price, 0) <= 0) scheduleTradeQuoteFetch(symbol);
+  // 转债代码自动把类型拨到「打新」；手动点过开关后尊重手选
+  if (isNew && !(state.modalPayload && state.modalPayload.ipoTouched)) {
+    setModalTradeIpoSelection(isConvertibleBondSymbol(symbol) ? 'ipo' : 'normal', { manual: false });
   }
   updateTradeAmountInfo();
 }
@@ -298,6 +348,7 @@ function renderQuickAddModal() {
       </div>
       <div class="zen-qa-options">
         ${option('open-trade', '交 易', '买入 / 卖出一笔股票', true)}
+        ${option('open-ipo-trade', '打 新', '中签缴款 / 上市卖出，自动计入打新收益', false)}
         ${option('open-cash-flow', '出 入 金', '真实的资金转入 / 转出', false)}
         ${option('open-current-cash', '当 前 现 金', '直接校准券商的现金余额（不产生流水）', false)}
       </div>
@@ -345,12 +396,21 @@ function renderTradeModal() {
   const side = entry && entry.side === 'sell' ? 'sell' : 'buy';
   const bucket = entry && entry.bucket === 'income' ? 'income' : 'core';
   const editing = Boolean(state.modalPayload && state.modalPayload.id);
+  // 优先级：存量标记 > 打新入口预设 > 转债代码自动默认（后者可被手动覆盖，见 updateTradeQuoteInfo）
+  const ipoKind = (entry && entry.isIpo === true) || (state.modalPayload && state.modalPayload.isIpo === true)
+    || (!editing && isConvertibleBondSymbol(symbol)) ? 'ipo' : 'normal';
+  /* 打新入口开精简抽屉：中签缴款和上市卖出都从这里走（方向二选保留），
+     费用/归入/类型三行整个退场——缴款无费用、卖出佣金忽略不计，归入默认打工仓
+     （打新是赚快钱不是长持，不进核心仓），类型由入口本身声明。
+     编辑存量打新交易仍走完整抽屉，留着纠错的地方。 */
+  const ipoEntry = !editing && Boolean(state.modalPayload && state.modalPayload.isIpo === true);
   const price = entry ? String(safeNumber(entry.price, 0)) : '';
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
     <section class="modal-sheet zen-sheet zen-sheet--form" role="dialog" aria-modal="true" aria-labelledby="zenTradeTitle">
       <div class="zen-sheet-handle" aria-hidden="true"></div>
       <div class="zen-sheet-title">
-        <span class="zen-sheet-title-text" id="zenTradeTitle">${editing ? '编辑交易' : '新增交易'}</span>
+        <span class="zen-sheet-title-text" id="zenTradeTitle">${ipoEntry ? '打新' : editing ? '编辑交易' : '新增交易'}</span>
+        ${ipoEntry ? '<p class="zen-sheet-note">中签缴款记买入，上市卖出记卖出</p>' : ''}
       </div>
       <div class="zen-form">
         <label class="zen-form-row"><span>日期</span><input id="modalTradeDateInput" class="zen-form-input" type="date" value="${escapeHtml(formatDateLabel(entry && entry.date) || getTodayLabel())}"></label>
@@ -363,11 +423,15 @@ function renderTradeModal() {
         <label class="zen-form-row"><span>股数</span><input id="modalTradeSharesInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.shares, 0)) : '')}" placeholder="0"></label>
         <label class="zen-form-row"><span id="modalTradePriceLabel">${escapeHtml(getTradePriceLabel(symbol))}</span><span class="zen-form-money"><input id="modalTradePriceInput" class="zen-form-amount" type="number" inputmode="decimal" style="width:${getZenEditWidthCh(price)}ch" value="${escapeHtml(price)}" placeholder="0.00" aria-label="成交价"><i class="zen-form-line" aria-hidden="true"></i></span></label>
         <p class="zen-form-hint" id="modalTradeAmountInfo"></p>
-        <label class="zen-form-row"><span>费用（CNY，可选）</span><input id="modalTradeFeeInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.feeCny, 0)) : '')}" placeholder="0.00"></label>
+        ${ipoEntry ? '' : `<label class="zen-form-row"><span>费用（CNY，可选）</span><input id="modalTradeFeeInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.feeCny, 0)) : '')}" placeholder="0.00"></label>
         <div class="zen-form-row"><span>归入</span>${renderZenSeg('modalBucketInput', bucket, [
           { value: 'core', label: LABELS.core, dataAttr: 'data-bucket-option' },
           { value: 'income', label: LABELS.income, dataAttr: 'data-bucket-option' }
         ])}</div>
+        <div class="zen-form-row"><span>类型</span>${renderZenSeg('modalTradeIpoInput', ipoKind, [
+          { value: 'normal', label: '常规', dataAttr: 'data-trade-ipo' },
+          { value: 'ipo', label: '打新', dataAttr: 'data-trade-ipo' }
+        ])}</div>`}
         <label class="zen-form-row"><span>备注</span><input id="modalTradeNoteInput" class="zen-form-input zen-form-note" type="text" value="${escapeHtml((entry && entry.note) || '')}" placeholder="可选"></label>
       </div>
       ${renderZenSheetActions({ deletable: editing })}
@@ -748,8 +812,12 @@ function saveTradeEdit() {
     price: safeNumber(document.getElementById('modalTradePriceInput').value, 0),
     currency,
     fxRate: resolveFxRate(currency, state.rates),
-    feeCny: safeNumber(document.getElementById('modalTradeFeeInput').value, 0),
-    bucket: document.getElementById('modalBucketInput').value,
+    // 打新精简抽屉没有这三个控件：费用记 0、归入打工仓、类型按入口预设
+    feeCny: safeNumber(document.getElementById('modalTradeFeeInput')?.value, 0),
+    bucket: document.getElementById('modalBucketInput')?.value || 'income',
+    isIpo: document.getElementById('modalTradeIpoInput')
+      ? document.getElementById('modalTradeIpoInput').value === 'ipo'
+      : Boolean(state.modalPayload && state.modalPayload.isIpo),
     note: document.getElementById('modalTradeNoteInput').value.trim(),
     createdAt: previousEntry && previousEntry.createdAt || now,
     updatedAt: now

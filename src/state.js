@@ -76,7 +76,9 @@ export const mutable = {
   // 年度回顾的「其余 N 项」是否展开。只活在本次会话里，切年份时归零。
   annualHoldingsExpanded: false,
   // 资金与交易页三段流水的展开状态。同样只活在本次会话里，不写进快照。
-  recordsExpanded: { trade: false, cash: false, dividend: false }
+  recordsExpanded: { trade: false, cash: false, dividend: false },
+  // 股息日历的回看年份：从年度回顾点进来时设为该年，正常导航清空（null = 当年实时）。
+  dividendViewYear: null
 };
 
 /* ── Compute Cache ── */
@@ -102,7 +104,6 @@ export const refs = {
   homeNavList: document.getElementById('homeNavList'),
   pageBackButtons: Array.from(document.querySelectorAll('[data-page-back]')),
   quickAddButton: document.getElementById('quickAddButton'),
-  dividendCalendarYear: document.getElementById('dividendCalendarYear'),
   dividendFilterGroup: document.getElementById('dividendFilterGroup'),
   dividendFilterButtons: Array.from(document.querySelectorAll('[data-dividend-filter]')),
   incomeSummaryPage: document.getElementById('incomeSummaryPage'),

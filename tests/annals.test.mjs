@@ -164,3 +164,56 @@ test('year annals uses confirmed dividend calendar dates for monthly totals', ()
   assert.equal(annals.row.capitalReturnCny, 100);
   assert.ok(Math.abs(annals.returnRate - 0.1) < 1e-9);
 });
+
+test('打新收益：标记按持仓段传染，只聚合打新卖出', () => {
+  applyTestSnapshot({
+    dailySnapshots: [
+      { date: '2024-12-31', netCny: 500000, totalMarketValueCny: 500000, liabilityCny: 0, holdings: [], rates: { CNY: 1, USD: 7.1, HKD: 0.90 } },
+      { date: '2025-12-31', netCny: 520000, totalMarketValueCny: 520000, liabilityCny: 0, holdings: [], rates: { CNY: 1, USD: 7.2, HKD: 0.92 } }
+    ],
+    quotes: {
+      '00700.HK': { name: '腾讯控股', price: 500, currency: 'HKD', dividends: [] },
+      '600519.SH': { name: '贵州茅台', price: 1600, currency: 'CNY', dividends: [] },
+      '113050.SH': { name: '南银转债', price: 130, currency: 'CNY', dividends: [] }
+    },
+    trades: [
+      // 转债打新：买入标了打新，卖出没标——传染规则应把这轮进出都算进打新收益
+      { id: 't1', date: '2025-08-01', symbol: '113050.SH', side: 'buy', shares: 10, price: 100, currency: 'CNY', fxRate: 1, feeCny: 0, bucket: 'core', isIpo: true },
+      { id: 't2', date: '2025-08-20', symbol: '113050.SH', side: 'sell', shares: 10, price: 130, currency: 'CNY', fxRate: 1, feeCny: 5, bucket: 'core' },
+      // 普通波段：不标打新，进总盈亏但不进打新收益
+      { id: 't3', date: '2025-03-01', symbol: '600519.SH', side: 'buy', shares: 10, price: 1500, currency: 'CNY', fxRate: 1, feeCny: 0, bucket: 'core' },
+      { id: 't4', date: '2025-09-01', symbol: '600519.SH', side: 'sell', shares: 10, price: 1600, currency: 'CNY', fxRate: 1, feeCny: 10, bucket: 'core' }
+    ]
+  });
+  const annals = computeYearAnnals(2025);
+  assert.ok(annals);
+  assert.equal(annals.hasIpoSells, true);
+  assert.equal(Math.round(annals.ipoRealizedPnlCny), 295, '打新收益只含转债那轮：1300 − 5 − 1000');
+  assert.equal(Math.round(annals.realizedPnlCny), 295 + 990, '总已实现盈亏含普通波段');
+  const bondSell = annals.trades.find((t) => t.id === 't2');
+  assert.equal(bondSell.isIpo, true, '卖出行应带上持仓段的打新标记');
+  const stockSell = annals.trades.find((t) => t.id === 't4');
+  assert.equal(stockSell.isIpo, false);
+});
+
+test('打新标记不跨持仓段：清仓后同一只票再进出属于新的一轮', () => {
+  applyTestSnapshot({
+    dailySnapshots: [
+      { date: '2024-12-31', netCny: 500000, totalMarketValueCny: 500000, liabilityCny: 0, holdings: [], rates: { CNY: 1, USD: 7.1, HKD: 0.90 } },
+      { date: '2025-12-31', netCny: 520000, totalMarketValueCny: 520000, liabilityCny: 0, holdings: [], rates: { CNY: 1, USD: 7.2, HKD: 0.92 } }
+    ],
+    quotes: { '113050.SH': { name: '南银转债', price: 130, currency: 'CNY', dividends: [] } },
+    trades: [
+      { id: 'r1', date: '2025-02-01', symbol: '113050.SH', side: 'buy', shares: 10, price: 100, currency: 'CNY', fxRate: 1, feeCny: 0, bucket: 'income', isIpo: true },
+      { id: 'r2', date: '2025-02-20', symbol: '113050.SH', side: 'sell', shares: 10, price: 130, currency: 'CNY', fxRate: 1, feeCny: 0, bucket: 'income' },
+      // 同一只票清仓后再进出：新的一轮，不该沾上一轮的打新标记
+      { id: 'r3', date: '2025-10-01', symbol: '113050.SH', side: 'buy', shares: 10, price: 110, currency: 'CNY', fxRate: 1, feeCny: 0, bucket: 'core' },
+      { id: 'r4', date: '2025-11-01', symbol: '113050.SH', side: 'sell', shares: 10, price: 120, currency: 'CNY', fxRate: 1, feeCny: 0, bucket: 'core' }
+    ]
+  });
+  const annals = computeYearAnnals(2025);
+  assert.ok(annals);
+  assert.equal(Math.round(annals.ipoRealizedPnlCny), 300, '打新收益只含第一轮：1300 − 1000');
+  assert.equal(annals.trades.find((t) => t.id === 'r2').isIpo, true);
+  assert.equal(annals.trades.find((t) => t.id === 'r4').isIpo, false, '第二轮不该继承打新标记');
+});
