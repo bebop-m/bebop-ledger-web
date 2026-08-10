@@ -6,7 +6,7 @@ import { loadTencentQuoteBatch } from './network.js';
 import {
   safeNumber, escapeHtml, normalizeSymbol, sanitizePerShareOverrideInput,
   mergeQuotes, sanitizeCashFlowEntry, sanitizeTradeEntry, formatDateLabel,
-  resolveQuoteCurrency, resolveFxRate, resolveEffectivePayDate, isConvertibleBondSymbol
+  resolveQuoteCurrency, resolveFxRate, resolveEffectivePayDate, isConvertibleBondSymbol, isShSubscriptionSymbol
 } from './utils.js';
 import { LABELS, MASK_AMOUNT } from './constants.js';
 import {
@@ -146,6 +146,8 @@ function detectTradeCurrency(symbol) {
 function buildTradeQuoteInfoText(symbol) {
   const s = normalizeSymbol(symbol);
   if (!s) return '输入代码后自动识别币种与现价';
+  // 申购代码不是上市证券，行情系统查无此码；点破并指路，别让人以为是识别坏了
+  if (isShSubscriptionSymbol(s)) return '沪市申购代码，无行情。建议用上市代码录入（转债 11 开头 / 新股 6 开头），成交价手动填写';
   const currency = detectTradeCurrency(s);
   const quote = inferQuote(s);
   const price = safeNumber(quote.price, 0);
@@ -188,9 +190,13 @@ export function updateTradeAmountInfo() {
    拉到就并入 state.quotes 刷新识别行；拉不到静默保持「未识别到行情」，
    截图回归的 --block-external 模式下请求必失败，同样走静默分支。 */
 function scheduleTradeQuoteFetch(symbol) {
-  if (!/\.(SH|SZ|HK)$/.test(symbol)) return;
+  /* 先取消上一次排队的请求再判资格：逐字输入时中间态（如 5 位数字被当成港股）
+     可能已排了定时器，若最终代码不该发请求（申购代码等），旧定时器不能漏网。 */
+  if (_quoteFetchTimer) { window.clearTimeout(_quoteFetchTimer); _quoteFetchTimer = null; }
+  if (!symbol || !/\.(SH|SZ|HK)$/.test(symbol)) return;
+  if (isShSubscriptionSymbol(symbol)) return; // 申购代码查无此码，不发无谓请求
+  if (safeNumber(inferQuote(symbol).price, 0) > 0) return; // 本地已有行情，无需再拉
   if (_quoteFetchAttempted.has(symbol)) return;
-  if (_quoteFetchTimer) window.clearTimeout(_quoteFetchTimer);
   _quoteFetchTimer = window.setTimeout(async () => {
     _quoteFetchTimer = null;
     _quoteFetchAttempted.add(symbol);
@@ -218,10 +224,10 @@ export function updateTradeQuoteInfo() {
     const price = safeNumber(inferQuote(symbol).price, 0);
     if (price > 0) priceInput.value = String(price);
   }
-  if (symbol && safeNumber(inferQuote(symbol).price, 0) <= 0) scheduleTradeQuoteFetch(symbol);
-  // 转债代码自动把类型拨到「打新」；手动点过开关后尊重手选
+  scheduleTradeQuoteFetch(symbol); // 自带资格判断；每次键入都会先取消上一次排队的请求
+  // 转债代码 / 沪市申购代码自动把类型拨到「打新」；手动点过开关后尊重手选
   if (isNew && !(state.modalPayload && state.modalPayload.ipoTouched)) {
-    setModalTradeIpoSelection(isConvertibleBondSymbol(symbol) ? 'ipo' : 'normal', { manual: false });
+    setModalTradeIpoSelection(isConvertibleBondSymbol(symbol) || isShSubscriptionSymbol(symbol) ? 'ipo' : 'normal', { manual: false });
   }
   updateTradeAmountInfo();
 }
@@ -398,7 +404,7 @@ function renderTradeModal() {
   const editing = Boolean(state.modalPayload && state.modalPayload.id);
   // 优先级：存量标记 > 打新入口预设 > 转债代码自动默认（后者可被手动覆盖，见 updateTradeQuoteInfo）
   const ipoKind = (entry && entry.isIpo === true) || (state.modalPayload && state.modalPayload.isIpo === true)
-    || (!editing && isConvertibleBondSymbol(symbol)) ? 'ipo' : 'normal';
+    || (!editing && (isConvertibleBondSymbol(symbol) || isShSubscriptionSymbol(symbol))) ? 'ipo' : 'normal';
   /* 打新入口开精简抽屉：中签缴款和上市卖出都从这里走（方向二选保留），
      费用/归入/类型三行整个退场——缴款无费用、卖出佣金忽略不计，归入默认打工仓
      （打新是赚快钱不是长持，不进核心仓），类型由入口本身声明。

@@ -301,6 +301,13 @@ export function isConvertibleBondSymbol(symbol) {
   return /^1[12]\d{4}\.(SH|SZ)$/.test(normalizeSymbol(symbol));
 }
 
+/* 沪市申购代码（7xxxxx）：转债/新股发行阶段的临时代码，不是上市证券，
+   行情系统里查无此码（实测 sh783044 腾讯不返回，而上市代码 sh113044 正常）。
+   识别出这一类是为了把「查不到」解释清楚，并指引改用上市代码。深市申购与上市同码，无此问题。 */
+export function isShSubscriptionSymbol(symbol) {
+  return /^7\d{5}\.SH$/.test(normalizeSymbol(symbol));
+}
+
 export function chunkSymbols(items, size) {
   const chunks = [];
   for (let index = 0; index < items.length; index += size) {
@@ -323,6 +330,8 @@ export function inferQuoteFromMap(symbol, quoteMap = {}, defaultQuotes = {}) {
   if (defaultQuotes[symbol]) return { ...defaultQuotes[symbol], symbol };
   const stub = { symbol, price: 0, dividendPerShareTtm: 0, dividendSource: 'cache', dividendUpdatedAt: '', lastExDate: '', dividendFetchError: '', dividendStatus: 'missing' };
   if (/\.HK$/.test(symbol)) return { ...stub, name: LABELS.unknownHK, market: 'HK', currency: 'HKD' };
+  // 申购代码永远查不到行情，名字直接点明身份，免得在持仓/流水里挂着「未识别A股」
+  if (/^7\d{5}\.SH$/.test(symbol)) return { ...stub, name: '申购代码', market: 'CN', currency: 'CNY' };
   if (/\.(SH|SZ)$/.test(symbol)) return { ...stub, name: LABELS.unknownCN, market: 'CN', currency: 'CNY' };
   return { ...stub, name: LABELS.unknownUS, market: 'US', currency: 'USD' };
 }

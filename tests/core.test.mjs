@@ -548,3 +548,15 @@ test('股息日历回看模式：已结年份不掺节奏预估，月份全为�
   assert.ok(model.months.every((item) => item.phase === 'past'), '已结年份 12 个月都是过去时');
   assert.equal(model.months[5].receivedCny, 10, '6 月应落着那笔已确认股息');
 });
+
+test('沪市申购代码：识别为独立类别，不当成未识别A股', async () => {
+  const { isShSubscriptionSymbol, inferQuoteFromMap, normalizeSymbol } = await import('../src/utils.js');
+  // 7 开头六位是发行阶段的临时代码（新股 780/787、转债 733/754/783 等），归沪市
+  assert.equal(normalizeSymbol('783044'), '783044.SH');
+  assert.ok(isShSubscriptionSymbol('783044'));
+  assert.ok(isShSubscriptionSymbol('754063.SH'));
+  assert.ok(!isShSubscriptionSymbol('113044'), '上市代码不是申购代码');
+  assert.ok(!isShSubscriptionSymbol('600519'));
+  // 兜底名称点明身份
+  assert.equal(inferQuoteFromMap('783044.SH', {}).name, '申购代码');
+});
