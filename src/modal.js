@@ -849,7 +849,21 @@ function saveTradeEdit() {
     removeRecordTombstone('holding', entry.symbol);
     state.nextId += 1;
   }
+  // 编辑时改了代码：旧代码下若已无交易，把当初自动建的 0 股持仓一并撤掉
+  if (previousEntry && previousEntry.symbol !== entry.symbol) pruneOrphanTradeHolding(previousEntry.symbol);
   return true;
+}
+
+/* 删交易 / 改代码后的收尾：录交易时自动建的持仓（基准股 0）在代码下已无任何交易时
+   一并撤掉，别在持仓页留一行 0 股的空壳（733642 申购代码删单后残留的教训）。
+   基准股 > 0 的是用户真实持仓，永远不动。 */
+function pruneOrphanTradeHolding(symbol) {
+  if (!symbol) return;
+  if (state.trades.some((item) => item && item.symbol === symbol)) return;
+  const holding = state.holdings.find((item) => item && item.symbol === symbol);
+  if (!holding || safeNumber(holding.quantity, 0) > 0) return;
+  state.holdings = state.holdings.filter((item) => item !== holding);
+  addRecordTombstone('holding', symbol);
 }
 
 export function handleModalSave() {
@@ -1003,6 +1017,7 @@ export function handleModalDelete() {
     );
     state.trades = state.trades.filter((item) => item.id !== id);
     addRecordTombstone('trade', id);
+    if (entry) pruneOrphanTradeHolding(entry.symbol);
     archiveCompletedYears(getTodayLabel());
     saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
     return;
