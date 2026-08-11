@@ -376,6 +376,22 @@ export function addRecordTombstone(type, id) {
   return true;
 }
 
+/* 启动清扫：录交易自动建的持仓在删单后可能残留 0 股空壳（733642 申购代码的教训——
+   老版本删交易不清持仓，左滑删除又不一定被用户发现）。条件收得很紧才算孤儿：
+   基准股 0 + 名下无任何交易 + 无任何股息台账记录。写墓碑，云同步后其他设备一并消失。
+   返回清掉的条数，调用方决定要不要 saveState。 */
+export function pruneOrphanHoldings() {
+  const orphans = state.holdings.filter((holding) => holding
+    && safeNumber(holding.quantity, 0) <= 0
+    && !state.trades.some((trade) => trade && trade.symbol === holding.symbol)
+    && !state.dividendLedger.some((entry) => entry && entry.symbol === holding.symbol));
+  if (!orphans.length) return 0;
+  invalidateComputeCache();
+  state.holdings = state.holdings.filter((holding) => !orphans.includes(holding));
+  orphans.forEach((holding) => addRecordTombstone('holding', holding.symbol));
+  return orphans.length;
+}
+
 export function removeRecordTombstone(type, id) {
   const key = type === 'trade' ? 'tradeIds' : type === 'holding' ? 'holdingSymbols' : 'cashFlowIds';
   const value = type === 'holding' ? normalizeSymbol(id) : String(id || '').trim();

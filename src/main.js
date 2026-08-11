@@ -1,5 +1,5 @@
 /* ── BOPUP LEDGER — Entry Point ── */
-import { state, refs, mutable, saveState, createDefaultSnapshot, applySnapshot, restoreState, showConfirm, addRecordTombstone } from './state.js';
+import { state, refs, mutable, saveState, createDefaultSnapshot, applySnapshot, restoreState, showConfirm, addRecordTombstone, pruneOrphanHoldings } from './state.js';
 import { safeNumber } from './utils.js';
 import {
   LABELS, HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD,
@@ -555,7 +555,7 @@ refs.modalRoot.addEventListener('input', (event) => {
 
 /* ── Boot ── */
 async function boot() {
-  try { applySnapshot(createDefaultSnapshot()); restoreState(); renderApp(); }
+  try { applySnapshot(createDefaultSnapshot()); restoreState(); if (pruneOrphanHoldings() > 0) saveState(); renderApp(); }
   catch (error) { console.error('boot render failed, resetting to defaults:', error); applySnapshot(createDefaultSnapshot()); saveState(); renderApp(); }
   await cleanupLegacyCaches();
   void Promise.all([loadFundamentals(), loadReportCalendar()])

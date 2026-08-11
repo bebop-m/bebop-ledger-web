@@ -560,3 +560,28 @@ test('沪市申购代码：识别为独立类别，不当成未识别A股', asyn
   // 兜底名称点明身份
   assert.equal(inferQuoteFromMap('783044.SH', {}).name, '申购代码');
 });
+
+test('启动清扫孤儿持仓：只清 0 股且名下无交易无股息的空壳', async () => {
+  const { pruneOrphanHoldings } = stateModule;
+  applyTestSnapshot({
+    holdings: [
+      { localId: 1, symbol: '733642.SZ', quantity: 0, bucket: 'income' },   // 纯孤儿：该清
+      { localId: 2, symbol: '733642.SH', quantity: 0, bucket: 'income' },   // 有交易：留
+      { localId: 3, symbol: '600519.SH', quantity: 0, bucket: 'core' },     // 有股息记录：留
+      { localId: 4, symbol: '00700.HK', quantity: 100, bucket: 'core' }     // 有基准股：留
+    ],
+    trades: [
+      { id: 't1', date: '2026-08-11', symbol: '733642.SH', side: 'buy', shares: 10, price: 100, currency: 'CNY', fxRate: 1, feeCny: 0, bucket: 'income' }
+    ],
+    dividendLedger: [
+      { sourceId: '600519.SH|2026-06-26|cash', symbol: '600519.SH', exDate: '2026-06-26', payDate: '2026-06-26', amountPerShare: 30, currency: 'CNY', shares: 100, confirmed: true }
+    ]
+  });
+  const pruned = pruneOrphanHoldings();
+  assert.equal(pruned, 1);
+  const symbols = state.holdings.map((h) => h.symbol);
+  assert.ok(!symbols.includes('733642.SZ'), '纯孤儿应被清掉');
+  assert.ok(symbols.includes('733642.SH') && symbols.includes('600519.SH') && symbols.includes('00700.HK'), '其余三类都不该动');
+  assert.ok(state.recordTombstones.holdingSymbols.includes('733642.SZ'), '清掉的要写墓碑跨端同步');
+  assert.equal(pruneOrphanHoldings(), 0, '再跑一遍应无事可做');
+});
