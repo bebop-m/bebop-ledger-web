@@ -296,11 +296,6 @@ export function normalizeSymbol(rawSymbol) {
   return value;
 }
 
-// 可转债/可交换债：沪 11x、深 12x。代码即身份，用于交易抽屉的打新默认值。
-export function isConvertibleBondSymbol(symbol) {
-  return /^1[12]\d{4}\.(SH|SZ)$/.test(normalizeSymbol(symbol));
-}
-
 /* 沪市申购代码（7xxxxx）：转债/新股发行阶段的临时代码，不是上市证券，
    行情系统里查无此码（实测 sh783044 腾讯不返回，而上市代码 sh113044 正常）。
    识别出这一类是为了把「查不到」解释清楚，并指引改用上市代码。深市申购与上市同码，无此问题。 */
