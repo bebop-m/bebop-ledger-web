@@ -9,7 +9,7 @@ import {
   sanitizeDividendLedgerEntry, sanitizeDailySnapshotEntry,
   sanitizeCashFlowEntry, sanitizeYearlyManualEntry, sanitizeTradeEntry,
   sanitizeYearlyHoldingsEntry, sanitizeYearlyArchiveEntry, formatDateLabel, resolveEffectivePayDate,
-  buildDividendSourceId
+  buildDividendSourceId, dividendIgnoreKey
 } from './utils.js';
 
 /* ── Default Quotes (normalized from seed data) ── */
@@ -374,6 +374,26 @@ export function addRecordTombstone(type, id) {
       .concat({ symbol: value, deletedAt: new Date().toISOString() });
   }
   return true;
+}
+
+/* 启动自愈：忽略名单/墓碑里的派息若还躺在台账里（老版本同步合并不应用墓碑，
+   删掉的行会被云端旧快照并回来），启动时清掉。已确认与手动补录的行不动。
+   返回清掉的条数，调用方决定要不要 saveState。 */
+export function pruneIgnoredDividendLedgerRows() {
+  const keys = new Set([
+    ...state.dividendLedgerIgnored,
+    ...state.dividendLedgerTombstones.map((item) => item && item.sourceId)
+  ].map(dividendIgnoreKey).filter(Boolean));
+  if (!keys.size) return 0;
+  const before = state.dividendLedger.length;
+  state.dividendLedger = state.dividendLedger.filter((entry) => {
+    if (!entry) return false;
+    if (entry.confirmed === true || entry.confidence === 'manual') return true;
+    return !keys.has(dividendIgnoreKey(entry.sourceId));
+  });
+  const pruned = before - state.dividendLedger.length;
+  if (pruned > 0) invalidateComputeCache();
+  return pruned;
 }
 
 /* 启动清扫：录交易自动建的持仓在删单后可能残留 0 股空壳（733642 申购代码的教训——

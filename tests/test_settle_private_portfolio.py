@@ -220,3 +220,36 @@ class AuditBoundaryTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PurgeResurrectedLedgerTest(unittest.TestCase):
+    """老版本 App 同步合并不应用墓碑，被删的行会随云端旧快照并回台账（00777 教训）。
+    结算跑批要把这类存量行清掉；已确认/手动补录的行除外。"""
+
+    def make_phantom(self, source_id):
+        entry = make_entry(source_id)
+        entry["confirmed"] = False
+        entry["confidence"] = "estimated"
+        entry["receiptStatus"] = "due"
+        return entry
+
+    def test_resurrected_row_is_purged(self):
+        out, _, _ = settle.settle_portfolio(
+            make_portfolio([self.make_phantom("TEST.HK|2026-06-02|1|HKD")],
+                           ignored=["TEST.HK|2026-06-02|1|HKD"]),
+            make_market(), "2026-07-10")
+        self.assertEqual(out["dividendLedger"], [], "并回来的已删行应被清掉")
+
+    def test_purge_survives_amount_revision(self):
+        out, _, _ = settle.settle_portfolio(
+            make_portfolio([self.make_phantom("TEST.HK|2026-06-02|1.01|HKD")],
+                           ignored=["TEST.HK|2026-06-02|1|HKD"]),
+            make_market(1.01), "2026-07-10")
+        self.assertEqual(out["dividendLedger"], [], "金额修订过的已删行也应被清掉")
+
+    def test_confirmed_row_survives_tombstone(self):
+        out, _, _ = settle.settle_portfolio(
+            make_portfolio([make_entry("TEST.HK|2026-06-02|1|HKD")],
+                           ignored=["TEST.HK|2026-06-02|1|HKD"]),
+            make_market(), "2026-07-10")
+        self.assertEqual(len(out["dividendLedger"]), 1, "已确认的真金到账不能被静默抹掉")

@@ -782,6 +782,28 @@ def settle_portfolio(portfolio, market, today):
             if safe_float(holding.get("shares"), 0.0) > 0:
                 relevant.add(normalize_symbol(holding.get("symbol")))
 
+    # 用户在 App 里手动删掉的派息事件，这里也不能重建，否则删除会被云端结算还原。
+    ignored_ids = {
+        dividend_ignore_key(item)
+        for item in (portfolio.get("dividendLedgerIgnored") or [])
+        if str(item or "").strip()
+    }
+    # 忽略名单只挡新建挡不住并回来的旧行：老版本 App 同步合并不应用墓碑，删掉的行
+    # 会随云端旧快照复活（00777 幻影股息删了又回来的教训）。这里把已在忽略名单里的
+    # 存量行一并清掉；已确认（真金到账）与手动补录的行除外。
+    before_purge = len(portfolio.get("dividendLedger", []))
+    portfolio["dividendLedger"] = [
+        entry for entry in portfolio.get("dividendLedger", [])
+        if not (
+            isinstance(entry, dict)
+            and dividend_ignore_key(entry.get("sourceId")) in ignored_ids
+            and entry.get("confirmed") is not True
+            and entry.get("confidence") != "manual"
+        )
+    ]
+    if len(portfolio["dividendLedger"]) != before_purge:
+        stats["ledgerRemoved"] += before_purge - len(portfolio["dividendLedger"])
+        changed = True
     # 一律用 canonical ID 建索引：台账里可能混有前端写的 "1" 和本脚本写的 "1.0"，
     # 按原字符串查找会认不出同一笔派息，于是又追加一条，造成重复计账。
     existing_by_id = {
@@ -789,12 +811,6 @@ def settle_portfolio(portfolio, market, today):
         for entry in portfolio.get("dividendLedger", []) if isinstance(entry, dict) and entry.get("sourceId")
     }
     existing_ids = set(existing_by_id)
-    # 用户在 App 里手动删掉的派息事件，这里也不能重建，否则删除会被云端结算还原。
-    ignored_ids = {
-        dividend_ignore_key(item)
-        for item in (portfolio.get("dividendLedgerIgnored") or [])
-        if str(item or "").strip()
-    }
     quotes = market.get("quotes") or {}
     now_iso = utc_now_iso()
     for symbol in sorted(relevant):

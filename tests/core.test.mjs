@@ -585,3 +585,33 @@ test('启动清扫孤儿持仓：只清 0 股且名下无交易无股息的空�
   assert.ok(state.recordTombstones.holdingSymbols.includes('733642.SZ'), '清掉的要写墓碑跨端同步');
   assert.equal(pruneOrphanHoldings(), 0, '再跑一遍应无事可做');
 });
+
+test('启动自愈：忽略名单里的派息行被清出台账，已确认/手动的不动', () => {
+  const { pruneIgnoredDividendLedgerRows } = stateModule;
+  const phantom = { sourceId: '00777.HK|2026-06-04|0.5|HKD', symbol: '00777.HK', exDate: '2026-06-04', payDate: '2026-07-31', amountPerShare: 0.5, currency: 'HKD', shares: 25000, fxRate: 0.87, taxRate: 0, grossCny: 10875, netCny: 10875, confirmed: false, confidence: 'estimated' };
+  const confirmedRow = { sourceId: 'TEST.HK|2026-05-01|1|HKD', symbol: 'TEST.HK', exDate: '2026-05-01', payDate: '2026-05-20', amountPerShare: 1, currency: 'HKD', shares: 10, fxRate: 1, taxRate: 0, grossCny: 10, netCny: 10, confirmed: true, confidence: 'manual', receivedDate: '2026-05-20' };
+  const unrelated = { sourceId: 'TEST.HK|2026-06-15|2|HKD', symbol: 'TEST.HK', exDate: '2026-06-15', payDate: '2026-07-01', amountPerShare: 2, currency: 'HKD', shares: 10, fxRate: 1, taxRate: 0, grossCny: 20, netCny: 20, confirmed: false, confidence: 'estimated' };
+  applyTestSnapshot({
+    dividendLedger: [phantom, confirmedRow, unrelated],
+    // 金额被修订过（0.5 vs 0.55）也要能挡住：忽略键只取 标的+除息日
+    dividendLedgerIgnored: ['00777.HK|2026-06-04|0.55|HKD', 'TEST.HK|2026-05-01|1|HKD']
+  });
+  const pruned = pruneIgnoredDividendLedgerRows();
+  assert.equal(pruned, 1, '只清未确认的幻影行');
+  const ids = state.dividendLedger.map((e) => e.sourceId);
+  assert.ok(!ids.includes('00777.HK|2026-06-04|0.5|HKD'), '幻影行应被清掉');
+  assert.ok(ids.includes('TEST.HK|2026-05-01|1|HKD'), '已确认的真金到账不能动');
+  assert.ok(ids.includes('TEST.HK|2026-06-15|2|HKD'), '无关行不能动');
+});
+
+test('云同步合并应用股息墓碑：本地删掉的行不被云端旧快照复活', async () => {
+  const { mergePortfolioSnapshots } = await import('../src/sync.js');
+  const phantom = { sourceId: '00777.HK|2026-06-04|0.5|HKD', symbol: '00777.HK', exDate: '2026-06-04', payDate: '2026-07-31', amountPerShare: 0.5, currency: 'HKD', shares: 25000, fxRate: 0.87, taxRate: 0, grossCny: 10875, netCny: 10875, confirmed: false, confidence: 'estimated', updatedAt: '2026-07-31T05:04:38Z' };
+  const remote = { type: 'portfolio-snapshot', version: 5, holdings: [], dividendLedger: [phantom], trades: [], cashFlows: [], dividendLedgerIgnored: [], dividendLedgerTombstones: [] };
+  const local = { type: 'portfolio-snapshot', version: 5, holdings: [], dividendLedger: [], trades: [], cashFlows: [],
+    dividendLedgerIgnored: ['00777.HK|2026-06-04|0.5|HKD'],
+    dividendLedgerTombstones: [{ sourceId: '00777.HK|2026-06-04|0.5|HKD', incomeDate: '2026-07-31' }] };
+  const merged = mergePortfolioSnapshots(remote, local);
+  assert.equal(merged.dividendLedger.length, 0, '云端旧快照里的已删行不得进合并结果');
+  assert.ok(merged.dividendLedgerIgnored.includes('00777.HK|2026-06-04|0.5|HKD'), '忽略名单要保留');
+});

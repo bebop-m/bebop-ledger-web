@@ -1,6 +1,6 @@
 import { state, refs, mutable, bootstrap, saveState, applySnapshot, showToast, showConfirm, buildPortfolioSnapshot, DEFAULT_QUOTES } from './state.js';
 import { safeNumber, normalizeSymbol, mergeQuotes } from './utils.js';
-import { canonicalDividendSourceId } from './utils.js';
+import { canonicalDividendSourceId, dividendIgnoreKey } from './utils.js';
 import { computeHoldings, normalizeEconomicDividendEntries } from './compute.js';
 import {
   GITHUB_TOKEN_STORAGE_KEY, GITHUB_PRIVATE_PORTFOLIO_CONTENTS_API, GITHUB_WATCHLIST_CONTENTS_API,
@@ -175,11 +175,32 @@ export function mergePortfolioSnapshots(remotePayload, localPayload) {
         return Boolean((Array.isArray(local.holdings) ? local.holdings : [])
           .find((item) => normalizeSymbol(item && item.symbol) === symbol && recordTimestamp(item)));
       });
+  /* 台账合并必须应用删除墓碑——交易、出入金、持仓都过滤了各自的墓碑，唯独这里
+     曾经只合并不应用：本地删掉的派息，云端旧快照里那行会在并集里原样复活
+     （00777 除息后买入的幻影股息删了又回来的根因）。已确认（真金到账）与
+     手动补录的行不受墓碑影响，避免跨设备把确认过的钱静默抹掉。 */
+  const mergedIgnored = Array.from(new Set([
+    ...(Array.isArray(remote.dividendLedgerIgnored) ? remote.dividendLedgerIgnored : []),
+    ...(Array.isArray(local.dividendLedgerIgnored) ? local.dividendLedgerIgnored : [])
+  ].map((entry) => String(entry || '').trim()).filter(Boolean)));
+  const mergedLedgerTombstones = mergeByKey(
+    remote.dividendLedgerTombstones,
+    local.dividendLedgerTombstones,
+    (entry) => canonicalDividendSourceId(entry && entry.sourceId)
+  );
+  const ignoredDividendKeys = new Set([
+    ...mergedIgnored,
+    ...mergedLedgerTombstones.map((entry) => entry && entry.sourceId)
+  ].map(dividendIgnoreKey).filter(Boolean));
   const dividendLedger = normalizeEconomicDividendEntries(mergeByKey(
     remote.dividendLedger,
     local.dividendLedger,
     (entry) => canonicalDividendSourceId(entry && entry.sourceId)
-  ));
+  )).filter((entry) => {
+    if (!entry) return false;
+    if (entry.confirmed === true || entry.confidence === 'manual') return true;
+    return !ignoredDividendKeys.has(dividendIgnoreKey(entry.sourceId));
+  });
   return {
     ...remote,
     ...local,
@@ -194,15 +215,8 @@ export function mergePortfolioSnapshots(remotePayload, localPayload) {
     yearlyManual: mergeByKey(remote.yearlyManual, local.yearlyManual, (entry) => String(entry && entry.year || '')),
     yearlyArchives: mergeByKey(remote.yearlyArchives, local.yearlyArchives, (entry) => String(entry && entry.year || '')),
     yearlyHoldings: mergeByKey(remote.yearlyHoldings, local.yearlyHoldings, (entry) => String(entry && entry.year || '')),
-    dividendLedgerIgnored: Array.from(new Set([
-      ...(Array.isArray(remote.dividendLedgerIgnored) ? remote.dividendLedgerIgnored : []),
-      ...(Array.isArray(local.dividendLedgerIgnored) ? local.dividendLedgerIgnored : [])
-    ].map((entry) => String(entry || '').trim()).filter(Boolean))),
-    dividendLedgerTombstones: mergeByKey(
-      remote.dividendLedgerTombstones,
-      local.dividendLedgerTombstones,
-      (entry) => canonicalDividendSourceId(entry && entry.sourceId)
-    ),
+    dividendLedgerIgnored: mergedIgnored,
+    dividendLedgerTombstones: mergedLedgerTombstones,
     recordTombstones: tombstones
   };
 }
