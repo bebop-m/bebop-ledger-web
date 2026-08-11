@@ -151,6 +151,7 @@ function mergeTombstones(remoteValue, localValue) {
   return {
     cashFlowIds: union('cashFlowIds'),
     tradeIds: union('tradeIds'),
+    ipoRoundIds: union('ipoRoundIds'),
     holdingSymbols: union('holdingSymbols', normalizeSymbol),
     holdingDeletes
   };
@@ -164,6 +165,7 @@ export function mergePortfolioSnapshots(remotePayload, localPayload) {
   const holdingDeleteBySymbol = new Map(tombstones.holdingDeletes.map((entry) => [entry.symbol, entry]));
   const cashTombstones = new Set(tombstones.cashFlowIds);
   const tradeTombstones = new Set(tombstones.tradeIds);
+  const ipoTombstones = new Set(tombstones.ipoRoundIds);
   const holdings = local.holdings && local.holdings.length === 0
     ? []
     : mergeByKey(remote.holdings, local.holdings, (entry) => normalizeSymbol(entry && entry.symbol))
@@ -212,6 +214,8 @@ export function mergePortfolioSnapshots(remotePayload, localPayload) {
       .filter((entry) => !cashTombstones.has(String(entry && entry.id || ''))),
     trades: mergeByKey(remote.trades, local.trades, (entry) => String(entry && entry.id || ''))
       .filter((entry) => !tradeTombstones.has(String(entry && entry.id || ''))),
+    ipoRounds: mergeByKey(remote.ipoRounds, local.ipoRounds, (entry) => String(entry && entry.id || ''))
+      .filter((entry) => !ipoTombstones.has(String(entry && entry.id || ''))),
     yearlyManual: mergeByKey(remote.yearlyManual, local.yearlyManual, (entry) => String(entry && entry.year || '')),
     yearlyArchives: mergeByKey(remote.yearlyArchives, local.yearlyArchives, (entry) => String(entry && entry.year || '')),
     yearlyHoldings: mergeByKey(remote.yearlyHoldings, local.yearlyHoldings, (entry) => String(entry && entry.year || '')),

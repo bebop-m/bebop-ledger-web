@@ -9,7 +9,7 @@ import {
   sanitizeDividendLedgerEntry, sanitizeDailySnapshotEntry,
   sanitizeCashFlowEntry, sanitizeYearlyManualEntry, sanitizeTradeEntry,
   sanitizeYearlyHoldingsEntry, sanitizeYearlyArchiveEntry, formatDateLabel, resolveEffectivePayDate,
-  buildDividendSourceId, dividendIgnoreKey
+  buildDividendSourceId, dividendIgnoreKey, sanitizeIpoRoundEntry
 } from './utils.js';
 
 /* ── Default Quotes (normalized from seed data) ── */
@@ -47,6 +47,8 @@ export const state = {
   dailySnapshots: [],
   cashFlows: [],
   trades: [],
+  /* 打新独立台账：与 trades 平行，不进持仓、不碰行情。一轮 = 一次中签的进出。 */
+  ipoRounds: [],
   yearlyManual: [],
   yearlyArchives: [],
   yearlyHoldings: [],
@@ -54,7 +56,7 @@ export const state = {
      不记下来的话下次结算会照原样再长回来。客户端与 Actions 结算脚本都要认这份名单。 */
   dividendLedgerIgnored: [],
   dividendLedgerTombstones: [],
-  recordTombstones: { cashFlowIds: [], tradeIds: [], holdingSymbols: [], holdingDeletes: [] },
+  recordTombstones: { cashFlowIds: [], tradeIds: [], ipoRoundIds: [], holdingSymbols: [], holdingDeletes: [] },
   lastUpdatedAt: '',
   modal: null,
   modalPayload: null,
@@ -76,7 +78,7 @@ export const mutable = {
   // 年度回顾的「其余 N 项」是否展开。只活在本次会话里，切年份时归零。
   annualHoldingsExpanded: false,
   // 资金与交易页三段流水的展开状态。同样只活在本次会话里，不写进快照。
-  recordsExpanded: { trade: false, cash: false, dividend: false },
+  recordsExpanded: { trade: false, ipo: false, cash: false, dividend: false },
   // 股息日历的回看年份：从年度回顾点进来时设为该年，正常导航清空（null = 当年实时）。
   dividendViewYear: null
 };
@@ -272,12 +274,13 @@ export function createDefaultSnapshot() {
     dailySnapshots: [],
     cashFlows: [],
     trades: [],
+    ipoRounds: [],
     yearlyManual: [],
     yearlyArchives: [],
     yearlyHoldings: [],
     dividendLedgerIgnored: [],
     dividendLedgerTombstones: [],
-    recordTombstones: { cashFlowIds: [], tradeIds: [], holdingSymbols: [], holdingDeletes: [] },
+    recordTombstones: { cashFlowIds: [], tradeIds: [], ipoRoundIds: [], holdingSymbols: [], holdingDeletes: [] },
     lastUpdatedAt: ''
   };
 }
@@ -350,6 +353,7 @@ function normalizeRecordTombstones(value) {
   return {
     cashFlowIds: normalize(source.cashFlowIds),
     tradeIds: normalize(source.tradeIds),
+    ipoRoundIds: normalize(source.ipoRoundIds),
     holdingSymbols: normalize(source.holdingSymbols).map(normalizeSymbol).filter(Boolean),
     holdingDeletes: Array.from((Array.isArray(source.holdingDeletes) ? source.holdingDeletes : [])
       .reduce((map, item) => {
@@ -363,8 +367,15 @@ function normalizeRecordTombstones(value) {
   };
 }
 
+function getTombstoneKey(type) {
+  if (type === 'trade') return 'tradeIds';
+  if (type === 'ipoRound') return 'ipoRoundIds';
+  if (type === 'holding') return 'holdingSymbols';
+  return 'cashFlowIds';
+}
+
 export function addRecordTombstone(type, id) {
-  const key = type === 'trade' ? 'tradeIds' : type === 'holding' ? 'holdingSymbols' : 'cashFlowIds';
+  const key = getTombstoneKey(type);
   const value = type === 'holding' ? normalizeSymbol(id) : String(id || '').trim();
   if (!value) return false;
   if (!state.recordTombstones[key].includes(value)) state.recordTombstones[key].push(value);
@@ -412,8 +423,55 @@ export function pruneOrphanHoldings() {
   return orphans.length;
 }
 
+/* 一次性迁移：把旧口径下打了 isIpo 标记的 trades 转成打新台账。
+   现金不动——每条腿的 cashTrackedCny 原样平移，迁移前后对现金余额的影响完全相等。
+   原 trade 删除并写墓碑，否则云端旧快照会把它并回来、同一笔钱记两遍。
+   没有买入腿的孤立卖出不迁（数据异常，留在 trades 里让用户自己看见）。
+   幂等：跑完就没有 isIpo trades 了，第二次调用直接返回 0。 */
+export function migrateIpoTradesToRounds() {
+  const legacy = state.trades.filter((trade) => trade && trade.isIpo === true);
+  if (!legacy.length) return 0;
+  const bySymbol = new Map();
+  legacy.forEach((trade) => {
+    if (!bySymbol.has(trade.symbol)) bySymbol.set(trade.symbol, []);
+    bySymbol.get(trade.symbol).push(trade);
+  });
+  const migratedTradeIds = new Set();
+  const rounds = [];
+  bySymbol.forEach((entries, symbol) => {
+    const sorted = entries.slice().sort((a, b) => `${a.date}|${a.id}`.localeCompare(`${b.date}|${b.id}`));
+    const buy = sorted.find((trade) => trade.side !== 'sell');
+    if (!buy) return;
+    const sells = sorted.filter((trade) => trade.side === 'sell' && trade !== buy);
+    sorted.forEach((trade) => migratedTradeIds.add(trade.id));
+    rounds.push(sanitizeIpoRoundEntry({
+      id: `ipo_${buy.id}`,
+      // 备注是用户当时写的中文名（「卖出打新长鑫科技」这类），比代码可读；没有就退回代码
+      name: (buy.note || '').trim() || symbol,
+      buyDate: buy.date,
+      shares: buy.shares,
+      costPerShare: buy.price,
+      sells: sells.map((trade) => ({
+        id: `ips_${trade.id}`, date: trade.date, shares: trade.shares, price: trade.price,
+        cashTrackedCny: trade.cashTrackedCny
+      })),
+      cashTrackedCny: buy.cashTrackedCny,
+      note: '',
+      createdAt: buy.createdAt || buy.date,
+      updatedAt: new Date().toISOString()
+    }, state.ipoRounds.length + rounds.length + 1));
+  });
+  const usable = rounds.filter(Boolean);
+  if (!usable.length) return 0;
+  invalidateComputeCache();
+  state.ipoRounds = state.ipoRounds.concat(usable);
+  state.trades = state.trades.filter((trade) => !migratedTradeIds.has(trade.id));
+  migratedTradeIds.forEach((id) => addRecordTombstone('trade', id));
+  return usable.length;
+}
+
 export function removeRecordTombstone(type, id) {
-  const key = type === 'trade' ? 'tradeIds' : type === 'holding' ? 'holdingSymbols' : 'cashFlowIds';
+  const key = getTombstoneKey(type);
   const value = type === 'holding' ? normalizeSymbol(id) : String(id || '').trim();
   if (!value) return false;
   const before = state.recordTombstones[key].length;
@@ -598,6 +656,9 @@ export function applySnapshot(snapshot) {
   state.trades = Array.isArray(snapshot && snapshot.trades)
     ? snapshot.trades.map(sanitizeTradeEntry).filter(Boolean)
     : [];
+  state.ipoRounds = Array.isArray(snapshot && snapshot.ipoRounds)
+    ? snapshot.ipoRounds.map(sanitizeIpoRoundEntry).filter(Boolean)
+    : [];
   const legacyOpeningDate = formatDateLabel(snapshot && snapshot.openingDate);
   state.positionOpeningDate = formatDateLabel(snapshot && (snapshot.positionOpeningDate || snapshot.openingDate));
   // 兼容一次误把“当前现金日期”设到未来的旧数据：持仓交易起点不得因此越过已有交易。
@@ -647,7 +708,8 @@ export function getPersistedSnapshot() {
     positionOpeningDate: state.positionOpeningDate,
     dividendLedger: state.dividendLedger,
     dailySnapshots: state.dailySnapshots, cashFlows: state.cashFlows,
-    trades: state.trades, yearlyManual: state.yearlyManual, yearlyArchives: state.yearlyArchives,
+    trades: state.trades, ipoRounds: state.ipoRounds,
+    yearlyManual: state.yearlyManual, yearlyArchives: state.yearlyArchives,
     yearlyHoldings: state.yearlyHoldings,
     dividendLedgerIgnored: state.dividendLedgerIgnored,
     dividendLedgerTombstones: state.dividendLedgerTombstones,
@@ -720,6 +782,9 @@ export function buildPortfolioSnapshot() {
       : [],
     trades: Array.isArray(persisted.trades)
       ? persisted.trades.map(sanitizeTradeEntry).filter(Boolean)
+      : [],
+    ipoRounds: Array.isArray(persisted.ipoRounds)
+      ? persisted.ipoRounds.map(sanitizeIpoRoundEntry).filter(Boolean)
       : [],
     yearlyManual: Array.isArray(persisted.yearlyManual)
       ? persisted.yearlyManual.map(sanitizeYearlyManualEntry).filter(Boolean)

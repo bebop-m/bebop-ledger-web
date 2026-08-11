@@ -253,3 +253,32 @@ class PurgeResurrectedLedgerTest(unittest.TestCase):
                            ignored=["TEST.HK|2026-06-02|1|HKD"]),
             make_market(), "2026-07-10")
         self.assertEqual(len(out["dividendLedger"]), 1, "已确认的真金到账不能被静默抹掉")
+
+
+class IpoRoundsPassthroughTest(unittest.TestCase):
+    """打新台账是纯客户端数据，结算脚本不加工但必须原样带回——
+    白名单漏一个键就等于把整张台账静默删掉。"""
+
+    def make_with_ipo(self):
+        portfolio = make_portfolio()
+        portfolio["ipoRounds"] = [{
+            "id": "ipo_1", "name": "长鑫科技", "buyDate": "2026-07-01",
+            "shares": 10, "costPerShare": 100,
+            "sells": [{"id": "ips_1", "date": "2026-07-08", "shares": 10, "price": 130}],
+        }]
+        portfolio["recordTombstones"] = {"ipoRoundIds": ["ipo_gone"]}
+        return portfolio
+
+    def test_rounds_survive_settlement(self):
+        out, _, _ = settle.settle_portfolio(self.make_with_ipo(), make_market(), "2026-07-10")
+        self.assertEqual(len(out["ipoRounds"]), 1)
+        self.assertEqual(out["ipoRounds"][0]["name"], "长鑫科技")
+        self.assertEqual(len(out["ipoRounds"][0]["sells"]), 1)
+
+    def test_ipo_tombstones_survive_settlement(self):
+        out, _, _ = settle.settle_portfolio(self.make_with_ipo(), make_market(), "2026-07-10")
+        self.assertIn("ipo_gone", out["recordTombstones"]["ipoRoundIds"])
+
+    def test_missing_key_defaults_to_empty_list(self):
+        out, _, _ = settle.settle_portfolio(make_portfolio(), make_market(), "2026-07-10")
+        self.assertEqual(out["ipoRounds"], [])

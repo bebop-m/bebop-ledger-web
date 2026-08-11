@@ -615,3 +615,65 @@ test('云同步合并应用股息墓碑：本地删掉的行不被云端旧快�
   assert.equal(merged.dividendLedger.length, 0, '云端旧快照里的已删行不得进合并结果');
   assert.ok(merged.dividendLedgerIgnored.includes('00777.HK|2026-06-04|0.5|HKD'), '忽略名单要保留');
 });
+
+test('打新迁移：旧 isIpo 交易转成独立台账，现金与股数不受影响', () => {
+  const { migrateIpoTradesToRounds } = stateModule;
+  const { computeIpoRounds } = computeModule;
+  applyTestSnapshot({
+    holdings: [{ localId: 1, symbol: '733642.SH', quantity: 0, bucket: 'income' }],
+    currentCashCny: 50000,
+    currentCashAsOfDate: '2026-01-01',
+    trades: [
+      // 用户当时录的打新买入：备注是中文名，迁移后应成为台账里的名称
+      { id: 'tr_a', date: '2026-08-11', symbol: '733642.SH', side: 'buy', shares: 10, price: 100, currency: 'CNY', fxRate: 1, feeCny: 0, bucket: 'income', isIpo: true, note: '长鑫科技', cashTrackedCny: -1000 },
+      // 普通交易不该被卷进来
+      { id: 'tr_b', date: '2026-07-02', symbol: '600519.SH', side: 'buy', shares: 10, price: 1500, currency: 'CNY', fxRate: 1, feeCny: 0, bucket: 'core', cashTrackedCny: -15000 }
+    ]
+  });
+  const cashBefore = state.currentCashCny;
+  assert.equal(migrateIpoTradesToRounds(), 1);
+  assert.equal(state.currentCashCny, cashBefore, '迁移不得改动现金余额（cashTrackedCny 原样平移）');
+  assert.equal(state.trades.length, 1, '打新那笔应从 trades 里移走');
+  assert.equal(state.trades[0].id, 'tr_b', '普通交易原样保留');
+  assert.ok(state.recordTombstones.tradeIds.includes('tr_a'), '原交易要写墓碑，否则云端旧快照会把它并回来');
+  const rounds = computeIpoRounds().rounds;
+  assert.equal(rounds.length, 1);
+  assert.equal(rounds[0].name, '长鑫科技');
+  assert.equal(rounds[0].shares, 10);
+  assert.equal(rounds[0].costPerShare, 100);
+  assert.equal(rounds[0].remainingCostCny, 1000, '未卖出前整轮都在途');
+  assert.equal(rounds[0].cashTrackedCny, -1000);
+  assert.equal(migrateIpoTradesToRounds(), 0, '迁移必须幂等');
+});
+
+test('打新迁移：买入与卖出成对时合成一轮，收益按卖出算', () => {
+  const { migrateIpoTradesToRounds } = stateModule;
+  const { computeIpoRounds, computeIpoYearSummary } = computeModule;
+  applyTestSnapshot({
+    holdings: [],
+    trades: [
+      { id: 'tr_buy', date: '2026-08-03', symbol: '113050.SH', side: 'buy', shares: 10, price: 100, currency: 'CNY', fxRate: 1, feeCny: 0, bucket: 'income', isIpo: true, note: '南银转债' },
+      { id: 'tr_sell', date: '2026-08-06', symbol: '113050.SH', side: 'sell', shares: 10, price: 130, currency: 'CNY', fxRate: 1, feeCny: 0, bucket: 'income', isIpo: true }
+    ]
+  });
+  assert.equal(migrateIpoTradesToRounds(), 1);
+  const round = computeIpoRounds().rounds[0];
+  assert.equal(round.sells.length, 1);
+  assert.equal(round.remainingShares, 0, '卖光即一轮结束');
+  assert.equal(round.isOpen, false);
+  assert.equal(round.realizedPnlCny, 300);
+  assert.equal(computeIpoYearSummary(2026).realizedPnlCny, 300);
+  assert.equal(computeIpoRounds().inTransitCostCny, 0, '结束的轮不再计在途');
+});
+
+test('云同步合并打新台账：墓碑生效，不被云端旧快照复活', async () => {
+  const { mergePortfolioSnapshots } = await import('../src/sync.js');
+  const round = { id: 'ipo_1', name: '长鑫科技', buyDate: '2026-08-11', shares: 10, costPerShare: 100, sells: [], updatedAt: '2026-08-11T00:00:00Z' };
+  const kept = { id: 'ipo_2', name: '某某转债', buyDate: '2026-08-01', shares: 10, costPerShare: 100, sells: [], updatedAt: '2026-08-01T00:00:00Z' };
+  const remote = { type: 'portfolio-snapshot', version: 5, holdings: [], trades: [], cashFlows: [], dividendLedger: [], ipoRounds: [round, kept], recordTombstones: {} };
+  const local = { type: 'portfolio-snapshot', version: 5, holdings: [], trades: [], cashFlows: [], dividendLedger: [], ipoRounds: [kept],
+    recordTombstones: { ipoRoundIds: ['ipo_1'] } };
+  const merged = mergePortfolioSnapshots(remote, local);
+  assert.deepEqual(merged.ipoRounds.map((item) => item.id), ['ipo_2'], '删掉的那轮不得被并回来');
+  assert.ok(merged.recordTombstones.ipoRoundIds.includes('ipo_1'), '墓碑要带进合并结果');
+});

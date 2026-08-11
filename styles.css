@@ -2994,47 +2994,7 @@ body[data-active-page="holdings"] .holdings-structure .bucket strong {
   font-weight: 700;
   line-height: var(--fl-20);
 }
-body[data-active-page="holdings"] .holdings-structure .bucket.is-active { color: var(--ink); }/* 选中记号：4px 金点下划。两个仓位都留位，只有选中的那颗着色，切换时不跳行 */
-
-body[data-active-page="holdings"] .holdings-structure .bucket-dot {
-  display: block;
-  width: var(--fl-4);
-  height: var(--fl-4);
-  margin: var(--fl-5) auto 0;
-  border-radius: 50%;
-  background: transparent;
-}
-body[data-active-page="holdings"] .holdings-structure .bucket.is-active .bucket-dot { background: var(--gold); }
-body[data-active-page="holdings"] .holdings-structure .bucket-detail {
-  display: block;
-  margin: var(--fl-14) 0 0;
-  padding: 0;
-  color: var(--muted);
-  font-size: var(--fl-11);
-  font-weight: 600;
-  line-height: var(--fl-15);
-  text-align: center;
-}
-body[data-active-page="holdings"] .holdings-structure .portfolio-line {
-  display: block;
-  margin: var(--fl-18) 0 0;
-  padding: 0;
-  color: var(--muted);
-  font-size: var(--fl-11);
-  font-weight: 600;
-  line-height: var(--fl-15);
-  text-align: center;
-}
-body[data-active-page="holdings"] .holdings-structure .bucket-detail strong,
-body[data-active-page="holdings"] .holdings-structure .portfolio-line strong {
-  color: var(--ink);
-  font-weight: 700;
-}/* 组合税后年化是股息数字，用金色——全页金色只给股息与选中记号 */
-
-body[data-active-page="holdings"] .holdings-structure .portfolio-line b {
-  color: var(--gold);
-  font-weight: 700;
-}/* 逐股节标行：左「逐股」，右单文字排序键 */
+/* 逐股节标行：左「逐股」，右单文字排序键 */
 
 
 body[data-active-page="holdings"] .holdings-list-head {
@@ -6720,15 +6680,8 @@ body[data-active-page="dividends"] .divi-ym.has-pay > b { background: transparen
 body[data-active-page="dividends"] .divi-ym.is-current > b { display: block; background: var(--gold); }
 
 /* ══════════════ 信息收敛 2026-08 · 02-持仓 + 03-详情 + 04-诊断 ══════════════ */
-/* hero 让位仓位结构：双仓大字、明细行瘦身、市值随注行 */
+/* hero 让位仓位结构：双仓大字（明细与市值随注行已随切换态退役，2026-08） */
 body[data-active-page="holdings"] .bucket strong { font-size: var(--fl-26); }
-body[data-active-page="holdings"] .mv-line {
-  display: block; margin: var(--fl-18) 0 0; padding: 0; text-align: center;
-  color: var(--muted); font-size: var(--fl-11); font-weight: 600; line-height: var(--fl-16);
-}
-body[data-active-page="holdings"] .mv-line strong { color: var(--ink); font-weight: 700; }
-body[data-active-page="holdings"] .mv-line strong.is-market-up { color: var(--up); }
-body[data-active-page="holdings"] .mv-line strong.is-market-down { color: var(--down); }
 /* 排序键统一金色高亮：按钮与每行排序键值同色（金=选中记号既有语义） */
 body[data-active-page="holdings"] .holdings-sort-action { color: var(--gold); font-weight: 800; }
 body[data-active-page="holdings"] .stock-side { display: block; flex: none; text-align: right; }
@@ -6763,7 +6716,6 @@ body[data-active-page="annual"] .ann-hero-sub.is-gain { color: var(--up); }
 body[data-active-page="annual"] .ann-hero-sub.is-loss { color: var(--down); }
 /* 单屏微调：8 行逐股后页高 946>932，行距与随注间距各收一档 */
 body[data-active-page="holdings"] #stockList { gap: var(--fl-16); }
-body[data-active-page="holdings"] .mv-line { margin-top: var(--fl-14); }
 
 /* ══════════════ 真机反馈 2026-08-06 第二轮 ══════════════ */
 /* 股息日历：在途行高亮（金额转金、加重）+ 上下各让一档间距 */
@@ -6794,13 +6746,9 @@ body[data-active-page="holdings"] .stock-name .stock-price {
 body[data-active-page="annual"] .ann-metrics strong { white-space: nowrap; }
 
 /* ══ 复盘修正 2026-08-06：双仓 hero 只改了字号没重排配件 ══ */
-/* 金点改内联在标签字后（原「数字下方 5px」与 34px 大字相撞）；标签随 hero 等比放大 */
+/* 标签随 hero 等比放大（金点已随切换态退役，2026-08） */
 body[data-active-page="holdings"] .bucket-row--hero .bucket-label {
   display: block; font-size: var(--fl-13); font-weight: 700; letter-spacing: var(--fl-2); line-height: var(--fl-18);
-}
-body[data-active-page="holdings"] .holdings-structure .bucket-dot {
-  display: inline-block; width: var(--fl-4); height: var(--fl-4);
-  margin: 0 0 0 var(--fl-5); border-radius: 50%; background: transparent; vertical-align: var(--fl-2);
 }
 body[data-active-page="holdings"] .bucket-row--hero .bucket strong { margin-top: var(--fl-5); }
 /* 占比数字：迁出 .stock-sub 时丢了原字号字重，这里补回并按新语境加重 */
@@ -6815,3 +6763,39 @@ body[data-active-page="home"] .home-todo .home-todo-line {
   border: none; border-radius: 0; background: none; box-shadow: none;
   color: inherit; font: inherit; letter-spacing: inherit; text-align: inherit;
 }
+
+/* ══════════════ 打新台账 + 持仓按仓分组 2026-08-12 ══════════════ */
+/* 逐股列表分两段：hero 宣告钱分两种，列表就长成那个样子。
+   节标是 stockList 的 flex 子项，段间距靠 is-later 单独拉开。 */
+body[data-active-page="holdings"] #stockList .sec-head { margin: 0; }
+body[data-active-page="holdings"] #stockList .sec-head.is-later { margin-top: var(--fl-12); }
+/* 打新在途行：与逐股同形制，右列改报成本（它没有行情，报市值会是假数） */
+body[data-active-page="holdings"] .ipo-card {
+  display: block; width: 100%; text-align: left;
+  border: none; background: none; font: inherit; color: inherit;
+}
+body[data-active-page="holdings"] .ipo-card .weight { color: var(--hint); font-weight: 700; }
+
+/* 打新抽屉：在途轮列在最上，点一行去卖出 */
+.zen-sheet .zen-ipo-open { display: block; margin: var(--fl-6) 0 var(--fl-4); }
+.zen-sheet .zen-ipo-row {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--fl-10);
+  width: 100%; margin: var(--fl-10) 0 0; padding: 0;
+  border: none; background: none; font: inherit; text-align: left;
+}
+.zen-sheet .zen-ipo-row-main { display: block; }
+.zen-sheet .zen-ipo-row-main > strong {
+  display: block; color: var(--ink); font-size: var(--fl-13); font-weight: 700; line-height: var(--fl-18);
+}
+.zen-sheet .zen-ipo-row-main > small {
+  display: block; margin: var(--fl-2) 0 0; color: var(--hint);
+  font-size: var(--fl-10p5); font-weight: 600; line-height: var(--fl-15);
+}
+.zen-sheet .zen-ipo-row-go { color: var(--gold); font-size: var(--fl-11); font-weight: 700; white-space: nowrap; }
+.zen-sheet .zen-form-hint .is-gain { color: var(--up); }
+.zen-sheet .zen-form-hint .is-loss { color: var(--down); }
+
+/* 资金与交易页：打新卖出行在现金影响后带这一笔的收益 */
+body[data-active-page="records"] .rec-row-pnl { margin-left: var(--fl-6); font-weight: 700; }
+body[data-active-page="records"] .rec-row-pnl.is-gain { color: var(--up); }
+body[data-active-page="records"] .rec-row-pnl.is-loss { color: var(--down); }

@@ -583,6 +583,43 @@ export function sanitizeTradeEntry(item, index = 0) {
   };
 }
 
+/* 打新一轮 = 一次中签的完整生命周期：缴款买入一次，上市后分若干笔卖出。
+   名称是用户手填的纯文本，刻意不做代码识别——申购代码无行情、上市后又换码，
+   走识别侧只会一路带毛刺（2026-08 裁决）。剩余股数归零即一轮结束。 */
+export function sanitizeIpoRoundEntry(item, index = 0) {
+  if (!item || typeof item !== 'object') return null;
+  const name = typeof item.name === 'string' ? item.name.trim() : '';
+  const buyDate = formatDateLabel(item.buyDate || item.date);
+  const shares = Math.max(0, roundTo(safeNumber(item.shares, 0), 6));
+  const costPerShare = Math.max(0, roundTo(safeNumber(item.costPerShare, 0), 6));
+  if (!name || !buyDate || shares <= 0 || costPerShare <= 0) return null;
+  const sells = (Array.isArray(item.sells) ? item.sells : [])
+    .map((sell, sellIndex) => {
+      if (!sell || typeof sell !== 'object') return null;
+      const date = formatDateLabel(sell.date);
+      const sellShares = Math.max(0, roundTo(safeNumber(sell.shares, 0), 6));
+      const price = Math.max(0, roundTo(safeNumber(sell.price, 0), 6));
+      if (!date || sellShares <= 0 || price <= 0) return null;
+      return {
+        id: typeof sell.id === 'string' && sell.id.trim() ? sell.id.trim() : `ips_${index + 1}_${sellIndex + 1}`,
+        date, shares: sellShares, price,
+        cashTrackedCny: sell.cashTrackedCny === null || sell.cashTrackedCny === undefined
+          ? null : roundMoney(sell.cashTrackedCny)
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => `${a.date}|${a.id}`.localeCompare(`${b.date}|${b.id}`));
+  return {
+    id: typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `ipo_${index + 1}`,
+    name, buyDate, shares, costPerShare, sells,
+    cashTrackedCny: item.cashTrackedCny === null || item.cashTrackedCny === undefined
+      ? null : roundMoney(item.cashTrackedCny),
+    note: typeof item.note === 'string' ? item.note : '',
+    createdAt: typeof item.createdAt === 'string' ? item.createdAt : '',
+    updatedAt: typeof item.updatedAt === 'string' ? item.updatedAt : ''
+  };
+}
+
 /* 年度持仓快照：每年一条，记录该年（年末或最近结算日）的逐只持仓。
    当年条目随结算持续覆盖，跨年后自然冻结；旧版按当前价格倒填的 backfill 条目会在迁移时移除。 */
 export function sanitizeYearlyHoldingsEntry(item) {

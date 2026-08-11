@@ -284,14 +284,17 @@ def normalize_snapshot(snapshot):
     result["type"] = "portfolio-snapshot"
     result["version"] = max(5, int(safe_float(result.get("version"), 5)))
     result["holdings"] = [h for h in (normalize_holding(item, i) for i, item in enumerate(holdings)) if h]
+    # ipoRounds 是打新独立台账（前端 2026-08 起写入）。这份白名单是「跑批后写回私库」的
+    # 全部内容，漏一个键就等于把它静默删掉——加字段时务必同步这里与 recordTombstones。
     for key in ("dividendLedger", "dailySnapshots", "cashFlows", "yearlyManual", "yearlyArchives",
-                "yearlyHoldings", "trades", "dividendLedgerIgnored", "dividendLedgerTombstones"):
+                "yearlyHoldings", "trades", "ipoRounds", "dividendLedgerIgnored", "dividendLedgerTombstones"):
         if not isinstance(result.get(key), list):
             result[key] = []
     tombstones = result.get("recordTombstones") if isinstance(result.get("recordTombstones"), dict) else {}
     result["recordTombstones"] = {
         "cashFlowIds": list(dict.fromkeys(str(item).strip() for item in tombstones.get("cashFlowIds", []) if str(item).strip())),
         "tradeIds": list(dict.fromkeys(str(item).strip() for item in tombstones.get("tradeIds", []) if str(item).strip())),
+        "ipoRoundIds": list(dict.fromkeys(str(item).strip() for item in tombstones.get("ipoRoundIds", []) if str(item).strip())),
         "holdingSymbols": list(dict.fromkeys(normalize_symbol(item) for item in tombstones.get("holdingSymbols", []) if normalize_symbol(item))),
         "holdingDeletes": [item for item in tombstones.get("holdingDeletes", [])
                            if isinstance(item, dict) and normalize_symbol(item.get("symbol"))],

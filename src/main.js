@@ -1,5 +1,5 @@
 /* ── BOPUP LEDGER — Entry Point ── */
-import { state, refs, mutable, saveState, createDefaultSnapshot, applySnapshot, restoreState, showConfirm, addRecordTombstone, pruneOrphanHoldings, pruneIgnoredDividendLedgerRows } from './state.js';
+import { state, refs, mutable, saveState, createDefaultSnapshot, applySnapshot, restoreState, showConfirm, addRecordTombstone, pruneOrphanHoldings, pruneIgnoredDividendLedgerRows, migrateIpoTradesToRounds } from './state.js';
 import { safeNumber } from './utils.js';
 import {
   LABELS, HOLDING_SWIPE_DELETE_WIDTH, HOLDING_SWIPE_OPEN_THRESHOLD,
@@ -17,7 +17,8 @@ import {
 import {
   openModal, closeModal, handleModalSave, handleModalDelete,
   setModalCashFlowTypeSelection,
-  setModalTradeSideSelection, setModalBucketSelection, setModalTradeIpoSelection, toggleDividendConfirm, updateTradeQuoteInfo, updateTradeAmountInfo, syncZenEditWidth,
+  setModalTradeSideSelection, setModalBucketSelection, toggleDividendConfirm, updateTradeQuoteInfo, updateTradeAmountInfo, syncZenEditWidth,
+  updateIpoAmountInfo, updateIpoSellAmountInfo,
   setReceiptCurrency, toggleReceiptConfirmed, updateReceiptConversion
 } from './modal.js';
 import { refreshMarketData, cleanupLegacyCaches } from './network.js';
@@ -253,6 +254,14 @@ if (refs.incomeRecordsList) refs.incomeRecordsList.addEventListener('click', (ev
     if (entry) openModal('trade', { ...entry });
     return;
   }
+  // 打新流水：缴款行进这一轮的编辑抽屉，卖出行进那一笔的编辑抽屉
+  const ipoButton = event.target.closest('[data-ipo-record]');
+  if (ipoButton) {
+    const sellId = ipoButton.dataset.ipoSellId;
+    if (sellId) openModal('ipoSell', { roundId: ipoButton.dataset.ipoRecord, sellId });
+    else openModal('ipo', { id: ipoButton.dataset.ipoRecord });
+    return;
+  }
   const dividendButton = event.target.closest('[data-dividend-source-id]');
   if (dividendButton) openModal('dividendLedger', { sourceId: dividendButton.dataset.dividendSourceId });
 });
@@ -262,15 +271,11 @@ document.addEventListener('click', (event) => {
   if (mutable.activeDividendTooltipButton && event.target.closest('.dividend-status-button--value') !== mutable.activeDividendTooltipButton) closeActiveDividendTooltip(true);
 });
 
-// 两个仓位是切换：点哪个哪个选中，明细行跟着换；不再有「都不选」的中间态
+// 仓位百分比是纯展示，点它滚到列表里对应那一段（切换态已随分组列表退役）
 refs.bucketTrack.addEventListener('click', (event) => {
-  const btn = event.target.closest('[data-bucket-toggle]'); if (!btn) return;
-  const key = btn.dataset.bucketToggle;
-  if (state.activeBucketKey === key) return;
-  state.activeBucketKey = key;
-  saveState();
-  const summary = computeHoldings();
-  renderBucketsView(getBucketSegments(summary.holdings), summary.holdings, summary, { animateDetail: true });
+  const btn = event.target.closest('[data-bucket-scroll]'); if (!btn) return;
+  const head = refs.stockList.querySelector(`[data-bucket-head="${btn.dataset.bucketScroll}"]`);
+  if (head) head.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 refs.stockList.addEventListener('mouseover', (e) => { const b = e.target.closest('.dividend-status-button'); if (b) updateDividendTooltipSide(b); });
@@ -281,7 +286,17 @@ refs.stockList.addEventListener('click', (event) => {
   if (Date.now() < mutable.suppressHoldingClickUntil) { event.preventDefault(); event.stopPropagation(); return; }
   const tb = event.target.closest('.dividend-status-button');
   if (tb) { if (tb.classList.contains('dividend-status-button--value')) { event.preventDefault(); event.stopPropagation(); toggleDividendTooltip(tb); return; } updateDividendTooltipSide(tb); }
+  // 打新在途行：点进这一轮的卖出抽屉
+  const ipoOpen = event.target.closest('[data-ipo-open]');
+  if (ipoOpen) { openModal('ipoSell', { roundId: ipoOpen.dataset.ipoOpen }); return; }
   const button = event.target.closest('[data-action]'), targetItem = event.target.closest('.holding-card') || event.target.closest('.holding-swipe');
+  /* 整行可点：落点不在任何按钮上时也开详情。名称按钮保留作无障碍路径，
+     滑动误触由上面的 suppressHoldingClickUntil 挡住。 */
+  if (!button && targetItem && !event.target.closest('button')) {
+    const rowId = safeNumber(targetItem.dataset.id, 0);
+    if (rowId) openModal('holdingDetail', { localId: rowId });
+    return;
+  }
   if (!button || !targetItem) return;
   const localId = safeNumber(targetItem.dataset.id, 0);
   const holding = state.holdings.find((i) => i.localId === localId); if (!holding) return;
@@ -516,7 +531,9 @@ refs.stockList.addEventListener('touchcancel', settleHoldingSwipe, { passive: tr
 refs.modalRoot.addEventListener('click', (event) => {
   const cf = event.target.closest('[data-cash-flow-type]'); if (cf) { setModalCashFlowTypeSelection(cf.dataset.cashFlowType); return; }
   const bb = event.target.closest('[data-bucket-option]'); if (bb) { setModalBucketSelection(bb.dataset.bucketOption); return; }
-  const ti = event.target.closest('[data-trade-ipo]'); if (ti) { setModalTradeIpoSelection(ti.dataset.tradeIpo); return; }
+  // 打新主抽屉里点在途那行 → 开卖出抽屉
+  const ipoSell = event.target.closest('[data-ipo-sell]');
+  if (ipoSell) { openModal('ipoSell', { roundId: ipoSell.dataset.ipoSell }); return; }
   const ts = event.target.closest('[data-trade-side]'); if (ts) { setModalTradeSideSelection(ts.dataset.tradeSide); return; }
   const dc = event.target.closest('[data-dividend-currency]'); if (dc) { setReceiptCurrency(dc.dataset.dividendCurrency); return; }
   const a = event.target.closest('[data-modal-action]'); if (!a) return;
@@ -532,8 +549,10 @@ refs.modalRoot.addEventListener('click', (event) => {
   }
   if (t === 'sort-holdings') { applyHoldingSortSelection(a.dataset.sortField); closeModal(); return; }
   if (t === 'open-trade') { openModal('trade'); return; }
-  // 打新入口：同一个交易抽屉，类型预设为打新且不再被代码输入自动改写
-  if (t === 'open-ipo-trade') { openModal('trade', { isIpo: true, ipoTouched: true }); return; }
+  // 打新走独立台账：不碰代码识别与持仓，只认名称与金额
+  if (t === 'open-ipo-trade') { openModal('ipo'); return; }
+  // 持仓详情里的交易键：带着代码直接开交易抽屉（现金模式下点「当前持股」是同一含义）
+  if (t === 'open-trade-for-holding') { openModal('trade', { symbol: a.dataset.symbol }); return; }
   if (t === 'open-cash-flow') { openModal('cashFlow'); return; }
   if (t === 'open-current-cash') { openModal('openingCash'); return; }
   if (t === 'save-share-card') { generateAnnualShareCard(); return; }
@@ -550,12 +569,20 @@ refs.modalRoot.addEventListener('input', (event) => {
   if (event.target && ['modalTradeSharesInput', 'modalTradePriceInput', 'modalTradeFeeInput'].includes(event.target.id)) updateTradeAmountInfo();
   // 实收金额边打边折算，让读者当场看见入账人民币是多少
   if (event.target && event.target.id === 'modalDividendNetInput') updateReceiptConversion();
+  // 打新：缴款额与卖出收益同样边打边折算
+  if (event.target && ['modalIpoSharesInput', 'modalIpoCostInput'].includes(event.target.id)) updateIpoAmountInfo();
+  if (event.target && ['modalIpoSellSharesInput', 'modalIpoSellPriceInput'].includes(event.target.id)) updateIpoSellAmountInfo();
   syncZenEditWidth(event.target);
 });
 
 /* ── Boot ── */
 async function boot() {
-  try { applySnapshot(createDefaultSnapshot()); restoreState(); if (pruneOrphanHoldings() + pruneIgnoredDividendLedgerRows() > 0) saveState(); renderApp(); }
+  try {
+    applySnapshot(createDefaultSnapshot()); restoreState();
+    const healed = migrateIpoTradesToRounds() + pruneOrphanHoldings() + pruneIgnoredDividendLedgerRows();
+    if (healed > 0) saveState();
+    renderApp();
+  }
   catch (error) { console.error('boot render failed, resetting to defaults:', error); applySnapshot(createDefaultSnapshot()); saveState(); renderApp(); }
   await cleanupLegacyCaches();
   void Promise.all([loadFundamentals(), loadReportCalendar()])

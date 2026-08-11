@@ -12,7 +12,7 @@ import { state } from './state.js';
 import { safeNumber, formatDateLabel, resolveFxRate } from './utils.js';
 import {
   computeIncomeSummary, inferQuote, getLedgerCalendarDate, getLedgerNetCny,
-  getNormalizedDividendLedgerEntries
+  getNormalizedDividendLedgerEntries, computeIpoYearSummary
 } from './compute.js';
 import { getCompanyFundamentals } from './fundamentals.js';
 
@@ -110,10 +110,7 @@ function getYearTrades(year) {
       const feeCny = Math.max(0, safeNumber(trade.feeCny, 0));
       const baselineHolding = state.holdings.find((holding) => holding && holding.symbol === trade.symbol);
       const baselineShares = Math.max(0, safeNumber(baselineHolding && baselineHolding.quantity, 0));
-      const position = positions.get(trade.symbol) || { shares: baselineShares, unknownCostShares: baselineShares, costCny: 0, isIpo: false };
-      // 打新标记按持仓段传染：买卖任一笔标了，这轮进出的已实现盈亏都算打新收益
-      if (trade.isIpo === true) position.isIpo = true;
-      const rowIsIpo = position.isIpo;
+      const position = positions.get(trade.symbol) || { shares: baselineShares, unknownCostShares: baselineShares, costCny: 0 };
       let realizedPnlCny = null;
       let realizedPnlComplete = true;
       if (trade.side === 'sell') {
@@ -127,8 +124,6 @@ function getYearTrades(year) {
         position.shares = Math.max(0, position.shares - shares);
         position.unknownCostShares = Math.max(0, position.unknownCostShares - unknownOut);
         position.costCny = Math.max(0, position.costCny - costOut);
-        // 清仓即一轮结束：同一只票以后再建仓属于新持仓段，打新标记不跨段延续
-        if (position.shares <= 0.000001) position.isIpo = false;
       } else {
         position.shares += shares;
         position.costCny += valueCny + feeCny;
@@ -146,8 +141,7 @@ function getYearTrades(year) {
         valueCny,
         cashImpactCny: trade.side === 'sell' ? valueCny - feeCny : -(valueCny + feeCny),
         realizedPnlCny,
-        realizedPnlComplete,
-        isIpo: rowIsIpo
+        realizedPnlComplete
       };
     });
   return rows.filter((trade) => trade.date.startsWith(String(year)));
@@ -221,6 +215,7 @@ export function computeYearAnnals(year) {
     : null;
 
   const trades = getYearTrades(year);
+  const ipo = computeIpoYearSummary(year);
   return {
     year,
     isCurrentYear: year === currentYear,
@@ -233,8 +228,8 @@ export function computeYearAnnals(year) {
     dividendMonths: getYearDividendMonths(year),
     trades,
     realizedPnlCny: trades.reduce((sum, trade) => sum + safeNumber(trade.realizedPnlCny, 0), 0),
-    // 打新收益：只聚合标了打新的持仓段卖出（口径由交易抽屉的「类型」开关决定）
-    ipoRealizedPnlCny: trades.reduce((sum, trade) => sum + (trade.isIpo ? safeNumber(trade.realizedPnlCny, 0) : 0), 0),
-    hasIpoSells: trades.some((trade) => trade.side === 'sell' && trade.isIpo && trade.realizedPnlComplete && trade.realizedPnlCny !== null)
+    // 打新收益走独立台账，按卖出日期归年；与股票买卖的已实现盈亏互不重叠
+    ipoRealizedPnlCny: ipo.realizedPnlCny,
+    hasIpoSells: ipo.count > 0
   };
 }

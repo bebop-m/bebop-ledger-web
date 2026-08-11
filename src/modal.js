@@ -6,7 +6,8 @@ import { loadTencentQuoteBatch } from './network.js';
 import {
   safeNumber, escapeHtml, normalizeSymbol, sanitizePerShareOverrideInput,
   mergeQuotes, sanitizeCashFlowEntry, sanitizeTradeEntry, formatDateLabel,
-  resolveQuoteCurrency, resolveFxRate, resolveEffectivePayDate, isConvertibleBondSymbol, isShSubscriptionSymbol
+  resolveQuoteCurrency, resolveFxRate, resolveEffectivePayDate, isShSubscriptionSymbol,
+  sanitizeIpoRoundEntry
 } from './utils.js';
 import { LABELS, MASK_AMOUNT } from './constants.js';
 import {
@@ -15,7 +16,7 @@ import {
 import {
   inferQuote, computeHoldings, computeIncomeSummary,
   getDividendCashImpactCny, getCashFlowCashImpactCny, getTradeCashImpactCny, validateTradeInventory,
-  convertReceiptToCny
+  convertReceiptToCny, computeIpoRounds, getIpoBuyCashImpactCny, getIpoSellCashImpactCny
 } from './compute.js';
 import { getFundamentalsPickerModel } from './fundamentals.js';
 import { getPortfolioDiagnostics } from './diagnostics.js';
@@ -61,16 +62,6 @@ export function setModalBucketSelection(next) {
   const input = document.getElementById('modalBucketInput'); if (input) input.value = bucket;
   Array.from(document.querySelectorAll('[data-bucket-option]')).forEach((b) => {
     const a = b.dataset.bucketOption === bucket; b.classList.toggle('is-active', a); b.setAttribute('aria-pressed', a ? 'true' : 'false');
-  });
-}
-
-/* 打新开关：转债代码（11x/12x）自动跳到「打新」，手动点过之后就不再自动改。 */
-export function setModalTradeIpoSelection(next, { manual = true } = {}) {
-  const kind = next === 'ipo' ? 'ipo' : 'normal';
-  if (manual) state.modalPayload = { ...(state.modalPayload || {}), ipoTouched: true };
-  const input = document.getElementById('modalTradeIpoInput'); if (input) input.value = kind;
-  Array.from(document.querySelectorAll('[data-trade-ipo]')).forEach((b) => {
-    const a = b.dataset.tradeIpo === kind; b.classList.toggle('is-active', a); b.setAttribute('aria-pressed', a ? 'true' : 'false');
   });
 }
 
@@ -225,10 +216,6 @@ export function updateTradeQuoteInfo() {
     if (price > 0) priceInput.value = String(price);
   }
   scheduleTradeQuoteFetch(symbol); // 自带资格判断；每次键入都会先取消上一次排队的请求
-  // 转债代码 / 沪市申购代码自动把类型拨到「打新」；手动点过开关后尊重手选
-  if (isNew && !(state.modalPayload && state.modalPayload.ipoTouched)) {
-    setModalTradeIpoSelection(isConvertibleBondSymbol(symbol) || isShSubscriptionSymbol(symbol) ? 'ipo' : 'normal', { manual: false });
-  }
   updateTradeAmountInfo();
 }
 
@@ -312,6 +299,8 @@ function renderModal() {
   if (state.modal === 'quickAdd') { renderQuickAddModal(); return; }
   if (state.modal === 'sortHoldings') { renderSortHoldingsModal(); return; }
   if (state.modal === 'trade') { renderTradeModal(); return; }
+  if (state.modal === 'ipo') { renderIpoModal(); return; }
+  if (state.modal === 'ipoSell') { renderIpoSellModal(); return; }
   if (state.modal === 'cashFlow') { renderCashFlowModal(); return; }
   if (state.modal === 'openingCash') { renderOpeningCashModal(); return; }
   // 全部抽屉均已走 zen 形制；未知 modal 名视为程序错误，清空兜底。
@@ -402,21 +391,12 @@ function renderTradeModal() {
   const side = entry && entry.side === 'sell' ? 'sell' : 'buy';
   const bucket = entry && entry.bucket === 'income' ? 'income' : 'core';
   const editing = Boolean(state.modalPayload && state.modalPayload.id);
-  // 优先级：存量标记 > 打新入口预设 > 转债代码自动默认（后者可被手动覆盖，见 updateTradeQuoteInfo）
-  const ipoKind = (entry && entry.isIpo === true) || (state.modalPayload && state.modalPayload.isIpo === true)
-    || (!editing && (isConvertibleBondSymbol(symbol) || isShSubscriptionSymbol(symbol))) ? 'ipo' : 'normal';
-  /* 打新入口开精简抽屉：中签缴款和上市卖出都从这里走（方向二选保留），
-     费用/归入/类型三行整个退场——缴款无费用、卖出佣金忽略不计，归入默认打工仓
-     （打新是赚快钱不是长持，不进核心仓），类型由入口本身声明。
-     编辑存量打新交易仍走完整抽屉，留着纠错的地方。 */
-  const ipoEntry = !editing && Boolean(state.modalPayload && state.modalPayload.isIpo === true);
   const price = entry ? String(safeNumber(entry.price, 0)) : '';
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
     <section class="modal-sheet zen-sheet zen-sheet--form" role="dialog" aria-modal="true" aria-labelledby="zenTradeTitle">
       <div class="zen-sheet-handle" aria-hidden="true"></div>
       <div class="zen-sheet-title">
-        <span class="zen-sheet-title-text" id="zenTradeTitle">${ipoEntry ? '打新' : editing ? '编辑交易' : '新增交易'}</span>
-        ${ipoEntry ? '<p class="zen-sheet-note">中签缴款记买入，上市卖出记卖出</p>' : ''}
+        <span class="zen-sheet-title-text" id="zenTradeTitle">${editing ? '编辑交易' : '新增交易'}</span>
       </div>
       <div class="zen-form">
         <label class="zen-form-row"><span>日期</span><input id="modalTradeDateInput" class="zen-form-input" type="date" value="${escapeHtml(formatDateLabel(entry && entry.date) || getTodayLabel())}"></label>
@@ -429,20 +409,181 @@ function renderTradeModal() {
         <label class="zen-form-row"><span>股数</span><input id="modalTradeSharesInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.shares, 0)) : '')}" placeholder="0"></label>
         <label class="zen-form-row"><span id="modalTradePriceLabel">${escapeHtml(getTradePriceLabel(symbol))}</span><span class="zen-form-money"><input id="modalTradePriceInput" class="zen-form-amount" type="number" inputmode="decimal" style="width:${getZenEditWidthCh(price)}ch" value="${escapeHtml(price)}" placeholder="0.00" aria-label="成交价"><i class="zen-form-line" aria-hidden="true"></i></span></label>
         <p class="zen-form-hint" id="modalTradeAmountInfo"></p>
-        ${ipoEntry ? '' : `<label class="zen-form-row"><span>费用（CNY，可选）</span><input id="modalTradeFeeInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.feeCny, 0)) : '')}" placeholder="0.00"></label>
+        <label class="zen-form-row"><span>费用（CNY，可选）</span><input id="modalTradeFeeInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(entry ? String(safeNumber(entry.feeCny, 0)) : '')}" placeholder="0.00"></label>
         <div class="zen-form-row"><span>归入</span>${renderZenSeg('modalBucketInput', bucket, [
           { value: 'core', label: LABELS.core, dataAttr: 'data-bucket-option' },
           { value: 'income', label: LABELS.income, dataAttr: 'data-bucket-option' }
         ])}</div>
-        <div class="zen-form-row"><span>类型</span>${renderZenSeg('modalTradeIpoInput', ipoKind, [
-          { value: 'normal', label: '常规', dataAttr: 'data-trade-ipo' },
-          { value: 'ipo', label: '打新', dataAttr: 'data-trade-ipo' }
-        ])}</div>`}
         <label class="zen-form-row"><span>备注</span><input id="modalTradeNoteInput" class="zen-form-input zen-form-note" type="text" value="${escapeHtml((entry && entry.note) || '')}" placeholder="可选"></label>
       </div>
       ${renderZenSheetActions({ deletable: editing })}
     </section>`;
   updateTradeAmountInfo();
+}
+
+/* ══ 打新台账 ══
+   打新是「一笔钱出去、几周后一笔钱回来」，代码/行情/持仓机制全是噪音——
+   申购代码无行情、上市还要换码，走识别侧只会一路带毛刺。这里只认名称与金额。 */
+
+function getIpoRoundModel(id) {
+  return computeIpoRounds().rounds.find((round) => round.id === id) || null;
+}
+
+function formatIpoDayCount(round) {
+  const start = Date.parse(`${round.buyDate}T00:00:00`);
+  if (!Number.isFinite(start)) return '';
+  const days = Math.max(0, Math.round((Date.now() - start) / 86400000));
+  return `${days} 天`;
+}
+
+/* 主抽屉：在途轮列在最上（点进去卖出），下面永远是新建表单。
+   带 id 时是编辑模式，只留表单与删除键。 */
+function renderIpoModal() {
+  const editingId = state.modalPayload && state.modalPayload.id;
+  const editing = Boolean(editingId);
+  const round = editing ? getIpoRoundModel(editingId) : null;
+  const model = computeIpoRounds();
+  const openList = !editing && model.openRounds.length
+    ? `<div class="zen-ipo-open">
+        <div class="sec-head"><span class="sec-label">在 途</span><span class="sec-aside">${model.openRounds.length} 轮 · ${escapeHtml(formatDisplayMoney(model.inTransitCostCny, 'CNY'))}</span></div>
+        ${model.openRounds.map((item) => `<button class="zen-ipo-row" type="button" data-ipo-sell="${escapeHtml(item.id)}">
+          <span class="zen-ipo-row-main"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(String(item.remainingShares))} 股 · 成本 ${escapeHtml(formatDisplayMoney(item.remainingCostCny, 'CNY'))} · ${escapeHtml(formatIpoDayCount(item))}</small></span>
+          <span class="zen-ipo-row-go" aria-hidden="true">卖出 ›</span>
+        </button>`).join('')}
+      </div>`
+    : '';
+  const cost = round ? String(safeNumber(round.costPerShare, 0)) : '';
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet zen-sheet zen-sheet--form" role="dialog" aria-modal="true" aria-labelledby="zenIpoTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <div class="zen-sheet-title">
+        <span class="zen-sheet-title-text" id="zenIpoTitle">${editing ? '编辑打新' : '打 新'}</span>
+        ${editing ? '' : '<p class="zen-sheet-note">中签缴款记一笔，上市卖出点在途那行</p>'}
+      </div>
+      ${openList}
+      <div class="zen-form">
+        ${openList ? '<div class="sec-head"><span class="sec-label">新 一 轮</span><span class="sec-aside"></span></div>' : ''}
+        <label class="zen-form-row"><span>名称</span><input id="modalIpoNameInput" class="zen-form-input" type="text" value="${escapeHtml((round && round.name) || '')}" placeholder="长鑫科技 / 某某转债"></label>
+        <label class="zen-form-row"><span>缴款日</span><input id="modalIpoDateInput" class="zen-form-input" type="date" value="${escapeHtml((round && round.buyDate) || getTodayLabel())}"></label>
+        <label class="zen-form-row"><span>股数</span><input id="modalIpoSharesInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(round ? String(safeNumber(round.shares, 0)) : '')}" placeholder="0"></label>
+        <label class="zen-form-row"><span>每股成本（CNY）</span><span class="zen-form-money"><input id="modalIpoCostInput" class="zen-form-amount" type="number" inputmode="decimal" style="width:${getZenEditWidthCh(cost)}ch" value="${escapeHtml(cost)}" placeholder="0.00" aria-label="每股成本"><i class="zen-form-line" aria-hidden="true"></i></span></label>
+        <p class="zen-form-hint" id="modalIpoAmountInfo"></p>
+        <label class="zen-form-row"><span>备注</span><input id="modalIpoNoteInput" class="zen-form-input zen-form-note" type="text" value="${escapeHtml((round && round.note) || '')}" placeholder="可选"></label>
+      </div>
+      ${renderZenSheetActions({ deletable: editing })}
+    </section>`;
+  updateIpoAmountInfo();
+}
+
+export function updateIpoAmountInfo() {
+  const line = document.getElementById('modalIpoAmountInfo');
+  if (!line) return;
+  const shares = Math.max(0, safeNumber(document.getElementById('modalIpoSharesInput')?.value, 0));
+  const cost = Math.max(0, safeNumber(document.getElementById('modalIpoCostInput')?.value, 0));
+  if (shares <= 0 || cost <= 0) { line.textContent = '填入股数与每股成本后自动折算缴款额'; return; }
+  line.innerHTML = `缴款额 <b>${escapeHtml(formatDisplayMoney(shares * cost, 'CNY'))}</b>`;
+}
+
+/* 卖出抽屉：一轮可以分几次卖，剩余股数归零即这轮结束。 */
+function renderIpoSellModal() {
+  const payload = state.modalPayload || {};
+  const round = getIpoRoundModel(payload.roundId);
+  if (!round) {
+    refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+      <section class="modal-sheet zen-sheet zen-sheet--form" role="dialog" aria-modal="true">
+        <div class="zen-sheet-handle" aria-hidden="true"></div>
+        <div class="zen-sheet-title"><span class="zen-sheet-title-text">卖出</span><p class="zen-sheet-note">未找到这一轮打新</p></div>
+        <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
+      </section>`;
+    return;
+  }
+  const sell = payload.sellId ? round.sells.find((item) => item.id === payload.sellId) || null : null;
+  const editing = Boolean(sell);
+  // 新增时默认卖光剩余；编辑时回填原值（该笔股数已计入 soldShares，要加回来才是可用上限）
+  const defaultShares = editing ? sell.shares : round.remainingShares;
+  const price = sell ? String(safeNumber(sell.price, 0)) : '';
+  refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
+    <section class="modal-sheet zen-sheet zen-sheet--form" role="dialog" aria-modal="true" aria-labelledby="zenIpoSellTitle">
+      <div class="zen-sheet-handle" aria-hidden="true"></div>
+      <div class="zen-sheet-title">
+        <span class="zen-sheet-title-text" id="zenIpoSellTitle">${escapeHtml(round.name)}</span>
+        <p class="zen-sheet-note">剩余 ${escapeHtml(String(round.remainingShares))} 股 · 成本 ${escapeHtml(formatDisplayMoney(round.costPerShare, 'CNY'))}/股</p>
+      </div>
+      <div class="zen-form">
+        <label class="zen-form-row"><span>卖出日</span><input id="modalIpoSellDateInput" class="zen-form-input" type="date" value="${escapeHtml((sell && sell.date) || getTodayLabel())}"></label>
+        <label class="zen-form-row"><span>股数</span><input id="modalIpoSellSharesInput" class="zen-form-input" type="number" inputmode="decimal" value="${escapeHtml(String(defaultShares || ''))}" placeholder="0"></label>
+        <label class="zen-form-row"><span>每股价格（CNY）</span><span class="zen-form-money"><input id="modalIpoSellPriceInput" class="zen-form-amount" type="number" inputmode="decimal" style="width:${getZenEditWidthCh(price)}ch" value="${escapeHtml(price)}" placeholder="0.00" aria-label="每股价格"><i class="zen-form-line" aria-hidden="true"></i></span></label>
+        <p class="zen-form-hint" id="modalIpoSellAmountInfo"></p>
+      </div>
+      ${renderZenSheetActions({ deletable: editing })}
+    </section>`;
+  updateIpoSellAmountInfo();
+}
+
+export function updateIpoSellAmountInfo() {
+  const line = document.getElementById('modalIpoSellAmountInfo');
+  if (!line) return;
+  const round = getIpoRoundModel(state.modalPayload && state.modalPayload.roundId);
+  const shares = Math.max(0, safeNumber(document.getElementById('modalIpoSellSharesInput')?.value, 0));
+  const price = Math.max(0, safeNumber(document.getElementById('modalIpoSellPriceInput')?.value, 0));
+  if (!round || shares <= 0 || price <= 0) { line.textContent = '填入股数与价格后自动折算收益'; return; }
+  const pnl = shares * (price - safeNumber(round.costPerShare, 0));
+  const tone = pnl > 0 ? 'is-gain' : pnl < 0 ? 'is-loss' : '';
+  line.innerHTML = `卖出 <b>${escapeHtml(formatDisplayMoney(shares * price, 'CNY'))}</b> · 收益 <b class="${tone}">${escapeHtml(`${pnl > 0 ? '+' : pnl < 0 ? '−' : ''}${formatDisplayMoney(Math.abs(pnl), 'CNY')}`)}</b>`;
+}
+
+function saveIpoEdit() {
+  const editingId = state.modalPayload && state.modalPayload.id;
+  const previous = editingId ? state.ipoRounds.find((item) => item.id === editingId) || null : null;
+  const now = new Date().toISOString();
+  const entry = sanitizeIpoRoundEntry({
+    id: editingId || createRecordId('ipo'),
+    name: document.getElementById('modalIpoNameInput').value,
+    buyDate: document.getElementById('modalIpoDateInput').value,
+    shares: safeNumber(document.getElementById('modalIpoSharesInput').value, 0),
+    costPerShare: safeNumber(document.getElementById('modalIpoCostInput').value, 0),
+    sells: previous ? previous.sells : [],
+    cashTrackedCny: previous ? previous.cashTrackedCny : null,
+    note: document.getElementById('modalIpoNoteInput').value.trim(),
+    createdAt: (previous && previous.createdAt) || now,
+    updatedAt: now
+  }, state.ipoRounds.length + 1);
+  if (!entry) { showToast('请填写名称、股数与每股成本', { type: 'error' }); return false; }
+  const soldShares = entry.sells.reduce((sum, sell) => sum + safeNumber(sell.shares, 0), 0);
+  if (soldShares > entry.shares + 0.000001) { showToast('股数不能少于已卖出的股数', { type: 'error' }); return false; }
+  adjustCashForRecordChange(
+    previous, getIpoBuyCashImpactCny(previous), previous && previous.buyDate,
+    entry, getIpoBuyCashImpactCny(entry), entry.buyDate
+  );
+  state.ipoRounds = state.ipoRounds.filter((item) => item.id !== entry.id).concat(entry);
+  removeRecordTombstone('ipoRound', entry.id);
+  return true;
+}
+
+function saveIpoSellEdit() {
+  const payload = state.modalPayload || {};
+  const round = state.ipoRounds.find((item) => item.id === payload.roundId) || null;
+  if (!round) { showToast('未找到这一轮打新', { type: 'error' }); return false; }
+  const previous = payload.sellId ? round.sells.find((item) => item.id === payload.sellId) || null : null;
+  const shares = Math.max(0, safeNumber(document.getElementById('modalIpoSellSharesInput').value, 0));
+  const price = Math.max(0, safeNumber(document.getElementById('modalIpoSellPriceInput').value, 0));
+  const date = formatDateLabel(document.getElementById('modalIpoSellDateInput').value);
+  if (!date || shares <= 0 || price <= 0) { showToast('请填写日期、股数与价格', { type: 'error' }); return false; }
+  const otherSold = round.sells
+    .filter((item) => item.id !== (previous && previous.id))
+    .reduce((sum, item) => sum + safeNumber(item.shares, 0), 0);
+  if (otherSold + shares > safeNumber(round.shares, 0) + 0.000001) {
+    showToast('卖出股数超过这一轮的中签股数', { type: 'error' }); return false;
+  }
+  const entry = { id: (previous && previous.id) || createRecordId('ips'), date, shares, price, cashTrackedCny: null };
+  adjustCashForRecordChange(
+    previous, getIpoSellCashImpactCny(previous), previous && previous.date,
+    entry, getIpoSellCashImpactCny(entry), entry.date
+  );
+  const nextSells = round.sells.filter((item) => item.id !== entry.id).concat(entry);
+  state.ipoRounds = state.ipoRounds.map((item) => (item.id === round.id
+    ? { ...item, sells: nextSells, updatedAt: new Date().toISOString() } : item));
+  return true;
 }
 
 /* 16-出入金 · 按 designs/禅意UI/16-出入金/定稿图.html
@@ -818,12 +959,8 @@ function saveTradeEdit() {
     price: safeNumber(document.getElementById('modalTradePriceInput').value, 0),
     currency,
     fxRate: resolveFxRate(currency, state.rates),
-    // 打新精简抽屉没有这三个控件：费用记 0、归入打工仓、类型按入口预设
     feeCny: safeNumber(document.getElementById('modalTradeFeeInput')?.value, 0),
-    bucket: document.getElementById('modalBucketInput')?.value || 'income',
-    isIpo: document.getElementById('modalTradeIpoInput')
-      ? document.getElementById('modalTradeIpoInput').value === 'ipo'
-      : Boolean(state.modalPayload && state.modalPayload.isIpo),
+    bucket: document.getElementById('modalBucketInput')?.value || 'core',
     note: document.getElementById('modalTradeNoteInput').value.trim(),
     createdAt: previousEntry && previousEntry.createdAt || now,
     updatedAt: now
@@ -898,6 +1035,10 @@ export function handleModalSave() {
     if (!saveCashFlowEdit()) return;
   } else if (state.modal === 'trade') {
     if (!saveTradeEdit()) return;
+  } else if (state.modal === 'ipo') {
+    if (!saveIpoEdit()) return;
+  } else if (state.modal === 'ipoSell') {
+    if (!saveIpoSellEdit()) return;
   } else if (state.modal === 'yearlyManual') {
     const year = getBackfillYear();
     if (year < 1900 || year > 2200) { showToast('请输入有效年份', { type: 'error' }); return; }
@@ -988,7 +1129,10 @@ function renderHoldingDetailModal() {
         ${row('TTM 股息（税后）', zenMoney(item.netAnnualDividendCny))}
       </dl>
       ${item.dividendPerShareTtmOverrideTouched === true ? '<p class="zen-detail-note">每股股息为手动覆写</p>' : ''}
-      <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
+      <div class="zen-sheet-actions">
+        <button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button>
+        <button class="zen-key zen-key--save" type="button" data-modal-action="open-trade-for-holding" data-symbol="${escapeHtml(item.symbol)}">交 易<i class="zen-key-dot" aria-hidden="true"></i></button>
+      </div>
     </section>`;
 }
 
@@ -1018,6 +1162,34 @@ export function handleModalDelete() {
     state.trades = state.trades.filter((item) => item.id !== id);
     addRecordTombstone('trade', id);
     if (entry) pruneOrphanTradeHolding(entry.symbol);
+    archiveCompletedYears(getTodayLabel());
+    saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
+    return;
+  }
+  if (state.modal === 'ipo') {
+    const id = state.modalPayload && state.modalPayload.id;
+    const round = id ? state.ipoRounds.find((item) => item.id === id) || null : null;
+    if (!round) return;
+    // 整轮删除：买入腿与每一笔卖出腿都要原路冲回现金
+    adjustCashForRecordChange(round, getIpoBuyCashImpactCny(round), round.buyDate, null, 0, '');
+    round.sells.forEach((sell) => {
+      adjustCashForRecordChange(sell, getIpoSellCashImpactCny(sell), sell.date, null, 0, '');
+    });
+    state.ipoRounds = state.ipoRounds.filter((item) => item.id !== id);
+    addRecordTombstone('ipoRound', id);
+    archiveCompletedYears(getTodayLabel());
+    saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
+    return;
+  }
+  if (state.modal === 'ipoSell') {
+    const payload = state.modalPayload || {};
+    const round = state.ipoRounds.find((item) => item.id === payload.roundId) || null;
+    const sell = round ? round.sells.find((item) => item.id === payload.sellId) || null : null;
+    if (!round || !sell) return;
+    adjustCashForRecordChange(sell, getIpoSellCashImpactCny(sell), sell.date, null, 0, '');
+    state.ipoRounds = state.ipoRounds.map((item) => (item.id === round.id
+      ? { ...item, sells: item.sells.filter((row) => row.id !== sell.id), updatedAt: new Date().toISOString() }
+      : item));
     archiveCompletedYears(getTodayLabel());
     saveState(); closeModal(); renderSavedStateQuietly({ animateHoldingReflow: false });
     return;

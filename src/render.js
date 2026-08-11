@@ -2,7 +2,8 @@ import { state, refs, mutable, saveState, isDemoMode } from './state.js';
 import {
   computeHoldings, getBucketSegments, getBucketSummaryItems,
   computeDividendCalendar, computeIncomeSummary,
-  computeCashFlowRecords, computeDividendRecords, computeTradeSummary, isCashModelActive, computeCashBalance, getAnnualDividendOverview
+  computeCashFlowRecords, computeDividendRecords, computeTradeSummary, isCashModelActive, computeCashBalance, getAnnualDividendOverview,
+  computeIpoRounds, computeIpoRecords
 } from './compute.js';
 import { renderFundamentalsPage, getFundamentalsCompanyCount, getPortfolioReturnSummary } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
@@ -294,19 +295,16 @@ export function renderHoldingsHero() {
 }
 
 /* ── 仓位结构 ──
-   两段线（墨=核心 / 金=打工）→ 两个可切换仓位（大字）→ 选中仓明细行（市值·项数）
-   → 市值随注行。原「组合年化」金色常驻行已裁撤：TTM 口径唯一出现处=股息日历。 */
+   两个仓位百分比（大字）+ 两段线。就这两样，是本页的一句话职责：钱分两种、各占多少。
+   2026-08 裁决：切换态退役——它此前只换一行明细文字、不过滤不分组列表，
+   结构宣言与内容排布脱节；现在由列表自己分段承担，明细与市值随注行一并撤销
+   （总市值＝两段节标之和，今日涨跌与首页 hero 同值）。点仓位滚到对应段。 */
 export function renderBucketsView(segments, holdings, summary, opts = {}) {
   if (!refs.bucketTrack) return;
   const items = getBucketSummaryItems(holdings);
   const total = items.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0);
-  // 两个仓位是「切换」不是「开关」：始终有一个选中，明细行跟着走，默认核心仓
-  if (!items.some((item) => item.key === state.activeBucketKey)) {
-    state.activeBucketKey = items.length ? items[0].key : null;
-  }
   const find = (key) => items.find((item) => item.key === key) || null;
   const share = (item) => (total > 0 && item ? item.marketValueCny / total : 0);
-  const active = find(state.activeBucketKey);
   const bar = ['core', 'income'].map((key) => {
     const item = find(key);
     return item ? `<i class="seg-${key}" style="width:${(share(item) * 100).toFixed(2)}%"></i>` : '';
@@ -314,30 +312,11 @@ export function renderBucketsView(segments, holdings, summary, opts = {}) {
   const buttons = ['core', 'income'].map((key) => {
     const item = find(key);
     if (!item) return '';
-    const isActive = state.activeBucketKey === key;
-    // 金点用真元素而不是 ::after：机检把带背景的伪元素一律当旧层装饰报出来，
-    // 而这颗点是设计要求的选中记号，得让它能和残留区分开
-    return `<button class="bucket${isActive ? ' is-active' : ''}" type="button" data-bucket-toggle="${key}" aria-pressed="${isActive}"><span class="bucket-label">${escapeHtml(item.label)}<i class="bucket-dot" aria-hidden="true"></i></span><strong>${formatZenPercent(share(item))}</strong></button>`;
+    return `<button class="bucket" type="button" data-bucket-scroll="${key}" aria-label="滚动到${escapeHtml(item.label)}"><span class="bucket-label">${escapeHtml(item.label)}</span><strong>${formatZenPercent(share(item))}</strong></button>`;
   }).join('');
-  /* 点开的仓明细只留市值与项数：股息口径全归股息日历（TTM）与首页（本年） */
-  const activeCount = active
-    ? holdings.filter((item) => (item.bucket === 'income' ? 'income' : 'core') === active.key && safeNumber(item.quantity, 0) > 0).length
-    : 0;
-  const detail = active
-    ? `<p class="bucket-detail">${escapeHtml(active.label)} <strong>${escapeHtml(formatZenMoney(active.marketValueCny))}</strong> · ${activeCount} 项</p>`
-    : '';
-  /* 市值与今日涨跌降为一行随注，涨跌只留百分比（额度与首页 hero 几乎同值，不再重复） */
-  const pnl = safeNumber(summary.totalDailyPnlCny, 0);
-  const base = safeNumber(summary.dailyPnlBaseCny, 0);
-  const pnlTone = pnl > 0 ? 'is-market-up' : pnl < 0 ? 'is-market-down' : 'is-flat';
-  const pnlText = !state.showAmounts ? MASK_AMOUNT
-    : base > 0 ? `${pnl > 0 ? '+' : pnl < 0 ? SIGN_MINUS : ''}${Math.abs(pnl / base * 100).toFixed(2)}%` : '';
-  const mvLine = `<p class="mv-line">市值 <strong>${escapeHtml(formatZenMoney(summary.totalMarketValueCny))}</strong>${pnlText ? ` · 今日 <strong class="${pnlTone}">${escapeHtml(pnlText)}</strong>` : ''}</p>`;
   refs.bucketTrack.innerHTML = `
     <div class="bucket-row bucket-row--hero">${buttons}</div>
-    <div class="structure-bar" aria-hidden="true">${bar}</div>
-    ${detail}
-    ${mvLine}`;
+    <div class="structure-bar" aria-hidden="true">${bar}</div>`;
 }
 
 export function patchBucketsView(segments, holdings, summary) {
@@ -939,6 +918,21 @@ function renderCashFlowRow(entry) {
     </button>`;
 }
 
+/* 打新流水：缴款一行、每笔卖出一行，卖出行带这笔的收益。点行进对应抽屉。 */
+function renderIpoFlowRow(entry) {
+  const isSell = entry.kind === 'sell';
+  const detail = state.showAmounts
+    ? `${formatRecordQuantity(entry.shares)} 股 @ ${safeNumber(entry.price, 0)}`
+    : `${MASK_AMOUNT} 股 @ ${MASK_AMOUNT}`;
+  const pnl = isSell && entry.realizedPnlCny !== null
+    ? ` <b class="rec-row-pnl ${getReturnTone(entry.realizedPnlCny)}">${escapeHtml(formatIncomeSignedMoney(entry.realizedPnlCny))}</b>`
+    : '';
+  return `<button class="rec-row" type="button" data-ipo-record="${escapeHtml(entry.roundId)}" data-ipo-sell-id="${escapeHtml(isSell ? entry.id : '')}">
+      <span class="rec-row-main">${escapeHtml(getRecordDayLabel(entry.date))} <em class="${isSell ? 'is-sell' : 'is-buy'}">${isSell ? '卖出' : '缴款'}</em> <strong>${escapeHtml(entry.name)}</strong>${getRecordDetailMarkup(detail)}</span>
+      <span class="rec-row-amt">${escapeHtml(formatIncomeSignedMoney(entry.cashImpactCny))}${pnl}</span>
+    </button>`;
+}
+
 function renderDividendFlowRow(entry) {
   return `<button class="rec-row" type="button" data-dividend-source-id="${escapeHtml(entry.sourceId)}">
       <span class="rec-row-main">${escapeHtml(getRecordDayLabel(entry.date))} <strong>${escapeHtml(entry.name || entry.symbol)}</strong>${getRecordDetailMarkup(entry.note)}</span>
@@ -979,6 +973,7 @@ export function renderIncomeRecords() {
   const cash = computeCashFlowRecords(year);
   const dividends = computeDividendRecords(year);
   const trades = computeTradeSummary(year);
+  const ipo = computeIpoRecords(year);
   /* 零值子句不上屏：hero 已写净注入，随注只挑有话说的部分 */
   const metaParts = [];
   if (cash.depositCny > 0) metaParts.push(`入金 ${escapeHtml(formatDisplayMoney(cash.depositCny, 'CNY'))}`);
@@ -991,6 +986,7 @@ export function renderIncomeRecords() {
     </section>
     ${renderRecordsCash()}
     ${renderRecordFlow('trade', '买卖流水', `${trades.count} 笔`, trades.records, '', renderTradeFlowRow)}
+    ${renderRecordFlow('ipo', '打新', `${ipo.count} 笔 · ${escapeHtml(formatIncomeSignedMoney(ipo.realizedPnlCny))}`, ipo.records, '', renderIpoFlowRow)}
     ${renderRecordFlow('cash', '出入金流水', `${cash.count} 笔 · ${escapeHtml(formatIncomeSignedMoney(cash.netInflowCny))}`, cash.records, '', renderCashFlowRow)}
     ${renderRecordFlow('dividend', '股息入账', `${dividends.count} 笔 · ${escapeHtml(formatDisplayMoney(dividends.totalCny, 'CNY'))}`, dividends.records, '', renderDividendFlowRow)}`;
 }
@@ -1454,12 +1450,49 @@ function getHoldingMarkup(item, index, opts = {}) {
     </article></div>`;
 }
 
+/* 打新在途：钱已经出去、还没变成持仓，按成本挂在列表末尾。
+   没有在途轮时整段不存在（非默认态才标记）。 */
+function getIpoInTransitMarkup() {
+  const model = computeIpoRounds();
+  if (!model.openRounds.length) return '';
+  /* 股数 × 成本能把右列已掩码的金额反推出来，掩码开启时这一行要一起掩上
+     （与买卖流水行、持仓详情「当前持股」同一套口径） */
+  const rows = model.openRounds.map((round) => `<button class="holding-card stock ipo-card" type="button" data-ipo-open="${escapeHtml(round.id)}">
+      <div class="stock-main">
+        <span class="stock-name">${escapeHtml(round.name)}<span class="stock-price">${state.showAmounts
+          ? `${escapeHtml(String(round.remainingShares))} 股 · 成本 ${escapeHtml(formatPlainPrice(round.costPerShare))}`
+          : `${MASK_AMOUNT} 股 · 成本 ${MASK_AMOUNT}`}</span></span>
+        <span class="stock-side"><b class="stock-mv stock-side-key">${escapeHtml(formatZenMoney(round.remainingCostCny))}</b><span class="weight">在途</span></span>
+      </div>
+    </button>`).join('');
+  return `<div class="sec-head is-later"><span class="sec-label">打新在途</span><span class="sec-aside">${escapeHtml(formatZenMoney(model.inTransitCostCny))} · ${model.openRounds.length} 轮</span></div>${rows}`;
+}
+
+/* 列表按仓分段：hero 宣告「钱分两种」，列表就得长成那个样子（2026-08 裁决）。
+   折叠仍按总数截断（首屏要短），节标报的是该段全部项数与市值，不受折叠影响。 */
 export function renderHoldingsView(holdings, opts = {}) {
   mutable.activeDividendTooltipButton = null;
-  if (!holdings.length) { refs.stockList.innerHTML = ''; refs.legendToggle.hidden = true; return; }
+  const ipoMarkup = getIpoInTransitMarkup();
+  if (!holdings.length) {
+    refs.stockList.innerHTML = ipoMarkup;
+    refs.legendToggle.hidden = true;
+    return;
+  }
   const pendingDividends = getPendingDividendSymbols();
   const visible = state.legendExpanded ? holdings : holdings.slice(0, LEGEND_COLLAPSED_COUNT);
-  refs.stockList.innerHTML = visible.map((item, i) => getHoldingMarkup(item, i, { ...opts, pendingDividends })).join('');
+  const bucketOf = (item) => (item.bucket === 'income' ? 'income' : 'core');
+  let index = 0;
+  const sections = [{ key: 'core', label: LABELS.core }, { key: 'income', label: LABELS.income }]
+    .map((group, groupIndex) => {
+      const all = holdings.filter((item) => bucketOf(item) === group.key);
+      if (!all.length) return '';
+      const shown = visible.filter((item) => bucketOf(item) === group.key);
+      const totalCny = all.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0);
+      const head = `<div class="sec-head${groupIndex > 0 ? ' is-later' : ''}" data-bucket-head="${group.key}"><span class="sec-label">${escapeHtml(group.label)}</span><span class="sec-aside">${escapeHtml(formatZenMoney(totalCny))} · ${all.length} 项</span></div>`;
+      const rows = shown.map((item) => getHoldingMarkup(item, index++, { ...opts, pendingDividends })).join('');
+      return head + rows;
+    }).join('');
+  refs.stockList.innerHTML = sections + ipoMarkup;
   refs.legendToggle.hidden = holdings.length <= LEGEND_COLLAPSED_COUNT;
   refs.legendToggle.textContent = state.legendExpanded ? '收起' : `展开全部 ${holdings.length} 项`;
 }

@@ -106,7 +106,10 @@ export function computeHoldings() {
   }, 0);
   const divisor = totalMarketValueCny || 1;
   const cashBalanceCny = computeCashBalance();
-  const totalAssetCny = totalMarketValueCny + cashBalanceCny;
+  /* 打新在途按成本进总资产：申购代码没有行情，不认这块钱的话净资产会凭空少一截。
+     刻意不进 totalMarketValueCny——持仓权重与双仓百分比是股票内部的比例，别被它稀释。 */
+  const ipoInTransitCny = computeIpoRounds().inTransitCostCny;
+  const totalAssetCny = totalMarketValueCny + cashBalanceCny + ipoInTransitCny;
   const result = {
     holdings: holdings.map((i) => ({
       ...i,
@@ -116,6 +119,7 @@ export function computeHoldings() {
     totalMarketValueCny, totalDividendCny, totalDailyPnlCny, dailyPnlBaseCny,
     unknownTaxCount: holdings.filter((item) => !item.taxRateKnown && safeNumber(item.quantity, 0) > 0).length,
     cashBalanceCny,
+    ipoInTransitCny,
     totalAssetCny,
     netMarketValueCny: totalAssetCny - state.liabilityCny
   };
@@ -846,6 +850,105 @@ export function getTradeCashImpactCny(entry) {
   const value = getTradeValueCny(entry);
   const fee = Math.max(0, safeNumber(entry.feeCny, 0));
   return roundMoney(entry.side === 'sell' ? value - fee : -(value + fee));
+}
+
+/* ── 打新台账 ──
+   一轮 = 一次中签：缴款买入一次，上市后分若干笔卖出。全程不碰行情与持仓，
+   在途期间按成本计入总资产（否则申购代码无行情会让净资产凭空少一块）。 */
+export function getIpoBuyCashImpactCny(round) {
+  if (!round) return 0;
+  return roundMoney(-(Math.max(0, safeNumber(round.shares, 0)) * Math.max(0, safeNumber(round.costPerShare, 0))));
+}
+
+export function getIpoSellCashImpactCny(sell) {
+  if (!sell) return 0;
+  return roundMoney(Math.max(0, safeNumber(sell.shares, 0)) * Math.max(0, safeNumber(sell.price, 0)));
+}
+
+export function computeIpoRounds() {
+  const rounds = state.ipoRounds.map((round) => {
+    const shares = Math.max(0, safeNumber(round.shares, 0));
+    const costPerShare = Math.max(0, safeNumber(round.costPerShare, 0));
+    const sells = (Array.isArray(round.sells) ? round.sells : []).map((sell) => {
+      const sellShares = Math.max(0, safeNumber(sell.shares, 0));
+      const price = Math.max(0, safeNumber(sell.price, 0));
+      return {
+        ...sell,
+        shares: sellShares,
+        price,
+        proceedsCny: roundMoney(sellShares * price),
+        realizedPnlCny: roundMoney(sellShares * (price - costPerShare))
+      };
+    });
+    const soldShares = sells.reduce((sum, sell) => sum + sell.shares, 0);
+    const remainingShares = Math.max(0, shares - soldShares);
+    return {
+      ...round,
+      shares,
+      costPerShare,
+      sells,
+      soldShares,
+      remainingShares,
+      costCny: roundMoney(shares * costPerShare),
+      remainingCostCny: roundMoney(remainingShares * costPerShare),
+      proceedsCny: roundMoney(sells.reduce((sum, sell) => sum + sell.proceedsCny, 0)),
+      realizedPnlCny: roundMoney(sells.reduce((sum, sell) => sum + sell.realizedPnlCny, 0)),
+      isOpen: remainingShares > 0.000001
+    };
+  }).sort((a, b) => `${b.buyDate}|${b.id}`.localeCompare(`${a.buyDate}|${a.id}`));
+  const openRounds = rounds.filter((round) => round.isOpen);
+  return {
+    rounds,
+    openRounds,
+    inTransitCostCny: roundMoney(openRounds.reduce((sum, round) => sum + round.remainingCostCny, 0)),
+    totalRealizedPnlCny: roundMoney(rounds.reduce((sum, round) => sum + round.realizedPnlCny, 0))
+  };
+}
+
+/* 年度打新收益：按卖出日期归年（钱哪年落袋算哪年），与已实现盈亏同一原则。 */
+export function computeIpoYearSummary(year = null) {
+  const model = computeIpoRounds();
+  const sells = [];
+  model.rounds.forEach((round) => {
+    round.sells.forEach((sell) => {
+      if (year !== null && !String(sell.date || '').startsWith(String(year))) return;
+      sells.push({ ...sell, roundId: round.id, name: round.name, costPerShare: round.costPerShare });
+    });
+  });
+  sells.sort((a, b) => `${b.date}|${b.id}`.localeCompare(`${a.date}|${a.id}`));
+  return {
+    sells,
+    count: sells.length,
+    realizedPnlCny: roundMoney(sells.reduce((sum, sell) => sum + sell.realizedPnlCny, 0)),
+    proceedsCny: roundMoney(sells.reduce((sum, sell) => sum + sell.proceedsCny, 0))
+  };
+}
+
+/* 资金与交易页的打新流水：买入腿与每笔卖出腿各占一行，按日期倒序。 */
+export function computeIpoRecords(year = null) {
+  const model = computeIpoRounds();
+  const records = [];
+  model.rounds.forEach((round) => {
+    records.push({
+      id: round.id, roundId: round.id, kind: 'buy', date: round.buyDate, name: round.name,
+      shares: round.shares, price: round.costPerShare,
+      cashImpactCny: getIpoBuyCashImpactCny(round), realizedPnlCny: null
+    });
+    round.sells.forEach((sell) => {
+      records.push({
+        id: sell.id, roundId: round.id, kind: 'sell', date: sell.date, name: round.name,
+        shares: sell.shares, price: sell.price,
+        cashImpactCny: getIpoSellCashImpactCny(sell), realizedPnlCny: sell.realizedPnlCny
+      });
+    });
+  });
+  const scoped = year === null ? records : records.filter((row) => String(row.date || '').startsWith(String(year)));
+  scoped.sort((a, b) => `${b.date}|${b.id}`.localeCompare(`${a.date}|${a.id}`));
+  return {
+    records: scoped,
+    count: scoped.length,
+    realizedPnlCny: roundMoney(scoped.reduce((sum, row) => sum + safeNumber(row.realizedPnlCny, 0), 0))
+  };
 }
 
 function getTradeHolding(symbol) {
