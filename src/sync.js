@@ -92,7 +92,7 @@ export function isLocalPortfolioTemplateState() {
   return holdingsAreDefault
     && state.holdings.every((h) => !recordTimestamp(h))
     && state.dividendLedger.every(isSeedDividendEntry)
-    && !state.dailySnapshots.length && !state.cashFlows.length && !state.trades.length
+    && !state.dailySnapshots.length && !state.cashFlows.length && !state.trades.length && !state.ipoRounds.length
     && !state.yearlyManual.length && !state.yearlyArchives.length && !state.yearlyHoldings.length
     && !state.dividendLedgerIgnored.length && !state.dividendLedgerTombstones.length
     && state.currentCashCny === null && safeNumber(state.liabilityCny, 0) === 0;

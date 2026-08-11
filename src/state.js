@@ -61,8 +61,7 @@ export const state = {
   modal: null,
   modalPayload: null,
   syncing: false,
-  cloudSyncing: false,
-  activeBucketKey: null
+  cloudSyncing: false
 };
 
 /* 启动时本机到底有没有存档。「添加到主屏幕」生成的是一份全新存储，读不到存档时
