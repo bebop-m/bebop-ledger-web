@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "updatedAt": "2026-08-14T03:28:26.469054Z",
+  "updatedAt": "2026-08-15T02:17:56.184243Z",
   "symbolsTotal": 31,
   "symbolsCovered": 16,
   "coveredSymbols": [
@@ -222,7 +222,7 @@
       "symbol": "600519.SH",
       "reportDate": "2026-08-15",
       "reportType": "中报",
-      "dateStatus": "scheduled",
+      "dateStatus": "confirmed",
       "source": "eastmoney",
       "fiscalPeriodEnd": "2026-06-30"
     },
