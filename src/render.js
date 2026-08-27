@@ -245,8 +245,10 @@ function renderHomeNavSummaries(summary, calendarModel, bucketItems, incomeModel
   const dividends = computeDividendRecords();
   const trades = computeTradeSummary();
   const coreItem = bucketItems.find((item) => item.key === 'core');
+  // \u8ba1\u6570\u4e0e\u6301\u4ed3\u9875\u5217\u8868\u540c\u53e3\u5f84\uff1a\u6e05\u4ed3\u80a1\uff08\u6709\u6548\u80a1\u6570 0\uff09\u4e0d\u7b97\u300c\u9879\u300d
+  const heldCount = summary.holdings.filter((item) => safeNumber(item.quantity, 0) > 0).length;
   const summaries = {
-    holdings: `${summary.holdings.length} \u9879${coreItem ? ` \u00b7 ${LABELS.core} ${(getNetAssetShare(coreItem.marketValueCny, summary) * 100).toFixed(1)}%` : ''}`,
+    holdings: `${heldCount} \u9879${coreItem ? ` \u00b7 ${LABELS.core} ${(getNetAssetShare(coreItem.marketValueCny, summary) * 100).toFixed(1)}%` : ''}`,
     dividends: getDividendNavSummary(calendarModel),
     income: getIncomeNavSummaryHtml(incomeModel),
     fundamentals: getFundamentalsNavSummary(),
@@ -1475,18 +1477,21 @@ function getIpoInTransitMarkup() {
 export function renderHoldingsView(holdings, opts = {}) {
   mutable.activeDividendTooltipButton = null;
   const ipoMarkup = getIpoInTransitMarkup();
-  if (!holdings.length) {
+  /* 只列还持有的：清仓股的行留在 state 里锚交易与股息历史（启动清扫刻意不收），
+     但不再占版面，与财报日历/收益结算/基本面的 quantity > 0 口径一致。 */
+  const held = holdings.filter((item) => safeNumber(item.quantity, 0) > 0);
+  if (!held.length) {
     refs.stockList.innerHTML = ipoMarkup;
     refs.legendToggle.hidden = true;
     return;
   }
   const pendingDividends = getPendingDividendSymbols();
-  const visible = state.legendExpanded ? holdings : holdings.slice(0, LEGEND_COLLAPSED_COUNT);
+  const visible = state.legendExpanded ? held : held.slice(0, LEGEND_COLLAPSED_COUNT);
   const bucketOf = (item) => (item.bucket === 'income' ? 'income' : 'core');
   let index = 0;
   const sections = [{ key: 'core', label: LABELS.core }, { key: 'income', label: LABELS.income }]
     .map((group, groupIndex) => {
-      const all = holdings.filter((item) => bucketOf(item) === group.key);
+      const all = held.filter((item) => bucketOf(item) === group.key);
       if (!all.length) return '';
       const shown = visible.filter((item) => bucketOf(item) === group.key);
       const totalCny = all.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0);
@@ -1495,8 +1500,8 @@ export function renderHoldingsView(holdings, opts = {}) {
       return head + rows;
     }).join('');
   refs.stockList.innerHTML = sections + ipoMarkup;
-  refs.legendToggle.hidden = holdings.length <= LEGEND_COLLAPSED_COUNT;
-  refs.legendToggle.textContent = state.legendExpanded ? '收起' : `展开全部 ${holdings.length} 项`;
+  refs.legendToggle.hidden = held.length <= LEGEND_COLLAPSED_COUNT;
+  refs.legendToggle.textContent = state.legendExpanded ? '收起' : `展开全部 ${held.length} 项`;
 }
 
 export function syncRenderedHoldingsView(holdings, opts = {}) {
