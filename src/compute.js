@@ -110,18 +110,22 @@ export function computeHoldings() {
      刻意不进 totalMarketValueCny——持仓权重与双仓百分比是股票内部的比例，别被它稀释。 */
   const ipoInTransitCny = computeIpoRounds().inTransitCostCny;
   const totalAssetCny = totalMarketValueCny + cashBalanceCny + ipoInTransitCny;
+  /* netAssetWeight 的分母是自有资金（净资产 = 总资产 − 负债）：融资时各仓合计
+     会超过 100%，超出的部分就是杠杆，这是刻意的。holdingWeight 仍是股票内部
+     比例（合计恒为 100%），只服务诊断门槛与排序，不再上屏。 */
+  const netMarketValueCny = totalAssetCny - state.liabilityCny;
   const result = {
     holdings: holdings.map((i) => ({
       ...i,
       holdingWeight: safeNumber(i.marketValueCny, 0) / divisor,
-      totalAssetWeight: totalAssetCny > 0 ? safeNumber(i.marketValueCny, 0) / totalAssetCny : null
+      netAssetWeight: netMarketValueCny > 0 ? safeNumber(i.marketValueCny, 0) / netMarketValueCny : null
     })),
     totalMarketValueCny, totalDividendCny, totalDailyPnlCny, dailyPnlBaseCny,
     unknownTaxCount: holdings.filter((item) => !item.taxRateKnown && safeNumber(item.quantity, 0) > 0).length,
     cashBalanceCny,
     ipoInTransitCny,
     totalAssetCny,
-    netMarketValueCny: totalAssetCny - state.liabilityCny
+    netMarketValueCny
   };
   setComputeCache(result);
   return result;

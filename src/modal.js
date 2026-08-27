@@ -1115,7 +1115,7 @@ function renderHoldingDetailModal() {
       <div class="zen-sheet-handle" aria-hidden="true"></div>
       <header class="zen-detail-head">
         <div><small>${escapeHtml(item.symbol)} · ${escapeHtml(bucketLabel)}</small><h3 id="holdingDetailTitle">${escapeHtml(item.name)}</h3></div>
-        <span class="zen-detail-weight">${escapeHtml((safeNumber(item.holdingWeight, 0) * 100).toFixed(1))}%</span>
+        <span class="zen-detail-weight">${escapeHtml((safeNumber(item.netAssetWeight !== null ? item.netAssetWeight : item.holdingWeight, 0) * 100).toFixed(1))}%</span>
       </header>
       <button class="zen-detail-qty" type="button" data-detail-edit="quantity">
         <small>当前持股</small><strong>${escapeHtml(quantity)}<em>股</em></strong>

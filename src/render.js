@@ -1425,7 +1425,8 @@ function getHoldingViewModel(item, index = 0, opts = {}) {
     sortKeyText: getSortKeyText(item),
     annualDividendText: formatZenMoney(item.netAnnualDividendCny),
     quantityText: state.showAmounts ? String(item.quantity) : MASK_AMOUNT,
-    weightText: formatZenPercent(item.holdingWeight),
+    // 占比按自有资金（净资产）计，融资时合计会超 100%——超出即杠杆
+    weightText: formatZenPercent(item.netAssetWeight !== null ? item.netAssetWeight : item.holdingWeight),
     yieldText: formatZenPercent(item.effectiveYield),
     statusKey, statusLabel: getDividendStatusLabel(statusKey), tooltipLines,
     tooltipHtml: buildDividendTooltipHtml(tooltipLines),

@@ -78,7 +78,21 @@ test('independent reconciliation: market value, negative cash, debt and capped t
   assert.equal(summary.totalMarketValueCny, independentlyCalculatedMarketValue);
   assert.equal(summary.netMarketValueCny, independentlyCalculatedNetValue);
   assert.equal(summary.holdings[0].netAnnualDividendCny, 0, '120% tax must be capped at 100%');
-  assert.equal(summary.holdings[0].totalAssetWeight, independentlyCalculatedMarketValue / (independentlyCalculatedMarketValue - 20));
+  assert.equal(summary.holdings[0].netAssetWeight, null, 'net capital is negative here, weight over own capital is meaningless');
+});
+
+test('holding weight over own capital counts liability, so leveraged weights sum above 100%', () => {
+  applyBase({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 10, bucket: 'income', taxRateOverride: '0' }],
+    quotes: { 'TEST.HK': { name: 'Test', price: 12, previousClose: 10, currency: 'HKD', dividendPerShareTtm: 2 } },
+    currentCashCny: 0,
+    currentCashAsOfDate: '2026-07-01',
+    liabilityCny: 27
+  });
+  const summary = computeHoldings();
+  const marketValue = 12 * 10 * 0.9;
+  assert.equal(summary.holdings[0].holdingWeight, 1, 'internal weight still sums to 100%');
+  assert.equal(summary.holdings[0].netAssetWeight, marketValue / (marketValue - 27));
 });
 
 test('money rounding is symmetric and invalid calendar dates are rejected', () => {
