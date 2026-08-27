@@ -21,7 +21,8 @@ const {
 } = stateModule;
 const {
   computeHoldings, computeIncomeSummary, computeTradeSummary, computeDividendCalendar,
-  getEffectiveHoldingQuantityAtDate, normalizeEconomicDividendEntries, validateTradeInventory
+  getEffectiveHoldingQuantityAtDate, normalizeEconomicDividendEntries, validateTradeInventory,
+  getNetAssetShare
 } = computeModule;
 const { settleRevenueData, archiveCompletedYears } = revenueModule;
 const { roundMoney, roundTo, formatDateLabel } = utilsModule;
@@ -93,6 +94,8 @@ test('holding weight over own capital counts liability, so leveraged weights sum
   const marketValue = 12 * 10 * 0.9;
   assert.equal(summary.holdings[0].holdingWeight, 1, 'internal weight still sums to 100%');
   assert.equal(summary.holdings[0].netAssetWeight, marketValue / (marketValue - 27));
+  assert.equal(getNetAssetShare(marketValue, summary), marketValue / (marketValue - 27), 'bucket share uses the same net-capital denominator');
+  assert.equal(getNetAssetShare(marketValue, { netMarketValueCny: -12, totalMarketValueCny: marketValue }), 1, 'negative net capital falls back to internal share');
 });
 
 test('money rounding is symmetric and invalid calendar dates are rejected', () => {

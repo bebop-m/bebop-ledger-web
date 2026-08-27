@@ -1,6 +1,6 @@
 import { state, refs, mutable, saveState, isDemoMode } from './state.js';
 import {
-  computeHoldings, getBucketSegments, getBucketSummaryItems,
+  computeHoldings, getBucketSegments, getBucketSummaryItems, getNetAssetShare,
   computeDividendCalendar, computeIncomeSummary,
   computeCashFlowRecords, computeDividendRecords, computeTradeSummary, isCashModelActive, computeCashBalance, getAnnualDividendOverview,
   computeIpoRounds, computeIpoRecords
@@ -74,10 +74,9 @@ export function renderHomePage(summary) {
   const calendarModel = computeDividendCalendar(new Date(), 'all');
   const incomeModel = computeIncomeSummary();
   const bucketItems = getBucketSummaryItems(summary.holdings);
-  const totalMv = bucketItems.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0) || 1;
   renderHomeHero(summary);
   renderHomeMetrics(calendarModel, summary);
-  renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv, incomeModel);
+  renderHomeNavSummaries(summary, calendarModel, bucketItems, incomeModel);
 }
 
 /* 今年收益 = 当前净值 − 年初净值 − 净注入（净值链口径，已含股息与汇率）。
@@ -241,13 +240,13 @@ function getRecordsNavSummary(cash, dividends, trades) {
   return `${formatHudDate(candidates[0].date)} ${candidates[0].text}`;
 }
 
-function renderHomeNavSummaries(summary, calendarModel, bucketItems, totalMv, incomeModel) {
+function renderHomeNavSummaries(summary, calendarModel, bucketItems, incomeModel) {
   const cash = computeCashFlowRecords();
   const dividends = computeDividendRecords();
   const trades = computeTradeSummary();
   const coreItem = bucketItems.find((item) => item.key === 'core');
   const summaries = {
-    holdings: `${summary.holdings.length} \u9879${coreItem ? ` \u00b7 ${LABELS.core} ${((coreItem.marketValueCny / totalMv) * 100).toFixed(1)}%` : ''}`,
+    holdings: `${summary.holdings.length} \u9879${coreItem ? ` \u00b7 ${LABELS.core} ${(getNetAssetShare(coreItem.marketValueCny, summary) * 100).toFixed(1)}%` : ''}`,
     dividends: getDividendNavSummary(calendarModel),
     income: getIncomeNavSummaryHtml(incomeModel),
     fundamentals: getFundamentalsNavSummary(),
@@ -298,21 +297,23 @@ export function renderHoldingsHero() {
    两个仓位百分比（大字）+ 两段线。就这两样，是本页的一句话职责：钱分两种、各占多少。
    2026-08 裁决：切换态退役——它此前只换一行明细文字、不过滤不分组列表，
    结构宣言与内容排布脱节；现在由列表自己分段承担，明细与市值随注行一并撤销
-   （总市值＝两段节标之和，今日涨跌与首页 hero 同值）。点仓位滚到对应段。 */
+   （今日涨跌与首页 hero 同值）。点仓位滚到对应段。
+   百分比按自有资金计（与逐股行同口径），融资时两数之和会超 100%；
+   两段线仍是内部构成比例——线段画不了杠杆，画的是钱怎么分。 */
 export function renderBucketsView(segments, holdings, summary, opts = {}) {
   if (!refs.bucketTrack) return;
   const items = getBucketSummaryItems(holdings);
   const total = items.reduce((sum, item) => sum + safeNumber(item.marketValueCny, 0), 0);
   const find = (key) => items.find((item) => item.key === key) || null;
-  const share = (item) => (total > 0 && item ? item.marketValueCny / total : 0);
+  const barShare = (item) => (total > 0 && item ? item.marketValueCny / total : 0);
   const bar = ['core', 'income'].map((key) => {
     const item = find(key);
-    return item ? `<i class="seg-${key}" style="width:${(share(item) * 100).toFixed(2)}%"></i>` : '';
+    return item ? `<i class="seg-${key}" style="width:${(barShare(item) * 100).toFixed(2)}%"></i>` : '';
   }).join('');
   const buttons = ['core', 'income'].map((key) => {
     const item = find(key);
     if (!item) return '';
-    return `<button class="bucket" type="button" data-bucket-scroll="${key}" aria-label="滚动到${escapeHtml(item.label)}"><span class="bucket-label">${escapeHtml(item.label)}</span><strong>${formatZenPercent(share(item))}</strong></button>`;
+    return `<button class="bucket" type="button" data-bucket-scroll="${key}" aria-label="滚动到${escapeHtml(item.label)}"><span class="bucket-label">${escapeHtml(item.label)}</span><strong>${formatZenPercent(getNetAssetShare(item.marketValueCny, summary))}</strong></button>`;
   }).join('');
   refs.bucketTrack.innerHTML = `
     <div class="bucket-row bucket-row--hero">${buttons}</div>

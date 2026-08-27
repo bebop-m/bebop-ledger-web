@@ -151,6 +151,15 @@ export function getBucketSegments(holdings) {
   ].filter((i) => i.value > 0);
 }
 
+/* 任意一笔市值占自有资金的比例：与 netAssetWeight 同一套规则——
+   分母是净资产，净资产非正时退回股票内部比例。双仓 hero、首页摘要共用。 */
+export function getNetAssetShare(valueCny, summary) {
+  const net = safeNumber(summary && summary.netMarketValueCny, 0);
+  if (net > 0) return safeNumber(valueCny, 0) / net;
+  const total = safeNumber(summary && summary.totalMarketValueCny, 0);
+  return total > 0 ? safeNumber(valueCny, 0) / total : 0;
+}
+
 export function getBucketSummaryItems(holdings) {
   const groups = {
     core: { key: 'core', label: LABELS.core, color: BUCKET_COLORS.core, marketValueCny: 0, totalDividendCny: 0 },
