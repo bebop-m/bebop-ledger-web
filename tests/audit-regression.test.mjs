@@ -17,7 +17,7 @@ const syncModule = await import('../src/sync.js');
 
 const {
   state, applySnapshot, invalidateComputeCache, setCurrentCashBalance, adjustCashForRecordChange,
-  ignoreDividendLedgerEntry
+  ignoreDividendLedgerEntry, buildPortfolioSnapshot
 } = stateModule;
 const {
   computeHoldings, computeIncomeSummary, computeTradeSummary, computeDividendCalendar,
@@ -96,6 +96,17 @@ test('holding weight over own capital counts liability, so leveraged weights sum
   assert.equal(summary.holdings[0].netAssetWeight, marketValue / (marketValue - 27));
   assert.equal(getNetAssetShare(marketValue, summary), marketValue / (marketValue - 27), 'bucket share uses the same net-capital denominator');
   assert.equal(getNetAssetShare(marketValue, { netMarketValueCny: -12, totalMarketValueCny: marketValue }), 1, 'negative net capital falls back to internal share');
+});
+
+test('portfolio snapshot exports effectiveQuantity alongside the opening-date baseline', () => {
+  applyBase({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 10000, bucket: 'core' }],
+    quotes: { 'TEST.HK': { name: 'Test', price: 10, currency: 'HKD' } },
+    trades: [{ id: 's1', date: '2026-08-12', symbol: 'TEST.HK', side: 'sell', shares: 5000, price: 10, currency: 'HKD', fxRate: 0.9, feeCny: 0 }]
+  });
+  const exported = buildPortfolioSnapshot().holdings[0];
+  assert.equal(exported.quantity, 10000, 'quantity stays the opening-date baseline for merge stability');
+  assert.equal(exported.effectiveQuantity, 5000, 'effectiveQuantity = baseline plus net trades, what the app displays');
 });
 
 test('money rounding is symmetric and invalid calendar dates are rejected', () => {

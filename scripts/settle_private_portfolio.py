@@ -891,6 +891,19 @@ def settle_portfolio(portfolio, market, today):
         stats["yearlyHoldingsUpdated"] = True
         changed = True
 
+    # effectiveQuantity 是给外部读者的衍生字段（与前端 buildPortfolioSnapshot 同口径）：
+    # quantity 是期初基准股数，外部工具几乎必然把它误读成当前持股。写回前重算一遍，
+    # 保证无论文件由 app 同步还是本结算任务落盘，该字段都与 trades 一致。
+    effective_by_symbol = {
+        normalize_symbol(item.get("symbol")): safe_float(item.get("quantity"), 0.0)
+        for item in effective_holdings(portfolio)
+    }
+    for holding in portfolio.get("holdings", []):
+        expected = effective_by_symbol.get(normalize_symbol(holding.get("symbol")), 0.0)
+        if safe_float(holding.get("effectiveQuantity"), -1.0) != expected:
+            holding["effectiveQuantity"] = expected
+            changed = True
+
     if changed:
         portfolio["dividendLedger"].sort(key=lambda item: f"{normalize_date(item.get('exDate'))}|{item.get('symbol', '')}")
         portfolio["updatedAt"] = now_iso

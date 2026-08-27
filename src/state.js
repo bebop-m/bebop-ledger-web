@@ -11,6 +11,8 @@ import {
   sanitizeYearlyHoldingsEntry, sanitizeYearlyArchiveEntry, formatDateLabel, resolveEffectivePayDate,
   buildDividendSourceId, dividendIgnoreKey, sanitizeIpoRoundEntry
 } from './utils.js';
+// 环形依赖（compute.js ← state.js）安全：双方顶层都不调用对方，只有运行期函数体引用。
+import { getEffectiveHoldingQuantityAtDate } from './compute.js';
 
 /* ── Default Quotes (normalized from seed data) ── */
 export const DEFAULT_QUOTES = normalizeSeedQuoteMap(SEED_QUOTES);
@@ -761,8 +763,12 @@ export function buildPortfolioSnapshotHolding(holding) {
 
 export function buildPortfolioSnapshot() {
   const persisted = getPersistedSnapshot();
+  /* effectiveQuantity 是给外部读者的衍生字段：quantity 是期初基准股数，当前持股
+     还要叠加 trades 净额，外部工具（以及人）几乎必然把 quantity 误读成现值。
+     导入侧 sanitizeHolding 白名单会丢弃它，不参与合并，不会回流进 state。 */
   const holdings = Array.isArray(persisted.holdings)
     ? persisted.holdings.map(buildPortfolioSnapshotHolding).filter((item) => item.symbol)
+      .map((item) => ({ ...item, effectiveQuantity: getEffectiveHoldingQuantityAtDate(item.symbol) }))
     : [];
   return {
     type: 'portfolio-snapshot',
