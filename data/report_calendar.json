@@ -1,18 +1,13 @@
 {
   "ok": true,
-  "updatedAt": "2026-08-27T11:09:12.833991Z",
+  "updatedAt": "2026-08-28T12:41:06.323262Z",
   "symbolsTotal": 33,
-  "symbolsCovered": 11,
+  "symbolsCovered": 6,
   "coveredSymbols": [
     "000333.SZ",
-    "000651.SZ",
     "00270.HK",
-    "00777.HK",
     "01088.HK",
-    "01571.HK",
     "01995.HK",
-    "02156.HK",
-    "09926.HK",
     "600177.SH",
     "601088.SH"
   ],
@@ -378,7 +373,7 @@
       "symbol": "000333.SZ",
       "reportDate": "2026-08-29",
       "reportType": "中报",
-      "dateStatus": "scheduled",
+      "dateStatus": "confirmed",
       "source": "eastmoney",
       "fiscalPeriodEnd": "2026-06-30"
     },
@@ -386,7 +381,7 @@
       "symbol": "600177.SH",
       "reportDate": "2026-08-29",
       "reportType": "中报",
-      "dateStatus": "scheduled",
+      "dateStatus": "confirmed",
       "source": "eastmoney",
       "fiscalPeriodEnd": "2026-06-30"
     },
@@ -394,7 +389,7 @@
       "symbol": "601088.SH",
       "reportDate": "2026-08-29",
       "reportType": "中报",
-      "dateStatus": "scheduled",
+      "dateStatus": "confirmed",
       "source": "eastmoney",
       "fiscalPeriodEnd": "2026-06-30"
     }
