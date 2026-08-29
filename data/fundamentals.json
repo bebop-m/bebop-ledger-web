@@ -1,7 +1,7 @@
 {
   "ok": true,
   "provider": "yfinance",
-  "updatedAt": "2026-08-28T11:37:17.378575Z",
+  "updatedAt": "2026-08-29T07:15:32.590860Z",
   "companies": {
     "00700.HK": {
       "symbol": "00700.HK",
@@ -1130,7 +1130,7 @@
       "years": [
         {
           "year": 2022,
-          "dividendPerShare": 4.938507,
+          "dividendPerShare": 4.938633,
           "lastExDate": "2022-05-19",
           "avgPrice": 231.052,
           "eps": 3.32,
@@ -1146,7 +1146,7 @@
         },
         {
           "year": 2023,
-          "dividendPerShare": 2.430059,
+          "dividendPerShare": 2.430121,
           "lastExDate": "2023-04-04",
           "avgPrice": 146.2763,
           "eps": 7.69,
@@ -1162,7 +1162,7 @@
         },
         {
           "year": 2024,
-          "dividendPerShare": 2.978782,
+          "dividendPerShare": 2.978858,
           "lastExDate": "2024-04-03",
           "avgPrice": 116.8744,
           "eps": 13.83,
@@ -1178,7 +1178,7 @@
         },
         {
           "year": 2025,
-          "dividendPerShare": 3.91945,
+          "dividendPerShare": 3.91955,
           "lastExDate": "2025-04-07",
           "avgPrice": 134.0402,
           "eps": 6.89,
@@ -1194,7 +1194,7 @@
         },
         {
           "year": 2026,
-          "dividendPerShare": 3.91945,
+          "dividendPerShare": 3.91955,
           "lastExDate": "2026-04-08",
           "avgPrice": 113.927
         }
@@ -1580,12 +1580,12 @@
       "years": [
         {
           "year": 2012,
-          "dividendPerShare": 0.11654,
+          "dividendPerShare": 0.11651,
           "lastExDate": "2012-02-27"
         },
         {
           "year": 2013,
-          "dividendPerShare": 0.5827,
+          "dividendPerShare": 0.58255,
           "lastExDate": "2013-06-25"
         },
         {
@@ -1596,7 +1596,7 @@
         },
         {
           "year": 2017,
-          "dividendPerShare": 0.139848,
+          "dividendPerShare": 0.139812,
           "lastExDate": "2017-06-20",
           "avgPrice": 8.5807
         },
@@ -1620,7 +1620,7 @@
         },
         {
           "year": 2021,
-          "dividendPerShare": 0.40789,
+          "dividendPerShare": 0.407785,
           "lastExDate": "2021-06-23",
           "avgPrice": 10.6822
         },
@@ -1980,7 +1980,7 @@
           "year": 2026,
           "dividendPerShare": 0.08,
           "lastExDate": "2026-08-17",
-          "avgPrice": 1.6187
+          "avgPrice": 1.6188
         }
       ]
     },
@@ -2455,7 +2455,7 @@
         },
         {
           "year": 2016,
-          "dividendPerShare": 0.37296,
+          "dividendPerShare": 0.372832,
           "lastExDate": "2016-06-23",
           "avgPrice": 13.7358
         },
