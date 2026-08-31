@@ -293,6 +293,31 @@ function isAnnouncedDividendEvent(dividend) {
   return String(dividend && dividend.status || '').trim().toLowerCase() === 'announced';
 }
 
+/* 公告减派对比：去同一只股的历史派息里找「去年同期」那笔——除息日落在本次除息日
+   回推一年 ±75 天窗口内的最近一笔。财报节奏（中期/末期/季度）靠除息日的季节性
+   对齐，不需要类型标签；75 天的窗也不会把季度息的相邻两笔（约 91 天）卷进来。
+   找不到可比笔（首次派息、节奏改变）返回 null，标记静默。 */
+const YOY_WINDOW_MS = 75 * 86400000;
+function findPriorYearDividendPerShare(dividends, exLabel, currency) {
+  const exMs = Date.parse(`${exLabel}T00:00:00Z`);
+  if (!Number.isFinite(exMs)) return null;
+  const targetMs = exMs - 365 * 86400000;
+  let best = null;
+  let bestGap = Infinity;
+  (Array.isArray(dividends) ? dividends : []).forEach((item) => {
+    if (isAnnouncedDividendEvent(item) || (item && item.tentative === true)) return;
+    const amount = safeNumber(item && item.amountPerShare, 0);
+    const label = formatDateLabel(item && item.exDate);
+    if (amount <= 0 || !label) return;
+    if (item.currency && currency && item.currency !== currency) return;
+    const ms = Date.parse(`${label}T00:00:00Z`);
+    if (!Number.isFinite(ms)) return;
+    const gap = Math.abs(ms - targetMs);
+    if (gap <= YOY_WINDOW_MS && gap < bestGap) { best = amount; bestGap = gap; }
+  });
+  return best;
+}
+
 function buildAnnouncedDividendEntries(summary, year, todayLabel) {
   const candidates = new Map();
 
@@ -333,8 +358,10 @@ function buildAnnouncedDividendEntries(summary, year, todayLabel) {
       const taxRate = getHoldingTaxRate(item.holding);
       const grossCny = roundMoney(item.amountPerShare * shares * fxRate);
       const netCny = roundMoney(grossCny * (1 - taxRate));
+      const priorPerShare = findPriorYearDividendPerShare(item.quote.dividends, item.exDate, item.currency);
       return {
         id: `announced_${item.sourceId.replace(/[^A-Z0-9]+/gi, '_')}`,
+        yoyPerShareChange: priorPerShare > 0 ? item.amountPerShare / priorPerShare - 1 : null,
         sourceId: item.sourceId,
         symbol: item.holding.symbol,
         name: item.holding.name || item.quote.name || item.holding.symbol,

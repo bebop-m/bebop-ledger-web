@@ -98,6 +98,26 @@ test('holding weight over own capital counts liability, so leveraged weights sum
   assert.equal(getNetAssetShare(marketValue, { netMarketValueCny: -12, totalMarketValueCny: marketValue }), 1, 'negative net capital falls back to internal share');
 });
 
+test('announced dividend below last year\'s comparable payout carries yoyPerShareChange', () => {
+  applyBase({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 1000, bucket: 'income', taxRateOverride: '0' }],
+    quotes: {
+      'TEST.HK': {
+        name: 'Test', price: 4, currency: 'HKD', dividendPerShareTtm: 0.5,
+        dividends: [
+          { exDate: '2025-09-25', payDate: '2025-10-24', amountPerShare: 0.2, currency: 'HKD' },
+          { exDate: '2026-06-18', payDate: '2026-07-21', amountPerShare: 0.3, currency: 'HKD' },
+          { exDate: '2026-09-24', payDate: '2026-10-23', amountPerShare: 0.15, currency: 'HKD', status: 'announced' }
+        ]
+      }
+    }
+  });
+  const announced = computeDividendCalendar('2026-08-31').allDetails.find((entry) => entry.status === 'announced');
+  assert.ok(announced, 'announced event enters the calendar');
+  // 可比笔按除息日回推一年对齐：只认 2025-09-25 的 0.2，最近的 0.3 末期息（差 98 天）不算同期
+  assert.ok(Math.abs(announced.yoyPerShareChange - (0.15 / 0.2 - 1)) < 1e-9, 'interim 0.15 vs prior-year 0.2 is -25%');
+});
+
 test('portfolio snapshot exports effectiveQuantity alongside the opening-date baseline', () => {
   applyBase({
     holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 10000, bucket: 'core' }],

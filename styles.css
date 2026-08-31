@@ -2846,7 +2846,7 @@ body:not([data-active-page="home"]) .pagebar-note { display: block; width: 100%;
 
 
 body:not([data-active-page="home"]) .pagebar-note.is-stale { color: var(--ink); }
-body[data-active-page="holdings"] .pagebar .diagnostics-button {
+body[data-active-page="dividends"] .pagebar .diagnostics-button {
   display: block;
   width: auto;
   height: auto;
@@ -2866,13 +2866,13 @@ body[data-active-page="holdings"] .pagebar .diagnostics-button {
   text-align: right;
   white-space: nowrap;
 }
-body[data-active-page="holdings"] .pagebar .diagnostics-button b {
+body[data-active-page="dividends"] .pagebar .diagnostics-button b {
   color: var(--up);
   font-weight: 800;
 }/* 无严重项但有关注项：一颗与正文同色的小点，不引入第三种状态色
    （金色留给股息与选中记号，涨红留给严重档） */
 
-body[data-active-page="holdings"] .pagebar .diagnostics-button .diag-dot {
+body[data-active-page="dividends"] .pagebar .diagnostics-button .diag-dot {
   display: inline-block;
   width: 3.5px;
   height: 3.5px;

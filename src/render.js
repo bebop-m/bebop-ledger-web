@@ -341,8 +341,8 @@ export function renderDiagnosticsButton() {
   refs.diagnosticsButton.classList.toggle('has-issues', critical > 0);
   refs.diagnosticsButton.classList.toggle('has-attention', critical === 0 && attention > 0);
   const label = critical > 0
-    ? `持仓诊断，${critical} 项严重${attention > 0 ? `、${attention} 项关注` : ''}`
-    : (attention > 0 ? `持仓诊断，${attention} 项关注` : '持仓诊断，无需处理');
+    ? `股息诊断，${critical} 项严重${attention > 0 ? `、${attention} 项关注` : ''}`
+    : (attention > 0 ? `股息诊断，${attention} 项关注` : '股息诊断，无需处理');
   refs.diagnosticsButton.setAttribute('aria-label', label);
 }
 
@@ -389,8 +389,8 @@ export function renderTimestamp() {
   refs.marketTimestamp.textContent = parts.join(' · ');
   refs.marketTimestamp.classList.toggle('is-stale', staleDays > 0);
   refs.marketTimestamp.setAttribute('aria-label', staleDays > 0
-    ? `行情已停更 ${staleDays} 天，打开持仓诊断`
-    : '打开持仓诊断');
+    ? `行情已停更 ${staleDays} 天，打开股息诊断`
+    : '打开股息诊断');
 }
 
 export function renderPrivacyButton() {
@@ -506,6 +506,16 @@ function getDividendRowStatus(entry) {
   return { text: '在途', tone: 'transit' };
 }
 
+/* 公告行的减派标记：每股派息低于去年同期那笔（compute 侧按除息日季节对齐）时
+   用涨色提醒，涨或持平静默——非默认态才标记。报表宣布减派当天即可见，
+   不用等财年数据（旧诊断规则要滞后近一年）。 */
+function getDividendCutTag(entry, className) {
+  const change = entry && entry.yoyPerShareChange;
+  if (!(entry && (entry.isAnnounced || entry.status === 'announced')) || !(change < 0)) return '';
+  const pct = Math.abs(change * 100);
+  return `<span class="${className}">减派 ${pct >= 9.95 ? pct.toFixed(0) : pct.toFixed(1)}%</span>`;
+}
+
 /* 真实台账条目直接点行进 08-股息到账，可点判定与月明细同一规则；
    预估/已公告背后没有可编辑的台账条目，保持纯展示。 */
 function buildDividendRow(entry) {
@@ -517,7 +527,7 @@ function buildDividendRow(entry) {
     : '';
   return `<${tag} class="divi-row${clickable ? ' is-clickable' : ''}"${attrs}>
     <span>${escapeHtml(formatDividendRowDate(entry))} <strong>${escapeHtml(entry.name || entry.symbol)}</strong></span>
-    <span><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong>${status.tone === 'paid' ? '' : ` <span class="divi-st is-${status.tone}">${escapeHtml(status.text)}</span>`}</span>
+    <span><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong>${(() => { const cut = getDividendCutTag(entry, 'divi-st is-due'); return cut ? ` ${cut}` : ''; })()}${status.tone === 'paid' ? '' : ` <span class="divi-st is-${status.tone}">${escapeHtml(status.text)}</span>`}</span>
   </${tag}>`;
 }
 
@@ -636,7 +646,7 @@ export function buildDividendMonthDetail(month) {
           : '';
         return `<${tag} class="zen-md-row${clickable ? ' is-clickable' : ''}"${attrs}>
           <span class="zen-md-co"><strong>${escapeHtml(entry.name)}</strong><span>${escapeHtml(getMonthDetailDateShort(entry))}</span></span>
-          <span class="zen-md-side"><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong>${status.tone === 'paid' ? '' : `<span class="is-${status.tone}">${escapeHtml(status.text)}</span>`}</span>
+          <span class="zen-md-side"><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong>${getDividendCutTag(entry, 'is-due')}${status.tone === 'paid' ? '' : `<span class="is-${status.tone}">${escapeHtml(status.text)}</span>`}</span>
         </${tag}>`;
       }).join('')
     : `<p class="zen-md-empty">${escapeHtml(LABELS.dividendEmptyTitle)}</p>`;

@@ -765,9 +765,10 @@ function renderDividendLedgerModal() {
   updateReceiptConversion();
 }
 
-/* 04-持仓诊断抽屉 · 按 designs/禅意UI/04-持仓诊断/定稿图.html
+/* 04-股息诊断抽屉 · 形制按 designs/禅意UI/04-持仓诊断/定稿图.html
    三组严重度：严重＝涨红点、关注＝金点、数据质量＝灰点（不计入右上计数）。
-   每项两行：结论（公司名加粗）+ 依据行，左侧 4px 色点悬挂缩进。诊断规则本身不动。 */
+   每项两行：结论（公司名加粗）+ 依据行，左侧 4px 色点悬挂缩进。
+   2026-08-31 裁决：仓位纪律退役，规则只剩「股息能否持续」，入口移至股息页。 */
 function renderDiagnosticsModal() {
   const model = getPortfolioDiagnostics();
   /* 按公司分组：名字是扫描锚点，一家的多条告警收在一个名字下；
@@ -799,13 +800,13 @@ function renderDiagnosticsModal() {
   /* 小仓位被门槛静默时如实交代一句：否则「为什么茅台报了、这只没报」无从判断。
      这是口径披露，不是教学文案，所以留着。 */
   const mutedNote = model.mutedHoldingCount > 0
-    ? `<p class="zen-diag-muted">另有 ${model.mutedHoldingCount} 只小仓位（合计 ${(model.mutedHoldingWeight * 100).toFixed(1)}%）只查仓位纪律，不列公司层面的发现</p>`
+    ? `<p class="zen-diag-muted">另有 ${model.mutedHoldingCount} 只小仓位（合计 ${(model.mutedHoldingWeight * 100).toFixed(1)}%）低于诊断门槛，不列公司层面的发现</p>`
     : '';
   let body = '';
   if (!model.ready) {
     body = '<p class="zen-diag-empty">正在读取自动基本面，完成后会自动生成诊断</p>';
   } else if (!model.items.length) {
-    body = `<p class="zen-diag-empty">仓位、股息与公司基本面均未触发当前规则</p>${mutedNote}`;
+    body = `<p class="zen-diag-empty">股息与公司基本面均未触发当前规则</p>${mutedNote}`;
   } else {
     body = [
       group('严重', model.critical, 'is-critical'),
@@ -819,7 +820,7 @@ function renderDiagnosticsModal() {
     <section class="modal-sheet zen-sheet zen-sheet--diag" role="dialog" aria-modal="true" aria-labelledby="diagnosticsTitle">
       <div class="zen-sheet-handle" aria-hidden="true"></div>
       <header class="zen-diag-head">
-        <h3 id="diagnosticsTitle">持仓诊断</h3>
+        <h3 id="diagnosticsTitle">股息诊断</h3>
         <strong class="zen-diag-count">${model.criticalCount}</strong>
       </header>
       <div class="zen-diag-body">${body}</div>

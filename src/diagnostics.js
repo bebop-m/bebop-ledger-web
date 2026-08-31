@@ -1,4 +1,5 @@
-/* 持仓诊断：只输出需要处理的异常，不生成综合评分。 */
+/* 股息诊断：只回答一个问题——股息能否持续。只输出需要处理的异常，不生成综合评分。
+   仓位纪律组已退役（2026-08-31 裁决：不需要仓位提醒，股息可持续性才是要提醒的）。 */
 import { computeHoldings } from './compute.js';
 import {
   getCompanyFundamentals,
@@ -8,8 +9,6 @@ import {
 } from './fundamentals.js';
 import { safeNumber, getDiagnosticsMinWeight } from './utils.js';
 
-const INCOME_USUAL_MAX = 0.05;
-const INCOME_HARD_MAX = 0.10;
 const MATERIAL_DECLINE = -0.10;
 
 function isValue(value) {
@@ -54,22 +53,6 @@ function latestPair(rows, key) {
   return { previous: available[available.length - 2], latest: available[available.length - 1] };
 }
 
-/* 仓位纪律的分母是净资产（总资产 − 负债，融资记在负债栏或负现金都已剔除）：
-   融资会放大单一标的对净资产的冲击，用净资产才如实反映风险敞口。 */
-function addPositionDiagnostics(items, holding, source) {
-  if (holding.bucket !== 'income') return;
-  const useNetAsset = holding.netAssetWeight !== null;
-  const assetWeight = useNetAsset ? holding.netAssetWeight : holding.holdingWeight;
-  const basis = useNetAsset ? '净资产' : '股票市值';
-  if (assetWeight > INCOME_HARD_MAX) {
-    items.push(makeItem('critical', holding, '打工仓超过 10% 上限',
-      `当前占${basis} ${percent(assetWeight)}，超过策略硬上限 ${percent(INCOME_HARD_MAX, 0)}`, source, 'income-hard-max'));
-  } else if (assetWeight > INCOME_USUAL_MAX) {
-    items.push(makeItem('attention', holding, '打工仓高于常规区间',
-      `当前占${basis} ${percent(assetWeight)}，常规仓位为 2%–5%`, source, 'income-usual-max'));
-  }
-}
-
 function addDividendDiagnostics(items, holding, rows, source, currentYear) {
   if (holding.bucket !== 'income') return;
   const dividendRows = rows.filter((row) => regularDividend(row) > 0);
@@ -79,14 +62,9 @@ function addDividendDiagnostics(items, holding, rows, source, currentYear) {
       latestDividend ? `最近一次常规派息来自 ${latestDividend.year} 财年` : '自动基本面没有找到常规派息记录', source, 'income-no-dividend'));
     return;
   }
-  if (dividendRows.length >= 2) {
-    const previous = dividendRows[dividendRows.length - 2];
-    const change = regularDividend(latestDividend) / regularDividend(previous) - 1;
-    if (change < 0) {
-      items.push(makeItem(change <= -0.20 ? 'critical' : 'attention', holding, '常规股息同比下降',
-        `${latestDividend.year} 财年下降 ${percent(Math.abs(change))}`, source, 'dividend-cut'));
-    }
-  }
+  /* 「常规股息同比下降」规则已退役（2026-08-31）：它比的是财年年度合计，
+     报表宣布减派要等财年数据落地才触发，滞后近一年。减派提醒改由股息页
+     的公告行承担——逐笔公告 vs 去年同期，公告当天即亮（render 的减派标记）。 */
   const coverageRows = rows.filter((row) => isValue(row.fcfDividendCoverage));
   const coverage = coverageRows[coverageRows.length - 1];
   if (coverage && Number(coverage.fcfDividendCoverage) < 1) {
@@ -153,7 +131,7 @@ function addModelDiagnostics(items, holding, model, source) {
 
 /* 公司层面的发现（经营 / 股息 / 数据覆盖）对组合的意义随权重衰减：
    一只占 0.07%（约 ¥190）的持仓净利润下滑，是事实，但不是待办。
-   低于门槛的持仓只跑仓位纪律，其余规则不生成条目，改为在抽屉沉底汇总一句。
+   低于门槛的持仓不生成条目，改为在抽屉沉底汇总一句。
    门槛本身在 config.json 的 diagnosticsMinWeight，设 0 即恢复全量上报。 */
 function isBelowDiagnosticsFloor(holding) {
   const floor = getDiagnosticsMinWeight();
@@ -173,8 +151,6 @@ export function getPortfolioDiagnostics() {
   let mutedWeight = 0;
 
   summary.holdings.forEach((holding) => {
-    // 仓位纪律检验的正是权重本身，任何仓位都要跑。
-    addPositionDiagnostics(items, holding, '当前持仓');
     if (isBelowDiagnosticsFloor(holding)) {
       if (safeNumber(holding.marketValueCny, 0) > 0) {
         mutedCount += 1;

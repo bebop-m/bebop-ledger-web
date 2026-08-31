@@ -53,7 +53,7 @@ test('经营回报用净利润增长桥接股本变化，不与 EPS 重复计算
   assert.ok(Math.abs(model.historicalReturn - 0.20) < 1e-9);
 });
 
-test('打工仓超过硬上限且无股息时自动列为严重问题', async () => {
+test('打工仓无常规股息时自动列为严重问题（仓位纪律已退役）', async () => {
   const year = new Date().getFullYear();
   applySnapshot({
     version: 3,
@@ -82,12 +82,12 @@ test('打工仓超过硬上限且无股息时自动列为严重问题', async ()
   await loadFundamentals({ force: true });
   globalThis.fetch = previousFetch;
   const diagnostics = getPortfolioDiagnostics();
-  assert.ok(diagnostics.critical.some((item) => item.title === '打工仓超过 10% 上限'));
+  assert.ok(!diagnostics.items.some((item) => item.title.includes('打工仓')), '仓位纪律规则已退役，不应再产出条目');
   assert.ok(diagnostics.critical.some((item) => item.title === '近两年没有常规股息'));
-  assert.ok(diagnostics.actionableCount >= 2);
+  assert.ok(diagnostics.actionableCount >= 1);
 });
 
-test('小仓位只查仓位纪律，公司层面的发现不进诊断', async () => {
+test('小仓位低于诊断门槛，公司层面的发现不进诊断', async () => {
   const year = new Date().getFullYear();
   // BIG 占 99.7%、TINY 占 0.3%（低于 1% 门槛）。两家的财务同样在恶化。
   applySnapshot({
