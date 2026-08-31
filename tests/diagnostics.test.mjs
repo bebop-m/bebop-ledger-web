@@ -13,7 +13,7 @@ const fundamentalsModule = await import('../src/fundamentals.js');
 const diagnosticsModule = await import('../src/diagnostics.js');
 const { applySnapshot, invalidateComputeCache } = stateModule;
 const { loadFundamentals, getCompanyReturnModel } = fundamentalsModule;
-const { getPortfolioDiagnostics } = diagnosticsModule;
+const { getDividendChangeReview } = diagnosticsModule;
 
 test('经营回报用净利润增长桥接股本变化，不与 EPS 重复计算', async () => {
   const year = new Date().getFullYear();
@@ -53,116 +53,83 @@ test('经营回报用净利润增长桥接股本变化，不与 EPS 重复计算
   assert.ok(Math.abs(model.historicalReturn - 0.20) < 1e-9);
 });
 
-test('打工仓无常规股息时自动列为严重问题（仓位纪律已退役）', async () => {
-  const year = new Date().getFullYear();
-  applySnapshot({
-    version: 3,
-    holdings: [{ localId: 1, symbol: 'PDD', quantity: 20, bucket: 'income' }],
-    quotes: { PDD: { name: '拼多多', price: 100, previousClose: 100, currency: 'USD', dividends: [] } },
-    rates: { CNY: 1, USD: 7, HKD: 1 },
-    dividendLedger: [], dailySnapshots: [], cashFlows: [], trades: [], yearlyManual: [], yearlyArchives: [], yearlyHoldings: []
-  });
-  invalidateComputeCache();
-  const previousFetch = globalThis.fetch;
-  globalThis.fetch = async () => ({
-    ok: true,
-    json: async () => ({
-      ok: true,
-      provider: 'test',
-      updatedAt: `${year}-07-12T00:00:00Z`,
-      companies: {
-        PDD: { symbol: 'PDD', currency: 'USD', statementCurrency: 'CNY', years: [
-          { year: year - 3, netIncome: 100, eps: 1, sharesOutstanding: 100 },
-          { year: year - 2, netIncome: 130, eps: 1.2, sharesOutstanding: 105 },
-          { year: year - 1, netIncome: 120, eps: 1.1, sharesOutstanding: 110 }
-        ] }
-      }
-    })
-  });
-  await loadFundamentals({ force: true });
-  globalThis.fetch = previousFetch;
-  const diagnostics = getPortfolioDiagnostics();
-  assert.ok(!diagnostics.items.some((item) => item.title.includes('打工仓')), '仓位纪律规则已退役，不应再产出条目');
-  assert.ok(diagnostics.critical.some((item) => item.title === '近两年没有常规股息'));
-  assert.ok(diagnostics.actionableCount >= 1);
-});
+/* 股息增减复核：与股息页减派标记同一口径（除息日回推一年 ±75 天找可比笔）。
+   日期相对真实今天构造，避免固定日期随时间腐烂。 */
+const DAY = 86400000;
+const label = (daysAgo) => new Date(Date.now() - daysAgo * DAY).toISOString().slice(0, 10);
 
-test('小仓位低于诊断门槛，公司层面的发现不进诊断', async () => {
-  const year = new Date().getFullYear();
-  // BIG 占 99.7%、TINY 占 0.3%（低于 1% 门槛）。两家的财务同样在恶化。
+test('股息增减复核：减派、增派、持平与无可比分别归位', () => {
+  const recentEx = 30;            // 最近一笔：30 天前除息
+  const priorEx = 30 + 365;       // 去年同期：正好一年前
   applySnapshot({
-    version: 3,
+    version: 5,
     holdings: [
-      { localId: 1, symbol: 'BIG.HK', quantity: 1000, bucket: 'core' },
-      { localId: 2, symbol: 'TINY.HK', quantity: 3, bucket: 'core' }
+      { localId: 1, symbol: 'CUT.HK', name: '减派股', quantity: 100, bucket: 'income' },
+      { localId: 2, symbol: 'RAISE.HK', name: '增派股', quantity: 100, bucket: 'income' },
+      { localId: 3, symbol: 'FLAT.HK', name: '持平股', quantity: 100, bucket: 'core' },
+      { localId: 4, symbol: 'NEW.HK', name: '首派股', quantity: 100, bucket: 'core' },
+      { localId: 5, symbol: 'OLD.HK', name: '停派股', quantity: 100, bucket: 'core' },
+      { localId: 6, symbol: 'GONE.HK', name: '已清仓', quantity: 0, bucket: 'core' }
     ],
     quotes: {
-      'BIG.HK': { name: '大仓', price: 100, previousClose: 100, currency: 'HKD', dividends: [] },
-      'TINY.HK': { name: '小仓', price: 100, previousClose: 100, currency: 'HKD', dividends: [] }
+      'CUT.HK': { name: '减派股', price: 10, currency: 'HKD', dividends: [
+        { exDate: label(priorEx), amountPerShare: 0.2, currency: 'HKD' },
+        { exDate: label(recentEx), amountPerShare: 0.15, currency: 'HKD' }
+      ] },
+      'RAISE.HK': { name: '增派股', price: 10, currency: 'HKD', dividends: [
+        { exDate: label(priorEx), amountPerShare: 0.2, currency: 'HKD' },
+        { exDate: label(recentEx), amountPerShare: 0.25, currency: 'HKD' }
+      ] },
+      'FLAT.HK': { name: '持平股', price: 10, currency: 'HKD', dividends: [
+        { exDate: label(priorEx), amountPerShare: 0.2, currency: 'HKD' },
+        { exDate: label(recentEx), amountPerShare: 0.2, currency: 'HKD' }
+      ] },
+      'NEW.HK': { name: '首派股', price: 10, currency: 'HKD', dividends: [
+        { exDate: label(recentEx), amountPerShare: 0.1, currency: 'HKD' }
+      ] },
+      'OLD.HK': { name: '停派股', price: 10, currency: 'HKD', dividends: [
+        { exDate: label(500), amountPerShare: 0.3, currency: 'HKD' },
+        { exDate: label(500 + 365), amountPerShare: 0.3, currency: 'HKD' }
+      ] },
+      'GONE.HK': { name: '已清仓', price: 10, currency: 'HKD', dividends: [
+        { exDate: label(priorEx), amountPerShare: 0.5, currency: 'HKD' },
+        { exDate: label(recentEx), amountPerShare: 0.1, currency: 'HKD' }
+      ] }
     },
     rates: { CNY: 1, USD: 7, HKD: 1 },
     dividendLedger: [], dailySnapshots: [], cashFlows: [], trades: [], yearlyManual: [], yearlyArchives: [], yearlyHoldings: []
   });
   invalidateComputeCache();
-  const declining = (symbol) => ({
-    symbol, currency: 'HKD', statementCurrency: 'HKD', years: [
-      { year: year - 3, netIncome: 100, eps: 1, sharesOutstanding: 100 },
-      { year: year - 2, netIncome: 90, eps: 0.9, sharesOutstanding: 100 },
-      { year: year - 1, netIncome: 50, eps: 0.5, sharesOutstanding: 100 }
-    ]
-  });
-  const previousFetch = globalThis.fetch;
-  globalThis.fetch = async () => ({
-    ok: true,
-    json: async () => ({
-      ok: true,
-      provider: 'test',
-      updatedAt: `${year}-07-12T00:00:00Z`,
-      companies: { 'BIG.HK': declining('BIG.HK'), 'TINY.HK': declining('TINY.HK') }
-    })
-  });
-  await loadFundamentals({ force: true });
-  globalThis.fetch = previousFetch;
 
-  const diagnostics = getPortfolioDiagnostics();
-  assert.ok(diagnostics.items.some((item) => item.symbol === 'BIG.HK' && item.title === '净利润明显下降'));
-  assert.ok(!diagnostics.items.some((item) => item.symbol === 'TINY.HK'));
-  assert.equal(diagnostics.mutedHoldingCount, 1);
-  assert.ok(diagnostics.mutedHoldingWeight > 0 && diagnostics.mutedHoldingWeight < 0.01);
+  const model = getDividendChangeReview();
+  assert.equal(model.cuts.length, 1, '只有减派股进减派组（清仓股不参与）');
+  assert.equal(model.cuts[0].symbol, 'CUT.HK');
+  assert.ok(Math.abs(model.cuts[0].change - (0.15 / 0.2 - 1)) < 1e-9, '0.2 → 0.15 是 −25%');
+  assert.equal(model.cuts[0].priorPerShare, 0.2);
+  assert.equal(model.raises.length, 1);
+  assert.equal(model.raises[0].symbol, 'RAISE.HK');
+  assert.ok(Math.abs(model.raises[0].change - 0.25) < 1e-9, '0.2 → 0.25 是 +25%');
+  assert.equal(model.flatCount, 1, '持平股沉底计数');
+  assert.equal(model.unratedCount, 2, '首派无可比 + 停派超窗口都归入无可比');
 });
 
-test('角标只认严重档，关注与数据质量不计入', async () => {
-  const year = new Date().getFullYear();
+test('公告中的未来除息也参与增减复核，并标记已公告', () => {
   applySnapshot({
-    version: 3,
-    holdings: [{ localId: 1, symbol: 'SOFT.HK', quantity: 100, bucket: 'core' }],
-    quotes: { 'SOFT.HK': { name: '温和下滑', price: 100, previousClose: 100, currency: 'HKD', dividends: [] } },
+    version: 5,
+    holdings: [{ localId: 1, symbol: 'ANN.HK', name: '公告股', quantity: 100, bucket: 'income' }],
+    quotes: {
+      'ANN.HK': { name: '公告股', price: 10, currency: 'HKD', dividends: [
+        { exDate: label(340), amountPerShare: 0.2, currency: 'HKD' },
+        { exDate: label(-25), amountPerShare: 0.15, currency: 'HKD', status: 'announced' }
+      ] }
+    },
     rates: { CNY: 1, USD: 7, HKD: 1 },
     dividendLedger: [], dailySnapshots: [], cashFlows: [], trades: [], yearlyManual: [], yearlyArchives: [], yearlyHoldings: []
   });
   invalidateComputeCache();
-  const previousFetch = globalThis.fetch;
-  globalThis.fetch = async () => ({
-    ok: true,
-    json: async () => ({
-      ok: true,
-      provider: 'test',
-      updatedAt: `${year}-07-12T00:00:00Z`,
-      companies: {
-        // 同比 −15%：够 MATERIAL_DECLINE 但不到 −30%，落在关注档。
-        'SOFT.HK': { symbol: 'SOFT.HK', currency: 'HKD', statementCurrency: 'HKD', years: [
-          { year: year - 3, netIncome: 100, eps: 1, sharesOutstanding: 100 },
-          { year: year - 2, netIncome: 100, eps: 1, sharesOutstanding: 100 },
-          { year: year - 1, netIncome: 85, eps: 0.85, sharesOutstanding: 100 }
-        ] }
-      }
-    })
-  });
-  await loadFundamentals({ force: true });
-  globalThis.fetch = previousFetch;
 
-  const diagnostics = getPortfolioDiagnostics();
-  assert.ok(diagnostics.attention.some((item) => item.title === '净利润明显下降'));
-  assert.equal(diagnostics.criticalCount, 0);
-  assert.ok(diagnostics.actionableCount > diagnostics.criticalCount);
+  const model = getDividendChangeReview();
+  assert.equal(model.cuts.length, 1);
+  assert.equal(model.cuts[0].announced, true);
+  assert.ok(Math.abs(model.cuts[0].change - (0.15 / 0.2 - 1)) < 1e-9);
 });

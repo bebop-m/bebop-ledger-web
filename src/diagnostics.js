@@ -1,194 +1,65 @@
-/* 股息诊断：只回答一个问题——股息能否持续。只输出需要处理的异常，不生成综合评分。
-   仓位纪律组已退役（2026-08-31 裁决：不需要仓位提醒，股息可持续性才是要提醒的）。 */
-import { computeHoldings } from './compute.js';
-import {
-  getCompanyFundamentals,
-  getCompanyReturnModel,
-  getFundamentalsCompanyCount,
-  getFundamentalsMeta
-} from './fundamentals.js';
-import { safeNumber, getDiagnosticsMinWeight } from './utils.js';
+/* 股息诊断：只回答一个问题——每只持仓的派息在增还是在减。
+   2026-08-31 两次裁决：先退役仓位纪律，随后规则收敛到只剩股息增减对比，
+   基本面衍生规则（FCF 覆盖 / 净利 / 负债 / 稀释 / 数据质量）一并退场。
+   对比口径与股息页公告行的减派标记同源：最近一笔派息（含未来公告）
+   vs 去年同期可比笔（除息日回推一年 ±75 天窗口，跨中期/末期不混比）。 */
+import { computeHoldings, findPriorYearDividendPerShare } from './compute.js';
+import { safeNumber, formatDateLabel } from './utils.js';
 
-const MATERIAL_DECLINE = -0.10;
+/* 最近一笔太老（超过约 13 个月）说明派息节奏已断或数据缺失，
+   给不出「增减」结论，归入沉底汇总而不是硬凑一条。 */
+const RECENT_WINDOW_DAYS = 400;
+const FLAT_EPSILON = 0.001;
 
-function isValue(value) {
-  return value !== null && value !== undefined && Number.isFinite(Number(value));
-}
-
-function fullYearRows(company, currentYear) {
-  return (Array.isArray(company && company.years) ? company.years : [])
-    .filter((row) => row && safeNumber(row.year, 0) > 0 && row.year < currentYear)
-    .slice()
-    .sort((a, b) => a.year - b.year);
-}
-
-function regularDividend(row) {
-  return Math.max(0, safeNumber(row && row.dividendPerShare, 0) - safeNumber(row && row.specialDividendPerShare, 0));
-}
-
-function percent(value, digits = 1) {
-  return `${(value * 100).toFixed(digits)}%`;
-}
-
-function ratio(value) {
-  return `${Number(value).toFixed(2)} 倍`;
-}
-
-function makeItem(severity, holding, title, evidence, source, key) {
-  return {
-    severity,
-    symbol: holding.symbol,
-    name: holding.name || holding.symbol,
-    weight: safeNumber(holding.holdingWeight, 0),
-    title,
-    evidence,
-    source,
-    key: `${holding.symbol}|${key || title}`
-  };
-}
-
-function latestPair(rows, key) {
-  const available = rows.filter((row) => isValue(row[key]));
-  if (available.length < 2) return null;
-  return { previous: available[available.length - 2], latest: available[available.length - 1] };
-}
-
-function addDividendDiagnostics(items, holding, rows, source, currentYear) {
-  if (holding.bucket !== 'income') return;
-  const dividendRows = rows.filter((row) => regularDividend(row) > 0);
-  const latestDividend = dividendRows[dividendRows.length - 1] || null;
-  if (!latestDividend || latestDividend.year < currentYear - 2) {
-    items.push(makeItem('critical', holding, '近两年没有常规股息',
-      latestDividend ? `最近一次常规派息来自 ${latestDividend.year} 财年` : '自动基本面没有找到常规派息记录', source, 'income-no-dividend'));
-    return;
-  }
-  /* 「常规股息同比下降」规则已退役（2026-08-31）：它比的是财年年度合计，
-     报表宣布减派要等财年数据落地才触发，滞后近一年。减派提醒改由股息页
-     的公告行承担——逐笔公告 vs 去年同期，公告当天即亮（render 的减派标记）。 */
-  const coverageRows = rows.filter((row) => isValue(row.fcfDividendCoverage));
-  const coverage = coverageRows[coverageRows.length - 1];
-  if (coverage && Number(coverage.fcfDividendCoverage) < 1) {
-    items.push(makeItem('critical', holding, '自由现金流不能覆盖股息',
-      `${coverage.year} 财年覆盖 ${ratio(coverage.fcfDividendCoverage)}`, source, 'fcf-coverage'));
-  } else if (coverage && Number(coverage.fcfDividendCoverage) < 1.2) {
-    items.push(makeItem('attention', holding, '股息现金覆盖偏紧',
-      `${coverage.year} 财年覆盖 ${ratio(coverage.fcfDividendCoverage)}`, source, 'fcf-coverage-thin'));
-  }
-}
-
-function addBusinessDiagnostics(items, holding, rows, source) {
-  const netPair = latestPair(rows, 'netIncome');
-  let hasNetIncomeDecline = false;
-  if (netPair && Number(netPair.previous.netIncome) > 0) {
-    const change = Number(netPair.latest.netIncome) / Number(netPair.previous.netIncome) - 1;
-    if (change <= MATERIAL_DECLINE) {
-      hasNetIncomeDecline = true;
-      items.push(makeItem(change <= -0.30 ? 'critical' : 'attention', holding, '净利润明显下降',
-        `${netPair.latest.year} 财年同比下降 ${percent(Math.abs(change))}`, source, 'net-income-decline'));
+function latestDividendEvent(holding) {
+  const dividends = Array.isArray(holding.dividends) ? holding.dividends : [];
+  let latest = null;
+  dividends.forEach((item) => {
+    const label = formatDateLabel(item && item.exDate);
+    const amount = safeNumber(item && item.amountPerShare, 0);
+    if (!label || amount <= 0) return;
+    if (!latest || label > latest.exDate) {
+      latest = {
+        exDate: label,
+        amountPerShare: amount,
+        currency: item.currency || holding.currency || '',
+        announced: String(item && item.status || '').trim().toLowerCase() === 'announced'
+      };
     }
-  }
-  const epsPair = latestPair(rows, 'eps');
-  if (epsPair && Number(epsPair.previous.eps) > 0) {
-    const change = Number(epsPair.latest.eps) / Number(epsPair.previous.eps) - 1;
-    // 净利润与 EPS 同向下降时只报净利润，避免同一经营变化重复占两行。
-    if (change <= MATERIAL_DECLINE && !hasNetIncomeDecline) {
-      items.push(makeItem('attention', holding, 'EPS 明显下降',
-        `${epsPair.latest.year} 财年同比下降 ${percent(Math.abs(change))}`, source, 'eps-decline'));
-    }
-  }
-  const fcfRows = rows.filter((row) => isValue(row.fcf));
-  if (fcfRows.length >= 2 && Number(fcfRows[fcfRows.length - 1].fcf) < 0 && Number(fcfRows[fcfRows.length - 2].fcf) < 0) {
-    items.push(makeItem('critical', holding, '自由现金流连续两年为负',
-      `${fcfRows[fcfRows.length - 2].year}–${fcfRows[fcfRows.length - 1].year} 财年`, source, 'negative-fcf'));
-  }
-  const debtRows = rows.filter((row) => isValue(row.debtRatio));
-  if (debtRows.length >= 3) {
-    const latest = debtRows[debtRows.length - 1];
-    const base = debtRows[debtRows.length - 3];
-    const increase = Number(latest.debtRatio) - Number(base.debtRatio);
-    if (increase >= 0.10) {
-      items.push(makeItem('attention', holding, '负债率两年明显上升',
-        `${base.year} ${percent(base.debtRatio)} → ${latest.year} ${percent(latest.debtRatio)}`, source, 'debt-rise'));
-    }
-  }
+  });
+  return latest;
 }
 
-function addModelDiagnostics(items, holding, model, source) {
-  if (!model) {
-    items.push(makeItem('data', holding, '经营回报暂不可计算', '缺少完整价格或财务数据', source, 'model-missing'));
-    return;
-  }
-  if (model.netBuybackYield !== null && model.netBuybackYield <= -0.01) {
-    items.push(makeItem(model.netBuybackYield <= -0.03 ? 'critical' : 'attention', holding, '总股本持续稀释',
-      `近 ${model.buybackSpan} 年年化稀释 ${percent(Math.abs(model.netBuybackYield))}`, source, 'share-dilution'));
-  }
-  // 最近一年经营反转已由上方盈利规则呈现；这里只报告真正的数据样本不足。
-  if (model.confidence === 'low' && model.growthSpan < 3) {
-    items.push(makeItem('data', holding, '长期增速置信度低',
-      model.confidenceReason || '历史年数不足或最近一年出现方向反转', source, 'model-low-confidence'));
-  }
-}
-
-/* 公司层面的发现（经营 / 股息 / 数据覆盖）对组合的意义随权重衰减：
-   一只占 0.07%（约 ¥190）的持仓净利润下滑，是事实，但不是待办。
-   低于门槛的持仓不生成条目，改为在抽屉沉底汇总一句。
-   门槛本身在 config.json 的 diagnosticsMinWeight，设 0 即恢复全量上报。 */
-function isBelowDiagnosticsFloor(holding) {
-  const floor = getDiagnosticsMinWeight();
-  return floor > 0 && safeNumber(holding.holdingWeight, 0) < floor;
-}
-
-export function getPortfolioDiagnostics() {
+export function getDividendChangeReview() {
   const summary = computeHoldings();
-  const meta = getFundamentalsMeta();
-  const currentYear = new Date().getFullYear();
-  const ready = getFundamentalsCompanyCount() > 0;
-  const source = meta.updatedAt
-    ? `自动基本面 · 更新 ${String(meta.updatedAt).slice(0, 10)}`
-    : '自动基本面';
-  const items = [];
-  let mutedCount = 0;
-  let mutedWeight = 0;
+  const cutoff = formatDateLabel(new Date(Date.now() - RECENT_WINDOW_DAYS * 86400000).toISOString());
+  const cuts = [];
+  const raises = [];
+  let flatCount = 0;
+  let unratedCount = 0;
 
   summary.holdings.forEach((holding) => {
-    if (isBelowDiagnosticsFloor(holding)) {
-      if (safeNumber(holding.marketValueCny, 0) > 0) {
-        mutedCount += 1;
-        mutedWeight += safeNumber(holding.holdingWeight, 0);
-      }
-      return;
-    }
-    const company = getCompanyFundamentals(holding.symbol);
-    if (!company) {
-      if (ready) items.push(makeItem('data', holding, '缺少公司基本面', '自动数据源尚未覆盖该证券', source, 'company-missing'));
-      return;
-    }
-    const rows = fullYearRows(company, currentYear);
-    const latestYear = rows.reduce((max, row) => Math.max(max, safeNumber(row.year, 0)), 0);
-    if (!latestYear || latestYear < currentYear - 1) {
-      items.push(makeItem('data', holding, '基本面数据已过期',
-        latestYear ? `最新完整财年为 ${latestYear}` : '没有完整年度财务数据', source, 'stale-fundamentals'));
-    }
-    addDividendDiagnostics(items, holding, rows, source, currentYear);
-    addBusinessDiagnostics(items, holding, rows, source);
-    addModelDiagnostics(items, holding, getCompanyReturnModel(holding.symbol), source);
+    if (safeNumber(holding.quantity, 0) <= 0) return;
+    const latest = latestDividendEvent(holding);
+    if (!latest || latest.exDate < cutoff) { unratedCount += 1; return; }
+    const prior = findPriorYearDividendPerShare(holding.dividends, latest.exDate, latest.currency);
+    if (!(prior > 0)) { unratedCount += 1; return; }
+    const change = latest.amountPerShare / prior - 1;
+    if (Math.abs(change) <= FLAT_EPSILON) { flatCount += 1; return; }
+    (change < 0 ? cuts : raises).push({
+      symbol: holding.symbol,
+      name: holding.name || holding.symbol,
+      change,
+      amountPerShare: latest.amountPerShare,
+      priorPerShare: prior,
+      currency: latest.currency,
+      exDate: latest.exDate,
+      announced: latest.announced
+    });
   });
 
-  const severityOrder = { critical: 0, attention: 1, data: 2 };
-  const unique = items.filter((item, index, rows) => rows.findIndex((other) => other.key === item.key) === index)
-    .sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity] || b.weight - a.weight || a.name.localeCompare(b.name, 'zh-CN'));
-  const critical = unique.filter((item) => item.severity === 'critical');
-  return {
-    ready,
-    items: unique,
-    critical,
-    attention: unique.filter((item) => item.severity === 'attention'),
-    data: unique.filter((item) => item.severity === 'data'),
-    actionableCount: unique.filter((item) => item.severity !== 'data').length,
-    // 角标只认严重档：常年高挂的数字不是告警。关注与数据质量仍在抽屉里逐条列出。
-    criticalCount: critical.length,
-    mutedHoldingCount: mutedCount,
-    mutedHoldingWeight: mutedWeight,
-    updatedAt: meta.updatedAt || ''
-  };
+  const byMagnitude = (a, b) => Math.abs(b.change) - Math.abs(a.change) || a.name.localeCompare(b.name, 'zh-CN');
+  cuts.sort(byMagnitude);
+  raises.sort(byMagnitude);
+  return { cuts, raises, flatCount, unratedCount };
 }

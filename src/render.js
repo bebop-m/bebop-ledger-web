@@ -7,7 +7,7 @@ import {
 } from './compute.js';
 import { renderFundamentalsPage, getFundamentalsCompanyCount, getPortfolioReturnSummary } from './fundamentals.js';
 import { computeYearAnnals } from './annals.js';
-import { getPortfolioDiagnostics } from './diagnostics.js';
+import { getDividendChangeReview } from './diagnostics.js';
 import { getUpcomingReportEvents } from './report-calendar.js';
 import {
   safeNumber, escapeHtml, formatMoney, formatPlainPrice, formatPercent, formatDailyPnl,
@@ -326,23 +326,22 @@ export function patchBucketsView(segments, holdings, summary) {
   renderBucketsView(segments, holdings, summary, { animateDetail: false });
 }
 
-/* 页头右槽：角标只报严重档，用涨色提醒。
-   关注与数据质量不进角标——它们不需要「现在就处理」，常年挂着的数字会把真警报淹掉；
-   有关注但无严重时留一颗小点，表示「有东西可看，不急」。完整分组在抽屉里。 */
+/* 页头右槽：角标只报减派数，用涨色提醒——增派是好消息，不值得一个常挂的数字，
+   只增无减时留一颗小点表示「有变化可看，不急」。细则全部在抽屉里。 */
 export function renderDiagnosticsButton() {
   if (!refs.diagnosticsButton) return;
-  const model = getPortfolioDiagnostics();
-  const critical = model.criticalCount;
-  const attention = model.attention.length;
+  const model = getDividendChangeReview();
+  const cuts = model.cuts.length;
+  const raises = model.raises.length;
   refs.diagnosticsButton.hidden = false;
-  refs.diagnosticsButton.innerHTML = critical > 0
-    ? `诊断 <b>${critical}</b>`
-    : (attention > 0 ? '诊断 <i class="diag-dot" aria-hidden="true"></i>' : '诊断');
-  refs.diagnosticsButton.classList.toggle('has-issues', critical > 0);
-  refs.diagnosticsButton.classList.toggle('has-attention', critical === 0 && attention > 0);
-  const label = critical > 0
-    ? `股息诊断，${critical} 项严重${attention > 0 ? `、${attention} 项关注` : ''}`
-    : (attention > 0 ? `股息诊断，${attention} 项关注` : '股息诊断，无需处理');
+  refs.diagnosticsButton.innerHTML = cuts > 0
+    ? `诊断 <b>${cuts}</b>`
+    : (raises > 0 ? '诊断 <i class="diag-dot" aria-hidden="true"></i>' : '诊断');
+  refs.diagnosticsButton.classList.toggle('has-issues', cuts > 0);
+  refs.diagnosticsButton.classList.toggle('has-attention', cuts === 0 && raises > 0);
+  const label = cuts > 0
+    ? `股息诊断，${cuts} 只减派${raises > 0 ? `、${raises} 只增派` : ''}`
+    : (raises > 0 ? `股息诊断，${raises} 只增派` : '股息诊断，派息无变动');
   refs.diagnosticsButton.setAttribute('aria-label', label);
 }
 

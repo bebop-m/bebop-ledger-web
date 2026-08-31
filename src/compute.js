@@ -298,7 +298,7 @@ function isAnnouncedDividendEvent(dividend) {
    对齐，不需要类型标签；75 天的窗也不会把季度息的相邻两笔（约 91 天）卷进来。
    找不到可比笔（首次派息、节奏改变）返回 null，标记静默。 */
 const YOY_WINDOW_MS = 75 * 86400000;
-function findPriorYearDividendPerShare(dividends, exLabel, currency) {
+export function findPriorYearDividendPerShare(dividends, exLabel, currency) {
   const exMs = Date.parse(`${exLabel}T00:00:00Z`);
   if (!Number.isFinite(exMs)) return null;
   const targetMs = exMs - 365 * 86400000;

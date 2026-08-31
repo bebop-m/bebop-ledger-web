@@ -19,7 +19,7 @@ import {
   convertReceiptToCny, computeIpoRounds, getIpoBuyCashImpactCny, getIpoSellCashImpactCny
 } from './compute.js';
 import { getFundamentalsPickerModel } from './fundamentals.js';
-import { getPortfolioDiagnostics } from './diagnostics.js';
+import { getDividendChangeReview } from './diagnostics.js';
 import { archiveCompletedYears } from './revenue.js';
 
 let _keydownHandler = null;
@@ -765,63 +765,44 @@ function renderDividendLedgerModal() {
   updateReceiptConversion();
 }
 
-/* 04-股息诊断抽屉 · 形制按 designs/禅意UI/04-持仓诊断/定稿图.html
-   三组严重度：严重＝涨红点、关注＝金点、数据质量＝灰点（不计入右上计数）。
-   每项两行：结论（公司名加粗）+ 依据行，左侧 4px 色点悬挂缩进。
-   2026-08-31 裁决：仓位纪律退役，规则只剩「股息能否持续」，入口移至股息页。 */
+/* 04-股息诊断抽屉 · 形制沿用 designs/禅意UI/04-持仓诊断/定稿图.html 的组结构
+   （减派＝涨红点、增派＝金点，每项两行：结论 + 细则，左侧 4px 色点悬挂缩进）。
+   2026-08-31 裁决：只诊断股息增减，点开给逐笔细则——从多少到多少、除息日、是否公告。 */
 function renderDiagnosticsModal() {
-  const model = getPortfolioDiagnostics();
-  /* 按公司分组：名字是扫描锚点，一家的多条告警收在一个名字下；
-     「依据：」前缀退场，证据压成行右证据位（条目均为年报口径）。 */
-  const compactEvidence = (text) => String(text || '')
-    .replace(/^依据：\s*/, '')
-    .replace(/^\d{4} 财年覆盖\s*/, '')
-    .replace(/^\d{4} 财年同比下降\s*/, '−')
-    .replace(/^\d{4} 财年下降\s*/, '−')
-    .replace(/^\d{4} 财年\s*/, '')
-    .replace(/^自动基本面没有找到常规派息记录$/, '无派息记录');
+  const model = getDividendChangeReview();
+  const perShare = (value) => String(Number(safeNumber(value, 0).toFixed(4)));
+  const pctText = (change) => {
+    const pct = Math.abs(change * 100);
+    return `${pct >= 9.95 ? pct.toFixed(0) : pct.toFixed(1)}%`;
+  };
+  const currentYear = String(new Date().getFullYear());
+  const exText = (label) => (String(label).startsWith(currentYear) ? `除息 ${String(label).slice(5)}` : `除息 ${label}`);
   const group = (label, items, className) => {
     if (!items.length) return '';
-    const byCo = new Map();
-    items.forEach((item) => {
-      const key = String(item.name || '');
-      if (!byCo.has(key)) byCo.set(key, []);
-      byCo.get(key).push(item);
-    });
-    const rows = Array.from(byCo.entries()).map(([name, list]) => `<div class="zen-diag-co">
-        <strong>${escapeHtml(name)}</strong>
-        ${list.map((item) => `<span class="zen-diag-issue"><span>${escapeHtml(item.title)}</span><em>${escapeHtml(compactEvidence(item.evidence))}</em></span>`).join('')}
+    const rows = items.map((item) => `<div class="zen-diag-co">
+        <strong>${escapeHtml(item.name)}</strong>
+        <span class="zen-diag-issue"><span>${item.change < 0 ? '减派' : '增派'} ${escapeHtml(pctText(item.change))}</span><em>${escapeHtml(`每股 ${perShare(item.priorPerShare)} → ${perShare(item.amountPerShare)} · ${exText(item.exDate)}${item.announced ? ' · 已公告' : ''}`)}</em></span>
       </div>`).join('');
     return `<div class="zen-diag-group ${className}">
       <span class="zen-diag-group-label">${escapeHtml(label)}<b>· ${items.length}</b></span>
       <div class="zen-diag-items">${rows}</div>
     </div>`;
   };
-  /* 小仓位被门槛静默时如实交代一句：否则「为什么茅台报了、这只没报」无从判断。
-     这是口径披露，不是教学文案，所以留着。 */
-  const mutedNote = model.mutedHoldingCount > 0
-    ? `<p class="zen-diag-muted">另有 ${model.mutedHoldingCount} 只小仓位（合计 ${(model.mutedHoldingWeight * 100).toFixed(1)}%）低于诊断门槛，不列公司层面的发现</p>`
-    : '';
-  let body = '';
-  if (!model.ready) {
-    body = '<p class="zen-diag-empty">正在读取自动基本面，完成后会自动生成诊断</p>';
-  } else if (!model.items.length) {
-    body = `<p class="zen-diag-empty">股息与公司基本面均未触发当前规则</p>${mutedNote}`;
-  } else {
-    body = [
-      group('严重', model.critical, 'is-critical'),
-      group('关注', model.attention, 'is-attention'),
-      group('数据质量', model.data, 'is-data'),
-      mutedNote
-    ].join('');
-  }
-  /* 抬头大数与页头角标同源（严重档）。「只列异常·全部自动计算」的契约进口径，不再立牌。 */
+  /* 沉底交代没进增减对比的持仓：否则「为什么这只没报」无从判断。口径披露，不是教学文案。 */
+  const mutedParts = [];
+  if (model.flatCount > 0) mutedParts.push(`${model.flatCount} 只与去年同期持平`);
+  if (model.unratedCount > 0) mutedParts.push(`${model.unratedCount} 只无同期可比或近 13 个月无派息`);
+  const mutedNote = mutedParts.length ? `<p class="zen-diag-muted">另有 ${mutedParts.join('、')}</p>` : '';
+  const body = (model.cuts.length || model.raises.length)
+    ? [group('减派', model.cuts, 'is-critical'), group('增派', model.raises, 'is-attention'), mutedNote].join('')
+    : `<p class="zen-diag-empty">持仓的派息较去年同期没有增减</p>${mutedNote}`;
+  /* 抬头大数与页头角标同源（减派数）。 */
   refs.modalRoot.innerHTML = `<div class="modal-mask" data-modal-action="close"></div>
     <section class="modal-sheet zen-sheet zen-sheet--diag" role="dialog" aria-modal="true" aria-labelledby="diagnosticsTitle">
       <div class="zen-sheet-handle" aria-hidden="true"></div>
       <header class="zen-diag-head">
         <h3 id="diagnosticsTitle">股息诊断</h3>
-        <strong class="zen-diag-count">${model.criticalCount}</strong>
+        <strong class="zen-diag-count">${model.cuts.length}</strong>
       </header>
       <div class="zen-diag-body">${body}</div>
       <div class="zen-sheet-actions"><button class="zen-key zen-key--cancel" type="button" data-modal-action="cancel">关 闭</button></div>
