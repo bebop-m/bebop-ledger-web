@@ -3,7 +3,7 @@
    基本面衍生规则（FCF 覆盖 / 净利 / 负债 / 稀释 / 数据质量）一并退场。
    对比口径与股息页公告行的减派标记同源：最近一笔派息（含未来公告）
    vs 去年同期可比笔（除息日回推一年 ±75 天窗口，跨中期/末期不混比）。 */
-import { computeHoldings, findPriorYearDividendPerShare } from './compute.js';
+import { computeHoldings, findPriorYearDividendPerShare, sumDividendPerShareOnDate } from './compute.js';
 import { safeNumber, formatDateLabel } from './utils.js';
 
 /* 最近一笔太老（超过约 13 个月）说明派息节奏已断或数据缺失，
@@ -11,6 +11,7 @@ import { safeNumber, formatDateLabel } from './utils.js';
 const RECENT_WINDOW_DAYS = 400;
 const FLAT_EPSILON = 0.001;
 
+/* 最近一次分派：取最大除息日，同日多笔（常规 + 特别息）加总为一次，任一笔是公告即算公告。 */
 function latestDividendEvent(holding) {
   const dividends = Array.isArray(holding.dividends) ? holding.dividends : [];
   let latest = null;
@@ -18,16 +19,16 @@ function latestDividendEvent(holding) {
     const label = formatDateLabel(item && item.exDate);
     const amount = safeNumber(item && item.amountPerShare, 0);
     if (!label || amount <= 0) return;
+    const announced = String(item && item.status || '').trim().toLowerCase() === 'announced';
     if (!latest || label > latest.exDate) {
-      latest = {
-        exDate: label,
-        amountPerShare: amount,
-        currency: item.currency || holding.currency || '',
-        announced: String(item && item.status || '').trim().toLowerCase() === 'announced'
-      };
+      latest = { exDate: label, currency: item.currency || holding.currency || '', announced };
+    } else if (label === latest.exDate && announced) {
+      latest.announced = true;
     }
   });
-  return latest;
+  if (!latest) return null;
+  latest.amountPerShare = sumDividendPerShareOnDate(dividends, latest.exDate, latest.currency);
+  return latest.amountPerShare > 0 ? latest : null;
 }
 
 export function getDividendChangeReview() {

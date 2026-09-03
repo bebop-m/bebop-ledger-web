@@ -133,3 +133,26 @@ test('公告中的未来除息也参与增减复核，并标记已公告', () =>
   assert.equal(model.cuts[0].announced, true);
   assert.ok(Math.abs(model.cuts[0].change - (0.15 / 0.2 - 1)) < 1e-9);
 });
+
+test('同日常规 + 特别息先加总再比：合计增派不能被逐笔误报成减派', () => {
+  applySnapshot({
+    version: 5,
+    holdings: [{ localId: 1, symbol: 'SPL.HK', name: '特别息股', quantity: 100, bucket: 'income' }],
+    quotes: {
+      'SPL.HK': { name: '特别息股', price: 10, currency: 'HKD', dividends: [
+        { exDate: label(340), amountPerShare: 0.0949, currency: 'HKD' },
+        { exDate: label(-25), amountPerShare: 0.0728, currency: 'HKD', status: 'announced' },
+        { exDate: label(-25), amountPerShare: 0.0291, currency: 'HKD', status: 'announced' }
+      ] }
+    },
+    rates: { CNY: 1, USD: 7, HKD: 1 },
+    dividendLedger: [], dailySnapshots: [], cashFlows: [], trades: [], yearlyManual: [], yearlyArchives: [], yearlyHoldings: []
+  });
+  invalidateComputeCache();
+
+  const model = getDividendChangeReview();
+  assert.equal(model.cuts.length, 0, '不能报减派');
+  assert.equal(model.raises.length, 1);
+  assert.ok(Math.abs(model.raises[0].amountPerShare - (0.0728 + 0.0291)) < 1e-9, '细则里的现值是同日加总');
+  assert.ok(Math.abs(model.raises[0].change - ((0.0728 + 0.0291) / 0.0949 - 1)) < 1e-9);
+});

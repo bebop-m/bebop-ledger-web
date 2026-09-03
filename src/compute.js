@@ -293,16 +293,50 @@ function isAnnouncedDividendEvent(dividend) {
   return String(dividend && dividend.status || '').trim().toLowerCase() === 'announced';
 }
 
+const DAY_MS = 86400000;
+const dateMs = (label) => Date.parse(`${label}T00:00:00Z`);
+
+/* 同一除息日的多笔（常规 + 特别息）是同一次分派：任何「这次 vs 那次」的对比
+   都先按除息日加总，否则永升 0.0728+0.0291 会被逐笔拿去跟去年的 0.0949 比、
+   报成两条减派。announcedOnly 取当前公告那一组，skipAnnounced 取历史那一组。 */
+export function sumDividendPerShareOnDate(dividends, exLabel, currency, options = {}) {
+  const { announcedOnly = false, skipAnnounced = false } = options;
+  return (Array.isArray(dividends) ? dividends : []).reduce((sum, item) => {
+    if (!item) return sum;
+    const announced = isAnnouncedDividendEvent(item);
+    if (announcedOnly && !announced) return sum;
+    if (skipAnnounced && (announced || item.tentative === true)) return sum;
+    if (formatDateLabel(item.exDate) !== exLabel) return sum;
+    if (item.currency && currency && item.currency !== currency) return sum;
+    return sum + Math.max(0, safeNumber(item.amountPerShare, 0));
+  }, 0);
+}
+
+/* 派息节奏窗：「除息日相差多少天以内算同一季」。按该股历史除息日的最小间隔取半，
+   夹在 7～75 天——半年/年派 75，季派约 45，月派约 14；20 天内的相邻两笔视为同季附加
+   （特别息），不参与定节奏。预估拦截与同比找可比笔共用同一个窗，「同一季」只有一处定义。 */
+export function getDividendSeasonWindowMs(dividends) {
+  const labels = Array.from(new Set((Array.isArray(dividends) ? dividends : [])
+    .map((item) => formatDateLabel(item && item.exDate)).filter(Boolean))).sort();
+  let minGapDays = Infinity;
+  for (let index = 1; index < labels.length; index += 1) {
+    const gap = (dateMs(labels[index]) - dateMs(labels[index - 1])) / DAY_MS;
+    if (gap >= 20 && gap < minGapDays) minGapDays = gap;
+  }
+  const days = Number.isFinite(minGapDays) ? Math.min(75, Math.max(7, Math.floor(minGapDays / 2))) : 75;
+  return days * DAY_MS;
+}
+
 /* 公告减派对比：去同一只股的历史派息里找「去年同期」那笔——除息日落在本次除息日
-   回推一年 ±75 天窗口内的最近一笔。财报节奏（中期/末期/季度）靠除息日的季节性
-   对齐，不需要类型标签；75 天的窗也不会把季度息的相邻两笔（约 91 天）卷进来。
+   回推一年 ± 节奏窗内的最近一个除息日，返回该日的加总每股金额。财报节奏
+   （中期/末期/季度）靠除息日的季节性对齐，不需要类型标签。
    找不到可比笔（首次派息、节奏改变）返回 null，标记静默。 */
-const YOY_WINDOW_MS = 75 * 86400000;
 export function findPriorYearDividendPerShare(dividends, exLabel, currency) {
-  const exMs = Date.parse(`${exLabel}T00:00:00Z`);
+  const exMs = dateMs(exLabel);
   if (!Number.isFinite(exMs)) return null;
-  const targetMs = exMs - 365 * 86400000;
-  let best = null;
+  const windowMs = getDividendSeasonWindowMs(dividends);
+  const targetMs = exMs - 365 * DAY_MS;
+  let bestLabel = '';
   let bestGap = Infinity;
   (Array.isArray(dividends) ? dividends : []).forEach((item) => {
     if (isAnnouncedDividendEvent(item) || (item && item.tentative === true)) return;
@@ -310,12 +344,14 @@ export function findPriorYearDividendPerShare(dividends, exLabel, currency) {
     const label = formatDateLabel(item && item.exDate);
     if (amount <= 0 || !label) return;
     if (item.currency && currency && item.currency !== currency) return;
-    const ms = Date.parse(`${label}T00:00:00Z`);
+    const ms = dateMs(label);
     if (!Number.isFinite(ms)) return;
     const gap = Math.abs(ms - targetMs);
-    if (gap <= YOY_WINDOW_MS && gap < bestGap) { best = amount; bestGap = gap; }
+    if (gap <= windowMs && gap < bestGap) { bestLabel = label; bestGap = gap; }
   });
-  return best;
+  if (!bestLabel) return null;
+  const total = sumDividendPerShareOnDate(dividends, bestLabel, currency, { skipAnnounced: true });
+  return total > 0 ? total : null;
 }
 
 function buildAnnouncedDividendEntries(summary, year, todayLabel) {
@@ -359,9 +395,11 @@ function buildAnnouncedDividendEntries(summary, year, todayLabel) {
       const grossCny = roundMoney(item.amountPerShare * shares * fxRate);
       const netCny = roundMoney(grossCny * (1 - taxRate));
       const priorPerShare = findPriorYearDividendPerShare(item.quote.dividends, item.exDate, item.currency);
+      // 同日多笔公告按除息日加总后再比，两行挂同一个结论
+      const currentPerShare = sumDividendPerShareOnDate(item.quote.dividends, item.exDate, item.currency, { announcedOnly: true }) || item.amountPerShare;
       return {
         id: `announced_${item.sourceId.replace(/[^A-Z0-9]+/gi, '_')}`,
-        yoyPerShareChange: priorPerShare > 0 ? item.amountPerShare / priorPerShare - 1 : null,
+        yoyPerShareChange: priorPerShare > 0 ? currentPerShare / priorPerShare - 1 : null,
         sourceId: item.sourceId,
         symbol: item.holding.symbol,
         name: item.holding.name || item.quote.name || item.holding.symbol,
@@ -392,6 +430,17 @@ function buildAnnouncedDividendEntries(summary, year, todayLabel) {
 function buildForecastDividendEntries(summary, year, todayLabel, blockingEntries) {
   // 同一 (symbol, 到账月) 已有真实账本或已公告条目时跳过预估，避免重复计数。
   const blockedMonthKeys = new Set(blockingEntries.map((entry) => `${entry.symbol}|${entry.month}`));
+  /* 到账月只是第一道拦截：预估的到账日是「除息日 + 市场固定滞后」估的，公告的真实
+     付息日落到相邻月就对不上（2026-08-31 永升/粤海/金茂三笔预估幸存，预计全年虚高
+     1.8 万）。第二道按除息日：同一只股已有真实/公告事件的除息日落在预估除息日的
+     节奏窗内，即视为同一次分派，预估退场。 */
+  const blockingExMsBySymbol = new Map();
+  blockingEntries.forEach((entry) => {
+    const ms = dateMs(formatDateLabel(entry && entry.exDate));
+    if (!Number.isFinite(ms)) return;
+    if (!blockingExMsBySymbol.has(entry.symbol)) blockingExMsBySymbol.set(entry.symbol, []);
+    blockingExMsBySymbol.get(entry.symbol).push(ms);
+  });
   // 只用最近 ~13 个月的历史做基准：否则多年历史会把同一笔年度股息（除息日逐年漂移）投影成多条重复。
   const cutoff = getForecastCutoffLabel(todayLabel);
   // 每个 (symbol, 到账月) 只保留一条预估，取最近一次历史派息。
@@ -400,6 +449,8 @@ function buildForecastDividendEntries(summary, year, todayLabel, blockingEntries
   summary.holdings.forEach((holding) => {
     const quote = state.quotes[holding.symbol] || {};
     const dividends = Array.isArray(quote.dividends) ? quote.dividends : [];
+    const seasonWindowMs = getDividendSeasonWindowMs(dividends);
+    const blockingExMs = blockingExMsBySymbol.get(holding.symbol) || [];
     dividends.forEach((dividend) => {
       const parts = getDateParts(dividend && dividend.exDate);
       if (!parts || parts.year >= year) return;
@@ -415,6 +466,8 @@ function buildForecastDividendEntries(summary, year, todayLabel, blockingEntries
       const payParts = getDateParts(forecastPayDate);
       if (!payParts || payParts.year !== year) return;
       if (blockedMonthKeys.has(`${holding.symbol}|${payParts.month}`)) return;
+      const forecastExMs = dateMs(forecastExDate);
+      if (blockingExMs.some((ms) => Math.abs(ms - forecastExMs) <= seasonWindowMs)) return;
       const key = `${holding.symbol}|${payParts.month}`;
       const prev = candidates.get(key);
       if (prev && prev.historyDate >= parts.label) return;

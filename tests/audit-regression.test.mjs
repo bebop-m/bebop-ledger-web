@@ -118,6 +118,76 @@ test('announced dividend below last year\'s comparable payout carries yoyPerShar
   assert.ok(Math.abs(announced.yoyPerShareChange - (0.15 / 0.2 - 1)) < 1e-9, 'interim 0.15 vs prior-year 0.2 is -25%');
 });
 
+/* 2026-08-31 预计全年虚高 1.8 万的根因：预估只按到账月拦截，公告付息日跨月就漏拦。
+   金茂 00816 原型：去年 09-08 除息、预估到账 10-08（除息 + 30 天）；今年公告 09-07 除息、09-30 付息。 */
+test('forecast yields to a same-season announcement even when pay months differ', () => {
+  applyBase({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 35000, bucket: 'income', taxRateOverride: '0' }],
+    quotes: {
+      'TEST.HK': {
+        name: 'Test', price: 3, currency: 'HKD',
+        dividends: [
+          { exDate: '2025-06-25', payDate: '2025-07-31', amountPerShare: 0.096, currency: 'HKD' },
+          { exDate: '2025-09-08', payDate: '2025-09-30', amountPerShare: 0.153, currency: 'HKD' },
+          { exDate: '2026-06-25', payDate: '2026-07-31', amountPerShare: 0.083, currency: 'HKD' },
+          { exDate: '2026-09-07', payDate: '2026-09-30', amountPerShare: 0.107, currency: 'HKD', status: 'announced' }
+        ]
+      }
+    }
+  });
+  const details = computeDividendCalendar('2026-08-31').allDetails.filter((entry) => entry.symbol === 'TEST.HK');
+  assert.equal(details.filter((entry) => entry.status === 'announced').length, 1);
+  assert.equal(details.filter((entry) => entry.isForecast).length, 0, 'the 10-08 forecast is the same interim payout and must not survive');
+});
+
+/* 永升 01995 原型：同日两笔（常规 0.0728 + 特别 0.0291）对去年 0.0949，合计是增派 7%，
+   逐笔比会错报成两条减派；同时预估（除息 09-02 → 到账 10-02）也要被 09-09 的公告拦掉。 */
+test('same-day regular and special dividends are summed before the yoy comparison', () => {
+  applyBase({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 100000, bucket: 'income', taxRateOverride: '0' }],
+    quotes: {
+      'TEST.HK': {
+        name: 'Test', price: 2, currency: 'HKD',
+        dividends: [
+          { exDate: '2025-09-02', payDate: '2025-09-15', amountPerShare: 0.0949, currency: 'HKD' },
+          { exDate: '2026-05-15', payDate: '2026-05-29', amountPerShare: 0.1029, currency: 'HKD' },
+          { exDate: '2026-09-09', payDate: '2026-09-22', amountPerShare: 0.0728, currency: 'HKD', status: 'announced' },
+          { exDate: '2026-09-09', payDate: '2026-09-22', amountPerShare: 0.0291, currency: 'HKD', status: 'announced' }
+        ]
+      }
+    }
+  });
+  const details = computeDividendCalendar('2026-08-31').allDetails.filter((entry) => entry.symbol === 'TEST.HK');
+  const announced = details.filter((entry) => entry.status === 'announced');
+  assert.equal(announced.length, 2, 'both same-day payouts stay as calendar rows');
+  const expected = (0.0728 + 0.0291) / 0.0949 - 1;
+  announced.forEach((entry) => assert.ok(Math.abs(entry.yoyPerShareChange - expected) < 1e-9, 'each row carries the aggregated +7% verdict'));
+  assert.equal(details.filter((entry) => entry.isForecast).length, 0, 'the projected 10-02 forecast is superseded by the announcement');
+});
+
+/* 节奏窗随派息频率收缩：季派的窗约 45 天，隔一季的预估不能被这次公告误伤。 */
+test('season window adapts to cadence so a quarterly payer keeps its next-quarter forecast', () => {
+  applyBase({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 1000, bucket: 'core', taxRateOverride: '0' }],
+    quotes: {
+      'TEST.HK': {
+        name: 'Test', price: 50, currency: 'HKD',
+        dividends: [
+          { exDate: '2025-08-20', amountPerShare: 0.5, currency: 'HKD' },
+          { exDate: '2025-11-20', amountPerShare: 0.5, currency: 'HKD' },
+          { exDate: '2026-02-20', amountPerShare: 0.5, currency: 'HKD' },
+          { exDate: '2026-05-20', amountPerShare: 0.5, currency: 'HKD' },
+          { exDate: '2026-08-22', payDate: '2026-09-15', amountPerShare: 0.5, currency: 'HKD', status: 'announced' }
+        ]
+      }
+    }
+  });
+  // 11-20 除息 + 30 天滞后仍在当年到账；再往后的季度会落到次年，本就不进今年日历
+  const details = computeDividendCalendar('2026-08-15').allDetails.filter((entry) => entry.symbol === 'TEST.HK');
+  const forecasts = details.filter((entry) => entry.isForecast).map((entry) => entry.exDate);
+  assert.deepEqual(forecasts, ['2026-11-20'], 'August forecast yields to the announcement, November forecast survives');
+});
+
 test('portfolio snapshot exports effectiveQuantity alongside the opening-date baseline', () => {
   applyBase({
     holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 10000, bucket: 'core' }],
