@@ -10,7 +10,7 @@
     "dividendHistoryPeriod": "5y",
     "dividendVerify": "disabled"
   },
-  "updatedAt": "2026-09-03T17:02:14.842131Z",
+  "updatedAt": "2026-09-04T03:31:03.355732Z",
   "rates": {
     "CNY": 1,
     "USD": 6.7191,
@@ -22,11 +22,11 @@
       "name": "腾讯控股",
       "market": "HK",
       "currency": "HKD",
-      "price": 433.0,
-      "previousClose": 438.2,
+      "price": 445.8,
+      "previousClose": 433.0,
       "dividendPerShareTtm": 5.3,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:36.312043Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:26.601907Z",
       "lastExDate": "2026-05-15",
       "dividendStatus": "fresh",
       "dividends": [
@@ -37,7 +37,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-23",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-05-19",
@@ -46,7 +47,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-22",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-05-17",
@@ -55,7 +57,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-20",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-05-16",
@@ -64,7 +67,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-19",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-05-15",
@@ -73,7 +77,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-18",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -82,11 +87,11 @@
       "name": "贵州茅台",
       "market": "CN",
       "currency": "CNY",
-      "price": 1298.88,
-      "previousClose": 1297.5,
+      "price": 1329.38,
+      "previousClose": 1298.88,
       "dividendPerShareTtm": 51.98123,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:36.463393Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:26.719298Z",
       "lastExDate": "2026-06-26",
       "dividendStatus": "fresh",
       "dividends": [
@@ -174,11 +179,11 @@
       "name": "格力电器",
       "market": "CN",
       "currency": "CNY",
-      "price": 38.74,
-      "previousClose": 38.48,
+      "price": 38.96,
+      "previousClose": 38.74,
       "dividendPerShareTtm": 3.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:36.624235Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:26.843504Z",
       "lastExDate": "2026-08-27",
       "dividendStatus": "fresh",
       "dividends": [
@@ -270,11 +275,11 @@
       "name": "中国海洋石油",
       "market": "HK",
       "currency": "HKD",
-      "price": 24.74,
-      "previousClose": 25.02,
+      "price": 24.94,
+      "previousClose": 24.74,
       "dividendPerShareTtm": 1.28,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:36.811465Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:26.945025Z",
       "lastExDate": "2026-06-11",
       "dividendStatus": "fresh",
       "dividends": [
@@ -285,7 +290,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-08-19",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-06-09",
@@ -294,7 +300,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-04-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "special"
         },
         {
           "exDate": "2022-09-06",
@@ -303,7 +310,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-08-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-08",
@@ -312,7 +320,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-09-07",
@@ -321,7 +330,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-08-17",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-13",
@@ -330,7 +340,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-21",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-09-12",
@@ -339,7 +350,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-12",
@@ -348,7 +360,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-09-11",
@@ -357,7 +370,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-06-11",
@@ -366,7 +380,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-09-10",
@@ -376,7 +391,8 @@
           "source": "etnet",
           "status": "announced",
           "announceDate": "2026-08-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -385,11 +401,11 @@
       "name": "保利物业",
       "market": "HK",
       "currency": "HKD",
-      "price": 28.32,
-      "previousClose": 28.1,
+      "price": 28.72,
+      "previousClose": 28.32,
       "dividendPerShareTtm": 1.60706,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:36.955074Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:27.067496Z",
       "lastExDate": "2026-06-02",
       "dividendStatus": "fresh",
       "dividends": [
@@ -400,7 +416,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-15",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-08",
@@ -409,7 +426,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-05-31",
@@ -418,7 +436,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-10",
@@ -427,7 +446,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-31",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-06-02",
@@ -436,7 +456,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-31",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -445,11 +466,11 @@
       "name": "美的集团",
       "market": "CN",
       "currency": "CNY",
-      "price": 87.25,
-      "previousClose": 86.98,
+      "price": 87.5,
+      "previousClose": 87.25,
       "dividendPerShareTtm": 4.3,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:37.059056Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:27.162124Z",
       "lastExDate": "2026-06-29",
       "dividendStatus": "fresh",
       "dividends": [
@@ -514,11 +535,11 @@
       "name": "中海物业",
       "market": "HK",
       "currency": "HKD",
-      "price": 3.55,
-      "previousClose": 3.44,
+      "price": 3.61,
+      "previousClose": 3.55,
       "dividendPerShareTtm": 0.2,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:37.240712Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:27.298732Z",
       "lastExDate": "2026-06-23",
       "dividendStatus": "fresh",
       "dividends": [
@@ -529,7 +550,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-08-17",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-06-23",
@@ -538,7 +560,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-09-26",
@@ -547,7 +570,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-08-31",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-23",
@@ -556,7 +580,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-23",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-09-14",
@@ -565,7 +590,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-08-21",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-24",
@@ -574,7 +600,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-09-27",
@@ -583,7 +610,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-20",
@@ -592,7 +620,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-09-19",
@@ -600,7 +629,19 @@
           "amountPerShare": 0.1,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2025-08-25"
+          "announceDate": "2025-08-25",
+          "components": [
+            {
+              "amountPerShare": 0.09,
+              "currency": "HKD",
+              "kind": "regular"
+            },
+            {
+              "amountPerShare": 0.01,
+              "currency": "HKD",
+              "kind": "special"
+            }
+          ]
         },
         {
           "exDate": "2026-06-23",
@@ -609,7 +650,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-09-11",
@@ -619,7 +661,8 @@
           "source": "etnet",
           "status": "announced",
           "announceDate": "2026-08-20",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -628,11 +671,11 @@
       "name": "拼多多",
       "market": "US",
       "currency": "USD",
-      "price": 82.34,
+      "price": 81.63,
       "previousClose": 82.25,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:37.387941Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:27.394509Z",
       "lastExDate": "",
       "dividendStatus": "missing",
       "dividends": []
@@ -642,11 +685,11 @@
       "name": "信邦控股",
       "market": "HK",
       "currency": "HKD",
-      "price": 3.76,
-      "previousClose": 3.73,
+      "price": 3.75,
+      "previousClose": 3.76,
       "dividendPerShareTtm": 0.5,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:37.765899Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:27.500933Z",
       "lastExDate": "2026-06-18",
       "dividendStatus": "fresh",
       "dividends": [
@@ -657,7 +700,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-08-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-06-07",
@@ -666,7 +710,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-09-29",
@@ -675,7 +720,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-08-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-08",
@@ -684,7 +730,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-09-28",
@@ -693,7 +740,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-08-17",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-11",
@@ -702,7 +750,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-09-26",
@@ -711,7 +760,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-22",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-26",
@@ -720,7 +770,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-09-25",
@@ -729,7 +780,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-06-18",
@@ -738,7 +790,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-09-24",
@@ -748,7 +801,8 @@
           "source": "etnet",
           "status": "announced",
           "announceDate": "2026-08-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -757,11 +811,11 @@
       "name": "粤海投资",
       "market": "HK",
       "currency": "HKD",
-      "price": 8.82,
-      "previousClose": 8.77,
+      "price": 8.81,
+      "previousClose": 8.82,
       "dividendPerShareTtm": 0.4629,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:37.929557Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:27.637653Z",
       "lastExDate": "2026-07-02",
       "dividendStatus": "fresh",
       "dividendFetchError": "dividend history returned empty series",
@@ -773,7 +827,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-08-30",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-06-27",
@@ -782,7 +837,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-30",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-10-07",
@@ -791,7 +847,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-08-30",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-27",
@@ -800,7 +857,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-30",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-10-06",
@@ -809,7 +867,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-08-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-26",
@@ -818,7 +877,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-10-09",
@@ -827,7 +887,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-25",
@@ -836,7 +897,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-10-08",
@@ -845,7 +907,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-07-02",
@@ -854,7 +917,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-30",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-09-11",
@@ -864,7 +928,8 @@
           "source": "etnet",
           "status": "announced",
           "announceDate": "2026-08-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -873,18 +938,18 @@
       "name": "京东集团-SW",
       "market": "HK",
       "currency": "HKD",
-      "price": 106.9,
-      "previousClose": 108.6,
-      "dividendPerShareTtm": 3.91993,
+      "price": 111.4,
+      "previousClose": 106.9,
+      "dividendPerShareTtm": 3.9199,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:38.061682Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:27.769446Z",
       "lastExDate": "2026-04-08",
       "dividendStatus": "fresh",
       "dividends": [
         {
           "exDate": "2022-05-19",
           "payDate": "2022-06-08",
-          "amountPerShare": 4.939112,
+          "amountPerShare": 4.939074,
           "currency": "HKD",
           "source": "yahoo",
           "announceDate": "2022-05-04",
@@ -893,7 +958,7 @@
         {
           "exDate": "2023-04-04",
           "payDate": "2023-04-27",
-          "amountPerShare": 2.430356,
+          "amountPerShare": 2.430338,
           "currency": "HKD",
           "source": "yahoo",
           "announceDate": "2023-03-09",
@@ -902,7 +967,7 @@
         {
           "exDate": "2024-04-03",
           "payDate": "2024-04-23",
-          "amountPerShare": 2.979147,
+          "amountPerShare": 2.979124,
           "currency": "HKD",
           "source": "yahoo",
           "announceDate": "2024-03-06",
@@ -911,7 +976,7 @@
         {
           "exDate": "2025-04-07",
           "payDate": "2025-04-23",
-          "amountPerShare": 3.91993,
+          "amountPerShare": 3.9199,
           "currency": "HKD",
           "source": "yahoo",
           "announceDate": "2025-03-06",
@@ -920,7 +985,7 @@
         {
           "exDate": "2026-04-08",
           "payDate": "2026-04-23",
-          "amountPerShare": 3.91993,
+          "amountPerShare": 3.9199,
           "currency": "HKD",
           "source": "yahoo",
           "announceDate": "2026-03-05",
@@ -933,11 +998,11 @@
       "name": "中国电信",
       "market": "HK",
       "currency": "HKD",
-      "price": 4.63,
-      "previousClose": 4.76,
+      "price": 4.675,
+      "previousClose": 4.63,
       "dividendPerShareTtm": 0.289543,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:38.258771Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:27.962688Z",
       "lastExDate": "2026-09-02",
       "dividendStatus": "fresh",
       "dividends": [
@@ -948,7 +1013,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-17",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-08-31",
@@ -957,7 +1023,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-08-16",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-05-31",
@@ -966,7 +1033,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-22",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-08-23",
@@ -975,7 +1043,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-08-08",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-05",
@@ -984,7 +1053,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-09-03",
@@ -993,7 +1063,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-20",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-03",
@@ -1002,7 +1073,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-08-27",
@@ -1011,7 +1083,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-14",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-06-02",
@@ -1020,7 +1093,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-09-02",
@@ -1029,7 +1103,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-08-20",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -1038,11 +1113,11 @@
       "name": "长城汽车",
       "market": "HK",
       "currency": "HKD",
-      "price": 7.77,
-      "previousClose": 7.765,
+      "price": 7.87,
+      "previousClose": 7.77,
       "dividendPerShareTtm": 0.40224,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:38.372296Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:28.075862Z",
       "lastExDate": "2026-07-02",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1053,7 +1128,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-08-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-05-10",
@@ -1062,7 +1138,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-29",
@@ -1071,7 +1148,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-30",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-05-28",
@@ -1080,7 +1158,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-07-08",
@@ -1089,7 +1168,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-07-02",
@@ -1098,7 +1178,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -1107,11 +1188,11 @@
       "name": "雅戈尔",
       "market": "CN",
       "currency": "CNY",
-      "price": 8.26,
-      "previousClose": 8.2,
+      "price": 8.27,
+      "previousClose": 8.26,
       "dividendPerShareTtm": 0.44,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:38.514360Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:28.195534Z",
       "lastExDate": "2026-06-05",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1221,11 +1302,11 @@
       "name": "绿城中国",
       "market": "HK",
       "currency": "HKD",
-      "price": 6.0,
-      "previousClose": 5.85,
+      "price": 6.25,
+      "previousClose": 6.0,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:38.674729Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:28.308803Z",
       "lastExDate": "2025-06-25",
       "dividendStatus": "missing",
       "dividends": [
@@ -1236,7 +1317,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-22",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-20",
@@ -1245,7 +1327,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-19",
@@ -1254,7 +1337,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-22",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-25",
@@ -1263,7 +1347,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -1272,11 +1357,11 @@
       "name": "永升服务",
       "market": "HK",
       "currency": "HKD",
-      "price": 1.85,
-      "previousClose": 1.82,
+      "price": 1.875,
+      "previousClose": 1.85,
       "dividendPerShareTtm": 0.1029,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:38.799720Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:28.418548Z",
       "lastExDate": "2026-05-15",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1287,7 +1372,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-22",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-09-06",
@@ -1296,7 +1382,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-08-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-11-22",
@@ -1305,7 +1392,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-09-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-11",
@@ -1314,7 +1402,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-09-10",
@@ -1322,7 +1411,19 @@
           "amountPerShare": 0.1175,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2024-08-29"
+          "announceDate": "2024-08-29",
+          "components": [
+            {
+              "amountPerShare": 0.0839,
+              "currency": "HKD",
+              "kind": "regular"
+            },
+            {
+              "amountPerShare": 0.0336,
+              "currency": "HKD",
+              "kind": "special"
+            }
+          ]
         },
         {
           "exDate": "2025-05-26",
@@ -1331,7 +1432,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-09-02",
@@ -1339,7 +1441,19 @@
           "amountPerShare": 0.0949,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2025-08-21"
+          "announceDate": "2025-08-21",
+          "components": [
+            {
+              "amountPerShare": 0.0678,
+              "currency": "HKD",
+              "kind": "regular"
+            },
+            {
+              "amountPerShare": 0.0271,
+              "currency": "HKD",
+              "kind": "special"
+            }
+          ]
         },
         {
           "exDate": "2026-05-15",
@@ -1347,7 +1461,19 @@
           "amountPerShare": 0.1029,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2026-03-30"
+          "announceDate": "2026-03-30",
+          "components": [
+            {
+              "amountPerShare": 0.0735,
+              "currency": "HKD",
+              "kind": "regular"
+            },
+            {
+              "amountPerShare": 0.0294,
+              "currency": "HKD",
+              "kind": "special"
+            }
+          ]
         },
         {
           "exDate": "2026-09-09",
@@ -1357,7 +1483,8 @@
           "source": "etnet",
           "status": "announced",
           "announceDate": "2026-08-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-09-09",
@@ -1367,7 +1494,8 @@
           "source": "etnet",
           "status": "announced",
           "announceDate": "2026-08-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "special"
         }
       ]
     },
@@ -1376,11 +1504,11 @@
       "name": "滨江服务",
       "market": "HK",
       "currency": "HKD",
-      "price": 22.2,
-      "previousClose": 21.7,
+      "price": 22.26,
+      "previousClose": 22.2,
       "dividendPerShareTtm": 0.978,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:38.933979Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:28.585485Z",
       "lastExDate": "2026-07-06",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1391,7 +1519,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-08-30",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-06-06",
@@ -1400,7 +1529,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-31",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-20",
@@ -1409,7 +1539,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-12",
@@ -1417,7 +1548,19 @@
           "amountPerShare": 1.374,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2024-03-25"
+          "announceDate": "2024-03-25",
+          "components": [
+            {
+              "amountPerShare": 1.178,
+              "currency": "HKD",
+              "kind": "regular"
+            },
+            {
+              "amountPerShare": 0.196,
+              "currency": "HKD",
+              "kind": "special"
+            }
+          ]
         },
         {
           "exDate": "2024-10-02",
@@ -1426,7 +1569,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-23",
@@ -1435,7 +1579,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-09-03",
@@ -1444,7 +1589,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-21",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-07-06",
@@ -1453,7 +1599,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2027-01-12",
@@ -1463,7 +1610,8 @@
           "source": "etnet",
           "status": "announced",
           "announceDate": "2026-08-20",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -1472,11 +1620,11 @@
       "name": "金茂服务",
       "market": "HK",
       "currency": "HKD",
-      "price": 2.355,
-      "previousClose": 2.285,
+      "price": 2.335,
+      "previousClose": 2.355,
       "dividendPerShareTtm": 0.236,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:39.031640Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:28.686294Z",
       "lastExDate": "2026-06-25",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1487,7 +1635,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-07",
@@ -1496,7 +1645,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-09-09",
@@ -1505,7 +1655,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-25",
@@ -1514,7 +1665,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-09-08",
@@ -1522,7 +1674,19 @@
           "amountPerShare": 0.153,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2025-08-25"
+          "announceDate": "2025-08-25",
+          "components": [
+            {
+              "amountPerShare": 0.087,
+              "currency": "HKD",
+              "kind": "regular"
+            },
+            {
+              "amountPerShare": 0.066,
+              "currency": "HKD",
+              "kind": "special"
+            }
+          ]
         },
         {
           "exDate": "2026-06-25",
@@ -1531,7 +1695,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-23",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-09-07",
@@ -1541,7 +1706,8 @@
           "source": "etnet",
           "status": "announced",
           "announceDate": "2026-08-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -1550,11 +1716,11 @@
       "name": "港股通红利ETF华泰柏瑞",
       "market": "CN",
       "currency": "CNY",
-      "price": 1.603,
-      "previousClose": 1.602,
+      "price": 1.612,
+      "previousClose": 1.603,
       "dividendPerShareTtm": 0.12,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:39.120001Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:28.823216Z",
       "lastExDate": "2026-08-17",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1670,11 +1836,11 @@
       "name": "领展房产基金",
       "market": "HK",
       "currency": "HKD",
-      "price": 38.22,
-      "previousClose": 38.54,
+      "price": 38.9,
+      "previousClose": 38.22,
       "dividendPerShareTtm": 2.5361,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:39.233727Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:28.936783Z",
       "lastExDate": "2026-06-11",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1685,7 +1851,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-11-10",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-06-16",
@@ -1694,7 +1861,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-06-01",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-11-21",
@@ -1703,7 +1871,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-11-09",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-15",
@@ -1712,7 +1881,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-05-31",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-11-20",
@@ -1721,7 +1891,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-11-08",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-27",
@@ -1730,7 +1901,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-05-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-11-18",
@@ -1739,7 +1911,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-11-06",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-18",
@@ -1748,7 +1921,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-05-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-12-02",
@@ -1757,7 +1931,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-11-20",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-06-11",
@@ -1766,7 +1941,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-05-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -1775,11 +1951,11 @@
       "name": "建发物业",
       "market": "HK",
       "currency": "HKD",
-      "price": 2.63,
-      "previousClose": 2.655,
+      "price": 2.68,
+      "previousClose": 2.63,
       "dividendPerShareTtm": 0.2,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:39.370984Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:29.030240Z",
       "lastExDate": "2026-05-29",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1790,7 +1966,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-01",
@@ -1799,7 +1976,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-30",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-05-28",
@@ -1807,7 +1985,19 @@
           "amountPerShare": 0.26,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2024-03-21"
+          "announceDate": "2024-03-21",
+          "components": [
+            {
+              "amountPerShare": 0.16,
+              "currency": "HKD",
+              "kind": "regular"
+            },
+            {
+              "amountPerShare": 0.1,
+              "currency": "HKD",
+              "kind": "special"
+            }
+          ]
         },
         {
           "exDate": "2025-05-27",
@@ -1816,7 +2006,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-05-29",
@@ -1824,7 +2015,19 @@
           "amountPerShare": 0.2,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2026-03-25"
+          "announceDate": "2026-03-25",
+          "components": [
+            {
+              "amountPerShare": 0.15,
+              "currency": "HKD",
+              "kind": "regular"
+            },
+            {
+              "amountPerShare": 0.05,
+              "currency": "HKD",
+              "kind": "special"
+            }
+          ]
         }
       ]
     },
@@ -1833,11 +2036,11 @@
       "name": "中国神华",
       "market": "CN",
       "currency": "CNY",
-      "price": 47.78,
-      "previousClose": 48.05,
+      "price": 47.32,
+      "previousClose": 47.78,
       "dividendPerShareTtm": 2.01,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:39.498732Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:29.163031Z",
       "lastExDate": "2026-07-13",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1902,11 +2105,11 @@
       "name": "中国移动",
       "market": "HK",
       "currency": "HKD",
-      "price": 79.25,
-      "previousClose": 79.5,
+      "price": 80.1,
+      "previousClose": 79.25,
       "dividendPerShareTtm": 5.4203,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:39.684299Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:29.341910Z",
       "lastExDate": "2026-08-25",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1917,7 +2120,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-23",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-09-06",
@@ -1926,7 +2130,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-08-11",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-07",
@@ -1935,7 +2140,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-23",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-09-04",
@@ -1944,7 +2150,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-08-10",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-06",
@@ -1953,7 +2160,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-21",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-09-02",
@@ -1962,7 +2170,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-08",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-06",
@@ -1971,7 +2180,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-20",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-09-01",
@@ -1980,7 +2190,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-07",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-06-05",
@@ -1989,7 +2200,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-08-25",
@@ -1998,7 +2210,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-08-13",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -2007,11 +2220,11 @@
       "name": "中国神华",
       "market": "HK",
       "currency": "HKD",
-      "price": 44.78,
-      "previousClose": 45.54,
+      "price": 45.5,
+      "previousClose": 44.78,
       "dividendPerShareTtm": 2.259,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:39.792235Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:29.501981Z",
       "lastExDate": "2026-07-02",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2022,7 +2235,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-06-21",
@@ -2031,7 +2245,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-27",
@@ -2040,7 +2255,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-22",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-26",
@@ -2049,7 +2265,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-21",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-10-30",
@@ -2058,7 +2275,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-07-02",
@@ -2067,7 +2285,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-30",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-10-08",
@@ -2077,7 +2296,8 @@
           "source": "etnet",
           "status": "announced",
           "announceDate": "2026-08-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -2086,11 +2306,11 @@
       "name": "九兴控股",
       "market": "HK",
       "currency": "HKD",
-      "price": 11.73,
-      "previousClose": 11.69,
+      "price": 11.86,
+      "previousClose": 11.73,
       "dividendPerShareTtm": 1.35,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:39.911043Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:29.641139Z",
       "lastExDate": "2026-09-02",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2101,7 +2321,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-08-19",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-05-19",
@@ -2110,7 +2331,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-17",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-09-09",
@@ -2119,7 +2341,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-08-18",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-05-17",
@@ -2128,7 +2351,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-16",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-09-06",
@@ -2137,7 +2361,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-08-17",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-05-16",
@@ -2146,7 +2371,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-21",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-09-04",
@@ -2155,7 +2381,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-22",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-05-20",
@@ -2163,7 +2390,19 @@
           "amountPerShare": 1.06,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2025-03-20"
+          "announceDate": "2025-03-20",
+          "components": [
+            {
+              "amountPerShare": 0.56,
+              "currency": "HKD",
+              "kind": "special"
+            },
+            {
+              "amountPerShare": 0.5,
+              "currency": "HKD",
+              "kind": "regular"
+            }
+          ]
         },
         {
           "exDate": "2025-09-03",
@@ -2172,7 +2411,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-21",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-05-19",
@@ -2180,7 +2420,19 @@
           "amountPerShare": 0.93,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2026-03-19"
+          "announceDate": "2026-03-19",
+          "components": [
+            {
+              "amountPerShare": 0.56,
+              "currency": "HKD",
+              "kind": "special"
+            },
+            {
+              "amountPerShare": 0.37,
+              "currency": "HKD",
+              "kind": "regular"
+            }
+          ]
         },
         {
           "exDate": "2026-09-02",
@@ -2189,7 +2441,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-08-20",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -2198,11 +2451,11 @@
       "name": "时代集团控股",
       "market": "HK",
       "currency": "HKD",
-      "price": 0.47,
-      "previousClose": 0.475,
+      "price": 0.455,
+      "previousClose": 0.47,
       "dividendPerShareTtm": 0.06,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:40.065526Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:29.739560Z",
       "lastExDate": "2026-03-26",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2213,7 +2466,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-09-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "special"
         },
         {
           "exDate": "2022-04-01",
@@ -2222,7 +2476,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-02-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-11-25",
@@ -2230,7 +2485,19 @@
           "amountPerShare": 0.06,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2022-09-26"
+          "announceDate": "2022-09-26",
+          "components": [
+            {
+              "amountPerShare": 0.04,
+              "currency": "HKD",
+              "kind": "regular"
+            },
+            {
+              "amountPerShare": 0.02,
+              "currency": "HKD",
+              "kind": "special"
+            }
+          ]
         },
         {
           "exDate": "2023-03-31",
@@ -2239,7 +2506,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-02-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-11-24",
@@ -2248,7 +2516,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-09-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-03-27",
@@ -2257,7 +2526,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-02-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-11-22",
@@ -2266,7 +2536,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-09-23",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-03-27",
@@ -2275,7 +2546,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-02-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-11-21",
@@ -2284,7 +2556,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-09-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "special"
         },
         {
           "exDate": "2026-03-26",
@@ -2293,7 +2566,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-02-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -2303,10 +2577,10 @@
       "market": "HK",
       "currency": "HKD",
       "price": 2.38,
-      "previousClose": 2.43,
+      "previousClose": 2.38,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:40.222834Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:29.850772Z",
       "lastExDate": "2025-08-27",
       "dividendStatus": "missing",
       "dividends": [
@@ -2317,7 +2591,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-09",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-18",
@@ -2326,7 +2601,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-31",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-08-27",
@@ -2335,7 +2611,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-05",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -2344,11 +2621,11 @@
       "name": "康方生物",
       "market": "HK",
       "currency": "HKD",
-      "price": 90.8,
-      "previousClose": 87.8,
+      "price": 99.85,
+      "previousClose": 90.8,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:40.309537Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:29.936612Z",
       "lastExDate": "",
       "dividendStatus": "missing",
       "dividends": []
@@ -2358,11 +2635,11 @@
       "name": "网龙",
       "market": "HK",
       "currency": "HKD",
-      "price": 8.015,
-      "previousClose": 8.155,
+      "price": 8.42,
+      "previousClose": 8.015,
       "dividendPerShareTtm": 1.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:40.453087Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:30.033222Z",
       "lastExDate": "2026-06-04",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2373,7 +2650,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-08-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-02-17",
@@ -2382,7 +2660,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-01-19",
-          "tentative": false
+          "tentative": false,
+          "kind": "special"
         },
         {
           "exDate": "2022-06-07",
@@ -2391,7 +2670,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-09-09",
@@ -2399,7 +2679,19 @@
           "amountPerShare": 0.9,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2022-08-30"
+          "announceDate": "2022-08-30",
+          "components": [
+            {
+              "amountPerShare": 0.5,
+              "currency": "HKD",
+              "kind": "special"
+            },
+            {
+              "amountPerShare": 0.4,
+              "currency": "HKD",
+              "kind": "regular"
+            }
+          ]
         },
         {
           "exDate": "2023-06-06",
@@ -2408,7 +2700,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-09-12",
@@ -2416,7 +2709,19 @@
           "amountPerShare": 1.4,
           "currency": "HKD",
           "source": "yahoo",
-          "announceDate": "2023-08-30"
+          "announceDate": "2023-08-30",
+          "components": [
+            {
+              "amountPerShare": 1.0,
+              "currency": "HKD",
+              "kind": "special"
+            },
+            {
+              "amountPerShare": 0.4,
+              "currency": "HKD",
+              "kind": "regular"
+            }
+          ]
         },
         {
           "exDate": "2024-06-12",
@@ -2425,7 +2730,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-09-11",
@@ -2434,7 +2740,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-10",
@@ -2443,7 +2750,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-09-10",
@@ -2452,7 +2760,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-06-04",
@@ -2461,7 +2770,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-09-09",
@@ -2471,7 +2781,8 @@
           "source": "etnet",
           "status": "announced",
           "announceDate": "2026-08-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -2486,7 +2797,7 @@
       "dividendUpdatedAt": "",
       "lastExDate": "",
       "dividendStatus": "missing",
-      "dividendFetchError": "404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/733642.SS?period1=1629910901&period2=1788454901&interval=1d&events=div&includeAdjustedClose=true",
+      "dividendFetchError": "404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/733642.SS?period1=1629948630&period2=1788492630&interval=1d&events=div&includeAdjustedClose=true",
       "dividends": []
     },
     "02111.HK": {
@@ -2494,11 +2805,11 @@
       "name": "超盈国际控股",
       "market": "HK",
       "currency": "HKD",
-      "price": 2.635,
-      "previousClose": 2.58,
+      "price": 2.64,
+      "previousClose": 2.635,
       "dividendPerShareTtm": 0.265,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:42.078207Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:31.411961Z",
       "lastExDate": "2026-06-12",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2509,7 +2820,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-08-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-07-04",
@@ -2518,7 +2830,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-28",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-09-09",
@@ -2527,7 +2840,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-08-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-07-03",
@@ -2536,7 +2850,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-09-13",
@@ -2545,7 +2860,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-08-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-28",
@@ -2554,7 +2870,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-09-10",
@@ -2563,7 +2880,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-27",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-06",
@@ -2572,7 +2890,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-09-18",
@@ -2581,7 +2900,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-06-12",
@@ -2590,7 +2910,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-23",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-09-16",
@@ -2600,7 +2921,8 @@
           "source": "etnet",
           "status": "announced",
           "announceDate": "2026-08-24",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -2609,11 +2931,11 @@
       "name": "中国联通",
       "market": "HK",
       "currency": "HKD",
-      "price": 5.605,
-      "previousClose": 5.57,
+      "price": 5.65,
+      "previousClose": 5.605,
       "dividendPerShareTtm": 0.15229,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:42.823558Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:31.527589Z",
       "lastExDate": "2026-06-03",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2624,7 +2946,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2021-08-19",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-05-19",
@@ -2633,7 +2956,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-03-11",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2022-09-01",
@@ -2642,7 +2966,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2022-08-08",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-05-23",
@@ -2651,7 +2976,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-08",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2023-09-04",
@@ -2660,7 +2986,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-08-09",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-06-05",
@@ -2669,7 +2996,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-19",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-09-04",
@@ -2678,7 +3006,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-08-15",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-06-04",
@@ -2687,7 +3016,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-18",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-09-02",
@@ -2696,7 +3026,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-08-12",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-06-03",
@@ -2705,7 +3036,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-19",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     },
@@ -2714,11 +3046,11 @@
       "name": "泡泡玛特",
       "market": "HK",
       "currency": "HKD",
-      "price": 153.4,
-      "previousClose": 154.2,
+      "price": 156.1,
+      "previousClose": 153.4,
       "dividendPerShareTtm": 2.7248,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-03T17:01:42.989464Z",
+      "dividendUpdatedAt": "2026-09-04T03:30:31.640620Z",
       "lastExDate": "2026-05-15",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2738,7 +3070,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2023-03-29",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2024-05-23",
@@ -2747,7 +3080,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2024-03-20",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2025-05-29",
@@ -2756,7 +3090,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2025-03-26",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         },
         {
           "exDate": "2026-05-15",
@@ -2765,7 +3100,8 @@
           "currency": "HKD",
           "source": "etnet",
           "announceDate": "2026-03-25",
-          "tentative": false
+          "tentative": false,
+          "kind": "regular"
         }
       ]
     }
