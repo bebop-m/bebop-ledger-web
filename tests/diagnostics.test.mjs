@@ -156,3 +156,26 @@ test('同日常规 + 特别息先加总再比：合计增派不能被逐笔误�
   assert.ok(Math.abs(model.raises[0].amountPerShare - (0.0728 + 0.0291)) < 1e-9, '细则里的现值是同日加总');
   assert.ok(Math.abs(model.raises[0].change - ((0.0728 + 0.0291) / 0.0949 - 1)) < 1e-9);
 });
+
+test('两侧带类型时只比常规部分：去年含特别息不算今年减派', () => {
+  applySnapshot({
+    version: 5,
+    holdings: [{ localId: 1, symbol: 'JM.HK', name: '金茂型', quantity: 100, bucket: 'income' }],
+    quotes: {
+      'JM.HK': { name: '金茂型', price: 10, currency: 'HKD', dividends: [
+        { exDate: label(340), amountPerShare: 0.153, currency: 'HKD', source: 'yahoo',
+          components: [{ amountPerShare: 0.087, currency: 'HKD', kind: 'regular' }, { amountPerShare: 0.066, currency: 'HKD', kind: 'special' }] },
+        { exDate: label(-25), amountPerShare: 0.107, currency: 'HKD', status: 'announced', kind: 'regular' }
+      ] }
+    },
+    rates: { CNY: 1, USD: 7, HKD: 1 },
+    dividendLedger: [], dailySnapshots: [], cashFlows: [], trades: [], yearlyManual: [], yearlyArchives: [], yearlyHoldings: []
+  });
+  invalidateComputeCache();
+
+  const model = getDividendChangeReview();
+  assert.equal(model.cuts.length, 0, '总额 0.153 → 0.107 不是减派');
+  assert.equal(model.raises.length, 1);
+  assert.equal(model.raises[0].priorPerShare, 0.087, '细则里去年只报常规部分');
+  assert.ok(Math.abs(model.raises[0].change - (0.107 / 0.087 - 1)) < 1e-9);
+});

@@ -289,11 +289,36 @@ def normalize_currency_code(value, fallback='CNY'):
 
 
 def build_dividend_event_key(event):
+    # kind 进键：同日「中期息 + 特别息」偶尔金额相同，不带类型会被当成同一笔并掉
     return '|'.join([
         str(event.get('exDate') or ''),
         str(round(safe_float(event.get('amountPerShare'), 0.0), 6)),
-        str(event.get('currency') or '')
+        str(event.get('currency') or ''),
+        str(event.get('kind') or '')
     ])
+
+
+DIVIDEND_KINDS = ('regular', 'special')
+
+
+def normalize_dividend_components(value, fallback_currency):
+    """聚合条目挂的分量元数据：[{amountPerShare, currency, kind}]，只保留正金额与合法类型。"""
+    if not isinstance(value, list):
+        return []
+    cleaned = []
+    for component in value:
+        if not isinstance(component, dict):
+            continue
+        amount = round(max(0.0, safe_float(component.get('amountPerShare'), 0.0)), 6)
+        if amount <= 0:
+            continue
+        kind = str(component.get('kind') or 'regular').strip().lower()
+        cleaned.append({
+            'amountPerShare': amount,
+            'currency': normalize_currency_code(component.get('currency'), fallback_currency),
+            'kind': kind if kind in DIVIDEND_KINDS else 'regular'
+        })
+    return sorted(cleaned, key=lambda item: -item['amountPerShare'])
 
 
 def normalize_dividend_event(item, symbol='', currency=''):
@@ -324,6 +349,14 @@ def normalize_dividend_event(item, symbol='', currency=''):
 
     if 'tentative' in item:
         event['tentative'] = bool(item.get('tentative'))
+
+    # 派息类型（常规 / 特别）与聚合条目的分量元数据：前端据此只拿常规部分做同比与预估。
+    kind = str(item.get('kind') or '').strip().lower()
+    if kind in DIVIDEND_KINDS:
+        event['kind'] = kind
+    components = normalize_dividend_components(item.get('components'), event['currency'])
+    if components:
+        event['components'] = components
 
     return event
 
@@ -485,13 +518,25 @@ def _dividend_event_keep_score(event, quote_currency):
     return score
 
 
-def _merge_dropped_event_metadata(kept, dropped_list):
+def _merge_dropped_event_metadata(kept, dropped_list, as_components=False):
+    """被折叠一侧的元数据并入保留侧。
+
+    等值折叠（雅虎 0.107 vs etnet 中期息 0.107）：类型随保留侧继承。
+    聚合折叠（雅虎 0.153 vs etnet 中期息 0.087 + 特别股息 0.066）：分量连同类型挂成
+    components——聚合条目仍是正本（sourceId、台账不动），但「多少是特别息」不再丢失。"""
     combined = {**kept}
     for dropped in dropped_list:
         if not combined.get('payDate') and dropped.get('payDate'):
             combined['payDate'] = dropped['payDate']
         if not combined.get('announceDate') and dropped.get('announceDate'):
             combined['announceDate'] = dropped['announceDate']
+        if not as_components:
+            if not combined.get('kind') and dropped.get('kind'):
+                combined['kind'] = dropped['kind']
+            if not combined.get('components') and dropped.get('components'):
+                combined['components'] = dropped['components']
+    if as_components and not combined.get('components') and any(item.get('kind') for item in dropped_list):
+        combined['components'] = normalize_dividend_components(dropped_list, combined.get('currency') or '')
     return combined
 
 
@@ -562,7 +607,7 @@ def collapse_duplicate_dividend_events(events, quote_currency, rates):
                 result.append(aggregate)
                 continue
             dropped = [pending[i] for i in subset]
-            result.append(_merge_dropped_event_metadata(aggregate, dropped))
+            result.append(_merge_dropped_event_metadata(aggregate, dropped, as_components=True))
             for i in sorted(subset, reverse=True):
                 pending.pop(i)
 
@@ -912,6 +957,12 @@ def parse_etnet_cash_dividend(action_text):
     return None
 
 
+def classify_etnet_dividend_kind(action_text):
+    """etnet 的派息文字自带类型：「特別股息 / 特別息」是特别息，中期息 / 末期息 / 季度息都算常规。"""
+    text = str(action_text or '')
+    return 'special' if ('特別' in text or '特别' in text) else 'regular'
+
+
 def build_etnet_announced_event(symbol, row, today_label):
     announce_raw, _fiscal_year, action, ex_raw, _book_from, _book_to, pay_raw = row[:7]
     cash_dividend = parse_etnet_cash_dividend(action)
@@ -926,7 +977,8 @@ def build_etnet_announced_event(symbol, row, today_label):
         'amountPerShare': amount_per_share,
         'currency': currency,
         'source': 'etnet',
-        'tentative': False
+        'tentative': False,
+        'kind': classify_etnet_dividend_kind(action)
     }
     if ex_date > today_label:
         event['status'] = 'announced'

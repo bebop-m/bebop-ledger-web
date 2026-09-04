@@ -515,6 +515,16 @@ function getDividendCutTag(entry, className) {
   return `<span class="${className}">减派 ${pct >= 9.95 ? pct.toFixed(0) : pct.toFixed(1)}%</span>`;
 }
 
+/* 特别息标注：单独一行的特别息标「特别息」；除息后被合并成一笔的（分量里含特别息）标「含特别息」。
+   一次性的钱要看得出来是一次性的，否则会被当成常态收入。 */
+function getDividendKindTag(entry, className) {
+  if (!entry) return '';
+  if (String(entry.kind || '').toLowerCase() === 'special') return `<span class="${className}">特别息</span>`;
+  const components = Array.isArray(entry.components) ? entry.components : [];
+  return components.some((item) => String(item && item.kind || '').toLowerCase() === 'special')
+    ? `<span class="${className}">含特别息</span>` : '';
+}
+
 /* 真实台账条目直接点行进 08-股息到账，可点判定与月明细同一规则；
    预估/已公告背后没有可编辑的台账条目，保持纯展示。 */
 function buildDividendRow(entry) {
@@ -526,7 +536,7 @@ function buildDividendRow(entry) {
     : '';
   return `<${tag} class="divi-row${clickable ? ' is-clickable' : ''}"${attrs}>
     <span>${escapeHtml(formatDividendRowDate(entry))} <strong>${escapeHtml(entry.name || entry.symbol)}</strong></span>
-    <span><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong>${(() => { const cut = getDividendCutTag(entry, 'divi-st is-due'); return cut ? ` ${cut}` : ''; })()}${status.tone === 'paid' ? '' : ` <span class="divi-st is-${status.tone}">${escapeHtml(status.text)}</span>`}</span>
+    <span><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong>${[getDividendKindTag(entry, 'divi-st is-transit'), getDividendCutTag(entry, 'divi-st is-due')].filter(Boolean).map((tag) => ` ${tag}`).join('')}${status.tone === 'paid' ? '' : ` <span class="divi-st is-${status.tone}">${escapeHtml(status.text)}</span>`}</span>
   </${tag}>`;
 }
 
@@ -645,7 +655,7 @@ export function buildDividendMonthDetail(month) {
           : '';
         return `<${tag} class="zen-md-row${clickable ? ' is-clickable' : ''}"${attrs}>
           <span class="zen-md-co"><strong>${escapeHtml(entry.name)}</strong><span>${escapeHtml(getMonthDetailDateShort(entry))}</span></span>
-          <span class="zen-md-side"><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong>${getDividendCutTag(entry, 'is-due')}${status.tone === 'paid' ? '' : `<span class="is-${status.tone}">${escapeHtml(status.text)}</span>`}</span>
+          <span class="zen-md-side"><strong>${escapeHtml(formatDisplayMoney(entry.netCny, 'CNY'))}</strong>${getDividendKindTag(entry, 'is-transit')}${getDividendCutTag(entry, 'is-due')}${status.tone === 'paid' ? '' : `<span class="is-${status.tone}">${escapeHtml(status.text)}</span>`}</span>
         </${tag}>`;
       }).join('')
     : `<p class="zen-md-empty">${escapeHtml(LABELS.dividendEmptyTitle)}</p>`;

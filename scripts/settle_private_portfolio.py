@@ -169,7 +169,7 @@ def normalize_dividend_event(item, symbol):
     currency = normalize_currency(item.get("currency"), infer_currency(symbol))
     if not ex_date or amount <= 0:
         return None
-    return {
+    event = {
         "sourceId": str(item.get("sourceId") or build_source_id(symbol, ex_date, amount, currency)).strip(),
         "symbol": normalize_symbol(item.get("symbol") or symbol),
         "exDate": ex_date,
@@ -179,6 +179,13 @@ def normalize_dividend_event(item, symbol):
         "source": str(item.get("source") or "unknown").strip() or "unknown",
         "status": str(item.get("status") or "").strip().lower(),
     }
+    # 派息类型与聚合分量随事件进台账，前端据此标注「特别息 / 含特别息」
+    kind = str(item.get("kind") or "").strip().lower()
+    if kind in ("regular", "special"):
+        event["kind"] = kind
+    if isinstance(item.get("components"), list) and item["components"]:
+        event["components"] = item["components"]
+    return event
 
 
 def add_days(date_label, days):
@@ -868,6 +875,8 @@ def settle_portfolio(portfolio, market, today):
                 "bucket": context["bucket"],
                 "receiptStatus": "due" if effective_pay and effective_pay <= today else "pending",
                 "eventSource": event.get("source"),
+                **({"kind": event["kind"]} if event.get("kind") else {}),
+                **({"components": event["components"]} if event.get("components") else {}),
                 "confidence": context["confidence"],
                 "confirmed": False,
                 "note": "",

@@ -151,18 +151,61 @@ test('same-day regular and special dividends are summed before the yoy compariso
         dividends: [
           { exDate: '2025-09-02', payDate: '2025-09-15', amountPerShare: 0.0949, currency: 'HKD' },
           { exDate: '2026-05-15', payDate: '2026-05-29', amountPerShare: 0.1029, currency: 'HKD' },
-          { exDate: '2026-09-09', payDate: '2026-09-22', amountPerShare: 0.0728, currency: 'HKD', status: 'announced' },
-          { exDate: '2026-09-09', payDate: '2026-09-22', amountPerShare: 0.0291, currency: 'HKD', status: 'announced' }
+          { exDate: '2026-09-09', payDate: '2026-09-22', amountPerShare: 0.0728, currency: 'HKD', status: 'announced', kind: 'regular' },
+          { exDate: '2026-09-09', payDate: '2026-09-22', amountPerShare: 0.0291, currency: 'HKD', status: 'announced', kind: 'special' }
         ]
       }
     }
   });
   const details = computeDividendCalendar('2026-08-31').allDetails.filter((entry) => entry.symbol === 'TEST.HK');
   const announced = details.filter((entry) => entry.status === 'announced');
-  assert.equal(announced.length, 2, 'both same-day payouts stay as calendar rows');
-  const expected = (0.0728 + 0.0291) / 0.0949 - 1;
-  announced.forEach((entry) => assert.ok(Math.abs(entry.yoyPerShareChange - expected) < 1e-9, 'each row carries the aggregated +7% verdict'));
+  assert.equal(announced.length, 2, 'both same-day payouts stay as calendar rows (special is labelled, not merged)');
+  const regular = announced.find((entry) => entry.kind === 'regular');
+  const special = announced.find((entry) => entry.kind === 'special');
+  // 去年那笔没有类型信息 → 退回总额比总额，基准一致
+  assert.ok(Math.abs(regular.yoyPerShareChange - ((0.0728 + 0.0291) / 0.0949 - 1)) < 1e-9, 'regular row carries the +7% total-vs-total verdict');
+  assert.equal(special.yoyPerShareChange, null, 'the special row itself carries no verdict');
   assert.equal(details.filter((entry) => entry.isForecast).length, 0, 'the projected 10-02 forecast is superseded by the announcement');
+});
+
+/* 金茂 00816 原型：去年中期 = 中期息 0.087 + 特别股息 0.066（雅虎合并数 0.153 挂分量），
+   今年中期息 0.107。常规部分 +23%，按总额比会误报 −30%。 */
+test('yoy compares regular-vs-regular once both sides carry dividend kinds', () => {
+  applyBase({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 35000, bucket: 'income', taxRateOverride: '0' }],
+    quotes: {
+      'TEST.HK': {
+        name: 'Test', price: 3, currency: 'HKD',
+        dividends: [
+          { exDate: '2025-09-08', payDate: '2025-09-30', amountPerShare: 0.153, currency: 'HKD', source: 'yahoo',
+            components: [{ amountPerShare: 0.087, currency: 'HKD', kind: 'regular' }, { amountPerShare: 0.066, currency: 'HKD', kind: 'special' }] },
+          { exDate: '2026-06-25', payDate: '2026-07-31', amountPerShare: 0.083, currency: 'HKD', kind: 'regular' },
+          { exDate: '2026-09-07', payDate: '2026-09-30', amountPerShare: 0.107, currency: 'HKD', status: 'announced', kind: 'regular' }
+        ]
+      }
+    }
+  });
+  const announced = computeDividendCalendar('2026-08-31').allDetails.find((entry) => entry.symbol === 'TEST.HK' && entry.status === 'announced');
+  assert.ok(Math.abs(announced.yoyPerShareChange - (0.107 / 0.087 - 1)) < 1e-9, '0.087 → 0.107 is +23%, the special is not a cut');
+});
+
+/* 预估只投影常规部分：去年派过特别息不代表今年还派。 */
+test('forecast projects only the regular part of last year\'s payout', () => {
+  applyBase({
+    holdings: [{ localId: 1, symbol: 'TEST.HK', quantity: 35000, bucket: 'income', taxRateOverride: '0' }],
+    quotes: {
+      'TEST.HK': {
+        name: 'Test', price: 3, currency: 'HKD',
+        dividends: [
+          { exDate: '2025-09-08', payDate: '2025-09-30', amountPerShare: 0.153, currency: 'HKD', source: 'yahoo',
+            components: [{ amountPerShare: 0.087, currency: 'HKD', kind: 'regular' }, { amountPerShare: 0.066, currency: 'HKD', kind: 'special' }] },
+          { exDate: '2025-11-20', amountPerShare: 0.02, currency: 'HKD', kind: 'special' }
+        ]
+      }
+    }
+  });
+  const forecasts = computeDividendCalendar('2026-08-15').allDetails.filter((entry) => entry.symbol === 'TEST.HK' && entry.isForecast);
+  assert.deepEqual(forecasts.map((entry) => [entry.exDate, entry.amountPerShare]), [['2026-09-08', 0.087]], 'special-only history never becomes a forecast; aggregate is trimmed to its regular part');
 });
 
 /* 节奏窗随派息频率收缩：季派的窗约 45 天，隔一季的预估不能被这次公告误伤。 */

@@ -3,7 +3,7 @@
    基本面衍生规则（FCF 覆盖 / 净利 / 负债 / 稀释 / 数据质量）一并退场。
    对比口径与股息页公告行的减派标记同源：最近一笔派息（含未来公告）
    vs 去年同期可比笔（除息日回推一年 ±75 天窗口，跨中期/末期不混比）。 */
-import { computeHoldings, findPriorYearDividendPerShare, sumDividendPerShareOnDate } from './compute.js';
+import { computeHoldings, findPriorYearDividendOnDate, summarizeDividendOnDate, computeDividendYoyChange } from './compute.js';
 import { safeNumber, formatDateLabel } from './utils.js';
 
 /* 最近一笔太老（超过约 13 个月）说明派息节奏已断或数据缺失，
@@ -11,7 +11,7 @@ import { safeNumber, formatDateLabel } from './utils.js';
 const RECENT_WINDOW_DAYS = 400;
 const FLAT_EPSILON = 0.001;
 
-/* 最近一次分派：取最大除息日，同日多笔（常规 + 特别息）加总为一次，任一笔是公告即算公告。 */
+/* 最近一次分派：取最大除息日，同日多笔（常规 + 特别息）汇总为一次，任一笔是公告即算公告。 */
 function latestDividendEvent(holding) {
   const dividends = Array.isArray(holding.dividends) ? holding.dividends : [];
   let latest = null;
@@ -27,8 +27,8 @@ function latestDividendEvent(holding) {
     }
   });
   if (!latest) return null;
-  latest.amountPerShare = sumDividendPerShareOnDate(dividends, latest.exDate, latest.currency);
-  return latest.amountPerShare > 0 ? latest : null;
+  latest.summary = summarizeDividendOnDate(dividends, latest.exDate, latest.currency);
+  return latest.summary.total > 0 ? latest : null;
 }
 
 export function getDividendChangeReview() {
@@ -43,16 +43,19 @@ export function getDividendChangeReview() {
     if (safeNumber(holding.quantity, 0) <= 0) return;
     const latest = latestDividendEvent(holding);
     if (!latest || latest.exDate < cutoff) { unratedCount += 1; return; }
-    const prior = findPriorYearDividendPerShare(holding.dividends, latest.exDate, latest.currency);
-    if (!(prior > 0)) { unratedCount += 1; return; }
-    const change = latest.amountPerShare / prior - 1;
+    const prior = findPriorYearDividendOnDate(holding.dividends, latest.exDate, latest.currency);
+    const change = computeDividendYoyChange(latest.summary, prior);
+    if (change === null) { unratedCount += 1; return; }
     if (Math.abs(change) <= FLAT_EPSILON) { flatCount += 1; return; }
+    // 两侧都有类型信息时细则里给常规部分，另报特别息；否则给总额（与同比基准一致）
+    const useRegular = latest.summary.typed && prior.typed;
     (change < 0 ? cuts : raises).push({
       symbol: holding.symbol,
       name: holding.name || holding.symbol,
       change,
-      amountPerShare: latest.amountPerShare,
-      priorPerShare: prior,
+      amountPerShare: useRegular ? latest.summary.regular : latest.summary.total,
+      priorPerShare: useRegular ? prior.regular : prior.total,
+      specialPerShare: useRegular ? Math.max(0, latest.summary.total - latest.summary.regular) : 0,
       currency: latest.currency,
       exDate: latest.exDate,
       announced: latest.announced

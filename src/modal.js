@@ -781,7 +781,7 @@ function renderDiagnosticsModal() {
     if (!items.length) return '';
     const rows = items.map((item) => `<div class="zen-diag-co">
         <strong>${escapeHtml(item.name)}</strong>
-        <span class="zen-diag-issue"><span>${item.change < 0 ? '减派' : '增派'} ${escapeHtml(pctText(item.change))}</span><em>${escapeHtml(`每股 ${perShare(item.priorPerShare)} → ${perShare(item.amountPerShare)} · ${exText(item.exDate)}${item.announced ? ' · 已公告' : ''}`)}</em></span>
+        <span class="zen-diag-issue"><span>${item.change < 0 ? '减派' : '增派'} ${escapeHtml(pctText(item.change))}</span><em>${escapeHtml(`每股 ${perShare(item.priorPerShare)} → ${perShare(item.amountPerShare)}${item.specialPerShare > 0 ? ` · 另派特别息 ${perShare(item.specialPerShare)}` : ''} · ${exText(item.exDate)}${item.announced ? ' · 已公告' : ''}`)}</em></span>
       </div>`).join('');
     return `<div class="zen-diag-group ${className}">
       <span class="zen-diag-group-label">${escapeHtml(label)}<b>· ${items.length}</b></span>

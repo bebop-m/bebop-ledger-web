@@ -268,6 +268,8 @@ function buildLedgerDividendEntry(entry, year, todayLabel) {
     currency: entry.currency || resolveQuoteCurrency(quote, entry.symbol),
     shares: safeNumber(entry.shares, 0),
     sharesSource: entry.sharesSource || 'manual',
+    kind: entry.kind || '',
+    components: Array.isArray(entry.components) ? entry.components : [],
     netCny,
     bucket: entry.bucket === 'income' ? 'income' : 'core',
     status: isReceived ? 'received' : (isDue ? 'due' : 'pending'),
@@ -296,20 +298,58 @@ function isAnnouncedDividendEvent(dividend) {
 const DAY_MS = 86400000;
 const dateMs = (label) => Date.parse(`${label}T00:00:00Z`);
 
-/* 同一除息日的多笔（常规 + 特别息）是同一次分派：任何「这次 vs 那次」的对比
-   都先按除息日加总，否则永升 0.0728+0.0291 会被逐笔拿去跟去年的 0.0949 比、
-   报成两条减派。announcedOnly 取当前公告那一组，skipAnnounced 取历史那一组。 */
-export function sumDividendPerShareOnDate(dividends, exLabel, currency, options = {}) {
+/* 派息类型来自管道（港股 etnet 带「中期息 / 末期息 / 特別股息」）：
+   kind 标在单条事件上；雅虎给的合并数被保留为正本时，分量连类型挂在 components 里。 */
+export function isSpecialDividendEvent(item) {
+  return String(item && item.kind || '').trim().toLowerCase() === 'special';
+}
+
+function isTypedDividendEvent(item) {
+  return Boolean(item && (item.kind || (Array.isArray(item.components) && item.components.length)));
+}
+
+/* 一条事件的常规部分：特别息为 0；聚合条目按分量扣掉特别息；没有类型信息就整笔视为常规。 */
+export function regularAmountOfDividendEvent(item) {
+  if (!item || isSpecialDividendEvent(item)) return 0;
+  const amount = Math.max(0, safeNumber(item.amountPerShare, 0));
+  if (!Array.isArray(item.components) || !item.components.length) return amount;
+  const special = item.components.reduce((sum, component) => sum
+    + (isSpecialDividendEvent(component) ? Math.max(0, safeNumber(component.amountPerShare, 0)) : 0), 0);
+  return Math.max(0, amount - special);
+}
+
+/* 同一除息日的多笔（常规 + 特别息）是同一次分派：任何「这次 vs 那次」的对比都按除息日
+   汇总。返回 { total, regular, typed }——typed 表示这一天有类型信息，可以只比常规部分。
+   announcedOnly 取当前公告那一组，skipAnnounced 取历史那一组。 */
+export function summarizeDividendOnDate(dividends, exLabel, currency, options = {}) {
   const { announcedOnly = false, skipAnnounced = false } = options;
-  return (Array.isArray(dividends) ? dividends : []).reduce((sum, item) => {
-    if (!item) return sum;
+  const summary = { total: 0, regular: 0, typed: false, hasSpecial: false };
+  (Array.isArray(dividends) ? dividends : []).forEach((item) => {
+    if (!item) return;
     const announced = isAnnouncedDividendEvent(item);
-    if (announcedOnly && !announced) return sum;
-    if (skipAnnounced && (announced || item.tentative === true)) return sum;
-    if (formatDateLabel(item.exDate) !== exLabel) return sum;
-    if (item.currency && currency && item.currency !== currency) return sum;
-    return sum + Math.max(0, safeNumber(item.amountPerShare, 0));
-  }, 0);
+    if (announcedOnly && !announced) return;
+    if (skipAnnounced && (announced || item.tentative === true)) return;
+    if (formatDateLabel(item.exDate) !== exLabel) return;
+    if (item.currency && currency && item.currency !== currency) return;
+    const amount = Math.max(0, safeNumber(item.amountPerShare, 0));
+    const regular = regularAmountOfDividendEvent(item);
+    summary.total += amount;
+    summary.regular += regular;
+    if (isTypedDividendEvent(item)) summary.typed = true;
+    if (regular < amount) summary.hasSpecial = true;
+  });
+  return summary;
+}
+
+/* 同比口径：两侧都有类型信息时只比常规部分——特别息是一次性的，不算增减
+   （金茂 2025 中期 0.087 + 特别 0.066，2026 中期 0.107：常规 +23%，总额却 −30%）。
+   任一侧没有类型信息就退回总额比总额，两边基准一致才不会误报。 */
+export function computeDividendYoyChange(current, prior) {
+  if (!current || !prior) return null;
+  const useRegular = current.typed && prior.typed;
+  const now = useRegular ? current.regular : current.total;
+  const before = useRegular ? prior.regular : prior.total;
+  return now > 0 && before > 0 ? now / before - 1 : null;
 }
 
 /* 派息节奏窗：「除息日相差多少天以内算同一季」。按该股历史除息日的最小间隔取半，
@@ -328,10 +368,10 @@ export function getDividendSeasonWindowMs(dividends) {
 }
 
 /* 公告减派对比：去同一只股的历史派息里找「去年同期」那笔——除息日落在本次除息日
-   回推一年 ± 节奏窗内的最近一个除息日，返回该日的加总每股金额。财报节奏
-   （中期/末期/季度）靠除息日的季节性对齐，不需要类型标签。
+   回推一年 ± 节奏窗内的最近一个除息日，返回该日的汇总（summarizeDividendOnDate）。
+   财报节奏（中期/末期/季度）靠除息日的季节性对齐，不需要类型标签。
    找不到可比笔（首次派息、节奏改变）返回 null，标记静默。 */
-export function findPriorYearDividendPerShare(dividends, exLabel, currency) {
+export function findPriorYearDividendOnDate(dividends, exLabel, currency) {
   const exMs = dateMs(exLabel);
   if (!Number.isFinite(exMs)) return null;
   const windowMs = getDividendSeasonWindowMs(dividends);
@@ -350,8 +390,8 @@ export function findPriorYearDividendPerShare(dividends, exLabel, currency) {
     if (gap <= windowMs && gap < bestGap) { bestLabel = label; bestGap = gap; }
   });
   if (!bestLabel) return null;
-  const total = sumDividendPerShareOnDate(dividends, bestLabel, currency, { skipAnnounced: true });
-  return total > 0 ? total : null;
+  const prior = summarizeDividendOnDate(dividends, bestLabel, currency, { skipAnnounced: true });
+  return prior.total > 0 ? { ...prior, exDate: bestLabel } : null;
 }
 
 function buildAnnouncedDividendEntries(summary, year, todayLabel) {
@@ -394,12 +434,16 @@ function buildAnnouncedDividendEntries(summary, year, todayLabel) {
       const taxRate = getHoldingTaxRate(item.holding);
       const grossCny = roundMoney(item.amountPerShare * shares * fxRate);
       const netCny = roundMoney(grossCny * (1 - taxRate));
-      const priorPerShare = findPriorYearDividendPerShare(item.quote.dividends, item.exDate, item.currency);
-      // 同日多笔公告按除息日加总后再比，两行挂同一个结论
-      const currentPerShare = sumDividendPerShareOnDate(item.quote.dividends, item.exDate, item.currency, { announcedOnly: true }) || item.amountPerShare;
+      /* 同日多笔公告按除息日汇总后再比，常规行挂结论；特别息行本身不参与同比、不挂标记 */
+      const yoy = isSpecialDividendEvent(item.dividend) ? null : computeDividendYoyChange(
+        summarizeDividendOnDate(item.quote.dividends, item.exDate, item.currency, { announcedOnly: true }),
+        findPriorYearDividendOnDate(item.quote.dividends, item.exDate, item.currency)
+      );
       return {
         id: `announced_${item.sourceId.replace(/[^A-Z0-9]+/gi, '_')}`,
-        yoyPerShareChange: priorPerShare > 0 ? currentPerShare / priorPerShare - 1 : null,
+        yoyPerShareChange: yoy,
+        kind: item.dividend.kind || '',
+        components: Array.isArray(item.dividend.components) ? item.dividend.components : [],
         sourceId: item.sourceId,
         symbol: item.holding.symbol,
         name: item.holding.name || item.quote.name || item.holding.symbol,
@@ -455,7 +499,8 @@ function buildForecastDividendEntries(summary, year, todayLabel, blockingEntries
       const parts = getDateParts(dividend && dividend.exDate);
       if (!parts || parts.year >= year) return;
       if (cutoff && parts.label < cutoff) return;
-      const amountPerShare = safeNumber(dividend.amountPerShare, 0);
+      // 只投影常规部分：特别息是一次性的，去年派过不代表今年还派
+      const amountPerShare = regularAmountOfDividendEvent(dividend);
       if (amountPerShare <= 0 || safeNumber(holding.quantity, 0) <= 0) return;
       const forecastExDate = formatDateParts(year, parts.month, parts.day);
       if (!forecastExDate) return;
