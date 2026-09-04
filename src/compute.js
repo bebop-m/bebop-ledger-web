@@ -315,7 +315,8 @@ export function regularAmountOfDividendEvent(item) {
   if (!Array.isArray(item.components) || !item.components.length) return amount;
   const special = item.components.reduce((sum, component) => sum
     + (isSpecialDividendEvent(component) ? Math.max(0, safeNumber(component.amountPerShare, 0)) : 0), 0);
-  return Math.max(0, amount - special);
+  // 每股金额最多六位小数，减法后收掉浮点尾巴（0.1 − 0.01 会得到 0.09000000000000001）
+  return Math.max(0, Number((amount - special).toFixed(6)));
 }
 
 /* 同一除息日的多笔（常规 + 特别息）是同一次分派：任何「这次 vs 那次」的对比都按除息日
