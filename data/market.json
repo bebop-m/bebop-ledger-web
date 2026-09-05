@@ -10,7 +10,7 @@
     "dividendHistoryPeriod": "5y",
     "dividendVerify": "disabled"
   },
-  "updatedAt": "2026-09-05T12:37:52.242281Z",
+  "updatedAt": "2026-09-05T16:02:37.012296Z",
   "rates": {
     "CNY": 1,
     "USD": 6.711,
@@ -26,7 +26,7 @@
       "previousClose": 433.0,
       "dividendPerShareTtm": 5.3,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:15.536097Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:04.419707Z",
       "lastExDate": "2026-05-15",
       "dividendStatus": "fresh",
       "dividends": [
@@ -91,7 +91,7 @@
       "previousClose": 1298.88,
       "dividendPerShareTtm": 51.98123,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:15.650225Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:04.550772Z",
       "lastExDate": "2026-06-26",
       "dividendStatus": "fresh",
       "dividends": [
@@ -183,7 +183,7 @@
       "previousClose": 38.74,
       "dividendPerShareTtm": 3.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:15.761695Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:04.663193Z",
       "lastExDate": "2026-08-27",
       "dividendStatus": "fresh",
       "dividends": [
@@ -279,7 +279,7 @@
       "previousClose": 24.74,
       "dividendPerShareTtm": 1.28,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:15.918079Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:04.771911Z",
       "lastExDate": "2026-06-11",
       "dividendStatus": "fresh",
       "dividends": [
@@ -405,7 +405,7 @@
       "previousClose": 28.32,
       "dividendPerShareTtm": 1.60706,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:16.016030Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:04.865470Z",
       "lastExDate": "2026-06-02",
       "dividendStatus": "fresh",
       "dividends": [
@@ -470,7 +470,7 @@
       "previousClose": 87.25,
       "dividendPerShareTtm": 4.3,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:16.115699Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:04.963793Z",
       "lastExDate": "2026-06-29",
       "dividendStatus": "fresh",
       "dividends": [
@@ -539,7 +539,7 @@
       "previousClose": 3.55,
       "dividendPerShareTtm": 0.2,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:16.245871Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:05.065330Z",
       "lastExDate": "2026-06-23",
       "dividendStatus": "fresh",
       "dividends": [
@@ -675,7 +675,7 @@
       "previousClose": 81.63,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:16.379130Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:05.188264Z",
       "lastExDate": "",
       "dividendStatus": "missing",
       "dividends": []
@@ -689,7 +689,7 @@
       "previousClose": 3.76,
       "dividendPerShareTtm": 0.5,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:16.489369Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:05.285783Z",
       "lastExDate": "2026-06-18",
       "dividendStatus": "fresh",
       "dividends": [
@@ -815,7 +815,7 @@
       "previousClose": 8.82,
       "dividendPerShareTtm": 0.4629,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:16.616996Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:05.429779Z",
       "lastExDate": "2026-07-02",
       "dividendStatus": "fresh",
       "dividendFetchError": "dividend history returned empty series",
@@ -942,7 +942,7 @@
       "previousClose": 106.9,
       "dividendPerShareTtm": 3.92035,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:16.737991Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:05.520422Z",
       "lastExDate": "2026-04-08",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1002,7 +1002,7 @@
       "previousClose": 4.63,
       "dividendPerShareTtm": 0.289543,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:16.865595Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:05.643098Z",
       "lastExDate": "2026-09-02",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1117,7 +1117,7 @@
       "previousClose": 7.77,
       "dividendPerShareTtm": 0.40224,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:17.007154Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:05.748704Z",
       "lastExDate": "2026-07-02",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1192,7 +1192,7 @@
       "previousClose": 8.26,
       "dividendPerShareTtm": 0.44,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:17.121278Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:05.855378Z",
       "lastExDate": "2026-06-05",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1306,7 +1306,7 @@
       "previousClose": 6.0,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:17.275097Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:05.946979Z",
       "lastExDate": "2025-06-25",
       "dividendStatus": "missing",
       "dividends": [
@@ -1361,7 +1361,7 @@
       "previousClose": 1.85,
       "dividendPerShareTtm": 0.1029,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:17.379585Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:06.046719Z",
       "lastExDate": "2026-05-15",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1508,7 +1508,7 @@
       "previousClose": 22.2,
       "dividendPerShareTtm": 0.978,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:17.502868Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:06.144896Z",
       "lastExDate": "2026-07-06",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1624,7 +1624,7 @@
       "previousClose": 2.355,
       "dividendPerShareTtm": 0.236,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:17.594521Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:06.239696Z",
       "lastExDate": "2026-06-25",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1720,7 +1720,7 @@
       "previousClose": 1.603,
       "dividendPerShareTtm": 0.12,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:17.683916Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:06.329101Z",
       "lastExDate": "2026-08-17",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1840,7 +1840,7 @@
       "previousClose": 38.22,
       "dividendPerShareTtm": 2.5361,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:17.795338Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:06.422743Z",
       "lastExDate": "2026-06-11",
       "dividendStatus": "fresh",
       "dividends": [
@@ -1955,7 +1955,7 @@
       "previousClose": 2.63,
       "dividendPerShareTtm": 0.2,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:17.893947Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:06.496144Z",
       "lastExDate": "2026-05-29",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2040,7 +2040,7 @@
       "previousClose": 47.78,
       "dividendPerShareTtm": 2.01,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:18.004837Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:06.607843Z",
       "lastExDate": "2026-07-13",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2109,7 +2109,7 @@
       "previousClose": 79.25,
       "dividendPerShareTtm": 5.4203,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:18.129511Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:06.752796Z",
       "lastExDate": "2026-08-25",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2224,7 +2224,7 @@
       "previousClose": 44.78,
       "dividendPerShareTtm": 2.259,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:18.239828Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:06.855320Z",
       "lastExDate": "2026-07-02",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2310,7 +2310,7 @@
       "previousClose": 11.73,
       "dividendPerShareTtm": 1.35,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:18.364757Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:06.995392Z",
       "lastExDate": "2026-09-02",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2455,7 +2455,7 @@
       "previousClose": 0.47,
       "dividendPerShareTtm": 0.06,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:18.550103Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:07.077434Z",
       "lastExDate": "2026-03-26",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2580,7 +2580,7 @@
       "previousClose": 2.38,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:18.687485Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:07.174850Z",
       "lastExDate": "2025-08-27",
       "dividendStatus": "missing",
       "dividends": [
@@ -2625,7 +2625,7 @@
       "previousClose": 90.8,
       "dividendPerShareTtm": 0.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:18.783718Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:07.251289Z",
       "lastExDate": "",
       "dividendStatus": "missing",
       "dividends": []
@@ -2639,7 +2639,7 @@
       "previousClose": 8.015,
       "dividendPerShareTtm": 1.0,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:18.936147Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:07.381515Z",
       "lastExDate": "2026-06-04",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2797,7 +2797,7 @@
       "dividendUpdatedAt": "",
       "lastExDate": "",
       "dividendStatus": "missing",
-      "dividendFetchError": "404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/733642.SS?period1=1630067841&period2=1788611841&interval=1d&events=div&includeAdjustedClose=true",
+      "dividendFetchError": "404 Client Error: Not Found for url: https://query1.finance.yahoo.com/v8/finance/chart/733642.SS?period1=1630080128&period2=1788624128&interval=1d&events=div&includeAdjustedClose=true",
       "dividends": []
     },
     "02111.HK": {
@@ -2809,7 +2809,7 @@
       "previousClose": 2.635,
       "dividendPerShareTtm": 0.265,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:23.515991Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:08.622109Z",
       "lastExDate": "2026-06-12",
       "dividendStatus": "fresh",
       "dividends": [
@@ -2935,7 +2935,7 @@
       "previousClose": 5.605,
       "dividendPerShareTtm": 0.15229,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:23.632466Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:08.744107Z",
       "lastExDate": "2026-06-03",
       "dividendStatus": "fresh",
       "dividends": [
@@ -3050,7 +3050,7 @@
       "previousClose": 153.4,
       "dividendPerShareTtm": 2.7248,
       "dividendSource": "yahoo",
-      "dividendUpdatedAt": "2026-09-05T12:37:23.738380Z",
+      "dividendUpdatedAt": "2026-09-05T16:02:08.822657Z",
       "lastExDate": "2026-05-15",
       "dividendStatus": "fresh",
       "dividends": [
