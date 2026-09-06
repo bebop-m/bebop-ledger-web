@@ -1,7 +1,7 @@
 {
   "ok": true,
   "provider": "yfinance",
-  "updatedAt": "2026-09-05T04:46:40.833434Z",
+  "updatedAt": "2026-09-06T04:56:22.781220Z",
   "companies": {
     "00700.HK": {
       "symbol": "00700.HK",
@@ -1980,7 +1980,7 @@
           "year": 2026,
           "dividendPerShare": 0.08,
           "lastExDate": "2026-08-17",
-          "avgPrice": 1.6186
+          "avgPrice": 1.6185
         }
       ]
     },
