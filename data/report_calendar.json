@@ -1,9 +1,11 @@
 {
   "ok": true,
-  "updatedAt": "2026-09-14T06:06:18.151935Z",
+  "updatedAt": "2026-09-15T06:05:21.188406Z",
   "symbolsTotal": 33,
-  "symbolsCovered": 0,
-  "coveredSymbols": [],
+  "symbolsCovered": 1,
+  "coveredSymbols": [
+    "01023.HK"
+  ],
   "events": [
     {
       "symbol": "601088.SH",
@@ -353,6 +355,15 @@
       "dateStatus": "confirmed",
       "source": "eastmoney",
       "fiscalPeriodEnd": "2026-06-30"
+    },
+    {
+      "symbol": "01023.HK",
+      "reportDate": "2026-09-28",
+      "reportType": "全年业绩",
+      "dateStatus": "confirmed",
+      "source": "hkex",
+      "purpose": "FIN RES/DIV",
+      "fiscalPeriod": "Y.E.30/06/26"
     }
   ]
 }
