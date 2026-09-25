@@ -1,10 +1,13 @@
 {
   "ok": true,
-  "updatedAt": "2026-09-24T06:05:04.957510Z",
+  "updatedAt": "2026-09-25T06:05:41.942508Z",
   "symbolsTotal": 33,
-  "symbolsCovered": 1,
+  "symbolsCovered": 4,
   "coveredSymbols": [
-    "01023.HK"
+    "01023.HK",
+    "600177.SH",
+    "600519.SH",
+    "601088.SH"
   ],
   "events": [
     {
@@ -364,6 +367,30 @@
       "source": "hkex",
       "purpose": "FIN RES/DIV",
       "fiscalPeriod": "Y.E.30/06/26"
+    },
+    {
+      "symbol": "601088.SH",
+      "reportDate": "2026-10-24",
+      "reportType": "三季报",
+      "dateStatus": "scheduled",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-09-30"
+    },
+    {
+      "symbol": "600177.SH",
+      "reportDate": "2026-10-31",
+      "reportType": "三季报",
+      "dateStatus": "scheduled",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-09-30"
+    },
+    {
+      "symbol": "600519.SH",
+      "reportDate": "2026-10-31",
+      "reportType": "三季报",
+      "dateStatus": "scheduled",
+      "source": "eastmoney",
+      "fiscalPeriodEnd": "2026-09-30"
     }
   ]
 }
