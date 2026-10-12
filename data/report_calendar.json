@@ -1,12 +1,13 @@
 {
   "ok": true,
-  "updatedAt": "2026-10-11T07:03:18.235711Z",
+  "updatedAt": "2026-10-12T07:16:11.830235Z",
   "symbolsTotal": 33,
-  "symbolsCovered": 6,
+  "symbolsCovered": 7,
   "coveredSymbols": [
     "000333.SZ",
     "000651.SZ",
     "00700.HK",
+    "01088.HK",
     "600177.SH",
     "600519.SH",
     "601088.SH"
@@ -311,15 +312,6 @@
       "fiscalPeriod": "6-MTH-ENDED30/06/26"
     },
     {
-      "symbol": "01088.HK",
-      "reportDate": "2026-08-28",
-      "reportType": "中期业绩",
-      "dateStatus": "confirmed",
-      "source": "hkex",
-      "purpose": "RESULTS/INT DIV",
-      "fiscalPeriod": "6-MTH-ENDED30/06/26"
-    },
-    {
       "symbol": "01995.HK",
       "reportDate": "2026-08-28",
       "reportType": "中期业绩",
@@ -360,6 +352,15 @@
       "source": "hkex",
       "purpose": "FIN RES/DIV",
       "fiscalPeriod": "Y.E.30/06/26"
+    },
+    {
+      "symbol": "01088.HK",
+      "reportDate": "2026-10-23",
+      "reportType": "业绩公告",
+      "dateStatus": "confirmed",
+      "source": "hkex",
+      "purpose": "RESULTS",
+      "fiscalPeriod": "9-MTH-ENDED30/09/26"
     },
     {
       "symbol": "601088.SH",
