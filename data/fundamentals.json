@@ -1,7 +1,7 @@
 {
   "ok": true,
   "provider": "yfinance",
-  "updatedAt": "2026-10-18T04:54:27.540022Z",
+  "updatedAt": "2026-10-19T05:02:50.785087Z",
   "companies": {
     "00700.HK": {
       "symbol": "00700.HK",
@@ -244,7 +244,7 @@
           "year": 2026,
           "dividendPerShare": 28.02423,
           "lastExDate": "2026-06-26",
-          "avgPrice": 1342.9405
+          "avgPrice": 1342.911
         }
       ],
       "sector": "Consumer Defensive",
@@ -261,7 +261,7 @@
           "year": 2014,
           "dividendPerShare": 0.75,
           "lastExDate": "2014-06-06",
-          "avgPrice": 7.9213
+          "avgPrice": 7.9591
         },
         {
           "year": 2015,
@@ -369,7 +369,7 @@
           "year": 2026,
           "dividendPerShare": 3.0,
           "lastExDate": "2026-08-27",
-          "avgPrice": 38.9206
+          "avgPrice": 38.9261
         }
       ],
       "sector": "Consumer Cyclical",
@@ -712,7 +712,7 @@
           "year": 2026,
           "dividendPerShare": 3.8,
           "lastExDate": "2026-06-29",
-          "avgPrice": 80.6357
+          "avgPrice": 80.668
         }
       ],
       "sector": "Consumer Cyclical",
@@ -1130,7 +1130,7 @@
       "years": [
         {
           "year": 2022,
-          "dividendPerShare": 4.944177,
+          "dividendPerShare": 4.943736,
           "lastExDate": "2022-05-19",
           "avgPrice": 231.052,
           "eps": 3.32,
@@ -1146,7 +1146,7 @@
         },
         {
           "year": 2023,
-          "dividendPerShare": 2.432849,
+          "dividendPerShare": 2.432632,
           "lastExDate": "2023-04-04",
           "avgPrice": 146.2763,
           "eps": 7.69,
@@ -1162,7 +1162,7 @@
         },
         {
           "year": 2024,
-          "dividendPerShare": 2.982202,
+          "dividendPerShare": 2.981936,
           "lastExDate": "2024-04-03",
           "avgPrice": 116.8744,
           "eps": 13.83,
@@ -1178,7 +1178,7 @@
         },
         {
           "year": 2025,
-          "dividendPerShare": 3.92395,
+          "dividendPerShare": 3.9236,
           "lastExDate": "2025-04-07",
           "avgPrice": 134.0402,
           "eps": 6.89,
@@ -1194,7 +1194,7 @@
         },
         {
           "year": 2026,
-          "dividendPerShare": 3.92395,
+          "dividendPerShare": 3.9236,
           "lastExDate": "2026-04-08",
           "avgPrice": 112.5479
         }
@@ -1565,7 +1565,7 @@
           "year": 2026,
           "dividendPerShare": 0.48,
           "lastExDate": "2026-09-18",
-          "avgPrice": 7.6655
+          "avgPrice": 7.6701
         }
       ],
       "sector": "Consumer Cyclical",
@@ -1580,12 +1580,12 @@
       "years": [
         {
           "year": 2012,
-          "dividendPerShare": 0.11724,
+          "dividendPerShare": 0.1174,
           "lastExDate": "2012-02-27"
         },
         {
           "year": 2013,
-          "dividendPerShare": 0.5862,
+          "dividendPerShare": 0.587,
           "lastExDate": "2013-06-25"
         },
         {
@@ -1596,7 +1596,7 @@
         },
         {
           "year": 2017,
-          "dividendPerShare": 0.140688,
+          "dividendPerShare": 0.14088,
           "lastExDate": "2017-06-20",
           "avgPrice": 8.5807
         },
@@ -1620,7 +1620,7 @@
         },
         {
           "year": 2021,
-          "dividendPerShare": 0.41034,
+          "dividendPerShare": 0.4109,
           "lastExDate": "2021-06-23",
           "avgPrice": 10.6822
         },
@@ -1980,7 +1980,7 @@
           "year": 2026,
           "dividendPerShare": 0.09,
           "lastExDate": "2026-09-14",
-          "avgPrice": 1.6128
+          "avgPrice": 1.6125
         }
       ]
     },
@@ -2310,7 +2310,7 @@
           "year": 2026,
           "dividendPerShare": 1.03,
           "lastExDate": "2026-07-13",
-          "avgPrice": 45.1616
+          "avgPrice": 45.196
         }
       ],
       "sector": "Energy",
@@ -2455,7 +2455,7 @@
         },
         {
           "year": 2016,
-          "dividendPerShare": 0.375168,
+          "dividendPerShare": 0.37568,
           "lastExDate": "2016-06-23",
           "avgPrice": 13.7358
         },
