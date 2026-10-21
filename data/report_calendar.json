@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "updatedAt": "2026-10-20T05:55:21.055553Z",
+  "updatedAt": "2026-10-21T05:56:27.317519Z",
   "symbolsTotal": 33,
-  "symbolsCovered": 11,
+  "symbolsCovered": 12,
   "coveredSymbols": [
     "000333.SZ",
     "000651.SZ",
@@ -10,6 +10,7 @@
     "00700.HK",
     "00728.HK",
     "00762.HK",
+    "00883.HK",
     "01088.HK",
     "02333.HK",
     "600177.SH",
@@ -236,15 +237,6 @@
       "fiscalPeriod": "6-MTH-ENDED30/06/26"
     },
     {
-      "symbol": "00883.HK",
-      "reportDate": "2026-08-26",
-      "reportType": "中期业绩",
-      "dateStatus": "confirmed",
-      "source": "hkex",
-      "purpose": "INT RES/DIV",
-      "fiscalPeriod": "6-MTH-ENDED30/06/26"
-    },
-    {
       "symbol": "000651.SZ",
       "reportDate": "2026-08-27",
       "reportType": "中报",
@@ -340,15 +332,6 @@
       "fiscalPeriod": "9-MTH-ENDED30/09/26"
     },
     {
-      "symbol": "00762.HK",
-      "reportDate": "2026-10-23",
-      "reportType": "业绩公告",
-      "dateStatus": "confirmed",
-      "source": "hkex",
-      "purpose": "RESULTS",
-      "fiscalPeriod": "9-MTH-ENDED30/09/26"
-    },
-    {
       "symbol": "01088.HK",
       "reportDate": "2026-10-23",
       "reportType": "业绩公告",
@@ -383,12 +366,30 @@
       "fiscalPeriod": "9-MTH-ENDED30/09/26"
     },
     {
+      "symbol": "00762.HK",
+      "reportDate": "2026-10-29",
+      "reportType": "业绩公告",
+      "dateStatus": "confirmed",
+      "source": "hkex",
+      "purpose": "RESULTS",
+      "fiscalPeriod": "9-MTH-ENDED30/09/26"
+    },
+    {
       "symbol": "000333.SZ",
       "reportDate": "2026-10-30",
       "reportType": "三季报",
       "dateStatus": "scheduled",
       "source": "eastmoney",
       "fiscalPeriodEnd": "2026-09-30"
+    },
+    {
+      "symbol": "00883.HK",
+      "reportDate": "2026-10-30",
+      "reportType": "业绩公告",
+      "dateStatus": "confirmed",
+      "source": "hkex",
+      "purpose": "RESULTS",
+      "fiscalPeriod": "9-MTH-ENDED30/09/26"
     },
     {
       "symbol": "02333.HK",
