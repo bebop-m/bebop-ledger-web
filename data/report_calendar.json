@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "updatedAt": "2026-10-23T05:57:18.605323Z",
+  "updatedAt": "2026-10-24T05:41:34.665666Z",
   "symbolsTotal": 33,
-  "symbolsCovered": 11,
+  "symbolsCovered": 10,
   "coveredSymbols": [
     "000333.SZ",
     "000651.SZ",
@@ -10,7 +10,6 @@
     "00700.HK",
     "00762.HK",
     "00883.HK",
-    "01088.HK",
     "02333.HK",
     "600177.SH",
     "600519.SH",
@@ -343,7 +342,7 @@
       "symbol": "601088.SH",
       "reportDate": "2026-10-24",
       "reportType": "三季报",
-      "dateStatus": "scheduled",
+      "dateStatus": "confirmed",
       "source": "eastmoney",
       "fiscalPeriodEnd": "2026-09-30"
     },
