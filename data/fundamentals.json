@@ -1,7 +1,7 @@
 {
   "ok": true,
   "provider": "yfinance",
-  "updatedAt": "2026-10-24T04:52:57.154446Z",
+  "updatedAt": "2026-10-25T05:03:39.430528Z",
   "companies": {
     "00700.HK": {
       "symbol": "00700.HK",
@@ -517,8 +517,7 @@
           "year": 2021,
           "dividendPerShare": 0.51977,
           "lastExDate": "2021-06-01",
-          "avgPrice": 52.5589,
-          "eps": 2.01
+          "avgPrice": 52.5589
         },
         {
           "year": 2022,
@@ -573,6 +572,7 @@
           "dividendPerShare": 1.45332,
           "lastExDate": "2025-06-10",
           "avgPrice": 32.7109,
+          "eps": 2.81,
           "netIncome": 1549450000.0,
           "dividendsPaid": 737040000.0,
           "payoutRatio": 0.4757,
@@ -921,8 +921,7 @@
           "year": 2021,
           "dividendPerShare": 0.184,
           "lastExDate": "2021-09-30",
-          "avgPrice": 4.0087,
-          "eps": 0.21
+          "avgPrice": 4.0087
         },
         {
           "year": 2022,
@@ -975,6 +974,7 @@
           "dividendPerShare": 0.5,
           "lastExDate": "2025-09-25",
           "avgPrice": 3.8581,
+          "eps": 0.53,
           "netIncome": 529340000.0,
           "dividendsPaid": 462381000.0,
           "payoutRatio": 0.8735,
@@ -1042,9 +1042,7 @@
           "year": 2021,
           "dividendPerShare": 0.5947,
           "lastExDate": "2021-10-08",
-          "avgPrice": 11.5701,
-          "eps": 0.7184,
-          "payoutRatio": 0.8278
+          "avgPrice": 11.5701
         },
         {
           "year": 2022,
@@ -1100,6 +1098,7 @@
           "dividendPerShare": 0.3393,
           "lastExDate": "2025-10-08",
           "avgPrice": 6.6717,
+          "eps": 0.7122,
           "netIncome": 4656261000.0,
           "dividendsPaid": 2218283000.0,
           "payoutRatio": 0.4764,
@@ -1980,7 +1979,7 @@
           "year": 2026,
           "dividendPerShare": 0.1,
           "lastExDate": "2026-10-19",
-          "avgPrice": 1.611
+          "avgPrice": 1.6104
         }
       ]
     },
@@ -2112,12 +2111,6 @@
       "statementCurrency": "CNY",
       "years": [
         {
-          "year": 2021,
-          "avgPrice": 4.0169,
-          "eps": 0.13,
-          "netBuyback": 0.0
-        },
-        {
           "year": 2022,
           "dividendPerShare": 0.06,
           "lastExDate": "2022-05-24",
@@ -2170,6 +2163,7 @@
           "dividendPerShare": 0.15,
           "lastExDate": "2025-05-27",
           "avgPrice": 2.7467,
+          "eps": 0.26,
           "netIncome": 358909000.0,
           "dividendsPaid": 194045000.0,
           "payoutRatio": 0.5407,
@@ -2906,12 +2900,6 @@
       "statementCurrency": "CNY",
       "years": [
         {
-          "year": 2021,
-          "avgPrice": 49.247,
-          "eps": -1.32,
-          "netBuyback": 51718000.0
-        },
-        {
           "year": 2022,
           "avgPrice": 23.486,
           "eps": -1.42,
@@ -2947,6 +2935,7 @@
         {
           "year": 2025,
           "avgPrice": 104.3559,
+          "eps": -1.23,
           "netIncome": -1113025000.0,
           "debtRatio": 0.4409,
           "roe": -0.123,
@@ -3340,7 +3329,6 @@
           "dividendPerShare": 0.1824,
           "lastExDate": "2021-06-03",
           "avgPrice": 63.5462,
-          "eps": 0.62,
           "netIncome": 854339000.0,
           "dividendsPaid": 208834000.0,
           "payoutRatio": 0.2444,
@@ -3403,6 +3391,7 @@
           "dividendPerShare": 0.8881,
           "lastExDate": "2025-05-29",
           "avgPrice": 204.6512,
+          "eps": 9.61,
           "sharesOutstanding": 1331963404.0
         },
         {
