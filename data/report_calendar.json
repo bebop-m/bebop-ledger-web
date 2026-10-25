@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "updatedAt": "2026-10-24T05:41:34.665666Z",
+  "updatedAt": "2026-10-25T05:57:09.054358Z",
   "symbolsTotal": 33,
-  "symbolsCovered": 10,
+  "symbolsCovered": 9,
   "coveredSymbols": [
     "000333.SZ",
     "000651.SZ",
@@ -12,8 +12,7 @@
     "00883.HK",
     "02333.HK",
     "600177.SH",
-    "600519.SH",
-    "601088.SH"
+    "600519.SH"
   ],
   "events": [
     {
