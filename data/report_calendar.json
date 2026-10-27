@@ -1,6 +1,6 @@
 {
   "ok": true,
-  "updatedAt": "2026-10-26T06:00:50.080064Z",
+  "updatedAt": "2026-10-27T06:11:32.538820Z",
   "symbolsTotal": 33,
   "symbolsCovered": 10,
   "coveredSymbols": [
@@ -350,7 +350,7 @@
       "symbol": "000651.SZ",
       "reportDate": "2026-10-27",
       "reportType": "三季报",
-      "dateStatus": "scheduled",
+      "dateStatus": "confirmed",
       "source": "eastmoney",
       "fiscalPeriodEnd": "2026-09-30"
     },
