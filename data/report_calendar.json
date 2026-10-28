@@ -1,12 +1,10 @@
 {
   "ok": true,
-  "updatedAt": "2026-10-27T06:11:32.538820Z",
+  "updatedAt": "2026-10-28T06:48:49.594374Z",
   "symbolsTotal": 33,
-  "symbolsCovered": 10,
+  "symbolsCovered": 8,
   "coveredSymbols": [
     "000333.SZ",
-    "000651.SZ",
-    "00270.HK",
     "00700.HK",
     "00762.HK",
     "00823.HK",
