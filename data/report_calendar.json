@@ -1,13 +1,11 @@
 {
   "ok": true,
-  "updatedAt": "2026-10-31T06:54:52.594146Z",
+  "updatedAt": "2026-11-01T07:24:18.497133Z",
   "symbolsTotal": 33,
-  "symbolsCovered": 4,
+  "symbolsCovered": 2,
   "coveredSymbols": [
     "00700.HK",
-    "00823.HK",
-    "600177.SH",
-    "600519.SH"
+    "00823.HK"
   ],
   "events": [
     {
