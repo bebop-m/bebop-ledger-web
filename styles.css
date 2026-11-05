@@ -83,6 +83,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   padding: max(18px, env(safe-area-inset-top)) 14px calc(96px + env(safe-area-inset-bottom));
   font-family: var(--font);
@@ -2259,9 +2260,7 @@ body[data-active-page="home"] .home-month-track::before { display: none; }
 #homePage { display: flex; flex-direction: column; gap: 0; }
 body[data-active-page="home"] .home-brand { align-items: baseline; gap: 5px; line-height: 1; }
 body[data-active-page="home"] .home-brand small { font-size: 10px; line-height: 1; letter-spacing: .1em; text-transform: none; }
-@media (min-height: 620px) and (max-width: 430px) {
-  body[data-active-page="home"] { height: 100dvh; overflow-y: hidden; }
-}/* Calendar filter tabs share one grid and one underline baseline. */
+/* Calendar filter tabs share one grid and one underline baseline. */
 
 
 #dividendFilterGroup.segmented-control {
@@ -2276,8 +2275,12 @@ body[data-active-page="home"] .home-brand small { font-size: 10px; line-height: 
 
 .modal-mask,.confirm-mask { background: rgba(24,25,22,.3); backdrop-filter: blur(4px); }
 .modal-sheet,.confirm-sheet {
-  width: min(calc(100% - 20px), 430px);
+  left: max(10px, env(safe-area-inset-left, 0px));
+  right: max(10px, env(safe-area-inset-right, 0px));
+  width: auto;
   max-width: 430px;
+  max-height: calc(100dvh - max(14px, env(safe-area-inset-top, 0px)) - max(14px, env(safe-area-inset-bottom, 0px)));
+  overflow-y: auto;
   padding: 18px 22px calc(18px + env(safe-area-inset-bottom));
   border: 0;
   border-radius: 22px;
@@ -2315,11 +2318,7 @@ body[data-active-page="home"] .home-month.is-current > b {
   background: linear-gradient(to right, var(--ledger-iris) 0 var(--home-month-progress, 0%), #d3d3cd var(--home-month-progress, 0%) 100%);
 }
 
-@media (min-height: 620px) and (max-width: 430px) {
-  #homePage { height: calc(100dvh - 38px); }
-  body[data-active-page="home"] .home-nav-list { flex: 1; display: flex; flex-direction: column; }
-  body[data-active-page="home"] .home-nav-item { flex: 1 1 0; min-height: 36px; }
-}/* Dividend tabs: a single shared baseline; filter precedes annual forecast. */
+/* Dividend tabs: a single shared baseline; filter precedes annual forecast. */
 
 
 #dividendCalendarListView > #dividendFilterGroup.segmented-control {
@@ -2486,7 +2485,7 @@ html { background: var(--frame); }
 body { background: var(--bg); color: var(--ink); }
 /* --frame 是宽屏时画布外的边框色。手机上没有边框，画布底色必须就是纸色，
    否则任何露出根元素的时刻（回弹、安全区、重载间隙）都会切出一条深边。 */
-@media (max-width: 430px) {
+@media (max-width: 430px), (min-width: 560px) and (pointer: coarse) {
   html { background: var(--bg); }
 }/* zen 纪律补强：图标裸置、焦点描边转金 */
 
@@ -2777,12 +2776,28 @@ body[data-active-page="home"] .home-quick-add {
 }/* 矮屏收紧竖向留白，首页仍要一屏放得下 */
 
 
-@media (max-height: 760px) {
+@media (max-height: 760px), (min-width: 560px) and (pointer: coarse) {
   body[data-active-page="home"] .home-hero { margin-top: var(--fl-34); }
   body[data-active-page="home"] .home-divi { margin-top: var(--fl-32); }
   body[data-active-page="home"] .home-todo { margin-top: var(--fl-26); }
   body[data-active-page="home"] .home-nav-list { margin-top: var(--fl-26); gap: var(--fl-15); }
-}/* ══════════════════════════════════════════════════════════════════
+}
+
+/* 浏览器工具栏展开或分屏时，先收留白，内容超出时仍可自然滚动。 */
+@media (max-height: 640px) {
+  body[data-active-page="home"] .home-hero,
+  body[data-active-page="home"] .home-divi { margin-top: var(--fl-15); }
+  body[data-active-page="home"] .home-hero-value,
+  body[data-active-page="home"] .home-hero-meta { margin-top: var(--fl-8); }
+  body[data-active-page="home"] .home-divi-value { margin-top: var(--fl-6); }
+  body[data-active-page="home"] .home-divi-thread { margin-top: var(--fl-12); }
+  body[data-active-page="home"] .home-todo { margin-top: var(--fl-14); line-height: 1.7; }
+  body[data-active-page="home"] .home-nav-list { margin-top: var(--fl-12); gap: var(--fl-3); }
+  body[data-active-page="home"] .home-nav-item { align-items: center; min-height: 32px; }
+  body[data-active-page="home"] .home-quick-add { margin-top: var(--fl-6); min-height: 36px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════
    B 簇 · 02-持仓页 / 03-持仓详情 / 04-持仓诊断 / 05-编辑抽屉
    按 designs/禅意UI/ 下 02–05 四个文件夹的 定稿图.html 重排。
    尺寸一律按总则折算：定稿值 N（390 画布）→ clamp(N*.92, N/3.9 vw, N*1.35)。
@@ -3266,8 +3281,9 @@ body[data-active-page="holdings"] .legend-toggle[hidden] { display: none; }/* �
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: var(--fl-14) var(--fl-26)
-    calc(var(--fl-30) + env(safe-area-inset-bottom, 0px));
+  padding: var(--fl-14) max(var(--fl-26), env(safe-area-inset-right, 0px))
+    calc(var(--fl-30) + env(safe-area-inset-bottom, 0px))
+    max(var(--fl-26), env(safe-area-inset-left, 0px));
   border: 0;
   border-radius: 22px 22px 0 0;
   background: var(--sheet);
@@ -3276,7 +3292,7 @@ body[data-active-page="holdings"] .legend-toggle[hidden] { display: none; }/* �
   -webkit-backdrop-filter: none;
   color: var(--ink);
   /* 抽屉最多吃到 78dvh：背景页要留得住，才读得出是抽屉而不是新页面 */
-  max-height: min(78dvh, calc(100dvh - var(--fl-56)));
+  max-height: min(78dvh, calc(100dvh - max(var(--fl-56), env(safe-area-inset-top, 0px))));
   overflow-y: auto;
   font-variant-numeric: tabular-nums;
 }
@@ -6799,3 +6815,13 @@ body[data-active-page="holdings"] .ipo-card .weight { color: var(--hint); font-w
 body[data-active-page="records"] .rec-row-pnl { margin-left: var(--fl-6); font-weight: 700; }
 body[data-active-page="records"] .rec-row-pnl.is-gain { color: var(--up); }
 body[data-active-page="records"] .rec-row-pnl.is-loss { color: var(--down); }
+
+/* 展开后的触屏给纸面多一些宽度，正文与抽屉仍沿同一阅读轴。 */
+@media (min-width: 560px) and (pointer: coarse) {
+  body[data-active-page] .app-shell,
+  .zen-sheet {
+    max-width: 600px;
+    margin-inline: auto;
+  }
+  .app-shell::before { content: none; }
+}
