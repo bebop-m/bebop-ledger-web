@@ -29,12 +29,15 @@ export function formatDisplayMoney(value, currency = 'CNY', decimals = 0) {
 
 function getHoldingTitleDivider() { return '\u00b7'; }
 
-function formatLedgerMoney(value, currency = 'CNY', fractionClass = '') {
-  if (!state.showAmounts) return `<span>${MASK_AMOUNT}</span>`;
-  const formatted = formatMoney(value, currency, 2); // 首页 hero 的小数尾巴是定稿形态，不随全局去角分
+function renderHomeAmount(value) {
+  const formatted = formatDisplayMoney(value, 'CNY', 2);
   const match = formatted.match(/^(.*?)([.,]\d{2})$/);
-  if (!match) return `<span>${escapeHtml(formatted)}</span>`;
-  return `<span>${escapeHtml(match[1])}</span><small${fractionClass ? ` class="${fractionClass}"` : ''}>${escapeHtml(match[2])}</small>`;
+  const whole = match ? match[1] : formatted;
+  const fraction = match ? `<small class="home-hero-fraction">${escapeHtml(match[2])}</small>` : '';
+  // 按数字、逗号和较小的小数尾巴预留宽度，窄屏可缩放整笔金额。
+  const commas = whole.length - whole.replaceAll(',', '').length;
+  const amountEm = Math.max(1, (whole.length - commas) * 0.75 + commas * 0.4 + (fraction ? 1.2 : 0));
+  return `<strong class="home-hero-value" style="--home-amount-em:${amountEm}"><span>${escapeHtml(whole)}</span>${fraction}</strong>`;
 }
 
 /* ── Tooltip helpers ── */
@@ -103,7 +106,7 @@ function renderHomeHero(summary) {
   const fxText = `USD ${safeNumber(state.rates.USD, 0).toFixed(2)}`;
   refs.homeHero.innerHTML = `
     <button class="home-hero-label" type="button" data-summary-action="liability" aria-label="\u7f16\u8f91\u8d1f\u503a">\u51c0\u8d44\u4ea7</button>
-    <strong class="home-hero-value">${formatLedgerMoney(summary.netMarketValueCny, 'CNY', 'home-hero-fraction')}</strong>
+    ${renderHomeAmount(summary.netMarketValueCny)}
     <p class="home-hero-meta">${pnlText ? `<strong class="${pnlClass}">${pnlArrow} ${escapeHtml(pnlText)}</strong> \u00b7 ` : ''}${escapeHtml(fxText)}</p>`;
 }
 
@@ -169,8 +172,8 @@ function renderHomeMetrics(calendarModel, summary) {
   const nextMonth = nextDividend ? Math.floor(safeNumber(String(nextDividend.payDate || nextDividend.exDate || '').slice(5, 7), 0)) : 0;
   /* 这行自禅意首版起一直是纯文本；真机反馈 2026-08-06 接上点击——走月点同一条路由 */
   const nextLine = nextDividend && nextMonth >= 1 && nextMonth <= 12
-    ? `<button class="home-todo-line" type="button" data-home-dividend-month="${nextMonth}" aria-label="查看 ${nextMonth} 月股息明细">${nextDate.month}${nextDate.day}日 ${escapeHtml(nextName)} <strong>${escapeHtml(nextIsEstimate ? `约${nextAmountText}` : nextAmountText)}</strong> ${nextIsEstimate ? '预计到账' : '到账'}</button>`
-    : (nextDividend ? `${nextDate.month}${nextDate.day}日 ${escapeHtml(nextName)} <strong>${escapeHtml(nextAmountText)}</strong> 到账` : '近期暂无在途股息');
+    ? `<button class="home-todo-line" type="button" data-home-dividend-month="${nextMonth}" aria-label="查看 ${nextMonth} 月股息明细">${nextDate.month}${nextDate.day}日 ${escapeHtml(nextName)} <span class="home-todo-payment"><strong>${escapeHtml(nextIsEstimate ? `约${nextAmountText}` : nextAmountText)}</strong> ${nextIsEstimate ? '预计到账' : '到账'}</span></button>`
+    : (nextDividend ? `${nextDate.month}${nextDate.day}日 ${escapeHtml(nextName)} <span class="home-todo-payment"><strong>${escapeHtml(nextAmountText)}</strong> 到账</span>` : '近期暂无在途股息');
   // \u7b2c\u4e8c\u884c\uff1a\u4e0b\u4e00\u573a\u8d22\u62a5\uff08\u5f85\u786e\u8ba4\u7b14\u6570\u5df2\u5728\u80a1\u606f\u65e5\u5386\u5165\u53e3\u6458\u8981\u91cc\uff09
   const nextReport = getUpcomingReportEvents()[0] || null;
   const reportDate = getHomeEventDateParts(nextReport && nextReport.reportDate);

@@ -2816,7 +2816,7 @@ body[data-active-page="home"] .home-quick-add {
     padding-left: max(var(--fl-16), env(safe-area-inset-left, 0px));
   }
   body[data-active-page="home"] #homePullIndicator { grid-area: pull; }
-  body[data-active-page="home"] .home-hero { grid-area: hero; }
+  body[data-active-page="home"] .home-hero { grid-area: hero; container-type: inline-size; }
   body[data-active-page="home"] .home-metrics { grid-area: metrics; }
   body[data-active-page="home"] .home-top {
     grid-area: tools;
@@ -2839,11 +2839,16 @@ body[data-active-page="home"] .home-quick-add {
   body[data-active-page="home"] .home-nav-list { margin-top: var(--home-section-gap); }
   body[data-active-page="home"] .home-hero-label,
   body[data-active-page="home"] .home-divi-label { line-height: var(--fl-16); }
-  body[data-active-page="home"] .home-hero-value { font-size: var(--fl-42); overflow-wrap: anywhere; }
+  body[data-active-page="home"] .home-hero-value {
+    font-size: min(var(--fl-42), calc(100cqi / var(--home-amount-em, 8)));
+    white-space: nowrap;
+  }
+  body[data-active-page="home"] .home-hero-value .home-hero-fraction { font-size: 0.52em; }
   body[data-active-page="home"] .home-divi-value { line-height: 1.1; overflow-wrap: anywhere; }
   body[data-active-page="home"] .home-divi-thread { max-width: 100%; }
   body[data-active-page="home"] .home-month-track { margin-top: var(--fl-6); }
-  body[data-active-page="home"] .home-todo { line-height: 1.5; }
+  body[data-active-page="home"] .home-todo { line-height: 1.5; text-wrap: balance; }
+  body[data-active-page="home"] .home-todo-payment { white-space: nowrap; }
   body[data-active-page="home"] .home-nav-list { grid-area: nav; justify-content: space-between; gap: 0; }
   body[data-active-page="home"] .home-nav-item { column-gap: var(--fl-8); }
   body[data-active-page="home"] .home-nav-title { flex-shrink: 0; }
