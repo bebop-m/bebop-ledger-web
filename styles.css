@@ -2783,8 +2783,8 @@ body[data-active-page="home"] .home-quick-add {
   body[data-active-page="home"] .home-nav-list { margin-top: var(--fl-26); gap: var(--fl-15); }
 }
 
-/* 浏览器工具栏展开或分屏时，先收留白，内容超出时仍可自然滚动。 */
-@media (max-height: 640px) {
+/* 窄矮视口覆盖合盖外屏的 Safari、主屏幕安装版和分屏窗口。 */
+@media (max-height: 640px), (max-width: 500px) and (max-height: 740px) {
   body[data-active-page="home"] .home-hero,
   body[data-active-page="home"] .home-divi { margin-top: var(--fl-15); }
   body[data-active-page="home"] .home-hero-value,
@@ -2795,6 +2795,27 @@ body[data-active-page="home"] .home-quick-add {
   body[data-active-page="home"] .home-nav-list { margin-top: var(--fl-12); gap: var(--fl-3); }
   body[data-active-page="home"] .home-nav-item { align-items: center; min-height: 32px; }
   body[data-active-page="home"] .home-quick-add { margin-top: var(--fl-6); min-height: 36px; }
+}
+
+/* 以工具栏展开时的高度安排留白，安全区较大时优先让出内容空间。 */
+@media (max-width: 500px) and (max-height: 740px) {
+  body[data-active-page="home"] #homePage {
+    --home-section-gap: clamp(4px, calc((100svh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 440px) / 8), 16px);
+    padding-top: max(8px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
+  }
+  body[data-active-page="home"] .home-hero,
+  body[data-active-page="home"] .home-divi,
+  body[data-active-page="home"] .home-todo,
+  body[data-active-page="home"] .home-nav-list { margin-top: var(--home-section-gap); }
+  body[data-active-page="home"] .home-hero-label,
+  body[data-active-page="home"] .home-divi-label { line-height: var(--fl-16); }
+  body[data-active-page="home"] .home-hero-value { font-size: var(--fl-42); }
+  body[data-active-page="home"] .home-divi-value { line-height: 1.1; }
+  body[data-active-page="home"] .home-month-track { margin-top: var(--fl-6); }
+  body[data-active-page="home"] .home-todo { line-height: 1.5; }
+  body[data-active-page="home"] .home-nav-list { justify-content: space-between; gap: 0; }
+  body[data-active-page="home"] .home-quick-add { margin-top: var(--fl-4); }
 }
 
 /* ══════════════════════════════════════════════════════════════════
