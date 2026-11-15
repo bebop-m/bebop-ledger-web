@@ -1,7 +1,7 @@
 {
   "ok": true,
   "provider": "yfinance",
-  "updatedAt": "2026-11-14T06:51:14.177520Z",
+  "updatedAt": "2026-11-15T06:56:18.539663Z",
   "companies": {
     "00700.HK": {
       "symbol": "00700.HK",
@@ -1579,12 +1579,12 @@
       "years": [
         {
           "year": 2012,
-          "dividendPerShare": 0.11756,
+          "dividendPerShare": 0.11747,
           "lastExDate": "2012-02-27"
         },
         {
           "year": 2013,
-          "dividendPerShare": 0.5878,
+          "dividendPerShare": 0.58735,
           "lastExDate": "2013-06-25"
         },
         {
@@ -1595,7 +1595,7 @@
         },
         {
           "year": 2017,
-          "dividendPerShare": 0.141072,
+          "dividendPerShare": 0.140964,
           "lastExDate": "2017-06-20",
           "avgPrice": 8.5807
         },
@@ -1619,7 +1619,7 @@
         },
         {
           "year": 2021,
-          "dividendPerShare": 0.41146,
+          "dividendPerShare": 0.411145,
           "lastExDate": "2021-06-23",
           "avgPrice": 10.6822
         },
@@ -1979,7 +1979,7 @@
           "year": 2026,
           "dividendPerShare": 0.1,
           "lastExDate": "2026-10-19",
-          "avgPrice": 1.6049
+          "avgPrice": 1.6046
         }
       ]
     },
@@ -2449,7 +2449,7 @@
         },
         {
           "year": 2016,
-          "dividendPerShare": 0.376192,
+          "dividendPerShare": 0.375904,
           "lastExDate": "2016-06-23",
           "avgPrice": 13.7358
         },
