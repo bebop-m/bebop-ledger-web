@@ -1,13 +1,13 @@
 {
   "ok": true,
   "provider": "yfinance",
-  "updatedAt": "2026-11-16T07:00:40.511446Z",
+  "updatedAt": "2026-11-17T08:15:48.162966Z",
   "companies": {
     "00700.HK": {
       "symbol": "00700.HK",
-      "name": "TENCENT",
+      "name": "00700.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2015,
@@ -119,16 +119,13 @@
           "year": 2026,
           "dividendPerShare": 5.3,
           "lastExDate": "2026-05-15",
-          "avgPrice": 478.5484
+          "avgPrice": 478.0838
         }
-      ],
-      "sector": "Communication Services",
-      "sectorCn": "通信服务",
-      "industry": "Internet Content & Information"
+      ]
     },
     "600519.SH": {
       "symbol": "600519.SH",
-      "name": "KWEICHOW MOUTAI",
+      "name": "600519.SH",
       "currency": "CNY",
       "statementCurrency": "CNY",
       "years": [
@@ -244,16 +241,13 @@
           "year": 2026,
           "dividendPerShare": 28.02423,
           "lastExDate": "2026-06-26",
-          "avgPrice": 1347.9798
+          "avgPrice": 1348.5213
         }
-      ],
-      "sector": "Consumer Defensive",
-      "sectorCn": "必需消费",
-      "industry": "Beverages - Wineries & Distilleries"
+      ]
     },
     "000651.SZ": {
       "symbol": "000651.SZ",
-      "name": "GREE",
+      "name": "000651.SZ",
       "currency": "CNY",
       "statementCurrency": "CNY",
       "years": [
@@ -369,18 +363,15 @@
           "year": 2026,
           "dividendPerShare": 3.0,
           "lastExDate": "2026-08-27",
-          "avgPrice": 38.874
+          "avgPrice": 38.8829
         }
-      ],
-      "sector": "Consumer Cyclical",
-      "sectorCn": "可选消费",
-      "industry": "Furnishings, Fixtures & Appliances"
+      ]
     },
     "00883.HK": {
       "symbol": "00883.HK",
-      "name": "CNOOC",
+      "name": "00883.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2015,
@@ -494,18 +485,15 @@
           "year": 2026,
           "dividendPerShare": 1.49,
           "lastExDate": "2026-09-10",
-          "avgPrice": 24.7893
+          "avgPrice": 24.7802
         }
-      ],
-      "sector": "Energy",
-      "sectorCn": "能源",
-      "industry": "Oil & Gas E&P"
+      ]
     },
     "06049.HK": {
       "symbol": "06049.HK",
-      "name": "POLY PPT SER",
+      "name": "06049.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2020,
@@ -587,16 +575,13 @@
           "year": 2026,
           "dividendPerShare": 1.60706,
           "lastExDate": "2026-06-02",
-          "avgPrice": 29.6614
+          "avgPrice": 29.647
         }
-      ],
-      "sector": "Real Estate",
-      "sectorCn": "房地产",
-      "industry": "Real Estate Services"
+      ]
     },
     "000333.SZ": {
       "symbol": "000333.SZ",
-      "name": "MIDEA GROUP",
+      "name": "000333.SZ",
       "currency": "CNY",
       "statementCurrency": "CNY",
       "years": [
@@ -712,18 +697,15 @@
           "year": 2026,
           "dividendPerShare": 3.8,
           "lastExDate": "2026-06-29",
-          "avgPrice": 81.3318
+          "avgPrice": 81.3904
         }
-      ],
-      "sector": "Consumer Cyclical",
-      "sectorCn": "可选消费",
-      "industry": "Furnishings, Fixtures & Appliances"
+      ]
     },
     "02669.HK": {
       "symbol": "02669.HK",
-      "name": "CHINA OVS PPT",
+      "name": "02669.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2016,
@@ -828,18 +810,15 @@
           "year": 2026,
           "dividendPerShare": 0.2,
           "lastExDate": "2026-09-11",
-          "avgPrice": 3.7979
+          "avgPrice": 3.7953
         }
-      ],
-      "sector": "Real Estate",
-      "sectorCn": "房地产",
-      "industry": "Real Estate Services"
+      ]
     },
     "PDD": {
       "symbol": "PDD",
-      "name": "PDD Holdings Inc.",
+      "name": "PDD",
       "currency": "USD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "USD",
       "years": [
         {
           "year": 2022,
@@ -882,16 +861,13 @@
           "sharesOutstanding": 5693585848.0,
           "fcf": 105793613000.0
         }
-      ],
-      "sector": "Consumer Cyclical",
-      "sectorCn": "可选消费",
-      "industry": "Internet Retail"
+      ]
     },
     "01571.HK": {
       "symbol": "01571.HK",
-      "name": "XIN POINT HOLD",
+      "name": "01571.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2017,
@@ -989,16 +965,13 @@
           "year": 2026,
           "dividendPerShare": 0.45,
           "lastExDate": "2026-09-24",
-          "avgPrice": 3.9169
+          "avgPrice": 3.9139
         }
-      ],
-      "sector": "Consumer Cyclical",
-      "sectorCn": "可选消费",
-      "industry": "Auto Parts"
+      ]
     },
     "00270.HK": {
       "symbol": "00270.HK",
-      "name": "GUANGDONG INV",
+      "name": "00270.HK",
       "currency": "HKD",
       "statementCurrency": "HKD",
       "years": [
@@ -1114,22 +1087,19 @@
           "year": 2026,
           "dividendPerShare": 0.4882,
           "lastExDate": "2026-09-11",
-          "avgPrice": 8.0403
+          "avgPrice": 8.0412
         }
-      ],
-      "sector": "Utilities",
-      "sectorCn": "公用事业",
-      "industry": "Utilities - Regulated Water"
+      ]
     },
     "09618.HK": {
       "symbol": "09618.HK",
-      "name": "JD-SW",
+      "name": "09618.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2022,
-          "dividendPerShare": 4.942476,
+          "dividendPerShare": 4.94286,
           "lastExDate": "2022-05-19",
           "avgPrice": 231.052,
           "eps": 3.32,
@@ -1145,7 +1115,7 @@
         },
         {
           "year": 2023,
-          "dividendPerShare": 2.432012,
+          "dividendPerShare": 2.432201,
           "lastExDate": "2023-04-04",
           "avgPrice": 146.2763,
           "eps": 7.69,
@@ -1161,7 +1131,7 @@
         },
         {
           "year": 2024,
-          "dividendPerShare": 2.981176,
+          "dividendPerShare": 2.981408,
           "lastExDate": "2024-04-03",
           "avgPrice": 116.8744,
           "eps": 13.83,
@@ -1177,7 +1147,7 @@
         },
         {
           "year": 2025,
-          "dividendPerShare": 3.9226,
+          "dividendPerShare": 3.922905,
           "lastExDate": "2025-04-07",
           "avgPrice": 134.0402,
           "eps": 6.89,
@@ -1193,20 +1163,17 @@
         },
         {
           "year": 2026,
-          "dividendPerShare": 3.9226,
+          "dividendPerShare": 3.922905,
           "lastExDate": "2026-04-08",
-          "avgPrice": 111.864
+          "avgPrice": 111.8331
         }
-      ],
-      "sector": "Consumer Cyclical",
-      "sectorCn": "可选消费",
-      "industry": "Internet Retail"
+      ]
     },
     "00728.HK": {
       "symbol": "00728.HK",
-      "name": "CHINA TELECOM",
+      "name": "00728.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2015,
@@ -1316,18 +1283,15 @@
           "year": 2026,
           "dividendPerShare": 0.289543,
           "lastExDate": "2026-09-02",
-          "avgPrice": 4.8485
+          "avgPrice": 4.8467
         }
-      ],
-      "sector": "Communication Services",
-      "sectorCn": "通信服务",
-      "industry": "Telecom Services"
+      ]
     },
     "02333.HK": {
       "symbol": "02333.HK",
-      "name": "GWMOTOR",
+      "name": "02333.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2015,
@@ -1439,16 +1403,13 @@
           "year": 2026,
           "dividendPerShare": 0.40224,
           "lastExDate": "2026-07-02",
-          "avgPrice": 10.2924
+          "avgPrice": 10.2713
         }
-      ],
-      "sector": "Consumer Cyclical",
-      "sectorCn": "可选消费",
-      "industry": "Auto Manufacturers"
+      ]
     },
     "600177.SH": {
       "symbol": "600177.SH",
-      "name": "YOUNGOR FASHION CO LTD",
+      "name": "600177.SH",
       "currency": "CNY",
       "statementCurrency": "CNY",
       "years": [
@@ -1564,27 +1525,24 @@
           "year": 2026,
           "dividendPerShare": 0.48,
           "lastExDate": "2026-09-18",
-          "avgPrice": 7.7335
+          "avgPrice": 7.7381
         }
-      ],
-      "sector": "Consumer Cyclical",
-      "sectorCn": "可选消费",
-      "industry": "Apparel Manufacturing"
+      ]
     },
     "03900.HK": {
       "symbol": "03900.HK",
-      "name": "GREENTOWN CHINA",
+      "name": "03900.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2012,
-          "dividendPerShare": 0.11759,
+          "dividendPerShare": 0.11767,
           "lastExDate": "2012-02-27"
         },
         {
           "year": 2013,
-          "dividendPerShare": 0.58795,
+          "dividendPerShare": 0.58835,
           "lastExDate": "2013-06-25"
         },
         {
@@ -1595,7 +1553,7 @@
         },
         {
           "year": 2017,
-          "dividendPerShare": 0.141108,
+          "dividendPerShare": 0.141204,
           "lastExDate": "2017-06-20",
           "avgPrice": 8.5807
         },
@@ -1619,7 +1577,7 @@
         },
         {
           "year": 2021,
-          "dividendPerShare": 0.411565,
+          "dividendPerShare": 0.411845,
           "lastExDate": "2021-06-23",
           "avgPrice": 10.6822
         },
@@ -1687,16 +1645,13 @@
           "fcf": 5272565000.0,
           "fcfDividendCoverage": 6.9205
         }
-      ],
-      "sector": "Real Estate",
-      "sectorCn": "房地产",
-      "industry": "Real Estate - Development"
+      ]
     },
     "01995.HK": {
       "symbol": "01995.HK",
-      "name": "ES SERVICES",
+      "name": "01995.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2019,
@@ -1784,18 +1739,15 @@
           "year": 2026,
           "dividendPerShare": 0.2048,
           "lastExDate": "2026-09-09",
-          "avgPrice": 1.7783
+          "avgPrice": 1.7777
         }
-      ],
-      "sector": "Real Estate",
-      "sectorCn": "房地产",
-      "industry": "Real Estate Services"
+      ]
     },
     "03316.HK": {
       "symbol": "03316.HK",
-      "name": "BINJIANG SER",
+      "name": "03316.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2019,
@@ -1842,6 +1794,8 @@
           "debtRatio": 0.6198,
           "roe": 0.3309,
           "sharesOutstanding": 276407000.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 904044000.0,
           "fcfDividendCoverage": 3.4877
         },
@@ -1857,6 +1811,8 @@
           "debtRatio": 0.6262,
           "roe": 0.3575,
           "sharesOutstanding": 276407000.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 535213000.0,
           "fcfDividendCoverage": 1.0602
         },
@@ -1872,6 +1828,8 @@
           "debtRatio": 0.6444,
           "roe": 0.3561,
           "sharesOutstanding": 276407000.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 793900000.0,
           "fcfDividendCoverage": 1.8457
         },
@@ -1879,18 +1837,15 @@
           "year": 2026,
           "dividendPerShare": 0.978,
           "lastExDate": "2026-07-06",
-          "avgPrice": 22.6119
+          "avgPrice": 22.6019
         }
-      ],
-      "sector": "Real Estate",
-      "sectorCn": "房地产",
-      "industry": "Real Estate Services"
+      ]
     },
     "00816.HK": {
       "symbol": "00816.HK",
-      "name": "JINMAO SERVICES",
+      "name": "00816.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2022,
@@ -1956,16 +1911,13 @@
           "year": 2026,
           "dividendPerShare": 0.19,
           "lastExDate": "2026-09-07",
-          "avgPrice": 2.3954
+          "avgPrice": 2.3937
         }
-      ],
-      "sector": "Real Estate",
-      "sectorCn": "房地产",
-      "industry": "Real Estate Services"
+      ]
     },
     "513530.SH": {
       "symbol": "513530.SH",
-      "name": "HUATAI-PINEBRIDGE FUND MANAGEME",
+      "name": "513530.SH",
       "currency": "CNY",
       "statementCurrency": "CNY",
       "years": [
@@ -1977,15 +1929,15 @@
         },
         {
           "year": 2026,
-          "dividendPerShare": 0.1,
-          "lastExDate": "2026-10-19",
+          "dividendPerShare": 0.11,
+          "lastExDate": "2026-11-16",
           "avgPrice": 1.6042
         }
       ]
     },
     "00823.HK": {
       "symbol": "00823.HK",
-      "name": "LINK REIT",
+      "name": "00823.HK",
       "currency": "HKD",
       "statementCurrency": "HKD",
       "years": [
@@ -2088,7 +2040,7 @@
           "year": 2026,
           "dividendPerShare": 1.2673,
           "lastExDate": "2026-06-11",
-          "avgPrice": 37.9688,
+          "avgPrice": 37.9824,
           "eps": -2.86,
           "netIncome": -7397000000.0,
           "dividendsPaid": 6220000000.0,
@@ -2099,16 +2051,13 @@
           "fcf": 8422000000.0,
           "fcfDividendCoverage": 1.354
         }
-      ],
-      "sector": "Real Estate",
-      "sectorCn": "房地产",
-      "industry": "REIT - Retail"
+      ]
     },
     "02156.HK": {
       "symbol": "02156.HK",
-      "name": "C&D PROPERTY",
+      "name": "02156.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2022,
@@ -2178,16 +2127,13 @@
           "year": 2026,
           "dividendPerShare": 0.2,
           "lastExDate": "2026-05-29",
-          "avgPrice": 2.6514
+          "avgPrice": 2.6502
         }
-      ],
-      "sector": "Real Estate",
-      "sectorCn": "房地产",
-      "industry": "Real Estate Services"
+      ]
     },
     "601088.SH": {
       "symbol": "601088.SH",
-      "name": "CHINA SHENHUA ENERGY COMPANY LT",
+      "name": "601088.SH",
       "currency": "CNY",
       "statementCurrency": "CNY",
       "years": [
@@ -2304,18 +2250,15 @@
           "year": 2026,
           "dividendPerShare": 2.01,
           "lastExDate": "2026-10-26",
-          "avgPrice": 45.6627
+          "avgPrice": 45.6862
         }
-      ],
-      "sector": "Energy",
-      "sectorCn": "能源",
-      "industry": "Thermal Coal"
+      ]
     },
     "00941.HK": {
       "symbol": "00941.HK",
-      "name": "CHINA MOBILE",
+      "name": "00941.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2015,
@@ -2359,7 +2302,8 @@
           "dividendPerShare": 3.39,
           "lastExDate": "2021-08-25",
           "avgPrice": 49.0132,
-          "eps": 5.67
+          "eps": 5.67,
+          "payoutRatio": 0.5979
         },
         {
           "year": 2022,
@@ -2428,18 +2372,15 @@
           "year": 2026,
           "dividendPerShare": 5.4203,
           "lastExDate": "2026-08-25",
-          "avgPrice": 80.6974
+          "avgPrice": 80.6961
         }
-      ],
-      "sector": "Communication Services",
-      "sectorCn": "通信服务",
-      "industry": "Telecom Services"
+      ]
     },
     "01088.HK": {
       "symbol": "01088.HK",
-      "name": "CHINA SHENHUA",
+      "name": "01088.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2015,
@@ -2449,7 +2390,7 @@
         },
         {
           "year": 2016,
-          "dividendPerShare": 0.376288,
+          "dividendPerShare": 0.376544,
           "lastExDate": "2016-06-23",
           "avgPrice": 13.7358
         },
@@ -2511,6 +2452,8 @@
           "debtRatio": 0.2408,
           "roe": 0.1461,
           "sharesOutstanding": 19868519955.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 52603000000.0,
           "fcfDividendCoverage": 0.9903
         },
@@ -2526,6 +2469,8 @@
           "debtRatio": 0.2565,
           "roe": 0.133,
           "sharesOutstanding": 19868519955.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 53378000000.0,
           "fcfDividendCoverage": 1.1316
         },
@@ -2541,6 +2486,8 @@
           "debtRatio": 0.2331,
           "roe": 0.1292,
           "sharesOutstanding": 19868519955.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 26661000000.0,
           "fcfDividendCoverage": 0.4002
         },
@@ -2548,18 +2495,15 @@
           "year": 2026,
           "dividendPerShare": 2.324,
           "lastExDate": "2026-10-08",
-          "avgPrice": 44.0407
+          "avgPrice": 44.04
         }
-      ],
-      "sector": "Energy",
-      "sectorCn": "能源",
-      "industry": "Thermal Coal"
+      ]
     },
     "01836.HK": {
       "symbol": "01836.HK",
-      "name": "STELLA HOLDINGS",
+      "name": "01836.HK",
       "currency": "HKD",
-      "statementCurrency": "USD",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2015,
@@ -2672,16 +2616,13 @@
           "year": 2026,
           "dividendPerShare": 1.35,
           "lastExDate": "2026-09-02",
-          "avgPrice": 13.7372
+          "avgPrice": 13.7337
         }
-      ],
-      "sector": "Consumer Cyclical",
-      "sectorCn": "可选消费",
-      "industry": "Footwear & Accessories"
+      ]
     },
     "01023.HK": {
       "symbol": "01023.HK",
-      "name": "SITOY GROUP",
+      "name": "01023.HK",
       "currency": "HKD",
       "statementCurrency": "HKD",
       "years": [
@@ -2785,7 +2726,7 @@
           "year": 2026,
           "dividendPerShare": 0.02,
           "lastExDate": "2026-03-26",
-          "avgPrice": 0.4709,
+          "avgPrice": 0.4704,
           "eps": -0.1272,
           "netIncome": -122827000.0,
           "dividendsPaid": 57926000.0,
@@ -2796,16 +2737,13 @@
           "fcf": -101833000.0,
           "fcfDividendCoverage": -1.758
         }
-      ],
-      "sector": "Consumer Cyclical",
-      "sectorCn": "可选消费",
-      "industry": "Footwear & Accessories"
+      ]
     },
     "00926.HK": {
       "symbol": "00926.HK",
-      "name": "BESUNYEN",
+      "name": "00926.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2011,
@@ -2897,16 +2835,13 @@
           "fcf": 54556000.0,
           "fcfDividendCoverage": 1.9581
         }
-      ],
-      "sector": "Consumer Defensive",
-      "sectorCn": "必需消费",
-      "industry": "Packaged Foods"
+      ]
     },
     "09926.HK": {
       "symbol": "09926.HK",
-      "name": "AKESO",
+      "name": "09926.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2022,
@@ -2952,16 +2887,13 @@
           "netBuyback": -3205262000.0,
           "fcf": -1734736000.0
         }
-      ],
-      "sector": "Healthcare",
-      "sectorCn": "医疗保健",
-      "industry": "Biotechnology"
+      ]
     },
     "00777.HK": {
       "symbol": "00777.HK",
-      "name": "NETDRAGON",
+      "name": "00777.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2015,
@@ -3076,16 +3008,13 @@
           "year": 2026,
           "dividendPerShare": 1.0,
           "lastExDate": "2026-09-09",
-          "avgPrice": 8.4637
+          "avgPrice": 8.4605
         }
-      ],
-      "sector": "Communication Services",
-      "sectorCn": "通信服务",
-      "industry": "Electronic Gaming & Multimedia"
+      ]
     },
     "02111.HK": {
       "symbol": "02111.HK",
-      "name": "BEST PACIFIC",
+      "name": "02111.HK",
       "currency": "HKD",
       "statementCurrency": "HKD",
       "years": [
@@ -3201,18 +3130,15 @@
           "year": 2026,
           "dividendPerShare": 0.261,
           "lastExDate": "2026-09-16",
-          "avgPrice": 2.7273
+          "avgPrice": 2.7253
         }
-      ],
-      "sector": "Consumer Cyclical",
-      "sectorCn": "可选消费",
-      "industry": "Textile Manufacturing"
+      ]
     },
     "00762.HK": {
       "symbol": "00762.HK",
-      "name": "CHINA UNICOM",
+      "name": "00762.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2014,
@@ -3283,6 +3209,8 @@
           "debtRatio": 0.4646,
           "roe": 0.0533,
           "sharesOutstanding": 30598000000.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 23016000000.0,
           "fcfDividendCoverage": 2.4111
         },
@@ -3298,6 +3226,8 @@
           "debtRatio": 0.4584,
           "roe": 0.0571,
           "sharesOutstanding": 30598000000.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 13662000000.0,
           "fcfDividendCoverage": 1.1694
         },
@@ -3313,6 +3243,8 @@
           "debtRatio": 0.4462,
           "roe": 0.0565,
           "sharesOutstanding": 30598000000.0,
+          "netBuyback": 0.0,
+          "netBuybackSource": "shareCount",
           "fcf": 22534000000.0,
           "fcfDividendCoverage": 1.6727
         },
@@ -3320,18 +3252,15 @@
           "year": 2026,
           "dividendPerShare": 0.15229,
           "lastExDate": "2026-06-03",
-          "avgPrice": 6.7584
+          "avgPrice": 6.7519
         }
-      ],
-      "sector": "Communication Services",
-      "sectorCn": "通信服务",
-      "industry": "Telecom Services"
+      ]
     },
     "09992.HK": {
       "symbol": "09992.HK",
-      "name": "POP MART",
+      "name": "09992.HK",
       "currency": "HKD",
-      "statementCurrency": "CNY",
+      "statementCurrency": "HKD",
       "years": [
         {
           "year": 2021,
@@ -3401,22 +3330,20 @@
           "lastExDate": "2025-05-29",
           "avgPrice": 204.6512,
           "eps": 9.61,
+          "payoutRatio": 0.0924,
           "sharesOutstanding": 1331963404.0
         },
         {
           "year": 2026,
           "dividendPerShare": 2.7248,
           "lastExDate": "2026-05-15",
-          "avgPrice": 170.9553
+          "avgPrice": 170.8324
         }
-      ],
-      "sector": "Consumer Cyclical",
-      "sectorCn": "可选消费",
-      "industry": "Leisure"
+      ]
     },
     "NVDA": {
       "symbol": "NVDA",
-      "name": "NVIDIA Corporation",
+      "name": "NVDA",
       "currency": "USD",
       "statementCurrency": "USD",
       "years": [
@@ -3477,7 +3404,6 @@
           "netIncome": 4368000000.0,
           "dividendsPaid": 398000000.0,
           "payoutRatio": 0.0911,
-          "debtRatio": 0.4633,
           "roe": 0.1976,
           "sharesOutstanding": 24661365720.0,
           "netBuyback": 10039000000.0,
@@ -3493,7 +3419,6 @@
           "netIncome": 29760000000.0,
           "dividendsPaid": 395000000.0,
           "payoutRatio": 0.0133,
-          "debtRatio": 0.3461,
           "roe": 0.6924,
           "sharesOutstanding": 24640000000.0,
           "netBuyback": 9533000000.0,
@@ -3509,7 +3434,6 @@
           "netIncome": 72880000000.0,
           "dividendsPaid": 834000000.0,
           "payoutRatio": 0.0114,
-          "debtRatio": 0.2892,
           "roe": 0.9187,
           "sharesOutstanding": 24477000000.0,
           "netBuyback": 33706000000.0,
@@ -3521,22 +3445,18 @@
           "dividendPerShare": 0.51,
           "specialDividendPerShare": 0.5,
           "lastExDate": "2026-09-10",
-          "avgPrice": 202.6551,
+          "avgPrice": 202.4437,
           "eps": 4.93,
           "netIncome": 120067000000.0,
           "dividendsPaid": 974000000.0,
           "payoutRatio": 0.0081,
-          "debtRatio": 0.2394,
           "roe": 0.7633,
           "sharesOutstanding": 24304000000.0,
           "netBuyback": 40086000000.0,
           "fcf": 96676000000.0,
           "fcfDividendCoverage": 99.2567
         }
-      ],
-      "sector": "Technology",
-      "sectorCn": "科技",
-      "industry": "Semiconductors"
+      ]
     }
   }
 }
