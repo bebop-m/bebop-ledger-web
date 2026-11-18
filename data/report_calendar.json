@@ -1,12 +1,10 @@
 {
   "ok": true,
-  "updatedAt": "2026-11-17T09:04:04.739631Z",
+  "updatedAt": "2026-11-18T08:27:19.969790Z",
   "symbolsTotal": 34,
-  "symbolsCovered": 3,
+  "symbolsCovered": 1,
   "coveredSymbols": [
-    "00700.HK",
-    "09618.HK",
-    "NVDA"
+    "00700.HK"
   ],
   "events": [
     {
