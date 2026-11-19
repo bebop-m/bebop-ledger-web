@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "updatedAt": "2026-11-18T08:27:19.969790Z",
+  "updatedAt": "2026-11-19T08:39:50.274504Z",
   "symbolsTotal": 34,
   "symbolsCovered": 1,
   "coveredSymbols": [
-    "00700.HK"
+    "NVDA"
   ],
   "events": [
     {
@@ -375,13 +375,6 @@
       "fiscalPeriod": "3-MTH-ENDED30/09/26"
     },
     {
-      "symbol": "NVDA",
-      "reportDate": "2026-11-17",
-      "reportType": "业绩公告",
-      "dateStatus": "estimated",
-      "source": "yahoo"
-    },
-    {
       "symbol": "00700.HK",
       "reportDate": "2026-11-18",
       "reportType": "业绩公告",
@@ -389,6 +382,13 @@
       "source": "hkex",
       "purpose": "3RD QUARTER RES/DIV",
       "fiscalPeriod": "9-MTH-ENDED30/09/26"
+    },
+    {
+      "symbol": "NVDA",
+      "reportDate": "2027-02-24",
+      "reportType": "业绩公告",
+      "dateStatus": "estimated",
+      "source": "yahoo"
     }
   ]
 }
